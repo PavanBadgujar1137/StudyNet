@@ -1,0 +1,49 @@
+.container {
+  height: 400px;
+  width: 560px;
+  position: relative;
+}
+.content {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+.content h1 {
+  margin-top: 175px;
+  margin-left: 150px;
+  font-size: x-large;
+  font: bold;
+  font-weight: 700;
+  color: rgb(7, 7, 136);
+  font-family: Georgia, "Times New Roman", Times, serif;
+}
+.content p {
+  margin-top: 7px;
+  margin-left: 350px;
+  font-size: 10px;
+  color: rgb(44, 44, 215);
+  font: bold;
+  font-weight: 900;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+}
+.content h4 {
+  margin-top: 78px;
+  margin-left: 78px;
+  font-size: 10px;
+  color: rgb(44, 44, 215);
+  font: bold;
+  font-weight: 900;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+}
+.button {
+  margin-top: 10px;
+  height: 40px;
+  width: 100px;
+  border: none;
+  background-color: orange;
+  color: white;
+  border-radius: 5px;
+}
