@@ -17,6 +17,7 @@ exports.createCourse = async (req, res) => {
       courseName,
       courseDescription,
       whatYouWillLearn,
+      instructorDescription,
       price,
       tag: _tag,
       category,
@@ -37,6 +38,7 @@ exports.createCourse = async (req, res) => {
     if (
       !courseName ||
       !courseDescription ||
+      instructorDescription ||
       !whatYouWillLearn ||
       !price ||
       !tag.length ||
@@ -82,6 +84,7 @@ exports.createCourse = async (req, res) => {
     const newCourse = await Course.create({
       courseName,
       courseDescription,
+      instructorDescription,
       instructor: instructorDetails._id,
       whatYouWillLearn: whatYouWillLearn,
       price,

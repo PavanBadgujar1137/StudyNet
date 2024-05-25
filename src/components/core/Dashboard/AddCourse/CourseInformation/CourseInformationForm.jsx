@@ -47,6 +47,7 @@ export default function CourseInformationForm() {
       // console.log("data populated", editCourse)
       setValue("courseTitle", course.courseName)
       setValue("courseShortDesc", course.courseDescription)
+      setValue("instructorShortDesc", course.instructorDescription)
       setValue("coursePrice", course.price)
       setValue("courseTags", course.tag)
       setValue("courseBenefits", course.whatYouWillLearn)
@@ -65,6 +66,7 @@ export default function CourseInformationForm() {
     if (
       currentValues.courseTitle !== course.courseName ||
       currentValues.courseShortDesc !== course.courseDescription ||
+      currentValues.instructorShortDesc !== course.instructorDescription ||
       currentValues.coursePrice !== course.price ||
       currentValues.courseTags.toString() !== course.tag.toString() ||
       currentValues.courseBenefits !== course.whatYouWillLearn ||
@@ -97,6 +99,11 @@ export default function CourseInformationForm() {
         }
         if (currentValues.courseShortDesc !== course.courseDescription) {
           formData.append("courseDescription", data.courseShortDesc)
+        }
+        if (
+          currentValues.instructorShortDesc !== course.instructorDescription
+        ) {
+          formData.append("instructorDescription", data.instructorShortDesc)
         }
         if (currentValues.coursePrice !== course.price) {
           formData.append("price", data.coursePrice)
@@ -139,6 +146,7 @@ export default function CourseInformationForm() {
     const formData = new FormData()
     formData.append("courseName", data.courseTitle)
     formData.append("courseDescription", data.courseShortDesc)
+    formData.append("instructorDescription", data.instructorShortDesc)
     formData.append("price", data.coursePrice)
     formData.append("tag", JSON.stringify(data.courseTags))
     formData.append("whatYouWillLearn", data.courseBenefits)
@@ -189,6 +197,26 @@ export default function CourseInformationForm() {
           className="form-style resize-x-none min-h-[130px] w-full"
         />
         {errors.courseShortDesc && (
+          <span className="ml-2 text-xs tracking-wide text-pink-200">
+            Course Description is required
+          </span>
+        )}
+      </div>
+      {/* Course Short Description */}
+      <div className="flex flex-col space-y-2">
+        <label
+          className="text-sm text-richblack-5"
+          htmlFor="instructorShortDesc"
+        >
+          Instuctor Short Description <sup className="text-pink-200">*</sup>
+        </label>
+        <textarea
+          id="instructorShortDesc"
+          placeholder="Enter Description"
+          {...register("instructorShortDesc", { required: true })}
+          className="form-style resize-x-none min-h-[130px] w-full"
+        />
+        {errors.instructorShortDesc && (
           <span className="ml-2 text-xs tracking-wide text-pink-200">
             Course Description is required
           </span>
@@ -298,7 +326,7 @@ export default function CourseInformationForm() {
           <button
             onClick={() => dispatch(setStep(2))}
             disabled={loading}
-            className={`flex cursor-pointer items-center gap-x-2 rounded-md bg-richblack-300 py-[8px] px-[20px] font-semibold text-richblack-900`}
+            className={`flex cursor-pointer items-center gap-x-2 rounded-md bg-richblack-300 px-[20px] py-[8px] font-semibold text-richblack-900`}
           >
             Continue Wihout Saving
           </button>

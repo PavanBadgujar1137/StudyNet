@@ -82,6 +82,14 @@ export default function EnrolledCourses() {
                       : course.courseDescription}
                   </p>
                 </div>
+                {/* <div className="flex max-w-xs flex-col gap-2">
+                  <p className="font-semibold">{course.courseName}</p>
+                  <p className="text-xs text-richblack-300">
+                    {course.instructorDescription.length > 50
+                      ? `${course.instructorDescription.slice(0, 50)}...`
+                      : course.instructorDescription}
+                  </p>
+                </div> */}
               </div>
               <div className="w-1/4 px-2 py-3">{course?.totalDuration}</div>
               <div className="flex w-1/5 flex-col gap-2 px-2 py-3">
