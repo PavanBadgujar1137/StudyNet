@@ -1,23 +1,32 @@
-// Importing necessary modules and packages
+// Load env before any other app modules (always from server/.env)
+const path = require("path")
+const dotenv = require("dotenv")
+dotenv.config({ path: path.join(__dirname, ".env") })
+
+const fs = require("fs")
+const os = require("os")
 const express = require("express")
-const app = express()
+const cookieParser = require("cookie-parser")
+const cors = require("cors")
+const fileUpload = require("express-fileupload")
+
 const userRoutes = require("./routes/user")
 const profileRoutes = require("./routes/profile")
 const courseRoutes = require("./routes/Course")
 const paymentRoutes = require("./routes/Payments")
 const contactUsRoute = require("./routes/Contact")
 const database = require("./config/database")
-const cookieParser = require("cookie-parser")
-const cors = require("cors")
 const { cloudinaryConnect } = require("./config/cloudinary")
-const fileUpload = require("express-fileupload")
-const dotenv = require("dotenv")
 
-// Setting up port number
 const PORT = process.env.PORT || 4000
 
-// Loading environment variables from .env file
-dotenv.config()
+// Windows-safe temp directory for file uploads
+const tempFileDir = path.join(os.tmpdir(), "studynet-uploads")
+if (!fs.existsSync(tempFileDir)) {
+  fs.mkdirSync(tempFileDir, { recursive: true })
+}
+
+const app = express()
 
 // Connecting to database
 database.connect()
@@ -34,7 +43,7 @@ app.use(
 app.use(
   fileUpload({
     useTempFiles: true,
-    tempFileDir: "/tmp/",
+    tempFileDir,
   })
 )
 
@@ -59,6 +68,9 @@ app.get("/", (req, res) => {
 // Listening to the server
 app.listen(PORT, () => {
   console.log(`App is listening at ${PORT}`)
+  if (!process.env.RAZORPAY_KEY || !process.env.RAZORPAY_SECRET) {
+    console.log(
+      "WARNING: RAZORPAY_KEY / RAZORPAY_SECRET missing in server/.env — payments will fail"
+    )
+  }
 })
-
-// End of code.

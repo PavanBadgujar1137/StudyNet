@@ -21,7 +21,6 @@ export function updateDisplayPicture(token, formData) {
         UPDATE_DISPLAY_PICTURE_API,
         formData,
         {
-          "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,
         }
       )
@@ -37,7 +36,9 @@ export function updateDisplayPicture(token, formData) {
       dispatch(setUser(response.data.data))
     } catch (error) {
       console.log("UPDATE_DISPLAY_PICTURE_API API ERROR............", error)
-      toast.error("Could Not Update Display Picture")
+      toast.error(
+        error?.response?.data?.message || "Could Not Update Display Picture"
+      )
     }
     toast.dismiss(toastId)
   }

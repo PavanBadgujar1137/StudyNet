@@ -1,13 +1,20 @@
-import axios from "axios";
+import axios from "axios"
 
-export const axiosInstance = axios.create({});
+export const axiosInstance = axios.create({})
 
 export const apiConnector = (method, url, bodyData, headers, params) => {
-  return axiosInstance({
-    method: `${method}`,
-    url: `${url}`,
-    data: bodyData ? bodyData : null,
-    headers: headers ? headers : null,
-    params: params ? params : null,
-  });
-};
+  const config = {
+    method,
+    url,
+    data: bodyData ?? null,
+    params: params ?? null,
+    headers: { ...(headers || {}) },
+  }
+
+  // Let the browser set the multipart boundary for FormData uploads
+  if (typeof FormData !== "undefined" && bodyData instanceof FormData) {
+    delete config.headers["Content-Type"]
+  }
+
+  return axiosInstance(config)
+}

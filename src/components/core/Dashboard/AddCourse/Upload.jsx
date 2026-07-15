@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { useDropzone } from "react-dropzone"
 import { FiUploadCloud } from "react-icons/fi"
-import { useSelector } from "react-redux"
 
 import "video-react/dist/video-react.css"
 import { Player } from "video-react"
@@ -16,12 +15,10 @@ export default function Upload({
   viewData = null,
   editData = null,
 }) {
-  const { course } = useSelector((state) => state.course)
   const [selectedFile, setSelectedFile] = useState(null)
   const [previewSource, setPreviewSource] = useState(
     viewData ? viewData : editData ? editData : ""
   )
-  const inputRef = useRef(null)
 
   const onDrop = (acceptedFiles) => {
     const file = acceptedFiles[0]
@@ -31,15 +28,17 @@ export default function Upload({
     }
   }
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     accept: !video
-      ? { "image/*": [".jpeg", ".jpg", ".png"] }
+      ? { "image/*": [".jpeg", ".jpg", ".png", ".webp"] }
       : { "video/*": [".mp4"] },
     onDrop,
+    noClick: false,
+    noKeyboard: false,
+    multiple: false,
   })
 
   const previewFile = (file) => {
-    // console.log(file)
     const reader = new FileReader()
     reader.readAsDataURL(file)
     reader.onloadend = () => {
@@ -48,7 +47,7 @@ export default function Upload({
   }
 
   useEffect(() => {
-    register(name, { required: true })
+    register(name, { required: !viewData })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [register])
 
@@ -59,9 +58,10 @@ export default function Upload({
 
   return (
     <div className="flex flex-col space-y-2">
-      <label className="text-sm text-richblack-5" htmlFor={name}>
+      <p className="text-sm text-richblack-5">
         {label} {!viewData && <sup className="text-pink-200">*</sup>}
-      </label>
+      </p>
+
       <div
         className={`${
           isDragActive ? "bg-richblack-600" : "bg-richblack-700"
@@ -97,22 +97,33 @@ export default function Upload({
             className="flex w-full flex-col items-center p-6"
             {...getRootProps()}
           >
-            <input {...getInputProps()} ref={inputRef} />
+            {/* Do not override dropzone's input ref — that breaks Browse/click */}
+            <input {...getInputProps()} />
             <div className="grid aspect-square w-14 place-items-center rounded-full bg-pure-greys-800">
               <FiUploadCloud className="text-2xl text-yellow-50" />
             </div>
-            <p className="mt-2 max-w-[200px] text-center text-sm text-richblack-200">
-              Drag and drop an {!video ? "image" : "video"}, or click to{" "}
-              <span className="font-semibold text-yellow-50">Browse</span> a
-              file
+            <p className="mt-2 max-w-[220px] text-center text-sm text-richblack-200">
+              Drag and drop an {!video ? "image" : "video"}, or{" "}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  open()
+                }}
+                className="font-semibold text-yellow-50 underline"
+              >
+                Browse
+              </button>{" "}
+              a file
             </p>
-            <ul className="mt-10 flex list-disc justify-between space-x-12 text-center  text-xs text-richblack-200">
+            <ul className="mt-10 flex list-disc justify-between space-x-12 text-center text-xs text-richblack-200">
               <li>Aspect ratio 16:9</li>
               <li>Recommended size 1024x576</li>
             </ul>
           </div>
         )}
       </div>
+
       {errors[name] && (
         <span className="ml-2 text-xs tracking-wide text-pink-200">
           {label} is required

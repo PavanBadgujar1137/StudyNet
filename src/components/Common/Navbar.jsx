@@ -44,9 +44,10 @@ function Navbar() {
       setLoading(true)
       try {
         const res = await apiConnector("GET", categories.CATEGORIES_API)
-        setSubLinks(res.data.data)
+        setSubLinks(res?.data?.data ?? [])
       } catch (error) {
         console.log("Could not fetch Categories.", error)
+        setSubLinks([])
       }
       setLoading(false)
     })()
@@ -89,13 +90,13 @@ function Navbar() {
                         <div className="absolute left-[50%] top-0 -z-10 h-6 w-6 translate-x-[80%] translate-y-[-40%] rotate-45 select-none rounded bg-richblack-5"></div>
                         {loading ? (
                           <p className="text-center">Loading...</p>
-                        ) : subLinks.length ? (
+                        ) : subLinks?.length ? (
                           <>
                             {subLinks
-                              ?.filter(
-                                (subLink) => subLink?.courses?.length > 0
+                              .filter(
+                                (subLink) => (subLink?.courses?.length ?? 0) > 0
                               )
-                              ?.map((subLink, i) => (
+                              .map((subLink, i) => (
                                 <Link
                                   to={`/catalog/${subLink.name
                                     .split(" ")

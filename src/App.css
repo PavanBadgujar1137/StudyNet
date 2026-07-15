@@ -3,6 +3,13 @@
 @tailwind utilities;
 
 html,
+body,
+#root {
+  min-height: 100%;
+  background-color: #000814;
+}
+
+html,
 body {
   overflow-x: hidden;
 }
@@ -10,13 +17,14 @@ body {
 /* ===== Scrollbar CSS ===== */
 /* Firefox */
 * {
-  scrollbar-width: auto;
-  scrollbar-color: #afb2bf;
+  scrollbar-width: thin;
+  scrollbar-color: #afb2bf #000814;
 }
 
 /* Chrome, Edge, and Safari */
 *::-webkit-scrollbar {
-  width: 3px;
+  width: 8px;
+  height: 8px;
 }
 
 *::-webkit-scrollbar-track {
@@ -26,13 +34,12 @@ body {
 *::-webkit-scrollbar-thumb {
   background-color: #afb2bf;
   border-radius: 10px;
-  visibility: hidden;
 }
 
-*:active::-webkit-scrollbar-thumb,
-*:focus::-webkit-scrollbar-thumb,
-*:hover::-webkit-scrollbar-thumb {
-  visibility: visible;
+.dashboard-scroll {
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
 }
 
 /* Hide default styling of details/summary */

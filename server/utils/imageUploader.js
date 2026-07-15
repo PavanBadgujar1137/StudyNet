@@ -1,14 +1,28 @@
 const cloudinary = require("cloudinary").v2
 
 exports.uploadImageToCloudinary = async (file, folder, height, quality) => {
-  const options = { folder }
+  if (!file?.tempFilePath) {
+    throw new Error("No file uploaded")
+  }
+
+  const options = {
+    folder,
+    resource_type: "auto",
+  }
+
   if (height) {
-    options.height = height
+    options.height = Number(height)
+    options.crop = "scale"
   }
+
   if (quality) {
-    options.quality = quality
+    // Cloudinary quality must be 1-100 or "auto"
+    const parsedQuality = Number(quality)
+    options.quality = Number.isNaN(parsedQuality)
+      ? quality
+      : Math.min(Math.max(parsedQuality, 1), 100)
   }
-  options.resource_type = "auto"
+
   console.log("OPTIONS", options)
   return await cloudinary.uploader.upload(file.tempFilePath, options)
 }

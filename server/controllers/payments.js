@@ -1,4 +1,7 @@
-const { instance } = require("../config/razorpay")
+const {
+  getRazorpayInstance,
+  getRazorpayKeys,
+} = require("../config/razorpay")
 const Course = require("../models/Course")
 const crypto = require("crypto")
 const User = require("../models/User")
@@ -14,7 +17,7 @@ const CourseProgress = require("../models/CourseProgress")
 exports.capturePayment = async (req, res) => {
   const { courses } = req.body
   const userId = req.user.id
-  if (courses.length === 0) {
+  if (!courses || courses.length === 0) {
     return res.json({ success: false, message: "Please Provide Course ID" })
   }
 
@@ -50,24 +53,27 @@ exports.capturePayment = async (req, res) => {
   }
 
   const options = {
-    amount: total_amount * 100,
+    amount: Math.round(Number(total_amount) * 100),
     currency: "INR",
-    receipt: Math.random(Date.now()).toString(),
+    receipt: `receipt_${Date.now()}`,
   }
 
   try {
     // Initiate the payment using Razorpay
-    const paymentResponse = await instance.orders.create(options)
+    const { key_id } = getRazorpayKeys()
+    const paymentResponse = await getRazorpayInstance().orders.create(options)
     console.log(paymentResponse)
-    res.json({
+    return res.json({
       success: true,
       data: paymentResponse,
+      key: key_id,
     })
   } catch (error) {
-    console.log(error)
-    res
-      .status(500)
-      .json({ success: false, message: "Could not initiate order." })
+    console.log("CAPTURE PAYMENT ERROR:", error)
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Could not initiate order.",
+    })
   }
 }
 
@@ -92,8 +98,9 @@ exports.verifyPayment = async (req, res) => {
 
   let body = razorpay_order_id + "|" + razorpay_payment_id
 
+  const { key_secret } = getRazorpayKeys()
   const expectedSignature = crypto
-    .createHmac("sha256", process.env.RAZORPAY_SECRET)
+    .createHmac("sha256", key_secret)
     .update(body.toString())
     .digest("hex")
 

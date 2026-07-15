@@ -22,10 +22,12 @@ export default function ChipInput({
 
   useEffect(() => {
     if (editCourse) {
-      // console.log(course)
-      setChips(course?.tag)
+      setChips(Array.isArray(course?.tag) ? course.tag : [])
     }
-    register(name, { required: true, validate: (value) => value.length > 0 })
+    register(name, {
+      required: true,
+      validate: (value) => Array.isArray(value) && value.length > 0,
+    })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -43,9 +45,9 @@ export default function ChipInput({
       // Get the input value and remove any leading/trailing spaces
       const chipValue = event.target.value.trim()
       // Check if the input value exists and is not already in the chips array
-      if (chipValue && !chips.includes(chipValue)) {
+      if (chipValue && !(chips || []).includes(chipValue)) {
         // Add the chip to the array and clear the input
-        const newChips = [...chips, chipValue]
+        const newChips = [...(chips || []), chipValue]
         setChips(newChips)
         event.target.value = ""
       }
@@ -69,7 +71,7 @@ export default function ChipInput({
       {/* Render the chips and input */}
       <div className="flex w-full flex-wrap gap-y-2">
         {/* Map over the chips array and render each chip */}
-        {chips.map((chip, index) => (
+        {(chips || []).map((chip, index) => (
           <div
             key={index}
             className="m-1 flex items-center rounded-full bg-yellow-400 px-2 py-1 text-sm text-richblack-5"

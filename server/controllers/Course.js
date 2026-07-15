@@ -25,11 +25,20 @@ exports.createCourse = async (req, res) => {
       instructions: _instructions,
     } = req.body
     // Get thumbnail image from request files
-    const thumbnail = req.files.thumbnailImage
+    const thumbnail = req.files?.thumbnailImage
 
     // Convert the tag and instructions from stringified Array to Array
-    const tag = JSON.parse(_tag)
-    const instructions = JSON.parse(_instructions)
+    let tag = []
+    let instructions = []
+    try {
+      tag = _tag ? JSON.parse(_tag) : []
+      instructions = _instructions ? JSON.parse(_instructions) : []
+    } catch (parseError) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid tag or instructions format",
+      })
+    }
 
     console.log("tag", tag)
     console.log("instructions", instructions)
@@ -38,9 +47,11 @@ exports.createCourse = async (req, res) => {
     if (
       !courseName ||
       !courseDescription ||
-      instructorDescription ||
+      !instructorDescription ||
       !whatYouWillLearn ||
-      !price ||
+      price === undefined ||
+      price === null ||
+      price === "" ||
       !tag.length ||
       !thumbnail ||
       !category ||

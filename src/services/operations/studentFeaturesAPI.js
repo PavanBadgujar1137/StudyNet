@@ -64,21 +64,68 @@ export async function BuyCourse(
     }
     console.log("PAYMENT RESPONSE FROM BACKEND............", orderResponse.data)
 
+    const orderData = orderResponse.data.data
+    const razorpayKey =
+      orderResponse.data.key ||
+      process.env.REACT_APP_RAZORPAY_KEY ||
+      "rzp_test_TDhFSRuAl18Gcb"
+
+    if (!razorpayKey) {
+      throw new Error("Razorpay key missing during initialization")
+    }
+
+    // Keep TEST mode only (rzp_test_). Live keys are not used.
+    // Most reliable test path: Netbanking → any bank → click Success.
+    const isTestMode = String(razorpayKey).startsWith("rzp_test_")
+    if (isTestMode) {
+      toast(
+        "TEST MODE: choose Netbanking → any bank → click Success. (No real money)",
+        { duration: 8000 }
+      )
+    }
+
     // Opening the Razorpay SDK
     const options = {
-      key: process.env.RAZORPAY_KEY,
-      currency: orderResponse.data.data.currency,
-      amount: `${orderResponse.data.data.amount}`,
-      order_id: orderResponse.data.data.id,
-      name: "StudyNotion",
-      description: "Thank you for Purchasing the Course.",
+      key: razorpayKey,
+      currency: orderData.currency,
+      amount: `${orderData.amount}`,
+      order_id: orderData.id,
+      name: "StudyNet",
+      description: isTestMode
+        ? "TEST MODE — Netbanking → Success"
+        : "Thank you for Purchasing the Course.",
       image: rzpLogo,
+      method: {
+        netbanking: true,
+        card: true,
+        upi: false, // test UPI QR/apps are unreliable
+        wallet: false,
+      },
+      config: {
+        display: {
+          blocks: {
+            netbanking: {
+              name: "Netbanking (best for test — then click Success)",
+              instruments: [{ method: "netbanking" }],
+            },
+            cards: {
+              name: "Cards (optional test)",
+              instruments: [{ method: "card" }],
+            },
+          },
+          sequence: ["block.netbanking", "block.cards"],
+          preferences: {
+            show_default_blocks: false,
+          },
+        },
+      },
       prefill: {
         name: `${user_details.firstName} ${user_details.lastName}`,
         email: user_details.email,
+        method: "netbanking",
       },
       handler: function (response) {
-        sendPaymentSuccessEmail(response, orderResponse.data.data.amount, token)
+        sendPaymentSuccessEmail(response, orderData.amount, token)
         verifyPayment({ ...response, courses }, token, navigate, dispatch)
       },
     }
@@ -86,7 +133,10 @@ export async function BuyCourse(
 
     paymentObject.open()
     paymentObject.on("payment.failed", function (response) {
-      toast.error("Oops! Payment Failed.")
+      toast.error(
+        response?.error?.description ||
+          "Test payment failed. Use Netbanking → any bank → Success."
+      )
       console.log(response.error)
     })
   } catch (error) {

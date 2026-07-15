@@ -36,15 +36,11 @@ export default function CourseInformationForm() {
     const getCategories = async () => {
       setLoading(true)
       const categories = await fetchCourseCategories()
-      if (categories.length > 0) {
-        // console.log("categories", categories)
-        setCourseCategories(categories)
-      }
+      setCourseCategories(Array.isArray(categories) ? categories : [])
       setLoading(false)
     }
     // if form is in edit mode
-    if (editCourse) {
-      // console.log("data populated", editCourse)
+    if (editCourse && course) {
       setValue("courseTitle", course.courseName)
       setValue("courseShortDesc", course.courseDescription)
       setValue("instructorShortDesc", course.instructorDescription)
@@ -194,7 +190,7 @@ export default function CourseInformationForm() {
           id="courseShortDesc"
           placeholder="Enter Description"
           {...register("courseShortDesc", { required: true })}
-          className="form-style resize-x-none min-h-[130px] w-full"
+          className="form-style min-h-[130px] w-full resize-none"
         />
         {errors.courseShortDesc && (
           <span className="ml-2 text-xs tracking-wide text-pink-200">
@@ -202,23 +198,23 @@ export default function CourseInformationForm() {
           </span>
         )}
       </div>
-      {/* Course Short Description */}
+      {/* Instructor Short Description */}
       <div className="flex flex-col space-y-2">
         <label
           className="text-sm text-richblack-5"
           htmlFor="instructorShortDesc"
         >
-          Instuctor Short Description <sup className="text-pink-200">*</sup>
+          Instructor Short Description <sup className="text-pink-200">*</sup>
         </label>
         <textarea
           id="instructorShortDesc"
           placeholder="Enter Description"
           {...register("instructorShortDesc", { required: true })}
-          className="form-style resize-x-none min-h-[130px] w-full"
+          className="form-style min-h-[130px] w-full resize-none"
         />
         {errors.instructorShortDesc && (
           <span className="ml-2 text-xs tracking-wide text-pink-200">
-            Course Description is required
+            Instructor Description is required
           </span>
         )}
       </div>
@@ -303,7 +299,7 @@ export default function CourseInformationForm() {
           id="courseBenefits"
           placeholder="Enter benefits of the course"
           {...register("courseBenefits", { required: true })}
-          className="form-style resize-x-none min-h-[130px] w-full"
+          className="form-style min-h-[130px] w-full resize-none"
         />
         {errors.courseBenefits && (
           <span className="ml-2 text-xs tracking-wide text-pink-200">
