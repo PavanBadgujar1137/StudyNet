@@ -31,7 +31,7 @@ function Home() {
         </Link>
 
         {/* Heading */}
-        <div className="text-center text-4xl font-semibold">
+        <div className="text-center text-4xl font-semibold text-richblack-100">
           You already know how to hold space. We'll help you hold it online —
           <HighlightText text={" and get paid for it."} />
         </div>
@@ -52,12 +52,17 @@ function Home() {
         </div>
 
         {/* Video */}
-        <div className="mx-3 my-7 shadow-[10px_-5px_50px_-5px] shadow-blue-200">
+        <div className="relative overflow-hidden rounded-3xl bg-white">
+          <div className="absolute top-5 left-5 z-10 rounded-full bg-white/90 px-4 py-2 shadow-lg backdrop-blur-md text-richblack-100">
+            🚀 Learn Without Limits
+          </div>
+
           <video
-            className="shadow-[20px_20px_rgba(255,255,255)]"
+            className="w-full object-cover transition-transform duration-500 hover:scale-[1.02]"
             muted
             loop
             autoPlay
+            playsInline
           >
             <source src={Banner} type="video/mp4" />
           </video>
@@ -86,7 +91,7 @@ function Home() {
               link: "/signup",
               active: false,
             }}
-            codeColor={"text-yellow-25"}
+            codeColor={"text-richblack-200"}
             codeblock={`const clientJourney = {\n  method: "practice-not-modules",\n  checkIns: "recurring & reflective",\n  cohorts: "private & small group",\n  progress: "gentle reflection tracking",\n  boundaries: "own rhythm & space",\n  corporateLmsFeel: false\n};\n\nconsole.log("Holding space online...");`}
             backgroundGradient={<div className="codeblock1 absolute"></div>}
           />
@@ -115,7 +120,7 @@ function Home() {
               link: "/signup",
               active: false,
             }}
-            codeColor={"text-white"}
+            codeColor={"text-richblack-200"}
             codeblock={`import React from "react";\nimport { PeerCircle } from "openhand";\n\nconst CircleGroup = () => {\n  return (\n    <PeerCircle\n      calls="built-in-calls"\n      feeling="living-room"\n      accountability="self-organizing"\n    />\n  );\n};\n\nexport default CircleGroup;`}
             backgroundGradient={<div className="codeblock2 absolute"></div>}
           />
@@ -148,11 +153,11 @@ function Home() {
         <div className="mx-auto flex w-11/12 max-w-maxContent flex-col items-center justify-between gap-8 ">
           {/* Job that is in Demand - Section 1 */}
           <div className="mb-10 mt-[-100px] flex flex-col justify-between gap-7 lg:mt-20 lg:flex-row lg:gap-0">
-            <div className="text-4xl font-semibold lg:w-[45%] ">
+            <div className="text-4xl font-semibold lg:w-[45%] text-richblack-100">
               Built for the trust your{" "}
               <HighlightText text={"work depends on."} />
             </div>
-            <div className="flex flex-col items-start gap-10 lg:w-[40%]">
+            <div className="flex flex-col items-start gap-10 lg:w-[40%] text-richblack-300">
               <div className="text-[16px]">
                 Held with care. Private cohorts and client data are separated and
                 access-controlled from the ground up, with ethical-practice standards
@@ -178,7 +183,7 @@ function Home() {
         <InstructorSection />
 
         {/* Reviws from Other Learner */}
-        <h1 className="text-center text-4xl font-semibold mt-8">
+        <h1 className="text-center text-4xl font-semibold mt-8 text-richblack-100">
           Reviews from other learners
         </h1>
         <ReviewSlider />

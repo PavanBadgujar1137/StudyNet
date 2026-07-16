@@ -17,7 +17,7 @@ const About = () => {
     <div>
       <section className="bg-richblack-700">
         <div className="relative mx-auto flex w-11/12 max-w-maxContent flex-col justify-between gap-10 text-center text-white">
-          <header className="mx-auto py-20 text-4xl font-semibold lg:w-[70%]">
+          <header className="mx-auto py-20 text-4xl font-semibold lg:w-[70%] text-richblack-100">
             Your practice, held online. Not modules.
             <HighlightText text={" Practice."} />
             <p className="mx-auto mt-3 text-center text-base font-medium text-richblack-300 lg:w-[95%]">
@@ -92,7 +92,7 @@ const About = () => {
 
       <div className="relative mx-auto my-20 flex w-11/12 max-w-maxContent flex-col items-center justify-between gap-8 bg-richblack-900 text-white">
         {/* Reviws from Other Learner */}
-        <h1 className="text-center text-4xl font-semibold mt-8">
+        <h1 className="text-center text-4xl font-semibold mt-8 text-richblack-100">
           Reviews from other learners
         </h1>
         <ReviewSlider />

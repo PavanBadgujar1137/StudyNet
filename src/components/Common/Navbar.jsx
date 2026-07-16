@@ -4,8 +4,7 @@ import { BsChevronDown } from "react-icons/bs"
 import { useSelector } from "react-redux"
 import { Link, matchPath, useLocation } from "react-router-dom"
 
-import logo from "../../assets/Logo/Logo-Full-Light.png"
-// Logo-Full-Light.png: white "StudyNotion" wordmark — ideal for dark navbar/footer surfaces
+import logo from "../../assets/Logo/onehandimagelogodark.png"
 import { NavbarLinks } from "../../data/navbar-links"
 import { apiConnector } from "../../services/apiConnector"
 import { categories } from "../../services/apis"
@@ -71,8 +70,10 @@ function Navbar() {
           <img
             src={logo}
             alt="StudyNotion"
-            className="h-8 w-auto object-contain"
+            className="object-contain"
             loading="eager"
+            width={160}
+            height={50}
           />
         </Link>
         {/* Navigation links */}

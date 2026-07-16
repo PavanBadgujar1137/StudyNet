@@ -42,8 +42,8 @@ const TimelineSection = () => {
                     <img src={ele.Logo} alt="" />
                   </div>
                   <div>
-                    <h2 className="font-semibold text-[18px]">{ele.Heading}</h2>
-                    <p className="text-base">{ele.Description}</p>
+                    <h2 className="font-semibold text-[18px] text-richblack-100">{ele.Heading}</h2>
+                    <p className="text-base text-richblack-300">{ele.Description}</p>
                   </div>
                 </div>
                 <div

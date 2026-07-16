@@ -3,7 +3,7 @@ import { FooterLink2 } from "../../data/footer-links";
 import { Link } from "react-router-dom";
 
 // Images
-import Logo from "../../assets/Logo/Logo-Full-Light.png";
+import Logo from "../../assets/Logo/onehandimagelogodark.png";
 
 // Icons
 import { FaFacebook, FaGoogle, FaTwitter, FaYoutube } from "react-icons/fa";
@@ -33,8 +33,10 @@ const Footer = () => {
               <img
                 src={Logo}
                 alt="StudyNotion"
-                className="h-7 w-auto object-contain"
+                className="block object-contain self-start"
                 loading="lazy"
+                width={150}
+                height={50}
               />
               <h1 className="text-richblack-50 font-semibold text-[16px]">
                 Company

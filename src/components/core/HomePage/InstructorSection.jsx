@@ -16,7 +16,7 @@ const InstructorSection = () => {
             />
           </div>
           <div className="lg:w-[50%] flex gap-10 flex-col">
-            <h1 className="lg:w-[50%] text-4xl font-semibold ">
+            <h1 className="lg:w-[50%] text-4xl font-semibold  text-richblack-100">
               Three ways in —
               <HighlightText text={" no pressure"} />
             </h1>
