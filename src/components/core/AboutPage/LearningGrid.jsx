@@ -5,42 +5,42 @@ import CTAButton from "../../../components/core/HomePage/Button";
 const LearningGridArray = [
   {
     order: -1,
-    heading: "World-Class Learning for",
-    highliteText: "Anyone, Anywhere",
+    heading: "Practice Platform for",
+    highliteText: " Guides & Coaches",
     description:
-      "Studynotion partners with more than 275+ leading universities and companies to bring flexible, affordable, job-relevant online learning to individuals and organizations worldwide.",
-    BtnText: "Learn More",
-    BtnLink: "/",
+      "Openhand partners with leading coaches, therapists, and guides to bring secure, thoughtful community tools to practices worldwide.",
+    BtnText: "Start Free",
+    BtnLink: "/signup",
   },
   {
     order: 1,
-    heading: "Curriculum Based on Industry Needs",
+    heading: "Ethical by Design",
     description:
-      "Save time and money! The Belajar curriculum is made to be easier to understand and in line with industry needs.",
+      "Built alongside practitioners, with guardrails and boundaries that reflect real coaching and counselling ethics codes.",
   },
   {
     order: 2,
-    heading: "Our Learning Methods",
+    heading: "Gentle reflections",
     description:
-      "Studynotion partners with more than 275+ leading universities and companies to bring",
+      "Simple, recurring check-ins and reflection prompts that feel like journaling, not a clinical database.",
   },
   {
     order: 3,
-    heading: "Certification",
+    heading: "Circle space",
     description:
-      "Studynotion partners with more than 275+ leading universities and companies to bring",
+      "Small group private cohorts and peer support structured for safety, depth, and genuine connection.",
   },
   {
     order: 4,
-    heading: `Rating "Auto-grading"`,
+    heading: "Protected data",
     description:
-      "Studynotion partners with more than 275+ leading universities and companies to bring",
+      "Your session notes and client information are encrypted and never used to train external models.",
   },
   {
     order: 5,
-    heading: "Ready to Work",
+    heading: "Client-focused tracking",
     description:
-      "Studynotion partners with more than 275+ leading universities and companies to bring",
+      "Understand client sentiment and engagement without rigid quiz scoring or corporate LMS dashboards.",
   },
 ];
 

@@ -1,116 +1,116 @@
 export const HomePageExplore = [
     {
-        tag: 'Free',
+        tag: 'Journey',
         courses : [
             {
-                heading : "Learn HTML",
-                description : "This course covers the basic concepts of HTML including creating and structuring web pages, adding text, links, images, and more.",
-                level : 'Beginner',
-                lessionNumber : 6
+                heading : "Client check-ins",
+                description : "Simple, recurring check-ins that show you how someone's really doing between sessions — not just whether they clicked 'complete'.",
+                level : 'Interactive',
+                lessionNumber : 1
             },
             {
-                heading : "Learn CSS",
-                description : "This course explores advanced topics in HTML5 and CSS3, including animations, transitions, and layout techniques",
-                level : 'Beginner',
-                lessionNumber : 6
+                heading : "Gentle progress tracking",
+                description : "Mood and progress tracking your clients will actually use, because it feels like reflection, not a clinical dashboard.",
+                level : 'Reflective',
+                lessionNumber : 2
             },
             {
-                heading : "Responsive Web design",
-                description : "This course teaches responsive web design techniques, allowing web pages to adapt to different devices and screen sizes",
-                level : 'Beginner',
-                lessionNumber : 6
+                heading : "Private cohorts",
+                description : "Small group containers with their own rhythm and boundaries — not a public course feed anyone can wander into.",
+                level : 'Boundaries',
+                lessionNumber : 3
             },
         ]
     },
     {
-        tag: 'New to coding',
+        tag: 'Community',
         courses : [
             {
-                heading : "HTML",
-                description : "This course covers the basic concepts of HTML including creating and structuring web pages, adding text, links, images, and more.",
-                level : 'Beginner',
-                lessionNumber : 6
+                heading : "Peer circles",
+                description : "Give clients a place to hold each other between sessions, guided but not dependent on you.",
+                level : 'Circle',
+                lessionNumber : 1
             },
             {
-                heading : "CSS",
-                description : "This course explores advanced topics in HTML5 and CSS3, including animations, transitions, and layout techniques",
-                level : 'Beginner',
-                lessionNumber : 6
+                heading : "Live sessions",
+                description : "Built-in group calls that feel like your living room, not a webinar platform.",
+                level : 'Circle',
+                lessionNumber : 2
             },
             {
-                heading : "Responsive ",
-                description : "This course teaches responsive web design techniques, allowing web pages to adapt to different devices and screen sizes",
-                level : 'Beginner',
-                lessionNumber : 6
+                heading : "Accountability pods",
+                description : "Small, self-organizing groups that keep momentum going long after the module ends.",
+                level : 'Circle',
+                lessionNumber : 3
             },
         ]
     },
     {
-        tag: 'Most popular',
+        tag: 'AI Features',
         courses : [
             {
-                heading : "Java",
-                description : "This course covers the basic concepts of HTML including creating and structuring web pages, adding text, links, images, and more.",
-                level : 'Beginner',
-                lessionNumber : 6
+                heading : "AI reflection prompts",
+                description : "Clients get thoughtful, personalized prompts between sessions — written in a tone you set, not a generic bot voice.",
+                level : 'AI-Powered',
+                lessionNumber : 1
             },
             {
-                heading : "Python",
-                description : "This course explores advanced topics in HTML5 and CSS3, including animations, transitions, and layout techniques",
-                level : 'Beginner',
-                lessionNumber : 6
+                heading : "Human-sounding nudges",
+                description : "Automated check-ins that read like they came from you, so no one feels like they fell into a drip campaign.",
+                level : 'AI-Powered',
+                lessionNumber : 2
             },
             {
-                heading : "SCSS",
-                description : "This course teaches responsive web design techniques, allowing web pages to adapt to different devices and screen sizes",
-                level : 'Beginner',
-                lessionNumber : 6
+                heading : "Notes-to-content converter",
+                description : "Turn your own session notes into your next lesson or resource automatically — your expertise, structured for you.",
+                level : 'AI-Powered',
+                lessionNumber : 3
             },
         ]
     },
     {
-        tag: 'Skills paths',
+        tag: 'Trust',
         courses : [
             {
-                heading : "Flask",
-                description : "This course covers the basic concepts of HTML including creating and structuring web pages, adding text, links, images, and more.",
-                level : 'Beginner',
-                lessionNumber : 6
+                heading : "Confidentiality by design",
+                description : "Private cohorts and client data are separated and access-controlled from the ground up, not bolted on.",
+                level : 'Secure',
+                lessionNumber : 1
             },
             {
-                heading : "Django",
-                description : "This course explores advanced topics in HTML5 and CSS3, including animations, transitions, and layout techniques",
-                level : 'Beginner',
-                lessionNumber : 6
+                heading : "Ethical-practice standards",
+                description : "Built alongside practitioners, with guardrails that reflect real coaching and counselling ethics codes.",
+                level : 'Secure',
+                lessionNumber : 2
             },
             {
-                heading : "Fast API",
-                description : "This course teaches responsive web design techniques, allowing web pages to adapt to different devices and screen sizes",
-                level : 'Beginner',
-                lessionNumber : 6
+                heading : "Protected conversations",
+                description : "Session notes and sensitive client information are encrypted and never used to train external models.",
+                level : 'Secure',
+                lessionNumber : 3
             },
         ]
     },
     {
-        tag: 'Career paths',
+        tag: 'Get Started',
         courses : [
             {
-                heading : "Next.js",
-                description : "This course covers the basic concepts of HTML including creating and structuring web pages, adding text, links, images, and more.",
-                level : 'Beginner',
-                lessionNumber : 6
+                heading : "Start your free practice space",
+                description : "Set up your space in minutes. No card required, no time limit to explore.",
+                level : 'Action',
+                lessionNumber : 1
             },
             {
-                heading : "Nuxt.js",
-                description : "This course explores advanced topics in HTML5 and CSS3, including animations, transitions, and layout techniques",
-                level : 'Beginner',
-                lessionNumber : 6
+                heading : "See a sample client journey",
+                description : "Walk through what a client actually experiences, from check-in to cohort.",
+                level : 'Action',
+                lessionNumber : 2
             },
             {
-                heading : "Sanity",
-                description : "This course teaches responsive web design techniques, allowing web pages to adapt to different devices and screen sizes",
-                level : 'Beginner',
-                lessionNumber : 6
+                heading : "Talk to a real human",
+                description : "Have questions specific to your practice? Book time with our team, not a bot.",
+                level : 'Action',
+                lessionNumber : 3
             },
         ]
     },

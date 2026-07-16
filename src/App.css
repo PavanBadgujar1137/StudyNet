@@ -20,7 +20,7 @@ body {
 }
 
 *::-webkit-scrollbar-track {
-  background: #000814;
+  background: #060C1E; /* richblack-900 — Deep Navy darkest bg */
 }
 
 *::-webkit-scrollbar-thumb {
@@ -201,13 +201,13 @@ details > summary::-webkit-details-marker {
 
 /* For conditional coloring of icons in dashboard sidebar */
 .active-icon {
-  fill: #ffd60a !important;
-  color: #ffd60a !important;
+  fill: #2563EB !important; /* yellow-50 → Royal Blue — brand primary action color */
+  color: #2563EB !important;
 }
 
 .inactive-icon {
-  fill: #838894;
-  color: #838894;
+  fill: #7D88CE; /* richblack-200 — muted navy */
+  color: #7D88CE;
 }
 
 /* Buttons */

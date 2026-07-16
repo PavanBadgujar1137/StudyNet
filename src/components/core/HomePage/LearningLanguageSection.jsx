@@ -9,12 +9,11 @@ const LearningLanguageSection = () => {
   return (
     <div>
         <div className="text-4xl font-semibold text-center my-10">
-            Your swiss knife for
-            <HighlightText text={"learning any language"} />
-            <div className="text-center text-richblack-700 font-medium lg:w-[75%] mx-auto leading-6 text-base mt-3">
-              Using spin making learning multiple languages easy. with 20+
-              languages realistic voice-over, progress tracking, custom schedule
-              and more.
+            Quietly intelligent
+            <HighlightText text={" AI that sounds like you"} />
+            <div className="text-center text-richblack-300 font-medium lg:w-[75%] mx-auto leading-6 text-base mt-3">
+              Clients get thoughtful, personalized reflection prompts between sessions —
+              written in a tone you set, not a generic bot voice. Plus, enjoy automated human-sounding check-ins.
             </div>
             <div className="flex flex-col lg:flex-row items-center justify-center mt-8 lg:mt-0">
               <img
@@ -37,7 +36,7 @@ const LearningLanguageSection = () => {
 
           <div className="w-fit mx-auto lg:mb-20 mb-8 -mt-5">
             <CTAButton active={true} linkto={"/signup"}>
-              <div className="">Learn More</div>
+              <div className="">Try AI features</div>
             </CTAButton>
           </div>
     </div>

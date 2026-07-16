@@ -24,7 +24,7 @@ function Home() {
         <Link to={"/signup"}>
           <div className="group mx-auto mt-16 w-fit rounded-full bg-richblack-800 p-1 font-bold text-richblack-200 drop-shadow-[0_1.5px_rgba(255,255,255,0.25)] transition-all duration-200 hover:scale-95 hover:drop-shadow-none">
             <div className="flex flex-row items-center gap-2 rounded-full px-10 py-[5px] transition-all duration-200 group-hover:bg-richblack-900">
-              <p>Become an Instructor</p>
+              <p>For coaches, counsellors & healers</p>
               <FaArrowRight />
             </div>
           </div>
@@ -32,25 +32,22 @@ function Home() {
 
         {/* Heading */}
         <div className="text-center text-4xl font-semibold">
-          Empower Your Future with
-          <HighlightText text={"Coding Skills"} />
+          You already know how to hold space. We'll help you hold it online —
+          <HighlightText text={" and get paid for it."} />
         </div>
 
         {/* Sub Heading */}
         <div className="-mt-3 w-[90%] text-center text-lg font-bold text-richblack-300">
-          With our online coding courses, you can learn at your own pace, from
-          anywhere in the world, and get access to a wealth of resources,
-          including hands-on projects, quizzes, and personalized feedback from
-          instructors.
+          Openhand is the practice platform built for people who guide, not just teach. Client check-ins, private cohorts, and real community — without the corporate LMS feel.
         </div>
 
         {/* CTA Buttons */}
         <div className="mt-8 flex flex-row gap-7">
           <CTAButton active={true} linkto={"/signup"}>
-            Learn More
+            Start your free practice space
           </CTAButton>
-          <CTAButton active={false} linkto={"/login"}>
-            Book a Demo
+          <CTAButton active={false} linkto={"#journey"}>
+            See a sample client journey
           </CTAButton>
         </div>
 
@@ -72,26 +69,25 @@ function Home() {
             position={"lg:flex-row"}
             heading={
               <div className="text-4xl font-semibold">
-                Unlock your
-                <HighlightText text={"coding potential"} /> with our online
-                courses.
+                Built around
+                <HighlightText text={" how you actually work"} /> with people.
               </div>
             }
             subheading={
-              "Our courses are designed and taught by industry experts who have years of experience in coding and are passionate about sharing their knowledge with you."
+              "Not modules. Practice. Simple, recurring check-ins that show you how someone's really doing between sessions, gentle progress tracking, and private cohorts with their own rhythm and boundaries."
             }
             ctabtn1={{
-              btnText: "Try it Yourself",
+              btnText: "Start free",
               link: "/signup",
               active: true,
             }}
             ctabtn2={{
-              btnText: "Learn More",
+              btnText: "View sample journey",
               link: "/signup",
               active: false,
             }}
             codeColor={"text-yellow-25"}
-            codeblock={`<!DOCTYPE html>\n <html lang="en">\n<head>\n<title>This is myPage</title>\n</head>\n<body>\n<h1><a href="/">Header</a></h1>\n<nav> <a href="/one">One</a> <a href="/two">Two</a> <a href="/three">Three</a>\n</nav>\n</body>`}
+            codeblock={`const clientJourney = {\n  method: "practice-not-modules",\n  checkIns: "recurring & reflective",\n  cohorts: "private & small group",\n  progress: "gentle reflection tracking",\n  boundaries: "own rhythm & space",\n  corporateLmsFeel: false\n};\n\nconsole.log("Holding space online...");`}
             backgroundGradient={<div className="codeblock1 absolute"></div>}
           />
         </div>
@@ -102,25 +98,25 @@ function Home() {
             position={"lg:flex-row-reverse"}
             heading={
               <div className="w-[100%] text-4xl font-semibold lg:w-[50%]">
-                Start
-                <HighlightText text={"coding in seconds"} />
+                People heal in
+                <HighlightText text={" circles, not in isolation"} />
               </div>
             }
             subheading={
-              "Go ahead, give it a try. Our hands-on learning environment means you'll be writing real code from your very first lesson."
+              "The part corporate LMS forgets: Peer circles, live group calls that feel like your living room, and small, self-organizing accountability pods."
             }
             ctabtn1={{
-              btnText: "Continue Lesson",
+              btnText: "Join a Circle",
               link: "/signup",
               active: true,
             }}
             ctabtn2={{
-              btnText: "Learn More",
+              btnText: "See How",
               link: "/signup",
               active: false,
             }}
             codeColor={"text-white"}
-            codeblock={`import React from "react";\n import CTAButton from "./Button";\nimport TypeAnimation from "react-type";\nimport { FaArrowRight } from "react-icons/fa";\n\nconst Home = () => {\nreturn (\n<div>Home</div>\n)\n}\nexport default Home;`}
+            codeblock={`import React from "react";\nimport { PeerCircle } from "openhand";\n\nconst CircleGroup = () => {\n  return (\n    <PeerCircle\n      calls="built-in-calls"\n      feeling="living-room"\n      accountability="self-organizing"\n    />\n  );\n};\n\nexport default CircleGroup;`}
             backgroundGradient={<div className="codeblock2 absolute"></div>}
           />
         </div>
@@ -153,17 +149,17 @@ function Home() {
           {/* Job that is in Demand - Section 1 */}
           <div className="mb-10 mt-[-100px] flex flex-col justify-between gap-7 lg:mt-20 lg:flex-row lg:gap-0">
             <div className="text-4xl font-semibold lg:w-[45%] ">
-              Get the skills you need for a{" "}
-              <HighlightText text={"job that is in demand."} />
+              Built for the trust your{" "}
+              <HighlightText text={"work depends on."} />
             </div>
             <div className="flex flex-col items-start gap-10 lg:w-[40%]">
               <div className="text-[16px]">
-                The modern StudyNotion is the dictates its own terms. Today, to
-                be a competitive specialist requires more than professional
-                skills.
+                Held with care. Private cohorts and client data are separated and
+                access-controlled from the ground up, with ethical-practice standards
+                and protected, encrypted conversations.
               </div>
               <CTAButton active={true} linkto={"/signup"}>
-                <div className="">Learn More</div>
+                <div className="">Read our trust guidelines</div>
               </CTAButton>
             </div>
           </div>

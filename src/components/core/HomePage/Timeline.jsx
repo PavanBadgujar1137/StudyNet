@@ -8,23 +8,23 @@ import Logo4 from "../../../assets/TimeLineLogo/Logo4.svg";
 const TimeLine = [
     {
       Logo: Logo1,
-      Heading: "Leadership",
-      Description: "Fully committed to the success company",
+      Heading: "Confidentiality by design",
+      Description: "Private cohorts and client data are separated and access-controlled from the ground up.",
     },
     {
       Logo: Logo2,
-      Heading: "Responsibility",
-      Description: "Students will always be our top priority",
+      Heading: "Ethical-practice standards",
+      Description: "Built alongside practitioners, with guardrails that reflect real ethics codes.",
     },
     {
       Logo: Logo3,
-      Heading: "Flexibility",
-      Description: "The ability to switch is an important skills",
+      Heading: "Protected conversations",
+      Description: "Session notes and sensitive client information are encrypted and secure.",
     },
     {
       Logo: Logo4,
-      Heading: "Solve the problem",
-      Description: "Code your way to a solution",
+      Heading: "Zero external training",
+      Description: "Your notes are never used to train external models.",
     },
   ];
 
@@ -59,17 +59,17 @@ const TimelineSection = () => {
           <div className="absolute lg:left-[50%] lg:bottom-0 lg:translate-x-[-50%] lg:translate-y-[50%] bg-caribbeangreen-700 flex lg:flex-row flex-col text-white uppercase py-5 gap-4 lg:gap-0 lg:py-10 ">
             {/* Section 1 */}
             <div className="flex gap-5 items-center lg:border-r border-caribbeangreen-300 px-7 lg:px-14">
-              <h1 className="text-3xl font-bold w-[75px]">10</h1>
+              <h1 className="text-3xl font-bold w-[75px]">100%</h1>
               <h1 className="text-caribbeangreen-300 text-sm w-[75px]">
-                Years experiences
+                Encrypted
               </h1>
             </div>
 
             {/* Section 2 */}
             <div className="flex gap-5 items-center lg:px-14 px-7">
-              <h1 className="text-3xl font-bold w-[75px]">250</h1>
+              <h1 className="text-3xl font-bold w-[75px]">Zero</h1>
               <h1 className="text-caribbeangreen-300 text-sm w-[75px]">
-                types of courses
+                Bot Feel
               </h1>
             </div>
             <div></div>

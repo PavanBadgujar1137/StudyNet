@@ -5,6 +5,7 @@ import { useSelector } from "react-redux"
 import { Link, matchPath, useLocation } from "react-router-dom"
 
 import logo from "../../assets/Logo/Logo-Full-Light.png"
+// Logo-Full-Light.png: white "StudyNotion" wordmark — ideal for dark navbar/footer surfaces
 import { NavbarLinks } from "../../data/navbar-links"
 import { apiConnector } from "../../services/apiConnector"
 import { categories } from "../../services/apis"
@@ -67,7 +68,12 @@ function Navbar() {
       <div className="flex w-11/12 max-w-maxContent items-center justify-between">
         {/* Logo */}
         <Link to="/">
-          <img src={logo} alt="Logo" width={160} height={32} loading="lazy" />
+          <img
+            src={logo}
+            alt="StudyNotion"
+            className="h-8 w-auto object-contain"
+            loading="eager"
+          />
         </Link>
         {/* Navigation links */}
         <nav className="hidden md:block">
@@ -89,8 +95,7 @@ function Navbar() {
                         <div className="absolute left-[50%] top-0 -z-10 h-6 w-6 translate-x-[80%] translate-y-[-40%] rotate-45 select-none rounded bg-richblack-5"></div>
                         {loading ? (
                           <p className="text-center">Loading...</p>
-                        ) : subLinks.length ? (
-                          <>
+                         ) : (subLinks?.length ?? 0) > 0 ? (                          <>
                             {subLinks
                               ?.filter(
                                 (subLink) => subLink?.courses?.length > 0
