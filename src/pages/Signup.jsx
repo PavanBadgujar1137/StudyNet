@@ -1,12 +1,12 @@
-import signupImg from "../assets/Images/signup.webp"
+import signupImg from "../assets/Images/signup.jpeg"
 import Template from "../components/core/Auth/Template"
 
 function Signup() {
   return (
     <Template
-      title="Start your free Openhand practice space"
-      description1="Hold space for your clients, build private cohorts, and foster real community."
-      description2="The practice platform built for people who guide."
+      title="Start Your Learning Journey Today"
+      description1="Create your free account and access expert-led courses, hands-on projects, and personalized learning."
+      description2="Learn new skills, earn certificates, and build your future at your own pace."
       image={signupImg}
       formType="signup"
     />

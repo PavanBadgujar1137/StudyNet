@@ -22,167 +22,130 @@ const Resources = [
 const Plans = ["Paid memberships", "For students", "Business solutions"];
 const Community = ["Forums", "Chapters", "Events"];
 
+const FooterCol = ({ title, children }) => (
+  <div className="flex flex-col gap-3">
+    <h3 className="mb-5 text-lg font-semibold text-gold-300">
+      {title}
+    </h3>
+    <div className="flex flex-col gap-2">{children}</div>
+  </div>
+);
+
+const FooterLinkItem = ({ to, children }) => (
+  <Link
+    to={to}
+    className="text-ink-300 transition-all duration-300 hover:translate-x-1 hover:text-gold-400"
+  >
+    {children}
+  </Link>
+);
+
 const Footer = () => {
   return (
-    <div className="bg-richblack-800">
-      <div className="flex lg:flex-row gap-8 items-center justify-between w-11/12 max-w-maxContent text-richblack-400 leading-6 mx-auto relative py-14">
-        <div className="border-b w-[100%] flex flex-col lg:flex-row pb-5 border-richblack-700">
-          {/* Section 1 */}
-          <div className="lg:w-[50%] flex flex-wrap flex-row justify-between lg:border-r lg:border-richblack-700 pl-3 lg:pr-5 gap-3">
-            <div className="w-[30%] flex flex-col gap-3 lg:w-[30%] mb-7 lg:pl-0">
-              <img
-                src={Logo}
-                alt="StudyNotion"
-                className="block object-contain self-start"
-                loading="lazy"
-                width={150}
-                height={50}
-              />
-              <h1 className="text-richblack-50 font-semibold text-[16px]">
-                Company
-              </h1>
-              <div className="flex flex-col gap-2">
-                {["About", "Careers", "Affiliates"].map((ele, i) => {
-                  return (
-                    <div
-                      key={i}
-                      className="text-[14px] cursor-pointer hover:text-richblack-50 transition-all duration-200"
-                    >
-                      <Link to={ele.toLowerCase()}>{ele}</Link>
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="flex gap-3 text-lg">
-                <FaFacebook />
-                <FaGoogle />
-                <FaTwitter />
-                <FaYoutube />
-              </div>
-              <div></div>
-            </div>
+    <footer className="bg-ink-900 border-t border-gold-700/30">
+      <div className="mx-auto w-11/12 max-w-maxContent py-20">
+        <div className="grid grid-cols-2 gap-x-8 gap-y-12 sm:grid-cols-3 lg:grid-cols-6">
+          {/* Brand column */}
+          <div className="col-span-2 lg:col-span-2 flex flex-col gap-6">
+            <img
+              src={Logo}
+              alt="OpenHand"
+              className="w-44"
+            />
+            <p className="max-w-sm text-[15px] leading-7 text-ink-200">
+              Empowering coaches, therapists, mentors, and educators with a thoughtful
+              digital space to connect, support, and grow meaningful communities.
+            </p>
+            <div className="flex gap-4">
 
-            <div className="w-[48%] lg:w-[30%] mb-7 lg:pl-0">
-              <h1 className="text-richblack-50 font-semibold text-[16px]">
-                Resources
-              </h1>
+              {[FaFacebook, FaGoogle, FaTwitter, FaYoutube].map((Icon, i) => (
 
-              <div className="flex flex-col gap-2 mt-2">
-                {Resources.map((ele, index) => {
-                  return (
-                    <div
-                      key={index}
-                      className="text-[14px] cursor-pointer hover:text-richblack-50 transition-all duration-200"
-                    >
-                      <Link to={ele.split(" ").join("-").toLowerCase()}>
-                        {ele}
-                      </Link>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <h1 className="text-richblack-50 font-semibold text-[16px] mt-7">
-                Support
-              </h1>
-              <div className="text-[14px] cursor-pointer hover:text-richblack-50 transition-all duration-200 mt-2">
-                <Link to={"/help-center"}>Help Center</Link>
-              </div>
-            </div>
-
-            <div className="w-[48%] lg:w-[30%] mb-7 lg:pl-0">
-              <h1 className="text-richblack-50 font-semibold text-[16px]">
-                Plans
-              </h1>
-
-              <div className="flex flex-col gap-2 mt-2">
-                {Plans.map((ele, index) => {
-                  return (
-                    <div
-                      key={index}
-                      className="text-[14px] cursor-pointer hover:text-richblack-50 transition-all duration-200"
-                    >
-                      <Link to={ele.split(" ").join("-").toLowerCase()}>
-                        {ele}
-                      </Link>
-                    </div>
-                  );
-                })}
-              </div>
-              <h1 className="text-richblack-50 font-semibold text-[16px] mt-7">
-                Community
-              </h1>
-
-              <div className="flex flex-col gap-2 mt-2">
-                {Community.map((ele, index) => {
-                  return (
-                    <div
-                      key={index}
-                      className="text-[14px] cursor-pointer hover:text-richblack-50 transition-all duration-200"
-                    >
-                      <Link to={ele.split(" ").join("-").toLowerCase()}>
-                        {ele}
-                      </Link>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* Section 2 */}
-          <div className="lg:w-[50%] flex flex-wrap flex-row justify-between pl-3 lg:pl-5 gap-3">
-            {FooterLink2.map((ele, i) => {
-              return (
-                <div key={i} className="w-[48%] lg:w-[30%] mb-7 lg:pl-0">
-                  <h1 className="text-richblack-50 font-semibold text-[16px]">
-                    {ele.title}
-                  </h1>
-                  <div className="flex flex-col gap-2 mt-2">
-                    {ele.links.map((link, index) => {
-                      return (
-                        <div
-                          key={index}
-                          className="text-[14px] cursor-pointer hover:text-richblack-50 transition-all duration-200"
-                        >
-                          <Link to={link.link}>{link.title}</Link>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      <div className="flex flex-row items-center justify-between w-11/12 max-w-maxContent text-richblack-400 mx-auto  pb-14 text-sm">
-        {/* Section 1 */}
-        <div className="flex justify-between lg:items-start items-center flex-col lg:flex-row gap-3 w-full">
-          <div className="flex flex-row">
-            {BottomFooter.map((ele, i) => {
-              return (
-                <div
+                <a
                   key={i}
-                  className={` ${
-                    BottomFooter.length - 1 === i
-                      ? ""
-                      : "border-r border-richblack-700 cursor-pointer hover:text-richblack-50 transition-all duration-200"
-                  } px-3 `}
+                  href="#"
+                  className="flex h-11 w-11 items-center justify-center rounded-full border border-ink-700 bg-ink-800 text-ink-200 transition-all duration-300 hover:-translate-y-1 hover:border-gold-500 hover:bg-gold-500 hover:text-ink-900"
                 >
-                  <Link to={ele.split(" ").join("-").toLocaleLowerCase()}>
-                    {ele}
-                  </Link>
-                </div>
-              );
-            })}
+                  <Icon />
+                </a>
+
+              ))}
+
+            </div>
           </div>
 
-          <div className="text-center text-richblack-300">Your practice, held online. · openhand.live</div>
+
+          <FooterCol title="Company">
+            {["About", "Careers", "Affiliates"].map((ele, i) => (
+              <FooterLinkItem key={i} to={ele.toLowerCase()}>
+                {ele}
+              </FooterLinkItem>
+            ))}
+          </FooterCol>
+
+          <FooterCol title="Resources">
+            {Resources.map((ele, i) => (
+              <FooterLinkItem key={i} to={ele.split(" ").join("-").toLowerCase()}>
+                {ele}
+              </FooterLinkItem>
+            ))}
+          </FooterCol>
+
+          <FooterCol title="Plans">
+            {Plans.map((ele, i) => (
+              <FooterLinkItem key={i} to={ele.split(" ").join("-").toLowerCase()}>
+                {ele}
+              </FooterLinkItem>
+            ))}
+          </FooterCol>
+
+          <FooterCol title="Community">
+            {Community.map((ele, i) => (
+              <FooterLinkItem key={i} to={ele.split(" ").join("-").toLowerCase()}>
+                {ele}
+              </FooterLinkItem>
+            ))}
+          </FooterCol>
+
+          {FooterLink2.map((ele, i) => (
+            <FooterCol key={i} title={ele.title}>
+              {ele.links.map((link, index) => (
+                <FooterLinkItem key={index} to={link.link}>
+                  {link.title}
+                </FooterLinkItem>
+              ))}
+            </FooterCol>
+          ))}
+
+          <FooterCol title="Support">
+            <FooterLinkItem to="/help-center">Help Center</FooterLinkItem>
+          </FooterCol>
+        </div>
+
+        <div className="my-16 h-px w-full bg-gradient-to-r from-transparent via-gold-600/40 to-transparent" />
+        <div className="mt-8 flex flex-col-reverse items-center justify-between gap-4 text-sm sm:flex-row">
+          <p className="text-ink-300">
+            © {new Date().getFullYear()} openhand.live — Your practice, held
+            online.
+          </p>
+          <div className="flex flex-col gap-6 lg:flex-row justify-between items-center">
+            {BottomFooter.map((ele, i) => (
+              <div
+                key={i}
+                className={`${BottomFooter.length - 1 === i ? "" : "border-r border-ink-600"
+                  } px-3`}
+              >
+                <Link
+                  to={ele.split(" ").join("-").toLowerCase()}
+                  className="text-ink-200 transition-colors duration-150 hover:text-gold-500"
+                >
+                  {ele}
+                </Link>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
+    </footer>
   );
 };
 

@@ -19,30 +19,87 @@ export default function DeleteAccount() {
 
   return (
     <>
-      <div className="my-10 flex flex-row gap-x-5 rounded-md border-[1px] border-pink-700 bg-pink-900 p-8 px-12">
-        <div className="flex aspect-square h-14 w-14 items-center justify-center rounded-full bg-pink-700">
-          <FiTrash2 className="text-3xl text-pink-200" />
-        </div>
-        <div className="flex flex-col space-y-2">
-          <h2 className="text-lg font-semibold text-richblack-5">
-            Delete Account
-          </h2>
-          <div className="w-3/5 text-pink-25">
-            <p>Would you like to delete account?</p>
-            <p>
-              This account may contain Paid Courses. Deleting your account is
-              permanent and will remove all the contain associated with it.
-            </p>
-          </div>
-          <button
-            type="button"
-            className="w-fit cursor-pointer italic text-pink-300"
-            onClick={handleDeleteAccount}
-          >
-            I want to delete my account.
-          </button>
-        </div>
-      </div>
+<div
+  className="
+    my-10
+    flex
+    flex-col
+    gap-5
+    rounded-2xl
+    border
+    border-red-900
+    bg-red-950/40
+    p-8
+    shadow-lg
+    lg:flex-row
+  "
+>
+
+  {/* Icon */}
+  <div
+    className="
+      flex
+      h-14
+      w-14
+      shrink-0
+      items-center
+      justify-center
+      rounded-full
+      bg-red-900/60
+      border
+      border-red-800
+    "
+  >
+    <FiTrash2 className="text-3xl text-red-300" />
+  </div>
+
+
+
+  <div className="flex flex-col gap-y-3">
+
+    <h2 className="text-xl font-semibold text-ink-50">
+      Delete Account
+    </h2>
+
+
+    <div className="max-w-[650px] space-y-2 text-sm leading-6 text-red-200">
+
+      <p>
+        Would you like to delete your account?
+      </p>
+
+      <p>
+        This account may contain paid courses. Deleting your account is
+        permanent and will remove all content associated with it.
+      </p>
+
+    </div>
+
+
+
+    <button
+      type="button"
+      className="
+        mt-2
+        w-fit
+        cursor-pointer
+        text-sm
+        font-medium
+        text-red-300
+        transition-all
+        hover:text-red-200
+        hover:underline
+      "
+      onClick={handleDeleteAccount}
+    >
+      I want to delete my account.
+    </button>
+
+
+  </div>
+
+
+</div>
     </>
   )
 }

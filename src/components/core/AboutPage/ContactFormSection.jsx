@@ -3,15 +3,20 @@ import ContactUsForm from "../ContactUsPage/ContactUsForm";
 
 const ContactFormSection = () => {
   return (
-    <div className="mx-auto">
-      <h1 className="text-center text-4xl font-semibold text-richblack-100">Get in Touch</h1>
-      <p className="text-center text-richblack-300 mt-3">
-        We&apos;d love to here for you, Please fill out this form.
-      </p>
-      <div className="mt-12 mx-auto">
-        <ContactUsForm />
-      </div>
-    </div>
+   <div className="mx-auto">
+  <h1 className="text-center text-4xl font-semibold text-ink-50">
+    We'd Love to Hear From You
+  </h1>
+
+  <p className="mt-4 text-center text-ink-200">
+    Whether you have a question, need support, or want to learn more about our
+    platform, we're just a message away.
+  </p>
+
+  <div className="mx-auto mt-12">
+    <ContactUsForm />
+  </div>
+</div>
   );
 };
 

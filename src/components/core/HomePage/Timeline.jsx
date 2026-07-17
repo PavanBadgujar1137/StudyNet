@@ -1,32 +1,32 @@
 import React from "react";
-import TimeLineImage from "../../../assets/Images/TimelineImage.png";
+import TimeLineImage from "../../../assets/Images/learners.jpeg";
 import Logo1 from "../../../assets/TimeLineLogo/Logo1.svg";
 import Logo2 from "../../../assets/TimeLineLogo/Logo2.svg";
 import Logo3 from "../../../assets/TimeLineLogo/Logo3.svg";
 import Logo4 from "../../../assets/TimeLineLogo/Logo4.svg";
 
 const TimeLine = [
-    {
-      Logo: Logo1,
-      Heading: "Confidentiality by design",
-      Description: "Private cohorts and client data are separated and access-controlled from the ground up.",
-    },
-    {
-      Logo: Logo2,
-      Heading: "Ethical-practice standards",
-      Description: "Built alongside practitioners, with guardrails that reflect real ethics codes.",
-    },
-    {
-      Logo: Logo3,
-      Heading: "Protected conversations",
-      Description: "Session notes and sensitive client information are encrypted and secure.",
-    },
-    {
-      Logo: Logo4,
-      Heading: "Zero external training",
-      Description: "Your notes are never used to train external models.",
-    },
-  ];
+  {
+    Logo: Logo1,
+    Heading: "Confidentiality by design",
+    Description: "Private cohorts and client data are separated and access-controlled from the ground up.",
+  },
+  {
+    Logo: Logo2,
+    Heading: "Ethical-practice standards",
+    Description: "Built alongside practitioners, with guardrails that reflect real ethics codes.",
+  },
+  {
+    Logo: Logo3,
+    Heading: "Protected conversations",
+    Description: "Session notes and sensitive client information are encrypted and secure.",
+  },
+  {
+    Logo: Logo4,
+    Heading: "Zero external training",
+    Description: "Your notes are never used to train external models.",
+  },
+];
 
 
 const TimelineSection = () => {
@@ -47,38 +47,22 @@ const TimelineSection = () => {
                   </div>
                 </div>
                 <div
-                  className={`hidden ${
-                    TimeLine.length - 1 === i ? "hidden" : "lg:block"
-                  }  h-14 border-dotted border-r border-richblack-100 bg-richblack-400/0 w-[26px]`}
+                  className={`hidden ${TimeLine.length - 1 === i ? "hidden" : "lg:block"
+                    }  h-14 border-dotted border-r border-richblack-100 bg-richblack-400/0 w-[26px]`}
                 ></div>
               </div>
             );
           })}
         </div>
         <div className="relative w-fit h-fit shadow-blue-200 shadow-[0px_0px_30px_0px]">
-          <div className="absolute lg:left-[50%] lg:bottom-0 lg:translate-x-[-50%] lg:translate-y-[50%] bg-caribbeangreen-700 flex lg:flex-row flex-col text-white uppercase py-5 gap-4 lg:gap-0 lg:py-10 ">
-            {/* Section 1 */}
-            <div className="flex gap-5 items-center lg:border-r border-caribbeangreen-300 px-7 lg:px-14">
-              <h1 className="text-3xl font-bold w-[75px]">100%</h1>
-              <h1 className="text-caribbeangreen-300 text-sm w-[75px]">
-                Encrypted
-              </h1>
-            </div>
 
-            {/* Section 2 */}
-            <div className="flex gap-5 items-center lg:px-14 px-7">
-              <h1 className="text-3xl font-bold w-[75px]">Zero</h1>
-              <h1 className="text-caribbeangreen-300 text-sm w-[75px]">
-                Bot Feel
-              </h1>
-            </div>
-            <div></div>
+          <div className="rounded-[22px] bg-ink-900 p-3">
+            <img
+              src={TimeLineImage}
+              alt="timeline"
+              className="rounded-2xl object-cover h-[400px] lg:h-auto"
+            />
           </div>
-          <img
-            src={TimeLineImage}
-            alt="timelineImage"
-            className="shadow-white shadow-[20px_20px_0px_0px] object-cover h-[400px] lg:h-fit"
-          />
         </div>
       </div>
     </div>

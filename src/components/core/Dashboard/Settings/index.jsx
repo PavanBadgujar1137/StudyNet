@@ -5,18 +5,73 @@ import UpdatePassword from "./UpdatePassword"
 
 export default function Settings() {
   return (
-    <>
-      <h1 className="mb-14 text-3xl font-medium text-richblack-5">
+    <div className="space-y-10">
+
+      <h1 className="text-3xl font-semibold text-ink-50">
         Edit Profile
       </h1>
+
+
       {/* Change Profile Picture */}
-      <ChangeProfilePicture />
+      <div
+        className="
+          rounded-2xl
+          border
+          border-ink-600
+          bg-ink-800
+          p-6
+          shadow-lg
+        "
+      >
+        <ChangeProfilePicture />
+      </div>
+
+
       {/* Profile */}
-      <EditProfile />
+      <div
+        className="
+          rounded-2xl
+          border
+          border-ink-600
+          bg-ink-800
+          p-6
+          shadow-lg
+        "
+      >
+        <EditProfile />
+      </div>
+
+
       {/* Password */}
-      <UpdatePassword />
+      <div
+        className="
+          rounded-2xl
+          border
+          border-ink-600
+          bg-ink-800
+          p-6
+          shadow-lg
+        "
+      >
+        <UpdatePassword />
+      </div>
+
+
       {/* Delete Account */}
-      <DeleteAccount />
-    </>
+      <div
+        className="
+          rounded-2xl
+          border
+          border-red-900
+          bg-ink-800
+          p-6
+          shadow-lg
+        "
+      >
+        <DeleteAccount />
+      </div>
+
+
+    </div>
   )
 }

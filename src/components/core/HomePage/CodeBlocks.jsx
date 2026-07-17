@@ -41,39 +41,51 @@ const CodeBlocks = ({
       </div>
 
       {/* Section 2 */}
-      <div className="h-fit code-border flex flex-row py-3 text-[10px] sm:text-sm leading-[18px] sm:leading-6 relative w-[100%] lg:w-[470px]">
-        {backgroundGradient}
-        {/* Indexing */}
-        <div className="text-center flex flex-col   w-[10%] select-none font-inter font-bold text-richblack-200 ">
-          <p>1</p>
-          <p>2</p>
-          <p>3</p>
-          <p>4</p>
-          <p>5</p>
-          <p>6</p>
-          <p>7</p>
-          <p>8</p>
-          <p>9</p>
-          <p>10</p>
-          <p>11</p>
-        </div>
+{/* Section 2 */}
+<div className="relative w-full lg:w-[500px] rounded-2xl overflow-hidden border border-richblack-700 bg-richblack-900 shadow-2xl">
 
-        {/* Codes */}
-        <div
-          className={`w-[90%] flex flex-col gap-2 font-bold font-mono ${codeColor} pr-1`}
-        >
-          <TypeAnimation
-            sequence={[codeblock, 1000, ""]}
-            cursor={true}
-            repeat={Infinity}
-            style={{
-              whiteSpace: "pre-line",
-              display: "block",
-            }}
-            omitDeletionAnimation={true}
-          />
-        </div>
-      </div>
+  {/* Header */}
+  <div className="flex items-center justify-between px-4 py-3 border-b border-richblack-700 bg-richblack-800">
+    <div className="flex items-center gap-2">
+      <span className="w-3 h-3 rounded-full bg-red-500"></span>
+      <span className="w-3 h-3 rounded-full bg-yellow-500"></span>
+      <span className="w-3 h-3 rounded-full bg-green-500"></span>
+    </div>
+
+<p className=" text-gold-300 font-small text-4xl font-semibold">
+  Learning Journey
+</p>
+    <div></div>
+  </div>
+
+  {backgroundGradient}
+
+  {/* Editor */}
+  <div className="flex py-5 font-mono text-sm relative">
+
+    {/* Line Numbers */}
+    <div className="w-12 text-right pr-4 text-richblack-500 select-none leading-7">
+      {Array.from({ length: 11 }, (_, i) => (
+        <p key={i}>{i + 1}</p>
+      ))}
+    </div>
+
+    {/* Code */}
+    <div className={`flex-1 leading-7 ${codeColor} pr-5`}>
+      <TypeAnimation
+        sequence={[codeblock, 1000, ""]}
+        repeat={Infinity}
+        cursor={true}
+        omitDeletionAnimation={true}
+        style={{
+          whiteSpace: "pre-line",
+          display: "block",
+        }}
+      />
+    </div>
+
+  </div>
+</div>  
     </div>
   );
 };

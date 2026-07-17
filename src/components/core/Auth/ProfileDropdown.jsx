@@ -26,31 +26,75 @@ export default function ProfileDropdown() {
           alt={`profile-${user?.firstName}`}
           className="aspect-square w-[30px] rounded-full object-cover"
         />
-        <AiOutlineCaretDown className="text-sm text-richblack-100" />
+        <AiOutlineCaretDown className="text-sm text-ink-900" />
       </div>
       {open && (
-        <div
-          onClick={(e) => e.stopPropagation()}
-          className="absolute top-[118%] right-0 z-[1000] divide-y-[1px] divide-richblack-700 overflow-hidden rounded-md border-[1px] border-richblack-700 bg-richblack-800"
-          ref={ref}
-        >
-          <Link to="/dashboard/my-profile" onClick={() => setOpen(false)}>
-            <div className="flex w-full items-center gap-x-1 py-[10px] px-[12px] text-sm text-richblack-100 hover:bg-richblack-700 hover:text-richblack-25">
-              <VscDashboard className="text-lg" />
-              Dashboard
-            </div>
-          </Link>
-          <div
-            onClick={() => {
-              dispatch(logout(navigate))
-              setOpen(false)
-            }}
-            className="flex w-full items-center gap-x-1 py-[10px] px-[12px] text-sm text-richblack-100 hover:bg-richblack-700 hover:text-richblack-25"
-          >
-            <VscSignOut className="text-lg" />
-            Logout
-          </div>
-        </div>
+<div
+  onClick={(e) => e.stopPropagation()}
+  className="
+    absolute
+    top-[118%]
+    right-0
+    z-[1000]
+    divide-y
+    divide-ink-600
+    overflow-hidden
+    rounded-xl
+    border
+    border-ink-600
+    bg-ink-800
+    shadow-xl
+  "
+  ref={ref}
+>
+
+  <Link to="/dashboard/my-profile" onClick={() => setOpen(false)}>
+    <div
+      className="
+        flex
+        w-full
+        items-center
+        gap-x-2
+        px-4
+        py-3
+        text-sm
+        text-ink-100
+        transition-all
+        hover:bg-ink-700
+        hover:text-gold-400
+      "
+    >
+      <VscDashboard className="text-lg" />
+      Dashboard
+    </div>
+  </Link>
+
+
+  <div
+    onClick={() => {
+      dispatch(logout(navigate))
+      setOpen(false)
+    }}
+    className="
+      flex
+      w-full
+      cursor-pointer
+      items-center
+      gap-x-2
+      px-4
+      py-3
+      text-sm
+      text-ink-100
+      transition-all
+      hover:bg-ink-700
+      hover:text-gold-400
+    "
+  >
+    <VscSignOut className="text-lg" />
+    Logout
+  </div>
+
+</div>
       )}
     </button>
   )

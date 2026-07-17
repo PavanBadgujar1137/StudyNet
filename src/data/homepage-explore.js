@@ -1,117 +1,136 @@
 export const HomePageExplore = [
-    {
-        tag: 'Journey',
-        courses : [
-            {
-                heading : "Client check-ins",
-                description : "Simple, recurring check-ins that show you how someone's really doing between sessions — not just whether they clicked 'complete'.",
-                level : 'Interactive',
-                lessionNumber : 1
-            },
-            {
-                heading : "Gentle progress tracking",
-                description : "Mood and progress tracking your clients will actually use, because it feels like reflection, not a clinical dashboard.",
-                level : 'Reflective',
-                lessionNumber : 2
-            },
-            {
-                heading : "Private cohorts",
-                description : "Small group containers with their own rhythm and boundaries — not a public course feed anyone can wander into.",
-                level : 'Boundaries',
-                lessionNumber : 3
-            },
-        ]
-    },
-    {
-        tag: 'Community',
-        courses : [
-            {
-                heading : "Peer circles",
-                description : "Give clients a place to hold each other between sessions, guided but not dependent on you.",
-                level : 'Circle',
-                lessionNumber : 1
-            },
-            {
-                heading : "Live sessions",
-                description : "Built-in group calls that feel like your living room, not a webinar platform.",
-                level : 'Circle',
-                lessionNumber : 2
-            },
-            {
-                heading : "Accountability pods",
-                description : "Small, self-organizing groups that keep momentum going long after the module ends.",
-                level : 'Circle',
-                lessionNumber : 3
-            },
-        ]
-    },
-    {
-        tag: 'AI Features',
-        courses : [
-            {
-                heading : "AI reflection prompts",
-                description : "Clients get thoughtful, personalized prompts between sessions — written in a tone you set, not a generic bot voice.",
-                level : 'AI-Powered',
-                lessionNumber : 1
-            },
-            {
-                heading : "Human-sounding nudges",
-                description : "Automated check-ins that read like they came from you, so no one feels like they fell into a drip campaign.",
-                level : 'AI-Powered',
-                lessionNumber : 2
-            },
-            {
-                heading : "Notes-to-content converter",
-                description : "Turn your own session notes into your next lesson or resource automatically — your expertise, structured for you.",
-                level : 'AI-Powered',
-                lessionNumber : 3
-            },
-        ]
-    },
-    {
-        tag: 'Trust',
-        courses : [
-            {
-                heading : "Confidentiality by design",
-                description : "Private cohorts and client data are separated and access-controlled from the ground up, not bolted on.",
-                level : 'Secure',
-                lessionNumber : 1
-            },
-            {
-                heading : "Ethical-practice standards",
-                description : "Built alongside practitioners, with guardrails that reflect real coaching and counselling ethics codes.",
-                level : 'Secure',
-                lessionNumber : 2
-            },
-            {
-                heading : "Protected conversations",
-                description : "Session notes and sensitive client information are encrypted and never used to train external models.",
-                level : 'Secure',
-                lessionNumber : 3
-            },
-        ]
-    },
-    {
-        tag: 'Get Started',
-        courses : [
-            {
-                heading : "Start your free practice space",
-                description : "Set up your space in minutes. No card required, no time limit to explore.",
-                level : 'Action',
-                lessionNumber : 1
-            },
-            {
-                heading : "See a sample client journey",
-                description : "Walk through what a client actually experiences, from check-in to cohort.",
-                level : 'Action',
-                lessionNumber : 2
-            },
-            {
-                heading : "Talk to a real human",
-                description : "Have questions specific to your practice? Book time with our team, not a bot.",
-                level : 'Action',
-                lessionNumber : 3
-            },
-        ]
-    },
-]
+  {
+    tag: "Journey",
+    courses: [
+      {
+        heading: "Personalized Learning Paths",
+        description:
+          "Follow structured roadmaps tailored to your goals, helping you learn efficiently from beginner to advanced.",
+        level: "Interactive",
+        lessionNumber: 1,
+      },
+      {
+        heading: "Track Your Progress",
+        description:
+          "Monitor completed lessons, quizzes, and milestones to stay motivated throughout your learning journey.",
+        level: "Reflective",
+        lessionNumber: 2,
+      },
+      {
+        heading: "Hands-on Projects",
+        description:
+          "Apply your knowledge by building real-world projects that strengthen your portfolio and practical skills.",
+        level: "Boundaries",
+        lessionNumber: 3,
+      },
+    ],
+  },
+
+  {
+    tag: "Community",
+    courses: [
+      {
+        heading: "Learn Together",
+        description:
+          "Collaborate with fellow learners, share ideas, and grow through an active learning community.",
+        level: "Circle",
+        lessionNumber: 1,
+      },
+      {
+        heading: "Live Expert Sessions",
+        description:
+          "Join interactive live classes where industry professionals teach, mentor, and answer your questions.",
+        level: "Circle",
+        lessionNumber: 2,
+      },
+      {
+        heading: "Discussion Forums",
+        description:
+          "Ask questions, exchange knowledge, and connect with learners from around the world.",
+        level: "Circle",
+        lessionNumber: 3,
+      },
+    ],
+  },
+
+  {
+    tag: "AI Features",
+    courses: [
+      {
+        heading: "AI Learning Assistant",
+        description:
+          "Get instant explanations, coding help, and personalized guidance whenever you need support.",
+        level: "AI-Powered",
+        lessionNumber: 1,
+      },
+      {
+        heading: "Smart Quiz Generator",
+        description:
+          "Practice with AI-generated quizzes that adapt to your learning progress and strengthen weak areas.",
+        level: "AI-Powered",
+        lessionNumber: 2,
+      },
+      {
+        heading: "AI Code Review",
+        description:
+          "Receive intelligent feedback on your code with suggestions to improve quality and best practices.",
+        level: "AI-Powered",
+        lessionNumber: 3,
+      },
+    ],
+  },
+
+  {
+    tag: "Trust",
+    courses: [
+      {
+        heading: "Secure Learning Platform",
+        description:
+          "Your personal information and learning progress are protected with industry-standard security.",
+        level: "Secure",
+        lessionNumber: 1,
+      },
+      {
+        heading: "Expert-Curated Content",
+        description:
+          "Every course is carefully designed by experienced professionals to ensure high-quality learning.",
+        level: "Secure",
+        lessionNumber: 2,
+      },
+      {
+        heading: "Verified Certificates",
+        description:
+          "Earn certificates that showcase your achievements and strengthen your professional profile.",
+        level: "Secure",
+        lessionNumber: 3,
+      },
+    ],
+  },
+
+  {
+    tag: "Get Started",
+    courses: [
+      {
+        heading: "Create Your Free Account",
+        description:
+          "Sign up in minutes and begin exploring premium learning resources at your own pace.",
+        level: "Action",
+        lessionNumber: 1,
+      },
+      {
+        heading: "Explore Popular Courses",
+        description:
+          "Browse top-rated courses across programming, design, data science, and more.",
+        level: "Action",
+        lessionNumber: 2,
+      },
+      {
+        heading: "Start Learning Today",
+        description:
+          "Build in-demand skills through interactive lessons, real-world projects, and expert guidance.",
+        level: "Action",
+        lessionNumber: 3,
+      },
+    ],
+  },
+];

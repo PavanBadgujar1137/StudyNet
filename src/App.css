@@ -5,13 +5,15 @@
 html,
 body {
   overflow-x: hidden;
+  background-color: #14171b; /* ink-900 — page bg */
+  color: #d7dade; /* ink-100 — default body text */
 }
 
 /* ===== Scrollbar CSS ===== */
 /* Firefox */
 * {
   scrollbar-width: auto;
-  scrollbar-color: #afb2bf;
+  scrollbar-color: #9aa0a6; /* ink-200 */
 }
 
 /* Chrome, Edge, and Safari */
@@ -20,11 +22,11 @@ body {
 }
 
 *::-webkit-scrollbar-track {
-  background: #060C1E; /* richblack-900 — Deep Navy darkest bg */
+  background: #14171b; /* ink-900 — page bg */
 }
 
 *::-webkit-scrollbar-thumb {
-  background-color: #afb2bf;
+  background-color: #9aa0a6; /* ink-200 */
   border-radius: 10px;
   visibility: hidden;
 }
@@ -48,7 +50,7 @@ details > summary::-webkit-details-marker {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  border: 9px solid #f1f2ff;
+  border: 9px solid #f3efe6; /* ink-50 */
   animation: spinner-bulqg1 0.8s infinite linear alternate,
     spinner-oaa3wk 1.6s infinite linear;
 }
@@ -59,11 +61,12 @@ details > summary::-webkit-details-marker {
   border-radius: 100%;
   left: calc(50% - 372.95px / 2 - 76.53px);
   top: calc(50% - 257.05px / 2 - 47.47px);
+  /* gold-toned blur */
   background: linear-gradient(
     123.77deg,
-    #8a2be2 -6.46%,
-    #ffa500 59.04%,
-    #f8f8ff 124.53%
+    #a9861e -6.46%,
+    #d2a72f 59.04%,
+    #f3efe6 124.53%
   );
   opacity: 0.2;
   filter: blur(34px);
@@ -76,11 +79,12 @@ details > summary::-webkit-details-marker {
   left: calc(50% - 372.95px / 2 - 76.53px);
   top: calc(50% - 257.05px / 2 - 47.47px);
   border-radius: 100%;
+  /* sage-toned blur */
   background: linear-gradient(
     118.19deg,
-    #1fa2ff -3.62%,
-    #12d8fa 50.44%,
-    #a6ffcb 104.51%
+    #587d6b -3.62%,
+    #7cab93 50.44%,
+    #b8d2c5 104.51%
   );
   opacity: 0.2;
   filter: blur(34px);
@@ -93,8 +97,8 @@ details > summary::-webkit-details-marker {
   border-image-source: linear-gradient(to right bottom, #ffffff38, #ffffff00);
   background: linear-gradient(
     111.93deg,
-    rgba(14, 26, 45, 0.24) -1.4%,
-    rgba(17, 30, 50, 0.38) 104.96%
+    rgba(29, 33, 38, 0.24) -1.4%,
+    rgba(20, 23, 27, 0.38) 104.96%
   );
   /* backdrop-filter: blur(26px); */
 }
@@ -201,18 +205,18 @@ details > summary::-webkit-details-marker {
 
 /* For conditional coloring of icons in dashboard sidebar */
 .active-icon {
-  fill: #2563EB !important; /* yellow-50 → Royal Blue — brand primary action color */
-  color: #2563EB !important;
+  fill: #c9a227 !important; /* gold-500 — brand primary accent */
+  color: #c9a227 !important;
 }
 
 .inactive-icon {
-  fill: #7D88CE; /* richblack-200 — muted navy */
-  color: #7D88CE;
+  fill: #6b7178; /* ink-300 — muted */
+  color: #6b7178;
 }
 
 /* Buttons */
 .yellowButton {
-  @apply cursor-pointer rounded-md bg-yellow-50 px-[20px] py-[8px] font-semibold text-richblack-900;
+  @apply cursor-pointer rounded-md bg-gold-500 px-[20px] py-[8px] font-semibold text-ink-900 transition-colors duration-150 hover:bg-gold-300;
 }
 
 /* Swiper CSS Starts */
@@ -228,19 +232,19 @@ details > summary::-webkit-details-marker {
   height: 100%;
 }
 /* .swiper-slide {
-  @apply bg-richblack-800 text-richblack-25 p-3 text-[14px];
+  @apply bg-ink-800 text-ink-100 p-3 text-[14px];
 } */
 /* Swiper CSS Ends */
 
 .blackButton {
-  @apply cursor-pointer rounded-md bg-richblack-800 px-[20px] py-[8px] font-semibold text-richblack-5;
+  @apply cursor-pointer rounded-md bg-ink-800 px-[20px] py-[8px] font-semibold text-ink-50 transition-colors duration-150 hover:bg-ink-700;
 }
 .lable-style {
-  @apply text-[14px] text-richblack-5;
+  @apply text-[14px] text-ink-50;
 }
 .form-style {
-  @apply rounded-lg bg-richblack-700 p-3 text-[16px] leading-[24px] text-richblack-5 shadow-[0_1px_0_0] shadow-white/50 placeholder:text-richblack-400 focus:outline-none;
+  @apply rounded-lg bg-ink-700 p-3 text-[16px] leading-[24px] text-ink-50 shadow-[0_1px_0_0] shadow-white/50 placeholder:text-ink-400 focus:outline-none;
 }
 .section_heading {
-  @apply text-2xl font-bold text-richblack-5 lg:text-4xl;
+  @apply text-2xl font-bold text-ink-50 lg:text-4xl;
 }

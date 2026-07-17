@@ -1,16 +1,16 @@
-import loginImg from "../assets/Images/login.webp"
-import Template from "../components/core/Auth/Template"
+import loginImg from "../assets/Images/login.jpeg";
+import Template from "../components/core/Auth/Template";
 
 function Login() {
   return (
     <Template
-      title="Welcome Back to Openhand"
-      description1="Access your practice space, cohorts, and circles."
-      description2="The practice platform built for people who guide."
+      title="Welcome Back!"
+      description1="Continue your learning journey and pick up where you left off."
+      description2="Access your courses, track your progress, and build new skills every day."
       image={loginImg}
       formType="login"
     />
-  )
+  );
 }
 
-export default Login
+export default Login;

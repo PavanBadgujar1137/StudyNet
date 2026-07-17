@@ -5,42 +5,42 @@ import CTAButton from "../../../components/core/HomePage/Button";
 const LearningGridArray = [
   {
     order: -1,
-    heading: "Practice Platform for",
-    highliteText: " Guides & Coaches",
+    heading: "Learn Smarter with",
+    highliteText: " Expert-Led Courses",
     description:
-      "Openhand partners with leading coaches, therapists, and guides to bring secure, thoughtful community tools to practices worldwide.",
-    BtnText: "Start Free",
+      "Gain practical skills through industry-focused courses, hands-on projects, coding exercises, and personalized learning paths designed to help you achieve your goals.",
+    BtnText: "Start Learning",
     BtnLink: "/signup",
   },
   {
     order: 1,
-    heading: "Ethical by Design",
+    heading: "Expert Instructors",
     description:
-      "Built alongside practitioners, with guardrails and boundaries that reflect real coaching and counselling ethics codes.",
+      "Learn directly from experienced professionals who share practical knowledge, real-world insights, and proven industry practices.",
   },
   {
     order: 2,
-    heading: "Gentle reflections",
+    heading: "Interactive Learning",
     description:
-      "Simple, recurring check-ins and reflection prompts that feel like journaling, not a clinical database.",
+      "Strengthen your understanding through coding challenges, quizzes, assignments, and project-based learning experiences.",
   },
   {
     order: 3,
-    heading: "Circle space",
+    heading: "Career-Focused Projects",
     description:
-      "Small group private cohorts and peer support structured for safety, depth, and genuine connection.",
+      "Build an impressive portfolio by creating real-world applications that showcase your skills to employers and clients.",
   },
   {
     order: 4,
-    heading: "Protected data",
+    heading: "Certificates & Progress",
     description:
-      "Your session notes and client information are encrypted and never used to train external models.",
+      "Track your achievements, monitor your learning journey, and earn certificates as you successfully complete courses.",
   },
   {
     order: 5,
-    heading: "Client-focused tracking",
+    heading: "Learn Anytime, Anywhere",
     description:
-      "Understand client sentiment and engagement without rigid quiz scoring or corporate LMS dashboards.",
+      "Access your courses from any device, study at your own pace, and continue learning whenever it fits your schedule.",
   },
 ];
 

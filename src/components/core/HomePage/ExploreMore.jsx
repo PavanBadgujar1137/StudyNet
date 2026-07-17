@@ -28,15 +28,15 @@ const ExploreMore = () => {
   return (
     <div>
       {/* Explore more section */}
-      <div>
-        <div className="text-4xl font-semibold text-center my-10 text-richblack-100">
-          Explore the
-          <HighlightText text={"Openhand Experience"} />
-          <p className="text-center text-richblack-300 text-lg font-semibold mt-1">
-            Discover how our practice space supports you and your clients
-          </p>
-        </div>
-      </div>
+  <div>
+  <div className="text-4xl font-semibold text-center my-10 text-richblack-100">
+    Start Your
+    <HighlightText text={"Journey to Success"} />
+    <p className="text-center text-richblack-300 text-lg font-semibold mt-1">
+      Discover interactive courses, hands-on learning, and a community that helps you achieve your goals.
+    </p>
+  </div>
+</div>
 
       {/* Tabs Section */}
       <div className="hidden lg:flex gap-5 -mt-5 mx-auto w-max bg-richblack-800 text-richblack-200 p-1 rounded-full font-medium drop-shadow-[0_1.5px_rgba(255,255,255,0.25)]">

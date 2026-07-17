@@ -3,7 +3,7 @@ import { FaArrowRight } from "react-icons/fa"
 import { Link } from "react-router-dom"
 
 // Image and Video Import
-import Banner from "../assets/Images/banner.mp4"
+import Banner from "../assets/Images/HomeVideo.mp4"
 // Component Imports
 import Footer from "../components/Common/Footer"
 import ReviewSlider from "../components/Common/ReviewSlider"
@@ -19,28 +19,38 @@ function Home() {
   return (
     <div>
       {/* Section 1 */}
-      <div className="relative mx-auto flex w-11/12 max-w-maxContent flex-col items-center justify-between gap-8 text-white">
+      <div className="relative mx-auto flex w-11/12 max-w-maxContent flex-col items-center justify-between gap-8 text-ink-100">
         {/* Become a Instructor Button */}
-        <Link to={"/signup"}>
-          <div className="group mx-auto mt-16 w-fit rounded-full bg-richblack-800 p-1 font-bold text-richblack-200 drop-shadow-[0_1.5px_rgba(255,255,255,0.25)] transition-all duration-200 hover:scale-95 hover:drop-shadow-none">
-            <div className="flex flex-row items-center gap-2 rounded-full px-10 py-[5px] transition-all duration-200 group-hover:bg-richblack-900">
-              <p>For coaches, counsellors & healers</p>
-              <FaArrowRight />
+        <Link to="/signup">
+          <div className="group mx-auto mt-16 w-fit">
+            <div className="flex items-center gap-3 rounded-2xl border border-gold-500/30 bg-gradient-to-r from-ink-800 to-ink-700 px-8 py-4 text-ink-50 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-gold-400 hover:shadow-gold-500/20">
+
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold-500 text-ink-900">
+                <FaArrowRight />
+              </div>
+
+              <div>
+                <p className="text-xs uppercase tracking-widest text-gold-300">
+                  Start Learning
+                </p>
+                <p className="font-semibold">
+                  Build skills that shape your future
+                </p>
+              </div>
+
             </div>
           </div>
         </Link>
 
         {/* Heading */}
-        <div className="text-center text-4xl font-semibold text-richblack-100">
-          You already know how to hold space. We'll help you hold it online —
-          <HighlightText text={" and get paid for it."} />
+        <div className="text-center text-4xl font-semibold text-ink-50">
+          Teach what you love.
+          <HighlightText text={" Inspire learners everywhere."} />
         </div>
 
-        {/* Sub Heading */}
-        <div className="-mt-3 w-[90%] text-center text-lg font-bold text-richblack-300">
-          Openhand is the practice platform built for people who guide, not just teach. Client check-ins, private cohorts, and real community — without the corporate LMS feel.
+        <div className="-mt-3 w-[90%] text-center text-lg font-bold text-ink-200">
+          Build interactive courses, connect with students, track progress, and create meaningful learning experiences from anywhere.
         </div>
-
         {/* CTA Buttons */}
         <div className="mt-8 flex flex-row gap-7">
           <CTAButton active={true} linkto={"/signup"}>
@@ -53,7 +63,7 @@ function Home() {
 
         {/* Video */}
         <div className="relative overflow-hidden rounded-3xl bg-white">
-          <div className="absolute top-5 left-5 z-10 rounded-full bg-white/90 px-4 py-2 shadow-lg backdrop-blur-md text-richblack-100">
+          <div className="absolute top-5 left-5 z-10 rounded-full bg-white/90 px-4 py-2 shadow-lg backdrop-blur-md text-ink-800">
             🚀 Learn Without Limits
           </div>
 
@@ -74,26 +84,33 @@ function Home() {
             position={"lg:flex-row"}
             heading={
               <div className="text-4xl font-semibold">
-                Built around
-                <HighlightText text={" how you actually work"} /> with people.
+                Everything you need
+                <HighlightText text={" to teach and learn."} />
               </div>
             }
             subheading={
-              "Not modules. Practice. Simple, recurring check-ins that show you how someone's really doing between sessions, gentle progress tracking, and private cohorts with their own rhythm and boundaries."
+              "Create engaging courses, connect with students, track progress, and deliver a seamless learning experience—all from one intuitive platform."
             }
             ctabtn1={{
-              btnText: "Start free",
+              btnText: "Start Learning",
               link: "/signup",
               active: true,
             }}
             ctabtn2={{
-              btnText: "View sample journey",
-              link: "/signup",
+              btnText: "Browse Courses",
+              link: "/catalog",
               active: false,
             }}
-            codeColor={"text-richblack-200"}
-            codeblock={`const clientJourney = {\n  method: "practice-not-modules",\n  checkIns: "recurring & reflective",\n  cohorts: "private & small group",\n  progress: "gentle reflection tracking",\n  boundaries: "own rhythm & space",\n  corporateLmsFeel: false\n};\n\nconsole.log("Holding space online...");`}
-            backgroundGradient={<div className="codeblock1 absolute"></div>}
+            codeColor={"text-ink-200"}
+            codeblock={`function startLearning() {
+  const skills = ["HTML", "CSS", "JavaScript", "React"];
+  skills.forEach((skill) => {
+    console.log(\`Learning \${skill}...\`);
+  });
+
+  return "Career Ready";
+}
+startLearning();`} backgroundGradient={<div className="codeblock1 absolute"></div>}
           />
         </div>
 
@@ -103,25 +120,35 @@ function Home() {
             position={"lg:flex-row-reverse"}
             heading={
               <div className="w-[100%] text-4xl font-semibold lg:w-[50%]">
-                People heal in
-                <HighlightText text={" circles, not in isolation"} />
+                Learn by
+                <HighlightText text={" building real projects"} />
               </div>
             }
             subheading={
-              "The part corporate LMS forgets: Peer circles, live group calls that feel like your living room, and small, self-organizing accountability pods."
+              "Move beyond theory with hands-on coding projects, practical assignments, and expert guidance designed to help you build real-world skills and confidence."
             }
             ctabtn1={{
-              btnText: "Join a Circle",
+              btnText: "Start Building",
               link: "/signup",
               active: true,
             }}
             ctabtn2={{
-              btnText: "See How",
-              link: "/signup",
+              btnText: "View Projects",
+              link: "/catalog",
               active: false,
             }}
-            codeColor={"text-richblack-200"}
-            codeblock={`import React from "react";\nimport { PeerCircle } from "openhand";\n\nconst CircleGroup = () => {\n  return (\n    <PeerCircle\n      calls="built-in-calls"\n      feeling="living-room"\n      accountability="self-organizing"\n    />\n  );\n};\n\nexport default CircleGroup;`}
+            codeColor={"text-yellow-25"}
+            codeblock={`const student = {
+  name: "Future Developer",
+  courses: ["HTML", "CSS", "JavaScript", "React"],
+  projectsCompleted: 12,
+  certificates: 5,
+  hired: false,
+};
+
+student.hired = true;
+
+console.log("Career Started 🚀");`}
             backgroundGradient={<div className="codeblock2 absolute"></div>}
           />
         </div>
@@ -131,20 +158,21 @@ function Home() {
       </div>
 
       {/* Section 2 */}
-      <div className="bg-pure-greys-5 text-richblack-700">
+      <div className="bg-ink-800 text-ink-100">
         <div className="homepage_bg h-[320px]">
           {/* Explore Full Catagory Section */}
           <div className="mx-auto flex w-11/12 max-w-maxContent flex-col items-center justify-between gap-8">
             <div className="lg:h-[150px]"></div>
-            <div className="flex flex-row gap-7 text-white lg:mt-8">
+            <div className="flex flex-row gap-7 text-ink-50 lg:mt-8">
               <CTAButton active={true} linkto={"/signup"}>
                 <div className="flex items-center gap-2">
-                  Explore Full Catalog
+                  Start Learning
                   <FaArrowRight />
                 </div>
               </CTAButton>
+
               <CTAButton active={false} linkto={"/login"}>
-                Learn More
+                Explore Courses
               </CTAButton>
             </div>
           </div>
@@ -153,11 +181,21 @@ function Home() {
         <div className="mx-auto flex w-11/12 max-w-maxContent flex-col items-center justify-between gap-8 ">
           {/* Job that is in Demand - Section 1 */}
           <div className="mb-10 mt-[-100px] flex flex-col justify-between gap-7 lg:mt-20 lg:flex-row lg:gap-0">
-            <div className="text-4xl font-semibold lg:w-[45%] text-richblack-100">
-              Built for the trust your{" "}
-              <HighlightText text={"work depends on."} />
+            <div className="text-4xl font-semibold lg:w-[45%] text-ink-50">
+              Learn from experts.
+              <HighlightText text={" Build your future."} />
             </div>
-            <div className="flex flex-col items-start gap-10 lg:w-[40%] text-richblack-300">
+
+            <div className="flex flex-col items-start gap-10 lg:w-[40%] text-ink-200">
+              <div className="text-[16px]">
+                Access industry-led courses, hands-on projects, and interactive learning experiences designed to help you gain practical skills and advance your career with confidence.
+              </div>
+
+              <CTAButton active={true} linkto={"/signup"}>
+                <div>Start Learning Today</div>
+              </CTAButton>
+            </div>
+            <div className="flex flex-col items-start gap-10 lg:w-[40%] text-ink-200">
               <div className="text-[16px]">
                 Held with care. Private cohorts and client data are separated and
                 access-controlled from the ground up, with ethical-practice standards
@@ -178,15 +216,33 @@ function Home() {
       </div>
 
       {/* Section 3 */}
-      <div className="relative mx-auto my-20 flex w-11/12 max-w-maxContent flex-col items-center justify-between gap-8 bg-richblack-900 text-white">
-        {/* Become a instructor section */}
+      <div className="relative mx-auto my-24 flex w-11/12 max-w-maxContent flex-col items-center gap-12 bg-ink-900 text-ink-100">
+
+        {/* Become an Instructor */}
         <InstructorSection />
 
-        {/* Reviws from Other Learner */}
-        <h1 className="text-center text-4xl font-semibold mt-8 text-richblack-100">
-          Reviews from other learners
-        </h1>
+        {/* Testimonials */}
+        <div className="flex flex-col items-center gap-4 text-center">
+
+          <span className="rounded-full border border-gold-500/30 bg-gold-500/10 px-5 py-2 text-sm font-semibold uppercase tracking-wider text-gold-300">
+            Student Success Stories
+          </span>
+
+          <h2 className="text-4xl lg:text-5xl font-bold text-ink-50">
+            Loved by
+            <HighlightText text={" Thousands of Learners"} />
+          </h2>
+
+          <p className="max-w-3xl text-lg leading-8 text-ink-200">
+            Discover how students have transformed their careers, built real-world
+            projects, and achieved their learning goals through our expert-led
+            courses and hands-on learning experience.
+          </p>
+
+        </div>
+
         <ReviewSlider />
+
       </div>
 
       {/* Footer */}

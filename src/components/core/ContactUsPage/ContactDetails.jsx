@@ -6,48 +6,66 @@ import * as Icon2 from "react-icons/io5"
 const contactDetails = [
   {
     icon: "HiChatBubbleLeftRight",
-    heading: "Chat on us",
-    description: "Our friendly team is here to help.",
-    details: "info@openhand.live",
+    heading: "Email Us",
+    description: "We're here to answer your questions.",
+    details: "support@learnhub.com",
   },
   {
     icon: "BiWorld",
-    heading: "Visit us",
-    description: "Come and say hello at our office HQ.",
+    heading: "Visit Our Office",
+    description: "Drop by and meet our team.",
     details:
-      "Akshya Nagar 1st Block 1st Cross, Rammurthy nagar, Bangalore-560016",
+      "Baner Road, Baner, Pune, Maharashtra 411045",
   },
   {
     icon: "IoCall",
-    heading: "Call us",
-    description: "Mon - Fri From 8am to 5pm",
-    details: "+123 456 7869",
+    heading: "Call Us",
+    description: "Monday - Saturday | 9:00 AM - 6:00 PM",
+    details: "+91 98765 43210",
   },
-]
+];
 
 const ContactDetails = () => {
   return (
-    <div className="flex flex-col gap-6 rounded-xl bg-richblack-800 p-4 lg:p-6">
+    <div className="flex flex-col gap-5 rounded-3xl border border-ink-600 bg-ink-800 p-6">
+
       {contactDetails.map((ele, i) => {
-        let Icon = Icon1[ele.icon] || Icon2[ele.icon] || Icon3[ele.icon]
+        const Icon = Icon1[ele.icon] || Icon2[ele.icon] || Icon3[ele.icon];
+
         return (
           <div
-            className="flex flex-col gap-[2px] p-3 text-sm text-richblack-200"
             key={i}
+            className="group rounded-2xl border border-ink-600 bg-ink-900 p-5 transition-all duration-300 hover:border-gold-400 hover:bg-ink-700"
           >
-            <div className="flex flex-row items-center gap-3">
-              <Icon size={25} />
-              <h1 className="text-lg font-semibold text-richblack-5">
-                {ele?.heading}
-              </h1>
+            <div className="flex items-start gap-4">
+
+              {/* Icon */}
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gold-500/10 text-gold-400 transition-all duration-300 group-hover:bg-gold-500 group-hover:text-ink-900">
+                <Icon size={24} />
+              </div>
+
+              {/* Content */}
+              <div className="flex-1">
+                <h2 className="text-lg font-semibold text-ink-50">
+                  {ele.heading}
+                </h2>
+
+                <p className="mt-1 text-sm leading-6 text-ink-200">
+                  {ele.description}
+                </p>
+
+                <p className="mt-3 font-medium text-gold-300 break-words">
+                  {ele.details}
+                </p>
+              </div>
+
             </div>
-            <p className="font-medium">{ele?.description}</p>
-            <p className="font-semibold">{ele?.details}</p>
           </div>
-        )
+        );
       })}
+
     </div>
-  )
-}
+  );
+};
 
 export default ContactDetails

@@ -4,32 +4,33 @@ import React from "react";
 import { HiUsers } from "react-icons/hi";
 import { ImTree } from "react-icons/im";
 
-const CourseCard = ({cardData, currentCard, setCurrentCard}) => {
+const CourseCard = ({ cardData, currentCard, setCurrentCard }) => {
   return (
     <div
-      className={`w-[360px] lg:w-[30%] ${
-        currentCard === cardData?.heading
-          ? "bg-white shadow-[12px_12px_0_0] shadow-yellow-50"
-          : "bg-richblack-800"
-      }  text-richblack-25 h-[300px] box-border cursor-pointer`}
+      className={`w-[360px] lg:w-[30%] rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer border ${currentCard === cardData?.heading
+          ? "bg-ink-800 border-gold-500 shadow-[0_15px_40px_rgba(201,162,39,0.15)]"
+          : "bg-ink-800 border-ink-600 hover:border-gold-400 hover:-translate-y-2"
+        }`}
       onClick={() => setCurrentCard(cardData?.heading)}
     >
-      <div className="border-b-[2px] border-richblack-400 border-dashed h-[80%] p-6 flex flex-col gap-3">
-        <div
-          className={` ${
-            currentCard === cardData?.heading && "text-richblack-100"
-          } font-semibold text-[20px]`}
-        >
-          {cardData?.heading}
-        </div>
-
-        <div className="text-richblack-400">{cardData?.description}</div>
+      <div className="h-[80%] p-6 flex flex-col gap-4 border-b border-ink-600"><div
+        className={`text-2xl font-bold transition-colors ${currentCard === cardData?.heading
+            ? "text-gold-300"
+            : "text-ink-50"
+          }`}
+      >
+        {cardData?.heading}
       </div>
 
+        <div className="text-ink-200 leading-7">
+          {cardData?.description}
+        </div>      </div>
+
       <div
-        className={`flex justify-between ${
-          currentCard === cardData?.heading ? "text-blue-300" : "text-richblack-300"
-        } px-6 py-3 font-medium`}
+        className={`flex justify-between items-center px-6 py-4 text-sm font-medium ${currentCard === cardData?.heading
+            ? "text-sage-300"
+            : "text-ink-300"
+          }`}
       >
         {/* Level */}
         <div className="flex items-center gap-2 text-[16px]">

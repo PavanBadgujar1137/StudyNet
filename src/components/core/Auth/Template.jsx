@@ -27,21 +27,16 @@ function Template({ title, description1, description2, image, formType }) {
             {formType === "signup" ? <SignupForm /> : <LoginForm />}
           </div>
           <div className="relative mx-auto w-11/12 max-w-[450px] md:mx-0">
-            <img
-              src={frameImg}
-              alt="Pattern"
-              width={558}
-              height={504}
-              loading="lazy"
-            />
-            <img
-              src={image}
-              alt="Students"
-              width={558}
-              height={504}
-              loading="lazy"
-              className="absolute -top-4 right-4 z-10"
-            />
+
+            <div className="relative overflow-hidden rounded-[28px] border border-ink-600 bg-ink-800 p-3 shadow-2xl transition-all duration-500 hover:-translate-y-2 hover:shadow-gold-500/20">
+
+              <img
+                src={image}
+                alt="Login"
+                className="rounded-2xl object-cover transition duration-700 hover:scale-105"
+              />
+
+            </div>
           </div>
         </div>
       )}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { AiOutlineMenu, AiOutlineShoppingCart } from "react-icons/ai"
+import { AiOutlineClose, AiOutlineMenu, AiOutlineShoppingCart } from "react-icons/ai"
 import { BsChevronDown } from "react-icons/bs"
 import { useSelector } from "react-redux"
 import { Link, matchPath, useLocation } from "react-router-dom"
@@ -11,25 +11,6 @@ import { categories } from "../../services/apis"
 import { ACCOUNT_TYPE } from "../../utils/constants"
 import ProfileDropdown from "../core/Auth/ProfileDropdown"
 
-// const subLinks = [
-//   {
-//     title: "Python",
-//     link: "/catalog/python",
-//   },
-//   {
-//     title: "javascript",
-//     link: "/catalog/javascript",
-//   },
-//   {
-//     title: "web-development",
-//     link: "/catalog/web-development",
-//   },
-//   {
-//     title: "Android Development",
-//     link: "/catalog/Android Development",
-//   },
-// ];
-
 function Navbar() {
   const { token } = useSelector((state) => state.auth)
   const { user } = useSelector((state) => state.profile)
@@ -38,6 +19,7 @@ function Navbar() {
 
   const [subLinks, setSubLinks] = useState([])
   const [loading, setLoading] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   useEffect(() => {
     ;(async () => {
@@ -52,81 +34,151 @@ function Navbar() {
     })()
   }, [])
 
-  // console.log("sub links", subLinks)
+  useEffect(() => {
+    setMobileOpen(false)
+  }, [location.pathname])
 
   const matchRoute = (route) => {
     return matchPath({ path: route }, location.pathname)
   }
 
   return (
-    <div
-      className={`flex h-14 items-center justify-center border-b-[1px] border-b-richblack-700 ${
-        location.pathname !== "/" ? "bg-richblack-800" : ""
-      } transition-all duration-200`}
-    >
-      <div className="flex w-11/12 max-w-maxContent items-center justify-between">
-        {/* Logo */}
-        <Link to="/">
-          <img
-            src={logo}
-            alt="StudyNotion"
-            className="object-contain"
-            loading="eager"
-            width={160}
-            height={50}
-          />
-        </Link>
-        {/* Navigation links */}
-        <nav className="hidden md:block">
-          <ul className="flex gap-x-6 text-richblack-25">
+    <div className="sticky top-0 z-50 border-b border-gold-700 bg-gradient-to-r from-gold-200 via-gold-100 to-gold-200 backdrop-blur-lg shadow-lg">
+      <div className="flex h-16 items-center justify-center">
+        <div className="flex w-11/12 max-w-maxContent items-center justify-between">
+          {/* Logo */}
+          <Link to="/">
+            <img
+              src={logo}
+              alt="StudyNotion"
+              className="object-contain"
+              loading="eager"
+              width={150}
+              height={46}
+            />
+          </Link>
+
+          {/* Navigation links */}
+   <nav className="hidden md:block">
+  <ul className="flex items-center gap-x-8 font-sans text-[15px] font-medium">
+    {NavbarLinks.map((link, index) => (
+      <li key={index}>
+        {link.title === "Catalog" ? (
+          <div
+            className={`group relative flex cursor-pointer items-center gap-1 py-2 transition-all duration-300 ${
+              matchRoute("/catalog/:catalogName")
+                ? "text-black"
+                : "text-ink-900 hover:text-gold-700"
+            }`}
+          >
+            <p>{link.title}</p>
+
+            <BsChevronDown className="text-xs transition-transform duration-300 group-hover:rotate-180" />
+
+            {/* Dropdown */}
+            <div className="invisible absolute left-1/2 top-full z-50 w-[280px] -translate-x-1/2 translate-y-3 rounded-2xl border border-gold-200 bg-white p-2 opacity-0 shadow-2xl transition-all duration-300 group-hover:visible group-hover:translate-y-4 group-hover:opacity-100">
+              {loading ? (
+                <p className="p-3 text-center text-sm text-ink-500">
+                  Loading...
+                </p>
+              ) : (subLinks?.length ?? 0) > 0 ? (
+                subLinks
+                  ?.filter((subLink) => subLink?.courses?.length > 0)
+                  ?.map((subLink, i) => (
+                    <Link
+                      key={i}
+                      to={`/catalog/${subLink.name
+                        .split(" ")
+                        .join("-")
+                        .toLowerCase()}`}
+                      className="block rounded-xl px-4 py-3 text-sm text-ink-900 transition-all duration-200 hover:bg-gold-50 hover:text-gold-700"
+                    >
+                      {subLink.name}
+                    </Link>
+                  ))
+              ) : (
+                <p className="p-3 text-center text-sm text-ink-500">
+                  No Courses Found
+                </p>
+              )}
+            </div>
+          </div>
+        ) : (
+          <Link to={link?.path}>
+            <p
+              className={`relative py-2 font-medium transition-all duration-300 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-gold-600 after:transition-all after:duration-300 hover:after:w-full ${
+                matchRoute(link?.path)
+                  ? "text-black after:w-full"
+                  : "text-ink-900 hover:text-gold-700"
+              }`}
+            >
+              {link.title}
+            </p>
+          </Link>
+        )}
+      </li>
+    ))}
+  </ul>
+</nav>
+
+          {/* Login / Signup / Dashboard */}
+          <div className="hidden items-center gap-x-4 md:flex">
+            {user && user?.accountType !== ACCOUNT_TYPE.INSTRUCTOR && (
+              <Link to="/dashboard/cart" className="relative">
+                <AiOutlineShoppingCart className="text-2xl text-ink-900" />
+                {totalItems > 0 && (
+                  <span className="absolute -bottom-2 -right-2 grid h-5 w-5 place-items-center rounded-full bg-gold-500 text-center text-xs font-bold text-ink-900">
+                    {totalItems}
+                  </span>
+                )}
+              </Link>
+            )}
+{token === null && (
+  <Link to="/login">
+    <button className="rounded-xl border border-ink-900 bg-white px-5 py-2.5 text-sm font-semibold text-ink-900 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-ink-900 hover:text-gold-100">
+      Log in
+    </button>
+  </Link>
+)}
+
+{token === null && (
+  <Link to="/signup">
+    <button className="rounded-xl bg-ink-900 px-5 py-2.5 text-sm font-semibold text-gold-100 shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:bg-black">
+      Sign up
+    </button>
+  </Link>
+)}
+            {token !== null && <ProfileDropdown />}
+          </div>
+
+          {/* Mobile menu toggle */}
+          <button
+            className="mr-1 md:hidden"
+            onClick={() => setMobileOpen((prev) => !prev)}
+            aria-label="Toggle menu"
+          >
+            {mobileOpen ? (
+              <AiOutlineClose fontSize={22} className="text-ink-100" />
+            ) : (
+              <AiOutlineMenu fontSize={22} className="text-ink-100" />
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile menu panel */}
+      {mobileOpen && (
+        <div className="border-t border-ink-600 bg-ink-900 px-6 py-4 md:hidden">
+          <ul className="flex flex-col gap-1">
             {NavbarLinks.map((link, index) => (
               <li key={index}>
                 {link.title === "Catalog" ? (
-                  <>
-                    <div
-                      className={`group relative flex cursor-pointer items-center gap-1 ${
-                        matchRoute("/catalog/:catalogName")
-                          ? "text-yellow-25"
-                          : "text-richblack-25"
-                      }`}
-                    >
-                      <p>{link.title}</p>
-                      <BsChevronDown />
-                      <div className="invisible absolute left-[50%] top-[50%] z-[1000] flex w-[200px] translate-x-[-50%] translate-y-[3em] flex-col rounded-lg bg-richblack-5 p-4 text-richblack-900 opacity-0 transition-all duration-150 group-hover:visible group-hover:translate-y-[1.65em] group-hover:opacity-100 lg:w-[300px]">
-                        <div className="absolute left-[50%] top-0 -z-10 h-6 w-6 translate-x-[80%] translate-y-[-40%] rotate-45 select-none rounded bg-richblack-5"></div>
-                        {loading ? (
-                          <p className="text-center">Loading...</p>
-                         ) : (subLinks?.length ?? 0) > 0 ? (                          <>
-                            {subLinks
-                              ?.filter(
-                                (subLink) => subLink?.courses?.length > 0
-                              )
-                              ?.map((subLink, i) => (
-                                <Link
-                                  to={`/catalog/${subLink.name
-                                    .split(" ")
-                                    .join("-")
-                                    .toLowerCase()}`}
-                                  className="rounded-lg bg-transparent py-4 pl-4 hover:bg-richblack-50"
-                                  key={i}
-                                >
-                                  <p>{subLink.name}</p>
-                                </Link>
-                              ))}
-                          </>
-                        ) : (
-                          <p className="text-center">No Courses Found</p>
-                        )}
-                      </div>
-                    </div>
-                  </>
+                  <p className="py-2 text-ink-100">{link.title}</p>
                 ) : (
                   <Link to={link?.path}>
                     <p
-                      className={`${
-                        matchRoute(link?.path)
-                          ? "text-yellow-25"
-                          : "text-richblack-25"
+                      className={`py-2 ${
+                        matchRoute(link?.path) ? "text-gold-500" : "text-ink-100"
                       }`}
                     >
                       {link.title}
@@ -136,39 +188,26 @@ function Navbar() {
               </li>
             ))}
           </ul>
-        </nav>
-        {/* Login / Signup / Dashboard */}
-        <div className="hidden items-center gap-x-4 md:flex">
-          {user && user?.accountType !== ACCOUNT_TYPE.INSTRUCTOR && (
-            <Link to="/dashboard/cart" className="relative">
-              <AiOutlineShoppingCart className="text-2xl text-richblack-100" />
-              {totalItems > 0 && (
-                <span className="absolute -bottom-2 -right-2 grid h-5 w-5 place-items-center overflow-hidden rounded-full bg-richblack-600 text-center text-xs font-bold text-yellow-100">
-                  {totalItems}
-                </span>
-              )}
-            </Link>
-          )}
-          {token === null && (
-            <Link to="/login">
-              <button className="rounded-[8px] border border-richblack-700 bg-richblack-800 px-[12px] py-[8px] text-richblack-100">
-                Log in
-              </button>
-            </Link>
-          )}
-          {token === null && (
-            <Link to="/signup">
-              <button className="rounded-[8px] border border-richblack-700 bg-richblack-800 px-[12px] py-[8px] text-richblack-100">
-                Sign up
-              </button>
-            </Link>
-          )}
-          {token !== null && <ProfileDropdown />}
+          <div className="mt-3 flex flex-col gap-2 border-t border-ink-600 pt-3">
+            {token === null ? (
+              <>
+                <Link to="/login">
+                  <button className="w-full rounded-lg border border-ink-600 px-4 py-2 text-sm font-medium text-ink-100">
+                    Log in
+                  </button>
+                </Link>
+                <Link to="/signup">
+                  <button className="w-full rounded-lg bg-gold-500 px-4 py-2 text-sm font-semibold text-ink-900">
+                    Sign up
+                  </button>
+                </Link>
+              </>
+            ) : (
+              <ProfileDropdown />
+            )}
+          </div>
         </div>
-        <button className="mr-4 md:hidden">
-          <AiOutlineMenu fontSize={24} fill="#AFB2BF" />
-        </button>
-      </div>
+      )}
     </div>
   )
 }
