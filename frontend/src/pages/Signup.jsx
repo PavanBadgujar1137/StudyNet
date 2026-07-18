@@ -1,13 +1,11 @@
-import signupImg from "../assets/Images/signup.webp"
 import Template from "../components/core/Auth/Template"
 
 function Signup() {
   return (
     <Template
-      title="Join the millions learning to code with StudyNotion for free"
-      description1="Build skills for today, tomorrow, and beyond."
-      description2="Education to future-proof your career."
-      image={signupImg}
+      title="Join OpenHand to start holding space online"
+      description1="Connect with clients, build private cohorts, and guide people ethically."
+      description2="A practice space built for guides and healers."
       formType="signup"
     />
   )

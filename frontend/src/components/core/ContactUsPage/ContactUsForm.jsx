@@ -62,7 +62,7 @@ const ContactUsForm = () => {
             {...register("firstname", { required: true })}
           />
           {errors.firstname && (
-            <span className="-mt-1 text-[12px] text-yellow-100">
+            <span className="-mt-1 text-[12px] text-red-500">
               Please enter your name.
             </span>
           )}
@@ -95,7 +95,7 @@ const ContactUsForm = () => {
           {...register("email", { required: true })}
         />
         {errors.email && (
-          <span className="-mt-1 text-[12px] text-yellow-100">
+          <span className="-mt-1 text-[12px] text-red-500">
             Please enter your Email address.
           </span>
         )}
@@ -106,26 +106,24 @@ const ContactUsForm = () => {
           Phone Number
         </label>
 
-        <div className="flex gap-5">
-          <div className="flex w-[81px] flex-col gap-2">
+        <div className="flex gap-4">
+          <div className="flex w-[120px] flex-col gap-2">
             <select
-              type="text"
-              name="firstname"
-              id="firstname"
-              placeholder="Enter first name"
-              className="form-style"
+              name="countrycode"
+              id="countrycode"
+              className="form-style px-3 py-3 text-navy bg-white border-richblack-700"
               {...register("countrycode", { required: true })}
             >
               {CountryCode.map((ele, i) => {
                 return (
                   <option key={i} value={ele.code}>
-                    {ele.code} -{ele.country}
+                    {ele.code} ({ele.country})
                   </option>
                 )
               })}
             </select>
           </div>
-          <div className="flex w-[calc(100%-90px)] flex-col gap-2">
+          <div className="flex w-[calc(100%-136px)] flex-col gap-2">
             <input
               type="number"
               name="phonenumber"
@@ -144,7 +142,7 @@ const ContactUsForm = () => {
           </div>
         </div>
         {errors.phoneNo && (
-          <span className="-mt-1 text-[12px] text-yellow-100">
+          <span className="-mt-1 text-[12px] text-red-500">
             {errors.phoneNo.message}
           </span>
         )}
@@ -164,7 +162,7 @@ const ContactUsForm = () => {
           {...register("message", { required: true })}
         />
         {errors.message && (
-          <span className="-mt-1 text-[12px] text-yellow-100">
+          <span className="-mt-1 text-[12px] text-red-500">
             Please enter your Message.
           </span>
         )}
@@ -173,11 +171,7 @@ const ContactUsForm = () => {
       <button
         disabled={loading}
         type="submit"
-        className={`rounded-md bg-yellow-50 px-6 py-3 text-center text-[13px] font-bold text-black shadow-[2px_2px_0px_0px_rgba(255,255,255,0.18)] 
-         ${
-           !loading &&
-           "transition-all duration-200 hover:scale-95 hover:shadow-none"
-         }  disabled:bg-richblack-500 sm:text-[16px] `}
+        className={`rounded-full bg-royal-blue hover:bg-royal-blue/90 py-3.5 px-8 text-center text-sm font-semibold text-white transition-all duration-200 hover:scale-95 shadow-lg shadow-blue-100/40 disabled:bg-richblack-500`}
       >
         Send Message
       </button>

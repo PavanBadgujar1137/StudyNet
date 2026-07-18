@@ -1,6 +1,5 @@
 import { toast } from "react-hot-toast"
 
-import rzpLogo from "../../assets/Logo/rzp_logo.png"
 import { resetCart } from "../../slices/cartSlice"
 import { setPaymentLoading } from "../../slices/courseSlice"
 import { apiConnector } from "../apiConnector"
@@ -90,11 +89,11 @@ export async function BuyCourse(
       currency: orderData.currency,
       amount: `${orderData.amount}`,
       order_id: orderData.id,
-      name: "StudyNet",
+      name: "OpenHand",
       description: isTestMode
         ? "TEST MODE — Netbanking → Success"
-        : "Thank you for Purchasing the Course.",
-      image: rzpLogo,
+        : "Thank you for joining our practice.",
+      image: "",
       method: {
         netbanking: true,
         card: true,

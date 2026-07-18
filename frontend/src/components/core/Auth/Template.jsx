@@ -1,47 +1,74 @@
-import { FcGoogle } from "react-icons/fc"
 import { useSelector } from "react-redux"
-
-import frameImg from "../../../assets/Images/frame.png"
+import logoIcon from "../../../assets/Logo/Logo-Icon.png"
 import LoginForm from "./LoginForm"
 import SignupForm from "./SignupForm"
 
-function Template({ title, description1, description2, image, formType }) {
+function Template({ title, description1, description2, formType }) {
   const { loading } = useSelector((state) => state.auth)
 
   return (
-    <div className="grid min-h-[calc(100vh-3.5rem)] place-items-center">
+    <div className="grid min-h-[calc(100vh-4rem)] place-items-center bg-paper relative overflow-hidden py-12">
+      {/* Background glow animations */}
+      <div className="absolute top-[-10%] right-[-10%] w-[35rem] h-[35rem] rounded-full bg-royal-blue/5 blur-[120px] pointer-events-none animate-pulse"></div>
+      <div className="absolute bottom-[-10%] left-[-10%] w-[35rem] h-[35rem] rounded-full bg-violet/5 blur-[120px] pointer-events-none animate-pulse"></div>
+
       {loading ? (
         <div className="spinner"></div>
       ) : (
-        <div className="mx-auto flex w-11/12 max-w-maxContent flex-col-reverse justify-between gap-y-12 py-12 md:flex-row md:gap-y-0 md:gap-x-12">
-          <div className="mx-auto w-11/12 max-w-[450px] md:mx-0">
-            <h1 className="text-[1.875rem] font-semibold leading-[2.375rem] text-richblack-5">
+        <div className="mx-auto flex w-11/12 max-w-maxContent flex-col-reverse justify-between gap-y-12 md:flex-row-reverse md:gap-y-0 md:gap-x-16 items-center z-10">
+          {/* Form container */}
+          <div className="mx-auto w-11/12 max-w-[480px] md:mx-0 flex flex-col justify-center bg-white/40 border border-white/50 backdrop-blur-md p-8 sm:p-10 rounded-[32px] shadow-xl">
+            <h1 className="text-[2rem] font-bold leading-[2.5rem] text-navy font-fraunces">
               {title}
             </h1>
-            <p className="mt-4 text-[1.125rem] leading-[1.625rem]">
-              <span className="text-richblack-100">{description1}</span>{" "}
-              <span className="font-edu-sa font-bold italic text-blue-100">
+            <p className="mt-4 text-[1.05rem] leading-[1.625rem]">
+              <span className="text-ink-soft">{description1}</span>{" "}
+              <span className="font-fraunces font-bold italic text-royal-blue">
                 {description2}
               </span>
             </p>
-            {formType === "signup" ? <SignupForm /> : <LoginForm />}
+            <div className="mt-8">
+              {formType === "signup" ? <SignupForm /> : <LoginForm />}
+            </div>
           </div>
-          <div className="relative mx-auto w-11/12 max-w-[450px] md:mx-0">
-            <img
-              src={frameImg}
-              alt="Pattern"
-              width={558}
-              height={504}
-              loading="lazy"
-            />
-            <img
-              src={image}
-              alt="Students"
-              width={558}
-              height={504}
-              loading="lazy"
-              className="absolute -top-4 right-4 z-10"
-            />
+          
+          {/* Premium CSS-based Glassmorphic Graphics Panel (Wow factor) */}
+          <div className="relative mx-auto w-11/12 max-w-[450px] md:mx-0 flex items-center justify-center animate-float">
+            <div className="w-full aspect-square rounded-[32px] bg-white/70 border border-white/60 flex flex-col justify-between p-10 relative overflow-hidden shadow-2xl">
+              {/* Decorative backgrounds */}
+              <div className="absolute top-0 right-0 w-36 h-36 rounded-full bg-royal-blue/5 blur-2xl"></div>
+              <div className="absolute bottom-0 left-0 w-36 h-36 rounded-full bg-violet/5 blur-2xl"></div>
+
+              <div className="flex justify-between items-center w-full">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-royal-blue bg-royal-blue/10 border border-royal-blue/20 px-3.5 py-1.5 rounded-full">
+                  Secure Practice Space
+                </span>
+                <span className="text-xs font-semibold text-ink-soft">openhand.live</span>
+              </div>
+
+              <div className="flex flex-col items-center justify-center my-auto py-8">
+                <div className="w-48 h-48 rounded-full bg-white flex flex-col items-center justify-center border border-line/60 shadow-inner relative group gap-1">
+                  <div className="absolute inset-2 rounded-full border border-dashed border-royal-blue/20 group-hover:rotate-45 transition-transform duration-700"></div>
+                  <img 
+                    src={logoIcon} 
+                    alt="OpenHand Icon" 
+                    className="w-24 object-contain hover:scale-110 transition-transform duration-300 relative z-10" 
+                  />
+                  <span className="font-fraunces text-2xl font-bold tracking-tight text-navy relative z-10 mt-1">
+                    Open<span className="text-royal-blue">Hand</span>
+                  </span>
+                </div>
+              </div>
+
+              <div className="border-t border-line/60 pt-8">
+                <p className="font-fraunces italic text-xl text-navy text-center leading-relaxed">
+                  "Your Growth, Our Guidance"
+                </p>
+                <p className="text-xs text-center text-ink-soft mt-2.5">
+                  The practice space built for coaches, counsellors &amp; healers.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       )}

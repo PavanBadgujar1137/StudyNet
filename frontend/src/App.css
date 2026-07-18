@@ -6,7 +6,9 @@ html,
 body,
 #root {
   min-height: 100%;
-  background-color: #000814;
+  background-color: #F3F4F6;
+  color: #0D1B3D;
+  font-family: 'Poppins', 'Inter', sans-serif;
 }
 
 html,
@@ -18,7 +20,7 @@ body {
 /* Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #afb2bf #000814;
+  scrollbar-color: #9CA3AF #F3F4F6;
 }
 
 /* Chrome, Edge, and Safari */
@@ -28,11 +30,11 @@ body {
 }
 
 *::-webkit-scrollbar-track {
-  background: #000814;
+  background: #F3F4F6;
 }
 
 *::-webkit-scrollbar-thumb {
-  background-color: #afb2bf;
+  background-color: #9CA3AF;
   border-radius: 10px;
 }
 
@@ -106,8 +108,7 @@ details > summary::-webkit-details-marker {
   /* backdrop-filter: blur(26px); */
 }
 .homepage_bg {
-  background: url("../src/assets/Images/bghome.svg");
-  /* background-size: contain; */
+  @apply bg-paper;
 }
 
 @keyframes spinner-bulqg1 {
@@ -208,18 +209,18 @@ details > summary::-webkit-details-marker {
 
 /* For conditional coloring of icons in dashboard sidebar */
 .active-icon {
-  fill: #ffd60a !important;
-  color: #ffd60a !important;
+  fill: #2563EB !important;
+  color: #2563EB !important;
 }
 
 .inactive-icon {
-  fill: #838894;
-  color: #838894;
+  fill: #9CA3AF;
+  color: #9CA3AF;
 }
 
 /* Buttons */
 .yellowButton {
-  @apply cursor-pointer rounded-md bg-yellow-50 px-[20px] py-[8px] font-semibold text-richblack-900;
+  @apply cursor-pointer rounded-md bg-yellow-50 px-[20px] py-[8px] font-semibold text-white transition-all duration-200 hover:scale-95 shadow-md shadow-blue-200/50;
 }
 
 /* Swiper CSS Starts */
@@ -240,14 +241,93 @@ details > summary::-webkit-details-marker {
 /* Swiper CSS Ends */
 
 .blackButton {
-  @apply cursor-pointer rounded-md bg-richblack-800 px-[20px] py-[8px] font-semibold text-richblack-5;
+  @apply cursor-pointer rounded-md bg-richblack-800 border border-richblack-700 px-[20px] py-[8px] font-semibold text-richblack-5 transition-all duration-200 hover:scale-95;
 }
 .lable-style {
-  @apply text-[14px] text-richblack-5;
+  @apply text-[14px] text-richblack-5 font-medium;
 }
 .form-style {
-  @apply rounded-lg bg-richblack-700 p-3 text-[16px] leading-[24px] text-richblack-5 shadow-[0_1px_0_0] shadow-white/50 placeholder:text-richblack-400 focus:outline-none;
+  @apply rounded-lg bg-richblack-800 border border-richblack-700 p-3 text-[16px] leading-[24px] text-richblack-5 shadow-sm placeholder:text-richblack-400 focus:outline-none focus:border-yellow-50 focus:ring-1 focus:ring-yellow-50;
 }
 .section_heading {
-  @apply text-2xl font-bold text-richblack-5 lg:text-4xl;
+  @apply text-2xl font-bold text-richblack-5 lg:text-4xl font-fraunces;
 }
+
+/* Elite Redesign Utilities & Keyframe Animations */
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0px rgba(37, 99, 235, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.4);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 3s infinite;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(13, 27, 61, 0.05);
+}
+
+.glass-card-dark {
+  background: rgba(19, 31, 61, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(13, 27, 61, 0.25);
+}
+
+/* Premium Form Focus Transition overrides */
+.form-style {
+  @apply rounded-xl bg-white border border-richblack-700 p-3 text-[16px] leading-[24px] text-richblack-5 shadow-sm placeholder:text-richblack-400 focus:outline-none focus:border-royal-blue focus:ring-2 focus:ring-royal-blue/15 transition-all duration-300;
+}
+.form-style-dark {
+  @apply rounded-xl bg-richblack-800 border border-richblack-700 p-3 text-[16px] leading-[24px] text-richblack-5 shadow-sm placeholder:text-richblack-400 focus:outline-none focus:border-royal-blue focus:ring-2 focus:ring-royal-blue/15 transition-all duration-300;
+}
+
+@keyframes slideDownIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 15px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0px);
+  }
+}
+.animate-slide-down-in {
+  animation: slideDownIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+

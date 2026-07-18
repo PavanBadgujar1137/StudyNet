@@ -21,7 +21,7 @@ const { cloudinaryConnect } = require("./config/cloudinary")
 const PORT = process.env.PORT || 4000
 
 // Windows-safe temp directory for file uploads
-const tempFileDir = path.join(os.tmpdir(), "studynet-uploads")
+const tempFileDir = path.join(os.tmpdir(), "openhand-uploads")
 if (!fs.existsSync(tempFileDir)) {
   fs.mkdirSync(tempFileDir, { recursive: true })
 }

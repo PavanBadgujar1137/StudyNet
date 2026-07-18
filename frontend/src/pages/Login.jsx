@@ -1,13 +1,11 @@
-import loginImg from "../assets/Images/login.webp"
 import Template from "../components/core/Auth/Template"
 
 function Login() {
   return (
     <Template
-      title="Welcome Back"
-      description1="Build skills for today, tomorrow, and beyond."
-      description2="Education to future-proof your career."
-      image={loginImg}
+      title="Welcome Back to OpenHand"
+      description1="Connect with clients, build private cohorts, and guide people ethically."
+      description2="A practice space built for guides and healers."
       formType="login"
     />
   )

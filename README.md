@@ -1,1 +1,1 @@
-# StudyNotion Edtech Project
+# OpenHand Practice Platform

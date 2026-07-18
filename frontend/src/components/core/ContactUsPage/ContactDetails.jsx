@@ -8,7 +8,7 @@ const contactDetails = [
     icon: "HiChatBubbleLeftRight",
     heading: "Chat on us",
     description: "Our friendly team is here to help.",
-    details: "info@studynotion.com",
+    details: "info@openhand.live",
   },
   {
     icon: "BiWorld",
@@ -27,22 +27,28 @@ const contactDetails = [
 
 const ContactDetails = () => {
   return (
-    <div className="flex flex-col gap-6 rounded-xl bg-richblack-800 p-4 lg:p-6">
+    <div className="flex flex-col gap-8 rounded-[32px] border border-line/65 bg-white/75 p-8 shadow-xl backdrop-blur-md">
       {contactDetails.map((ele, i) => {
         let Icon = Icon1[ele.icon] || Icon2[ele.icon] || Icon3[ele.icon]
         return (
           <div
-            className="flex flex-col gap-[2px] p-3 text-sm text-richblack-200"
+            className="flex gap-4 p-2 text-left"
             key={i}
           >
-            <div className="flex flex-row items-center gap-3">
-              <Icon size={25} />
-              <h1 className="text-lg font-semibold text-richblack-5">
-                {ele?.heading}
-              </h1>
+            <div className="w-12 h-12 rounded-2xl bg-royal-blue/10 flex items-center justify-center text-royal-blue shrink-0 shadow-sm border border-royal-blue/10">
+              <Icon size={22} />
             </div>
-            <p className="font-medium">{ele?.description}</p>
-            <p className="font-semibold">{ele?.details}</p>
+            <div className="flex flex-col gap-1">
+              <h3 className="text-lg font-bold text-navy font-fraunces">
+                {ele?.heading}
+              </h3>
+              <p className="text-sm font-medium text-ink-soft leading-relaxed">
+                {ele?.description}
+              </p>
+              <p className="text-sm font-bold text-royal-blue select-all">
+                {ele?.details}
+              </p>
+            </div>
           </div>
         )
       })}
