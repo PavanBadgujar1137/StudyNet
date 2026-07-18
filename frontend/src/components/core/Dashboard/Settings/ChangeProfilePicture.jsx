@@ -3,7 +3,6 @@ import { FiUpload } from "react-icons/fi"
 import { useDispatch, useSelector } from "react-redux"
 
 import { updateDisplayPicture } from "../../../../services/operations/SettingsAPI"
-import IconBtn from "../../../Common/IconBtn"
 
 export default function ChangeProfilePicture() {
   const { token } = useSelector((state) => state.auth)
@@ -22,7 +21,6 @@ export default function ChangeProfilePicture() {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0]
-    // console.log(file)
     if (file) {
       setImageFile(file)
       previewFile(file)
@@ -39,16 +37,15 @@ export default function ChangeProfilePicture() {
 
   const handleFileUpload = () => {
     try {
-      console.log("uploading...")
       setLoading(true)
       const formData = new FormData()
       formData.append("displayPicture", imageFile)
-      // console.log("formdata", formData)
       dispatch(updateDisplayPicture(token, formData)).then(() => {
         setLoading(false)
       })
     } catch (error) {
       console.log("ERROR MESSAGE - ", error.message)
+      setLoading(false)
     }
   }
 
@@ -57,44 +54,43 @@ export default function ChangeProfilePicture() {
       previewFile(imageFile)
     }
   }, [imageFile])
+
   return (
-    <>
-      <div className="flex items-center justify-between rounded-md border-[1px] border-richblack-700 bg-richblack-800 p-8 px-12 text-richblack-5">
-        <div className="flex items-center gap-x-4">
-          <img
-            src={previewSource || user?.image}
-            alt={`profile-${user?.firstName}`}
-            className="aspect-square w-[78px] rounded-full object-cover"
-          />
-          <div className="space-y-2">
-            <p>Change Profile Picture</p>
-            <div className="flex flex-row gap-3">
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                className="hidden"
-                accept="image/png, image/gif, image/jpeg"
-              />
-              <button
-                onClick={handleClick}
-                disabled={loading}
-                className="cursor-pointer rounded-md bg-richblack-700 py-2 px-5 font-semibold text-richblack-50"
-              >
-                Select
-              </button>
-              <IconBtn
-                text={loading ? "Uploading..." : "Upload"}
-                onclick={handleFileUpload}
-              >
-                {!loading && (
-                  <FiUpload className="text-lg text-richblack-900" />
-                )}
-              </IconBtn>
-            </div>
+    <div className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white p-6 md:p-8 shadow-sm text-navy text-left">
+      <div className="flex items-center gap-4">
+        <img
+          src={previewSource || user?.image}
+          alt={`profile-${user?.firstName}`}
+          className="aspect-square w-16 h-16 rounded-full object-cover border border-slate-200 p-0.5 shadow-sm shrink-0 animate-fadeIn"
+        />
+        <div className="space-y-2">
+          <h3 className="font-fraunces text-navy text-lg font-bold">Change Profile Picture</h3>
+          <div className="flex flex-row gap-3">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+              accept="image/png, image/gif, image/jpeg"
+            />
+            <button
+              onClick={handleClick}
+              disabled={loading}
+              className="rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-5 text-xs transition-all hover:scale-95"
+            >
+              Select Image
+            </button>
+            <button
+              onClick={handleFileUpload}
+              disabled={loading || !imageFile}
+              className="rounded-full bg-royal-blue hover:bg-royal-blue/90 disabled:bg-royal-blue/40 text-white font-semibold py-2 px-5 text-xs transition-all hover:scale-95 shadow-sm flex items-center gap-1.5"
+            >
+              {loading ? "Uploading..." : "Upload"}
+              {!loading && <FiUpload className="text-xs" />}
+            </button>
           </div>
         </div>
       </div>
-    </>
+    </div>
   )
 }

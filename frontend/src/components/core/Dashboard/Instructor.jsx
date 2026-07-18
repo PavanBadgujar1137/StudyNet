@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { useSelector } from "react-redux"
 import { Link } from "react-router-dom"
+import { FaBook, FaUsers, FaWallet, FaPlus, FaChevronRight } from "react-icons/fa"
 
 import { fetchInstructorCourses } from "../../../services/operations/courseDetailsAPI"
 import { getInstructorData } from "../../../services/operations/profileAPI"
@@ -18,14 +19,13 @@ export default function Instructor() {
       setLoading(true)
       const instructorApiData = await getInstructorData(token)
       const result = await fetchInstructorCourses(token)
-      console.log(instructorApiData)
       if (instructorApiData.length) setInstructorData(instructorApiData)
       if (result) {
         setCourses(result)
       }
       setLoading(false)
     })()
-  }, [])
+  }, [token])
 
   const totalAmount = instructorData?.reduce(
     (acc, curr) => acc + curr.totalAmountGenerated,
@@ -38,86 +38,108 @@ export default function Instructor() {
   )
 
   return (
-    <div>
-      <div className="space-y-2">
-        <h1 className="text-2xl font-bold text-richblack-5">
+    <div className="flex flex-col gap-6 text-left">
+      {/* Welcome Header */}
+      <div className="space-y-1">
+        <h1 className="text-3xl font-bold text-navy font-fraunces flex items-center gap-2">
           Hi {user?.firstName} 👋
         </h1>
-        <p className="font-medium text-richblack-200">
-          Let's start something new
+        <p className="text-sm font-medium text-slate-500">
+          Monitor your client enrolments, course revenue, and active spaces.
         </p>
       </div>
+
       {loading ? (
-        <div className="spinner"></div>
+        <div className="grid min-h-[40vh] place-items-center">
+          <div className="spinner"></div>
+        </div>
       ) : courses.length > 0 ? (
-        <div>
-          <div className="my-4 flex h-[450px] space-x-4">
-            {/* Render chart / graph */}
-            {totalAmount > 0 || totalStudents > 0 ? (
-              <InstructorChart courses={instructorData} />
-            ) : (
-              <div className="flex-1 rounded-md bg-richblack-800 p-6">
-                <p className="text-lg font-bold text-richblack-5">Visualize</p>
-                <p className="mt-4 text-xl font-medium text-richblack-50">
-                  Not Enough Data To Visualize
+        <div className="flex flex-col gap-6">
+          {/* Stats Summary Strip */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            {/* Total Spaces */}
+            <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm flex items-center gap-4 text-left">
+              <div className="w-10 h-10 rounded-xl bg-royal-blue/10 flex items-center justify-center text-royal-blue shrink-0">
+                <FaBook className="text-sm" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Total Spaces</p>
+                <p className="text-2xl font-extrabold text-navy font-fraunces mt-0.5">
+                  {courses.length}
                 </p>
               </div>
-            )}
-            {/* Total Statistics */}
-            <div className="flex min-w-[250px] flex-col rounded-md bg-richblack-800 p-6">
-              <p className="text-lg font-bold text-richblack-5">Statistics</p>
-              <div className="mt-4 space-y-4">
-                <div>
-                  <p className="text-lg text-richblack-200">Total Courses</p>
-                  <p className="text-3xl font-semibold text-richblack-50">
-                    {courses.length}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-lg text-richblack-200">Total Students</p>
-                  <p className="text-3xl font-semibold text-richblack-50">
-                    {totalStudents}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-lg text-richblack-200">Total Income</p>
-                  <p className="text-3xl font-semibold text-richblack-50">
-                    Rs. {totalAmount}
-                  </p>
-                </div>
+            </div>
+
+            {/* Total Clients */}
+            <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm flex items-center gap-4 text-left">
+              <div className="w-10 h-10 rounded-xl bg-violet/10 flex items-center justify-center text-violet shrink-0">
+                <FaUsers className="text-sm" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Total Clients</p>
+                <p className="text-2xl font-extrabold text-navy font-fraunces mt-0.5">
+                  {totalStudents}
+                </p>
+              </div>
+            </div>
+
+            {/* Total Earnings */}
+            <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm flex items-center gap-4 text-left">
+              <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center text-green-700 shrink-0">
+                <FaWallet className="text-sm" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Total Income</p>
+                <p className="text-2xl font-extrabold text-navy font-fraunces mt-0.5">
+                  Rs. {totalAmount || 0}
+                </p>
               </div>
             </div>
           </div>
-          <div className="rounded-md bg-richblack-800 p-6">
-            {/* Render 3 courses */}
+
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* Visualizer Chart Card */}
+            {totalAmount > 0 || totalStudents > 0 ? (
+              <div className="flex-1 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm flex flex-col justify-between">
+                <InstructorChart courses={instructorData} />
+              </div>
+            ) : (
+              <div className="flex-1 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm flex flex-col justify-center items-center text-center">
+                <FaBook className="text-4xl text-slate-300 mb-3" />
+                <p className="text-lg font-bold text-navy font-fraunces">Visualize Performance</p>
+                <p className="mt-2 text-sm text-slate-500 max-w-xs">
+                  Not enough analytics data yet to populate visualizations.
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Bottom Card: Your Active Containers */}
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm relative">
             <div className="flex items-center justify-between">
-              <p className="text-lg font-bold text-richblack-5">Your Courses</p>
-              <Link to="/dashboard/my-courses">
-                <p className="text-xs font-semibold text-yellow-50">View All</p>
+              <h2 className="text-lg font-bold text-navy font-fraunces">Your Active Containers</h2>
+              <Link to="/dashboard/my-courses" className="text-xs font-bold text-royal-blue flex items-center gap-1 hover:underline">
+                View All <FaChevronRight className="text-[9px]" />
               </Link>
             </div>
-            <div className="my-4 flex items-start space-x-6">
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 my-5">
               {courses.slice(0, 3).map((course) => (
-                <div key={course._id} className="w-1/3">
-                  <img
-                    src={course.thumbnail}
-                    alt={course.courseName}
-                    className="h-[201px] w-full rounded-md object-cover"
-                  />
-                  <div className="mt-3 w-full">
-                    <p className="text-sm font-medium text-richblack-50">
+                <div key={course._id} className="flex flex-col gap-3 group cursor-pointer bg-slate-50 border border-slate-100 rounded-xl p-3">
+                  <div className="h-40 w-full rounded-lg overflow-hidden border border-slate-200/60 relative">
+                    <img
+                      src={course.thumbnail}
+                      alt={course.courseName}
+                      className="h-full w-full object-cover group-hover:scale-102 transition-transform duration-300"
+                    />
+                  </div>
+                  <div className="px-1 flex flex-col gap-1">
+                    <h3 className="text-sm font-semibold text-navy group-hover:text-royal-blue transition-colors duration-200 line-clamp-1">
                       {course.courseName}
-                    </p>
-                    <div className="mt-1 flex items-center space-x-2">
-                      <p className="text-xs font-medium text-richblack-300">
-                        {course.studentsEnroled.length} students
-                      </p>
-                      <p className="text-xs font-medium text-richblack-300">
-                        |
-                      </p>
-                      <p className="text-xs font-medium text-richblack-300">
-                        Rs. {course.price}
-                      </p>
+                    </h3>
+                    <div className="flex items-center justify-between text-xs text-slate-500 mt-1">
+                      <span>{course.studentsEnroled?.length || 0} clients</span>
+                      <span className="font-bold text-royal-blue">Rs. {course.price}</span>
                     </div>
                   </div>
                 </div>
@@ -126,14 +148,16 @@ export default function Instructor() {
           </div>
         </div>
       ) : (
-        <div className="mt-20 rounded-md bg-richblack-800 p-6 py-20">
-          <p className="text-center text-2xl font-bold text-richblack-5">
-            You have not created any courses yet
+        <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center shadow-sm">
+          <FaBook className="text-4xl text-slate-300 mx-auto mb-4" />
+          <p className="font-semibold text-navy text-lg">No practice spaces created yet</p>
+          <p className="text-sm text-slate-500 mt-1 max-w-sm mx-auto">
+            Get started by creating your first secure container for client coaching and reflections.
           </p>
           <Link to="/dashboard/add-course">
-            <p className="mt-1 text-center text-lg font-semibold text-yellow-50">
-              Create a course
-            </p>
+            <button className="mt-5 rounded-full bg-royal-blue px-6 py-2.5 text-sm font-semibold text-white hover:bg-royal-blue/90 shadow-sm transition-all hover:scale-95 inline-flex items-center gap-1.5">
+              <FaPlus className="text-xs" /> Create space
+            </button>
           </Link>
         </div>
       )}

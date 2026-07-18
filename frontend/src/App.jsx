@@ -22,6 +22,8 @@ import Settings from "./components/core/Dashboard/Settings"
 import VideoDetails from "./components/core/ViewCourse/VideoDetails"
 import About from "./pages/About"
 import Catalog from "./pages/Catalog"
+import PublicCourses from "./pages/PublicCourses"
+import DashboardAllCourses from "./pages/DashboardAllCourses"
 import Contact from "./pages/Contact"
 import CourseDetails from "./pages/CourseDetails"
 import Dashboard from "./pages/Dashboard"
@@ -66,6 +68,7 @@ function App() {
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="courses/:courseId" element={<CourseDetails />} />
+        <Route path="all-courses" element={<PublicCourses />} />
         <Route path="catalog/:catalogName" element={<Catalog />} />
         {/* Open Route - for Only Non Logged in User */}
         <Route
@@ -118,6 +121,7 @@ function App() {
         >
           {/* Route for all users */}
           <Route path="dashboard/my-profile" element={<MyProfile />} />
+          <Route path="dashboard/all-courses" element={<DashboardAllCourses />} />
           <Route path="dashboard/Settings" element={<Settings />} />
           {/* Route only for Instructors */}
           {user?.accountType === ACCOUNT_TYPE.INSTRUCTOR && (

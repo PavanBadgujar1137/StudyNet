@@ -4,7 +4,6 @@ import { useSelector } from "react-redux"
 import { useNavigate } from "react-router-dom"
 
 import { fetchInstructorCourses } from "../../../services/operations/courseDetailsAPI"
-import IconBtn from "../../Common/IconBtn"
 import CoursesTable from "./InstructorCourses/CoursesTable"
 
 export default function MyCourses() {
@@ -24,15 +23,15 @@ export default function MyCourses() {
   }, [])
 
   return (
-    <div>
-      <div className="mb-14 flex items-center justify-between">
-        <h1 className="text-3xl font-medium text-richblack-5">My Courses</h1>
-        <IconBtn
-          text="Add Course"
-          onclick={() => navigate("/dashboard/add-course")}
+    <div className="flex flex-col gap-6 text-left">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl sm:text-4xl font-bold text-navy font-fraunces">My Practice Spaces</h1>
+        <button
+          onClick={() => navigate("/dashboard/add-course")}
+          className="rounded-full bg-royal-blue hover:bg-royal-blue/90 text-white font-semibold py-2.5 px-6 text-sm transition-all duration-200 shadow-md flex items-center gap-2 hover:scale-95 inline-flex"
         >
-          <VscAdd />
-        </IconBtn>
+          <VscAdd className="text-base" /> Create Space
+        </button>
       </div>
       {courses && <CoursesTable courses={courses} setCourses={setCourses} />}
     </div>
