@@ -1,6 +1,6 @@
 const Razorpay = require("razorpay")
 
-// Fallback if .env does not load (keep in sync with server/.env)
+// Fallback if .env does not load (keep in sync with backend/.env)
 const RAZORPAY_KEY = "rzp_test_TDhFSRuAl18Gcb"
 const RAZORPAY_SECRET = "C9toYuVwZMb25GLyeuXQcKhs"
 
@@ -18,7 +18,7 @@ const getRazorpayKeys = () => {
 
   if (invalid) {
     throw new Error(
-      "Razorpay SECRET missing. Add RAZORPAY_KEY and RAZORPAY_SECRET in server/.env"
+      "Razorpay SECRET missing. Add RAZORPAY_KEY and RAZORPAY_SECRET in backend/.env"
     )
   }
 

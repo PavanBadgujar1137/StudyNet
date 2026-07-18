@@ -1,4 +1,4 @@
-// Load env before any other app modules (always from server/.env)
+// Load env before any other app modules (always from backend/.env)
 const path = require("path")
 const dotenv = require("dotenv")
 dotenv.config({ path: path.join(__dirname, ".env") })
@@ -70,7 +70,7 @@ app.listen(PORT, () => {
   console.log(`App is listening at ${PORT}`)
   if (!process.env.RAZORPAY_KEY || !process.env.RAZORPAY_SECRET) {
     console.log(
-      "WARNING: RAZORPAY_KEY / RAZORPAY_SECRET missing in server/.env — payments will fail"
+      "WARNING: RAZORPAY_KEY / RAZORPAY_SECRET missing in backend/.env — payments will fail"
     )
   }
 })

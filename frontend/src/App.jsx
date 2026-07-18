@@ -43,9 +43,17 @@ function App() {
   const { user } = useSelector((state) => state.profile)
 
   useEffect(() => {
-    if (localStorage.getItem("token")) {
-      const token = JSON.parse(localStorage.getItem("token"))
-      dispatch(getUserDetails(token, navigate))
+    const storedToken = localStorage.getItem("token");
+    if (storedToken) {
+      let token = null;
+      try {
+        token = JSON.parse(storedToken);
+      } catch (e) {
+        token = storedToken;
+      }
+      if (token) {
+        dispatch(getUserDetails(token, navigate))
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
