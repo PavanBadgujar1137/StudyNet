@@ -18,7 +18,7 @@ const ContactUsForm = () => {
     // console.log("Form Data - ", data)
     try {
       setLoading(true)
-      const res = await apiConnector(
+       await apiConnector(
         "POST",
         contactusEndpoint.CONTACT_US_API,
         data

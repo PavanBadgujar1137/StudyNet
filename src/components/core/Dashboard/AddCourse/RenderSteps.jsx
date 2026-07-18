@@ -11,7 +11,7 @@ export default function RenderSteps() {
   const steps = [
     {
       id: 1,
-      title: "Course Information",
+      title: "Information",
     },
     {
       id: 2,
@@ -24,66 +24,58 @@ export default function RenderSteps() {
   ]
 
   return (
-    <>
-      <div className="relative mb-2 flex w-full justify-center">
-        {steps.map((item) => (
-          <>
-            <div
-              className="flex flex-col items-center "
-              key={item.id}
-            >
-              <button
-                className={`grid cursor-default aspect-square w-[34px] place-items-center rounded-full border-[1px] ${
-                  step === item.id
-                    ? "border-yellow-50 bg-yellow-900 text-yellow-50"
-                    : "border-richblack-700 bg-richblack-800 text-richblack-300"
-                } ${step > item.id && "bg-yellow-50 text-yellow-50"}} `}
-              >
-                {step > item.id ? (
-                  <FaCheck className="font-bold text-richblack-900" />
-                ) : (
-                  item.id
-                )}
-              </button>
-              
-            </div>
-            {item.id !== steps.length && (
-              <>
-                <div
-                  className={`h-[calc(34px/2)] w-[33%]  border-dashed border-b-2 ${
-                  step > item.id  ? "border-yellow-50" : "border-richblack-500"
-                } `}
-                ></div>
-              </>
-            )}
-          </>
-        ))}
-      </div>
+<>
+  {/* Progress Steps */}
+  <div className="mb-12 flex items-center justify-between">
+    {steps.map((item, index) => (
+      <div
+        key={item.id}
+        className="flex flex-1 items-start"
+      >
+        {/* Step */}
+        <div className="flex flex-col items-center">
+          <button
+            className={`flex h-12 w-12 items-center justify-center rounded-full border-2 text-sm font-semibold transition-all duration-300
+              ${
+                step > item.id
+                  ? "border-gold-500 bg-gold-500 text-ink-900 shadow-lg shadow-gold-500/30"
+                  : step === item.id
+                  ? "border-gold-500 bg-gold-500/15 text-gold-300 ring-4 ring-gold-500/10"
+                  : "border-ink-600 bg-ink-800 text-ink-300"
+              }`}
+          >
+            {step > item.id ? <FaCheck size={16} /> : item.id}
+          </button>
 
-      <div className="relative mb-16 flex w-full select-none justify-between">
-        {steps.map((item) => (
-          <>
+          <p
+            className={`mt-4 w-28 text-center text-sm font-medium transition-colors duration-300 ${
+              step >= item.id ? "text-ink-50" : "text-ink-300"
+            }`}
+          >
+            {item.title}
+          </p>
+        </div>
+
+        {/* Connector */}
+        {index !== steps.length - 1 && (
+          <div className="mx-4 mt-6 flex-1">
             <div
-              className="flex min-w-[130px] flex-col items-center gap-y-2"
-              key={item.id}
-            >
-              
-              <p
-                className={`text-sm ${
-                  step >= item.id ? "text-richblack-5" : "text-richblack-500"
-                }`}
-              >
-                {item.title}
-              </p>
-            </div>
-            
-          </>
-        ))}
+              className={`h-[3px] rounded-full transition-all duration-300 ${
+                step > item.id ? "bg-gold-500" : "bg-ink-700"
+              }`}
+            />
+          </div>
+        )}
       </div>
-      {/* Render specific component based on current step */}
-      {step === 1 && <CourseInformationForm />}
-      {step === 2 && <CourseBuilderForm />}
-      {step === 3 && <PublishCourse />}
-    </>
+    ))}
+  </div>
+
+  {/* Current Step Form */}
+  <div>
+    {step === 1 && <CourseInformationForm />}
+    {step === 2 && <CourseBuilderForm />}
+    {step === 3 && <PublishCourse />}
+  </div>
+</>
   )
 }

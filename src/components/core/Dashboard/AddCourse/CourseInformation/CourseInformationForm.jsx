@@ -72,7 +72,7 @@ export default function CourseInformationForm() {
       currentValues.courseBenefits !== course.whatYouWillLearn ||
       currentValues.courseCategory._id !== course.category._id ||
       currentValues.courseRequirements.toString() !==
-        course.instructions.toString() ||
+      course.instructions.toString() ||
       currentValues.courseImage !== course.thumbnail
     ) {
       return true
@@ -166,12 +166,12 @@ export default function CourseInformationForm() {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="space-y-8 rounded-md border-[1px] border-richblack-700 bg-richblack-800 p-6"
+      className="space-y-8 rounded-2xl border border-ink-700 bg-gradient-to-b from-ink-800 to-ink-900 p-8 shadow-2xl"
     >
       {/* Course Title */}
       <div className="flex flex-col space-y-2">
-        <label className="text-sm text-richblack-5" htmlFor="courseTitle">
-          Course Title <sup className="text-pink-200">*</sup>
+        <label className="text-sm font-medium tracking-wide text-ink-100" htmlFor="courseTitle">
+          Course Title <sup className="text-gold-300">*</sup>
         </label>
         <input
           id="courseTitle"
@@ -180,7 +180,7 @@ export default function CourseInformationForm() {
           className="form-style w-full"
         />
         {errors.courseTitle && (
-          <span className="ml-2 text-xs tracking-wide text-pink-200">
+          <span className="ml-2 text-xs tracking-wide text-gold-300">
             Course title is required
           </span>
         )}
@@ -188,16 +188,16 @@ export default function CourseInformationForm() {
       {/* Course Short Description */}
       <div className="flex flex-col space-y-2">
         <label className="text-sm text-richblack-5" htmlFor="courseShortDesc">
-          Course Short Description <sup className="text-pink-200">*</sup>
+          Course Short Description <sup className="text-gold-300">*</sup>
         </label>
         <textarea
           id="courseShortDesc"
           placeholder="Enter Description"
           {...register("courseShortDesc", { required: true })}
-          className="form-style resize-x-none min-h-[130px] w-full"
+          className="form-style min-h-[140px] resize-none"
         />
         {errors.courseShortDesc && (
-          <span className="ml-2 text-xs tracking-wide text-pink-200">
+          <span className="ml-1 text-xs font-medium tracking-wide text-red-400">
             Course Description is required
           </span>
         )}
@@ -208,16 +208,16 @@ export default function CourseInformationForm() {
           className="text-sm text-richblack-5"
           htmlFor="instructorShortDesc"
         >
-          Instuctor Short Description <sup className="text-pink-200">*</sup>
+          Instuctor Short Description <sup className="text-gold-300">*</sup>
         </label>
         <textarea
           id="instructorShortDesc"
           placeholder="Enter Description"
           {...register("instructorShortDesc", { required: true })}
-          className="form-style resize-x-none min-h-[130px] w-full"
+          className="form-style min-h-[140px] resize-none"
         />
         {errors.instructorShortDesc && (
-          <span className="ml-2 text-xs tracking-wide text-pink-200">
+          <span className="ml-2 text-xs tracking-wide text-gold-300">
             Course Description is required
           </span>
         )}
@@ -225,7 +225,7 @@ export default function CourseInformationForm() {
       {/* Course Price */}
       <div className="flex flex-col space-y-2">
         <label className="text-sm text-richblack-5" htmlFor="coursePrice">
-          Course Price <sup className="text-pink-200">*</sup>
+          Course Price <sup className="text-gold-300">*</sup>
         </label>
         <div className="relative">
           <input
@@ -240,10 +240,10 @@ export default function CourseInformationForm() {
             })}
             className="form-style w-full !pl-12"
           />
-          <HiOutlineCurrencyRupee className="absolute left-3 top-1/2 inline-block -translate-y-1/2 text-2xl text-richblack-400" />
+          <HiOutlineCurrencyRupee className="absolute left-4 top-1/2 -translate-y-1/2 text-xl text-gold-400" />
         </div>
         {errors.coursePrice && (
-          <span className="ml-2 text-xs tracking-wide text-pink-200">
+          <span className="ml-2 text-xs tracking-wide text-gold-300">
             Course Price is required
           </span>
         )}
@@ -251,13 +251,13 @@ export default function CourseInformationForm() {
       {/* Course Category */}
       <div className="flex flex-col space-y-2">
         <label className="text-sm text-richblack-5" htmlFor="courseCategory">
-          Course Category <sup className="text-pink-200">*</sup>
+          Course Category <sup className="text-gold-300">*</sup>
         </label>
         <select
           {...register("courseCategory", { required: true })}
           defaultValue=""
           id="courseCategory"
-          className="form-style w-full"
+          className="form-style cursor-pointer w-full"
         >
           <option value="" disabled>
             Choose a Category
@@ -270,7 +270,7 @@ export default function CourseInformationForm() {
             ))}
         </select>
         {errors.courseCategory && (
-          <span className="ml-2 text-xs tracking-wide text-pink-200">
+          <span className="ml-2 text-xs tracking-wide text-gold-300">
             Course Category is required
           </span>
         )}
@@ -297,16 +297,16 @@ export default function CourseInformationForm() {
       {/* Benefits of the course */}
       <div className="flex flex-col space-y-2">
         <label className="text-sm text-richblack-5" htmlFor="courseBenefits">
-          Benefits of the course <sup className="text-pink-200">*</sup>
+          Benefits of the course <sup className="text-gold-300">*</sup>
         </label>
         <textarea
           id="courseBenefits"
           placeholder="Enter benefits of the course"
           {...register("courseBenefits", { required: true })}
-          className="form-style resize-x-none min-h-[130px] w-full"
+          className="form-style min-h-[140px] resize-none"
         />
         {errors.courseBenefits && (
-          <span className="ml-2 text-xs tracking-wide text-pink-200">
+          <span className="ml-2 text-xs tracking-wide text-gold-300">
             Benefits of the course is required
           </span>
         )}
@@ -321,7 +321,7 @@ export default function CourseInformationForm() {
         getValues={getValues}
       />
       {/* Next Button */}
-      <div className="flex justify-end gap-x-2">
+      <div className="flex items-center justify-end gap-4 border-t border-ink-700 pt-6">
         {editCourse && (
           <button
             onClick={() => dispatch(setStep(2))}

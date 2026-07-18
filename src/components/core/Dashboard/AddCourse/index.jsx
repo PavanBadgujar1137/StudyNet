@@ -3,36 +3,60 @@ import RenderSteps from "./RenderSteps"
 export default function AddCourse() {
   return (
     <>
-      <div className="flex w-full items-start gap-x-6">
-        <div className="flex flex-1 flex-col">
-          <h1 className="mb-14 text-3xl font-medium text-richblack-5">
-            Add Course
-          </h1>
-          <div className="flex-1">
-            <RenderSteps />
-          </div>
-        </div>
-        {/* Course Upload Tips */}
-        <div className="sticky top-10 hidden max-w-[400px] flex-1 rounded-md border-[1px] border-richblack-700 bg-richblack-800 p-6 xl:block">
-          <p className="mb-8 text-lg text-richblack-5">⚡ Course Upload Tips</p>
-          <ul className="ml-5 list-item list-disc space-y-4 text-xs text-richblack-5">
-            <li>Set the Course Price option or make it free.</li>
-            <li>Standard size for the course thumbnail is 1024x576.</li>
-            <li>Video section controls the course overview video.</li>
-            <li>Course Builder is where you create & organize a course.</li>
-            <li>
-              Add Topics in the Course Builder section to create lessons,
-              quizzes, and assignments.
-            </li>
-            <li>
-              Information from the Additional Data section shows up on the
-              course single page.
-            </li>
-            <li>Make Announcements to notify any important</li>
-            <li>Notes to all enrolled students at once.</li>
-          </ul>
-        </div>
+<div className="flex w-full items-start gap-10">
+  {/* Left Section */}
+  <div className="flex flex-1 flex-col">
+    <h1 className="mb-8 text-4xl font-bold tracking-tight text-ink-50">
+      Add Course
+    </h1>
+
+    <div className="rounded-2xl border border-ink-700 bg-ink-900/70 p-6 shadow-lg backdrop-blur-sm">
+      <RenderSteps />
+    </div>
+  </div>
+
+  {/* Course Upload Tips */}
+  <div className="sticky top-8 hidden w-full max-w-sm xl:block">
+    <div className="overflow-hidden rounded-2xl border border-ink-700 bg-gradient-to-b from-ink-800 to-ink-900 shadow-2xl">
+
+      {/* Header */}
+      <div className="border-b border-ink-700 bg-gold-500/10 px-6 py-5">
+        <h2 className="flex items-center gap-2 text-xl font-semibold text-gold-300">
+          ⚡ Course Upload Tips
+        </h2>
+        <p className="mt-1 text-sm text-ink-200">
+          Follow these recommendations for the best learning experience.
+        </p>
       </div>
+
+      {/* Body */}
+      <div className="space-y-4 p-6">
+        {[
+          "Set the course price or make it free.",
+          "Use a 1024 × 576 thumbnail for the best quality.",
+          "Upload an engaging course overview video.",
+          "Organize lessons inside the Course Builder.",
+          "Create quizzes and assignments for better engagement.",
+          "Additional Data appears on the course page.",
+          "Use announcements to notify enrolled students.",
+        ].map((tip, index) => (
+          <div
+            key={index}
+            className="flex items-start gap-3 rounded-xl p-3 transition-all duration-200 hover:bg-ink-700/50"
+          >
+            <div className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-gold-500/15 text-sm font-semibold text-gold-300">
+              ✓
+            </div>
+
+            <p className="text-sm leading-6 text-ink-100">
+              {tip}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</div>
     </>
   )
 }

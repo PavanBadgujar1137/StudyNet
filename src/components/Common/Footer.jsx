@@ -62,7 +62,7 @@ const Footer = () => {
 
                 <a
                   key={i}
-                  href="#"
+                  href="www.google.com"
                   className="flex h-11 w-11 items-center justify-center rounded-full border border-ink-700 bg-ink-800 text-ink-200 transition-all duration-300 hover:-translate-y-1 hover:border-gold-500 hover:bg-gold-500 hover:text-ink-900"
                 >
                   <Icon />
