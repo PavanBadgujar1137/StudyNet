@@ -1,10 +1,10 @@
 import React from "react";
 
 const Stats = [
-  { count: "5K+", label: "Guides & Healers" },
-  { count: "12K+", label: "Secure Containers" },
-  { count: "250K+", label: "Daily Reflections" },
-  { count: "99.8%", label: "Trust Rate" },
+  { count: "50K+", label: "Active Students" },
+  { count: "1,200+", label: "Published Courses" },
+  { count: "2.5M+", label: "Video Lessons Streamed" },
+  { count: "99.4%", label: "Completion Satisfaction" },
 ];
 
 const StatsComponenet = () => {

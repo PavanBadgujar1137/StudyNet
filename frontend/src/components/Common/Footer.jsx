@@ -27,22 +27,22 @@ const Footer = () => {
         <div className="flex flex-col gap-6 max-w-sm">
           <Link to="/" className="flex items-center gap-2 group w-fit transition-transform duration-300 hover:scale-105">
             <img src={logoIcon} alt="OpenHand Logo" className="h-8 md:h-9 w-auto object-contain" />
-            <span className="font-fraunces text-xl md:text-2xl font-bold tracking-tight text-navy leading-none">
+            <span className="text-xl md:text-2xl font-bold tracking-tight text-navy leading-none">
               Open<span className="text-royal-blue">Hand</span>
             </span>
           </Link>
 
           <p className="text-sm text-ink-soft leading-relaxed -mt-1.5">
-            Your practice, held online. OpenHand is the practice platform built for coaches, counsellors, and healers to guide, hold space, and support clients securely.
+            The next-generation online learning and practice platform. High-definition video streaming, interactive quizzes, progress tracking, and automated completion certificates.
           </p>
 
           {/* Dynamic Newsletter Subscription Box */}
           <div className="flex flex-col gap-2.5">
-            <h4 className="text-xs font-bold uppercase tracking-widest text-royal-blue">Stay held &amp; updated</h4>
+            <h4 className="text-xs font-bold uppercase tracking-widest text-royal-blue">Stay Updated on OpenHand</h4>
             {subscribed ? (
               <div className="flex items-center gap-2 text-royal-blue text-sm font-semibold py-2 animate-float">
                 <FaCheck />
-                Thank you for subscribing to our space!
+                Thank you for subscribing to OpenHand!
               </div>
             ) : (
               <form onSubmit={handleSubscribe} className="flex items-center bg-paper border border-line/80 rounded-full p-1 focus-within:border-royal-blue focus-within:ring-2 focus-within:ring-royal-blue/15 transition-all duration-300">
@@ -62,48 +62,44 @@ const Footer = () => {
                 </button>
               </form>
             )}
-          </div>
 
-          {/* Social Icons */}
-          <div className="flex gap-3 text-base">
-            {[
-              { icon: <FaFacebook />, url: "https://facebook.com" },
-              { icon: <FaTwitter />, url: "https://twitter.com" },
-              { icon: <FaInstagram />, url: "https://instagram.com" },
-              { icon: <FaLinkedin />, url: "https://linkedin.com" }
-            ].map((social, idx) => (
-              <a
-                key={idx}
-                href={social.url}
-                target="_blank"
-                rel="noreferrer"
-                className="w-9 h-9 rounded-full bg-paper flex items-center justify-center text-navy hover:bg-royal-blue hover:text-white border border-line/60 transition-all duration-300 hover:scale-115"
-              >
-                {social.icon}
+            {/* Social Media Links */}
+            <div className="flex items-center gap-3 mt-2 text-ink-soft">
+              <a href="https://facebook.com" target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full bg-paper flex items-center justify-center hover:bg-royal-blue hover:text-white transition-all duration-200">
+                <FaFacebook className="text-xs" />
               </a>
-            ))}
+              <a href="https://twitter.com" target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full bg-paper flex items-center justify-center hover:bg-royal-blue hover:text-white transition-all duration-200">
+                <FaTwitter className="text-xs" />
+              </a>
+              <a href="https://instagram.com" target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full bg-paper flex items-center justify-center hover:bg-royal-blue hover:text-white transition-all duration-200">
+                <FaInstagram className="text-xs" />
+              </a>
+              <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full bg-paper flex items-center justify-center hover:bg-royal-blue hover:text-white transition-all duration-200">
+                <FaLinkedin className="text-xs" />
+              </a>
+            </div>
           </div>
         </div>
 
-        {/* Right columns: Links */}
-        <div className="flex flex-wrap gap-x-16 gap-y-10 lg:pt-2">
+        {/* Right column: Navigation Links */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 lg:gap-16">
           <div>
             <h3 className="font-semibold text-navy text-xs uppercase tracking-widest mb-5">Platform</h3>
             <ul className="flex flex-col gap-3 text-sm text-ink-soft">
-              <li><Link to="/about" className="hover:text-royal-blue hover:translate-x-1.5 transition-all duration-200 inline-block">About Us</Link></li>
-              <li><Link to="/contact" className="hover:text-royal-blue hover:translate-x-1.5 transition-all duration-200 inline-block">Contact</Link></li>
-              <li><a href="#journey" className="hover:text-royal-blue hover:translate-x-1.5 transition-all duration-200 inline-block">Client Journey</a></li>
-              <li><a href="#start" className="hover:text-royal-blue hover:translate-x-1.5 transition-all duration-200 inline-block">Pricing & Plans</a></li>
+              <li><Link to="/catalog/web-development" className="hover:text-royal-blue hover:translate-x-1.5 transition-all duration-200 inline-block">Web Development</Link></li>
+              <li><Link to="/catalog/data-science" className="hover:text-royal-blue hover:translate-x-1.5 transition-all duration-200 inline-block">Data Science</Link></li>
+              <li><Link to="/catalog/ui-ux-design" className="hover:text-royal-blue hover:translate-x-1.5 transition-all duration-200 inline-block">UI/UX Design</Link></li>
+              <li><Link to="/about" className="hover:text-royal-blue hover:translate-x-1.5 transition-all duration-200 inline-block">About OpenHand</Link></li>
             </ul>
           </div>
 
           <div>
             <h3 className="font-semibold text-navy text-xs uppercase tracking-widest mb-5">Resources</h3>
             <ul className="flex flex-col gap-3 text-sm text-ink-soft">
-              <li><a href="/" className="hover:text-royal-blue hover:translate-x-1.5 transition-all duration-200 inline-block">Articles & Guides</a></li>
-              <li><a href="/" className="hover:text-royal-blue hover:translate-x-1.5 transition-all duration-200 inline-block">Community Forum</a></li>
-              <li><a href="/" className="hover:text-royal-blue hover:translate-x-1.5 transition-all duration-200 inline-block">Ethical Standards</a></li>
+              <li><a href="/" className="hover:text-royal-blue hover:translate-x-1.5 transition-all duration-200 inline-block">Course Catalog</a></li>
+              <li><a href="/" className="hover:text-royal-blue hover:translate-x-1.5 transition-all duration-200 inline-block">Student Forum</a></li>
               <li><a href="/" className="hover:text-royal-blue hover:translate-x-1.5 transition-all duration-200 inline-block">Help Center</a></li>
+              <li><a href="/" className="hover:text-royal-blue hover:translate-x-1.5 transition-all duration-200 inline-block">Certificates</a></li>
             </ul>
           </div>
 
@@ -123,7 +119,7 @@ const Footer = () => {
         <div className="flex flex-col sm:flex-row items-center justify-between text-xs text-ink-soft/70 gap-4">
           <p>© 2026 OpenHand. All rights reserved.</p>
           <p className="flex items-center gap-1.5">
-            Made with ❤️ for healers & guides · <span className="text-ink-soft hover:text-royal-blue transition-colors cursor-pointer">openhand.live</span>
+            Empowering students &amp; instructors worldwide · <span className="text-ink-soft hover:text-royal-blue transition-colors cursor-pointer">openhand.live</span>
           </p>
         </div>
       </div>

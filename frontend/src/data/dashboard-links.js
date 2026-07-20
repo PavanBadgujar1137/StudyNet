@@ -16,7 +16,8 @@ export const sidebarLinks = [
     type: ACCOUNT_TYPE.STUDENT,
     icon: "VscMortarBoard",
   },
-  
+
+
   // 2. All Courses (For both)
   {
     id: 6,
@@ -24,7 +25,7 @@ export const sidebarLinks = [
     path: "/dashboard/all-courses",
     icon: "VscCompass",
   },
-  
+
   // 3. Cart (Student only)
   {
     id: 7,
@@ -49,6 +50,14 @@ export const sidebarLinks = [
     type: ACCOUNT_TYPE.INSTRUCTOR,
     icon: "VscAdd",
   },
+  {
+    id: 10,
+    name: "Live Schedule",
+    path: "/dashboard/schedule",
+    type: ACCOUNT_TYPE.INSTRUCTOR,
+    icon: "VscCalendar",
+  },
+
 
   // 5. My Profile (For both)
   {

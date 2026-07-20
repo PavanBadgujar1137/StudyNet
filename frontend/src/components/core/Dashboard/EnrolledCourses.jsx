@@ -123,6 +123,24 @@ export default function EnrolledCourses() {
                     />
                   </div>
 
+                  {/* Validity Countdown bar (if applicable) */}
+                  {course.validityDays && (
+                    <div className="w-full shrink-0 text-xs">
+                      <div className="flex justify-between text-slate-500 mb-1">
+                        <span>Validity</span>
+                        <span>{course.validityDays} days left</span>
+                      </div>
+                      <ProgressBar
+                        completed={100}
+                        height="3px"
+                        isLabelVisible={false}
+                        bgColor="#10B981"
+                        baseBgColor="#E2E8F0"
+                      />
+                    </div>
+                  )}
+
+
                   {/* Actions row */}
                   <div className="flex items-center justify-between mt-1 shrink-0 gap-3 border-t border-slate-100 pt-3">
                     <button

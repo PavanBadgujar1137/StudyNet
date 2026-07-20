@@ -5,6 +5,7 @@ import cartReducer from "../slices/cartSlice"
 import courseReducer from "../slices/courseSlice"
 import profileReducer from "../slices/profileSlice"
 import viewCourseReducer from "../slices/viewCourseSlice"
+import liveClassReducer from "../slices/liveClassSlice"
 
 const rootReducer = combineReducers({
   auth: authReducer,
@@ -12,6 +13,9 @@ const rootReducer = combineReducers({
   course: courseReducer,
   cart: cartReducer,
   viewCourse: viewCourseReducer,
+  liveClass: liveClassReducer,
 })
 
 export default rootReducer
+
+

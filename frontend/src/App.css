@@ -8,7 +8,9 @@ body,
   min-height: 100%;
   background-color: #F3F4F6;
   color: #0D1B3D;
-  font-family: 'Poppins', 'Inter', sans-serif;
+  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 html,
@@ -330,4 +332,125 @@ details > summary::-webkit-details-marker {
 .animate-slide-down-in {
   animation: slideDownIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Over-the-Top Animation Keyframes & Dynamic Classes */
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-12px) rotate(1deg); }
+}
+
+@keyframes floatReverse {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(12px) rotate(-1deg); }
+}
+
+@keyframes shimmerSweep {
+  0% { transform: translateX(-150%) skewX(-20deg); }
+  100% { transform: translateX(250%) skewX(-20deg); }
+}
+
+@keyframes borderGlowRotate {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+@keyframes neonPulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(37, 99, 235, 0.4), 0 0 30px rgba(124, 58, 237, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(37, 99, 235, 0.7), 0 0 50px rgba(124, 58, 237, 0.5);
+  }
+}
+
+.animate-gradient-text {
+  background-size: 200% auto;
+  animation: gradientShift 4s ease infinite;
+}
+
+.animate-float-slow {
+  animation: floatSlow 6s ease-in-out infinite;
+}
+
+.animate-float-reverse {
+  animation: floatReverse 7s ease-in-out infinite;
+}
+
+.animate-neon-pulse {
+  animation: neonPulseGlow 3s ease-in-out infinite;
+}
+
+/* Shimmer Overlay effect */
+.btn-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.btn-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: translateX(-150%) skewX(-20deg);
+}
+.btn-shimmer:hover::after {
+  animation: shimmerSweep 1.2s ease-in-out;
+}
+
+/* Neon & Glassmorphic Container Cards */
+.glass-neon-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 20px 40px -15px rgba(37, 99, 235, 0.12),
+              0 0 20px 0 rgba(124, 58, 237, 0.08);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.glass-neon-card:hover {
+  transform: translateY(-8px) scale(1.01);
+  box-shadow: 0 30px 60px -15px rgba(37, 99, 235, 0.25),
+              0 0 35px 2px rgba(124, 58, 237, 0.2);
+}
+
+.glass-dark-neon {
+  background: rgba(13, 27, 61, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4),
+              0 0 30px rgba(96, 165, 250, 0.15);
+  transition: all 0.4s ease;
+}
+.glass-dark-neon:hover {
+  border-color: rgba(96, 165, 250, 0.4);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5),
+              0 0 45px rgba(96, 165, 250, 0.3);
+}
+
+/* Animated Neon Border wrapper */
+.animated-gradient-border {
+  position: relative;
+  border-radius: 28px;
+  background: linear-gradient(135deg, #2563EB, #7C3AED, #60A5FA, #EC4899);
+  background-size: 300% 300%;
+  animation: gradientShift 6s ease infinite;
+  padding: 2px;
+}
+
 

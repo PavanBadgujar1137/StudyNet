@@ -4,8 +4,8 @@ function Login() {
   return (
     <Template
       title="Welcome Back to OpenHand"
-      description1="Connect with clients, build private cohorts, and guide people ethically."
-      description2="A practice space built for guides and healers."
+      description1="Build skills for today, tomorrow, and beyond."
+      description2="Education to future-proof your career."
       formType="login"
     />
   )

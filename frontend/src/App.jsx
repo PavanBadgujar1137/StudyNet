@@ -36,6 +36,9 @@ import Signup from "./pages/Signup"
 import UpdatePassword from "./pages/UpdatePassword"
 import VerifyEmail from "./pages/VerifyEmail"
 import ViewCourse from "./pages/ViewCourse"
+// Phase 2 — Live pages
+import SchedulingDashboard from "./components/core/Dashboard/SchedulingDashboard"
+import LiveClassRoom from "./pages/LiveClassRoom"
 import { getUserDetails } from "./services/operations/profileAPI"
 import { ACCOUNT_TYPE } from "./utils/constants"
 
@@ -70,6 +73,15 @@ function App() {
         <Route path="courses/:courseId" element={<CourseDetails />} />
         <Route path="all-courses" element={<PublicCourses />} />
         <Route path="catalog/:catalogName" element={<Catalog />} />
+        {/* Phase 2 — Live classroom */}
+        <Route
+          path="live/:classId"
+          element={
+            <PrivateRoute>
+              <LiveClassRoom />
+            </PrivateRoute>
+          }
+        />
         {/* Open Route - for Only Non Logged in User */}
         <Route
           path="login"
@@ -133,6 +145,8 @@ function App() {
                 path="dashboard/edit-course/:courseId"
                 element={<EditCourse />}
               />
+              {/* Phase 2 — Live Schedule */}
+              <Route path="dashboard/schedule" element={<SchedulingDashboard />} />
             </>
           )}
           {/* Route only for Students */}

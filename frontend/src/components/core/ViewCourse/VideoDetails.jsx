@@ -1,20 +1,17 @@
-import React, { useEffect, useRef, useState } from "react"
+import React, { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import { useNavigate, useParams } from "react-router-dom"
-
-import "video-react/dist/video-react.css"
-import { useLocation } from "react-router-dom"
-import { BigPlayButton, Player } from "video-react"
+import { useNavigate, useParams, useLocation } from "react-router-dom"
 
 import { markLectureAsComplete } from "../../../services/operations/courseDetailsAPI"
 import { updateCompletedLectures } from "../../../slices/viewCourseSlice"
-import IconBtn from "../../Common/IconBtn"
+import LectureVideoPlayer from "../Course/LectureVideoPlayer"
+import StudyMaterialHub from "../Course/StudyMaterialHub"
+
 
 const VideoDetails = () => {
   const { courseId, sectionId, subSectionId } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
-  const playerRef = useRef(null)
   const dispatch = useDispatch()
   const { token } = useSelector((state) => state.auth)
   const { courseSectionData, courseEntireData, completedLectures } =
@@ -22,7 +19,6 @@ const VideoDetails = () => {
 
   const [videoData, setVideoData] = useState([])
   const [previewSource, setPreviewSource] = useState("")
-  const [videoEnded, setVideoEnded] = useState(false)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -31,20 +27,17 @@ const VideoDetails = () => {
       if (!courseId && !sectionId && !subSectionId) {
         navigate(`/dashboard/enrolled-courses`)
       } else {
-        // console.log("courseSectionData", courseSectionData)
         const filteredData = courseSectionData.filter(
           (course) => course._id === sectionId
         )
-        // console.log("filteredData", filteredData)
         const filteredVideoData = filteredData?.[0]?.subSection.filter(
           (data) => data._id === subSectionId
         )
-        // console.log("filteredVideoData", filteredVideoData)
         setVideoData(filteredVideoData[0])
         setPreviewSource(courseEntireData.thumbnail)
-        setVideoEnded(false)
       }
     })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseSectionData, courseEntireData, location.pathname])
 
   // check if the lecture is the first video of the course
@@ -168,8 +161,10 @@ const VideoDetails = () => {
     setLoading(false)
   }
 
+  const { user } = useSelector((state) => state.profile)
+
   return (
-    <div className="flex flex-col gap-5 text-white">
+    <div className="flex flex-col gap-6 text-white pb-10">
       {!videoData ? (
         <img
           src={previewSource}
@@ -177,73 +172,62 @@ const VideoDetails = () => {
           className="h-full w-full rounded-md object-cover"
         />
       ) : (
-        <Player
-          ref={playerRef}
-          aspectRatio="16:9"
-          playsInline
-          onEnded={() => setVideoEnded(true)}
-          src={videoData?.videoUrl}
-        >
-          <BigPlayButton position="center" />
-          {/* Render When Video Ends */}
-          {videoEnded && (
-            <div
-              style={{
-                backgroundImage:
-                  "linear-gradient(to top, rgb(0, 0, 0), rgba(0,0,0,0.7), rgba(0,0,0,0.5), rgba(0,0,0,0.1)",
-              }}
-              className="full absolute inset-0 z-[100] grid h-full place-content-center font-inter"
-            >
-              {!completedLectures.includes(subSectionId) && (
-                <IconBtn
+        <div className="relative">
+          <LectureVideoPlayer
+            videoUrl={videoData?.videoUrl}
+            watermarkText={user?.email || "OpenHand Portal"}
+          />
+          {/* Navigation Controls Overlay under Video */}
+          <div className="mt-4 flex justify-between gap-4">
+            <div className="flex gap-2">
+              {!isFirstVideo() && (
+                <button
                   disabled={loading}
-                  onclick={() => handleLectureCompletion()}
-                  text={!loading ? "Mark As Completed" : "Loading..."}
-                  customClasses="text-xl max-w-max px-4 mx-auto"
-                />
+                  onClick={goToPrevVideo}
+                  className="px-4 py-2 bg-richblack-800 hover:bg-richblack-700 rounded-lg text-sm font-semibold border border-richblack-700"
+                >
+                  Previous Lecture
+                </button>
               )}
-              <IconBtn
-                disabled={loading}
-                onclick={() => {
-                  if (playerRef?.current) {
-                    // set the current time of the video to 0
-                    playerRef?.current?.seek(0)
-                    setVideoEnded(false)
-                  }
-                }}
-                text="Rewatch"
-                customClasses="text-xl max-w-max px-4 mx-auto mt-2"
-              />
-              <div className="mt-10 flex min-w-[250px] justify-center gap-x-4 text-xl">
-                {!isFirstVideo() && (
-                  <button
-                    disabled={loading}
-                    onClick={goToPrevVideo}
-                    className="blackButton"
-                  >
-                    Prev
-                  </button>
-                )}
-                {!isLastVideo() && (
-                  <button
-                    disabled={loading}
-                    onClick={goToNextVideo}
-                    className="blackButton"
-                  >
-                    Next
-                  </button>
-                )}
-              </div>
+              {!isLastVideo() && (
+                <button
+                  disabled={loading}
+                  onClick={goToNextVideo}
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm font-semibold text-white"
+                >
+                  Next Lecture
+                </button>
+              )}
             </div>
-          )}
-        </Player>
+
+            {!completedLectures.includes(subSectionId) ? (
+              <button
+                disabled={loading}
+                onClick={handleLectureCompletion}
+                className="px-4 py-2 bg-green-600 hover:bg-green-500 rounded-lg text-sm font-semibold text-white"
+              >
+                Mark Completed
+              </button>
+            ) : (
+              <span className="text-xs text-green-400 font-bold flex items-center bg-green-500/10 px-3 py-1.5 rounded-full border border-green-500/20">
+                ✓ Completed
+              </span>
+            )}
+          </div>
+        </div>
       )}
 
-      <h1 className="mt-4 text-3xl font-semibold">{videoData?.title}</h1>
-      <p className="pt-2 pb-6">{videoData?.description}</p>
+      <div>
+        <h1 className="text-2xl font-bold text-richblack-5">{videoData?.title}</h1>
+        <p className="text-richblack-400 text-sm mt-1">{videoData?.description}</p>
+      </div>
+
+      <div className="border-t border-richblack-800 pt-6">
+        <StudyMaterialHub courseId={courseId} />
+      </div>
     </div>
   )
 }
 
 export default VideoDetails
-// video
+

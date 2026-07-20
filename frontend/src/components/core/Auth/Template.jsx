@@ -32,7 +32,7 @@ function Template({ title, description1, description2, formType }) {
             </div>
           </div>
           
-          {/* Premium CSS-based Glassmorphic Graphics Panel (Wow factor) */}
+          {/* Premium CSS-based Glassmorphic Graphics Panel */}
           <div className="relative mx-auto w-11/12 max-w-[450px] md:mx-0 flex items-center justify-center animate-float">
             <div className="w-full aspect-square rounded-[32px] bg-white/70 border border-white/60 flex flex-col justify-between p-10 relative overflow-hidden shadow-2xl">
               {/* Decorative backgrounds */}
@@ -41,31 +41,30 @@ function Template({ title, description1, description2, formType }) {
 
               <div className="flex justify-between items-center w-full">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-royal-blue bg-royal-blue/10 border border-royal-blue/20 px-3.5 py-1.5 rounded-full">
-                  Secure Practice Space
+                  Educational &amp; Practice Platform
                 </span>
                 <span className="text-xs font-semibold text-ink-soft">openhand.live</span>
               </div>
 
               <div className="flex flex-col items-center justify-center my-auto py-8">
-                <div className="w-48 h-48 rounded-full bg-white flex flex-col items-center justify-center border border-line/60 shadow-inner relative group gap-1">
-                  <div className="absolute inset-2 rounded-full border border-dashed border-royal-blue/20 group-hover:rotate-45 transition-transform duration-700"></div>
+                <div className="flex flex-col items-center justify-center gap-3">
                   <img 
                     src={logoIcon} 
-                    alt="OpenHand Icon" 
-                    className="w-24 object-contain hover:scale-110 transition-transform duration-300 relative z-10" 
+                    alt="OpenHand Logo" 
+                    className="h-20 w-auto object-contain" 
                   />
-                  <span className="font-fraunces text-2xl font-bold tracking-tight text-navy relative z-10 mt-1">
+                  <span className="text-3xl font-extrabold tracking-tight text-navy">
                     Open<span className="text-royal-blue">Hand</span>
                   </span>
                 </div>
               </div>
 
               <div className="border-t border-line/60 pt-8">
-                <p className="font-fraunces italic text-xl text-navy text-center leading-relaxed">
-                  "Your Growth, Our Guidance"
+                <p className="italic text-xl text-navy text-center leading-relaxed font-semibold">
+                  "Education for a Future-Proof Career"
                 </p>
                 <p className="text-xs text-center text-ink-soft mt-2.5">
-                  The practice space built for coaches, counsellors &amp; healers.
+                  The online platform built for students &amp; instructors.
                 </p>
               </div>
             </div>

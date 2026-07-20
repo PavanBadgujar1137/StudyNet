@@ -5,42 +5,42 @@ import CTAButton from "../../../components/core/HomePage/Button";
 const LearningGridArray = [
   {
     order: -1,
-    heading: "A Trusted Space for",
-    highliteText: "Guides & Healers",
+    heading: "World-Class Learning for",
+    highliteText: "Anyone, Anywhere",
     description:
-      "OpenHand provides secure check-ins, private cohorts, and ethical practice tools to support coaches, counsellors, and guides around the world.",
-    BtnText: "Explore Platform",
-    BtnLink: "/",
+      "OpenHand partners with leading instructors and tech experts to deliver hands-on, job-ready education in Web Development, Data Science, and UI/UX Design.",
+    BtnText: "Explore Courses",
+    BtnLink: "/signup",
   },
   {
     order: 1,
-    heading: "Ethical Practice Boundaries",
+    heading: "Curriculum Designed by Experts",
     description:
-      "Our platform features built-in boundaries and guidelines that respect professional practice codes.",
+      "Courses are built from the ground up by industry professionals using modern tech stacks.",
   },
   {
     order: 2,
-    heading: "Flexible Client Journeys",
+    heading: "Flexible Learning Rhythm",
     description:
-      "Design check-ins and reflection prompts that meet your client's needs on their transformation path.",
+      "Watch video lectures on your schedule, track lesson progress, and pause anytime.",
   },
   {
     order: 3,
-    heading: "Secure Reflection Space",
+    heading: "Interactive Skill Quizzes",
     description:
-      "Conversations and notes are heavily encrypted, protecting client confidentiality.",
+      "Reinforce knowledge with built-in quizzes and instant feedback after every module.",
   },
   {
     order: 4,
-    heading: "Quietly Intelligent Tools",
+    heading: "Verified Certificates",
     description:
-      "Use AI that sounds like you to draft reflection questions and help organize session highlights.",
+      "Earn shareable, official certificates upon finishing 100% of course lectures.",
   },
   {
     order: 5,
-    heading: "Circular Community",
+    heading: "Vibrant Student Community",
     description:
-      "Fosters peer support and accountability pods to keep progress going organically.",
+      "Engage with fellow learners, share project feedback, and collaborate on challenges.",
   },
 ];
 

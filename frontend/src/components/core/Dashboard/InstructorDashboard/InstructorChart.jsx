@@ -178,7 +178,7 @@ export default function InstructorChart({ courses }) {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-line/50 pb-4">
         <div>
           <h3 className="text-lg font-bold text-navy font-fraunces">Visual Performance</h3>
-          <p className="text-xs text-ink-soft mt-0.5">Visualize client distribution and income distribution across spaces</p>
+          <p className="text-xs text-ink-soft mt-0.5">Visualize student enrollments and revenue distribution across courses</p>
         </div>
         
         <div className="flex items-center gap-3 self-end sm:self-auto">
@@ -229,7 +229,7 @@ export default function InstructorChart({ courses }) {
                   : "text-slate-500 hover:text-navy"
               }`}
             >
-              Clients
+              Students
             </button>
             <button
               onClick={() => setCurrChart("income")}

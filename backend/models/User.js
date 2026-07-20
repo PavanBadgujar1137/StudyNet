@@ -67,8 +67,14 @@ const userSchema = new mongoose.Schema(
         ref: "courseProgress",
       },
     ],
+    // Phase 1: batch enrollments
+    enrolledBatches: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Batch",
+      },
+    ],
 
-    // Add timestamps for when the document is created and last modified
   },
   { timestamps: true }
 )

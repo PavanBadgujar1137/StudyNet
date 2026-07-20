@@ -16,3 +16,4 @@ export const NavbarLinks = [
     path: "/contact",
   },
 ];
+

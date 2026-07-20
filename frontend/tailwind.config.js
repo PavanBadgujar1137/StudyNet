@@ -3,11 +3,12 @@ module.exports = {
   content: ["./src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     fontFamily: {
-      inter: ["Inter", "sans-serif"],
-      poppins: ["Poppins", "sans-serif"],
-      fraunces: ["Fraunces", "serif"],
-      "edu-sa": ["Edu SA Beginner", "cursive"],
-      mono: ["Roboto Mono", "monospace"],
+      inter: ["Plus Jakarta Sans", "Inter", "sans-serif"],
+      poppins: ["Plus Jakarta Sans", "Inter", "sans-serif"],
+      jakarta: ["Plus Jakarta Sans", "Inter", "sans-serif"],
+      fraunces: ["Plus Jakarta Sans", "Inter", "sans-serif"],
+      sans: ["Plus Jakarta Sans", "Inter", "system-ui", "sans-serif"],
+      mono: ["Plus Jakarta Sans", "Inter", "sans-serif"],
     },
     colors: {
       white: "#fff",
