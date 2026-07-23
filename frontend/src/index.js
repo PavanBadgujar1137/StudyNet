@@ -1,5 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+// ─── OpenHand Design Tokens (import first so all CSS vars are available globally)
+import "./styles/tokens.css";
 import App from "./App";
 
 import { BrowserRouter } from "react-router-dom";

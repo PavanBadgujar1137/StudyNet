@@ -75,6 +75,16 @@ app.use(
 // Connecting to cloudinary
 cloudinaryConnect()
 
+const practitionerRoutes = require("./routes/practitioner")
+const offerRoutes = require("./routes/offer")
+const checkinRoutes = require("./routes/checkin")
+const reflectionRoutes = require("./routes/reflection")
+const consentRoutes = require("./routes/consent")
+const circleRoutes = require("./routes/circle")
+const copilotRoutes = require("./routes/copilot")
+const plansRoutes = require("./routes/plans")
+const orgRoutes = require("./routes/org")
+
 app.use("/api/v1/auth", userRoutes)
 app.use("/api/v1/profile", profileRoutes)
 app.use("/api/v1/course", courseRoutes)
@@ -83,6 +93,17 @@ app.use("/api/v1/reach", contactUsRoute)
 app.use("/api/v1/live", liveClassRoutes)       // Phase 2 — Live Classes
 app.use("/api/v1/lecture", recordedLectureRoutes) // Phase 3 — Recorded Lectures
 app.use("/api/v1/note", noteRoutes)            // Phase 3 — Study Materials / Notes
+
+// OpenHand Core API Routes
+app.use("/api/v1/practitioners", practitionerRoutes)
+app.use("/api/v1/offers", offerRoutes)
+app.use("/api/v1/checkins", checkinRoutes)
+app.use("/api/v1/reflections", reflectionRoutes)
+app.use("/api/v1/consent", consentRoutes)
+app.use("/api/v1/circles", circleRoutes)
+app.use("/api/v1/copilot", copilotRoutes)
+app.use("/api/v1/plans", plansRoutes)
+app.use("/api/v1/org", orgRoutes)
 
 
 // Testing the server

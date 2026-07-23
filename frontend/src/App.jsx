@@ -20,25 +20,40 @@ import MyCourses from "./components/core/Dashboard/MyCourses"
 import MyProfile from "./components/core/Dashboard/MyProfile"
 import Settings from "./components/core/Dashboard/Settings"
 import VideoDetails from "./components/core/ViewCourse/VideoDetails"
-import About from "./pages/About"
 import Catalog from "./pages/Catalog"
-import PublicCourses from "./pages/PublicCourses"
-import DashboardAllCourses from "./pages/DashboardAllCourses"
-import Contact from "./pages/Contact"
 import CourseDetails from "./pages/CourseDetails"
 import Dashboard from "./pages/Dashboard"
 import Error from "./pages/Error"
 import ForgotPassword from "./pages/ForgotPassword"
-// Pages
-import Home from "./pages/Home"
 import Login from "./pages/Login"
 import Signup from "./pages/Signup"
 import UpdatePassword from "./pages/UpdatePassword"
 import VerifyEmail from "./pages/VerifyEmail"
+import DashboardAllCourses from "./pages/DashboardAllCourses"
 import ViewCourse from "./pages/ViewCourse"
-// Phase 2 — Live pages
-import SchedulingDashboard from "./components/core/Dashboard/SchedulingDashboard"
 import LiveClassRoom from "./pages/LiveClassRoom"
+import SchedulingDashboard from "./components/core/Dashboard/SchedulingDashboard"
+
+// OpenHand Marketing Pages (Verbatim Specs)
+import HomeMarketing from "./pages/marketing/Home"
+import Pricing from "./pages/marketing/Pricing"
+import ForOrganizations from "./pages/marketing/ForOrganizations"
+import FindAPractitioner from "./pages/marketing/FindAPractitioner"
+import CoPilot from "./pages/marketing/CoPilot"
+import ClientJourney from "./pages/marketing/ClientJourney"
+import StartFree from "./pages/marketing/StartFree"
+import TalkToHuman from "./pages/marketing/TalkToHuman"
+import PractitionerOnboarding from "./pages/PractitionerOnboarding"
+
+// OpenHand Authenticated Apps (B & C)
+import ClientApp from "./pages/app/ClientApp"
+import PractitionerApp from "./pages/practice/PractitionerApp"
+import OrgAdmin from "./pages/org/OrgAdmin"
+
+// Phase 2 — Role Guards
+import ClientRoute from "./components/core/Auth/ClientRoute"
+import PractitionerRoute from "./components/core/Auth/PractitionerRoute"
+import OrgAdminRoute from "./components/core/Auth/OrgAdminRoute"
 import { getUserDetails } from "./services/operations/profileAPI"
 import { ACCOUNT_TYPE } from "./utils/constants"
 
@@ -67,11 +82,58 @@ function App() {
     <div className="flex min-h-screen w-full flex-col overflow-x-hidden bg-richblack-900 font-inter">
       <Navbar />
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/contact" element={<Contact />} />
+        {/* OpenHand Marketing Sitemap (A1-A8) */}
+        <Route path="/" element={<HomeMarketing />} />
+        <Route path="/pricing" element={<Pricing />} />
+        <Route path="/for-organizations" element={<ForOrganizations />} />
+        <Route path="/find-a-practitioner" element={<FindAPractitioner />} />
+        <Route path="/co-pilot" element={<CoPilot />} />
+        <Route path="/client-journey" element={<ClientJourney />} />
+        <Route path="/start-free" element={<StartFree />} />
+        <Route path="/talk-to-human" element={<TalkToHuman />} />
+
+        {/* Client App (5 Tabs) */}
+        <Route
+          path="/app/*"
+          element={
+            <ClientRoute>
+              <ClientApp />
+            </ClientRoute>
+          }
+        />
+
+        {/* Practitioner App (7 Sections) */}
+        <Route
+          path="/practice/*"
+          element={
+            <PractitionerRoute>
+              <PractitionerApp />
+            </PractitionerRoute>
+          }
+        />
+
+        {/* Org Portal */}
+        <Route
+          path="/org/dashboard"
+          element={
+            <OrgAdminRoute>
+              <OrgAdmin />
+            </OrgAdminRoute>
+          }
+        />
+
+        {/* Practitioner Onboarding Flow */}
+        <Route
+          path="/onboarding/practitioner"
+          element={
+            <PractitionerRoute>
+              <PractitionerOnboarding />
+            </PractitionerRoute>
+          }
+        />
+
+        {/* Program & Course Compatibility Routes */}
         <Route path="courses/:courseId" element={<CourseDetails />} />
-        <Route path="all-courses" element={<PublicCourses />} />
         <Route path="catalog/:catalogName" element={<Catalog />} />
         {/* Phase 2 — Live classroom */}
         <Route

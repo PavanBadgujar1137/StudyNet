@@ -1,0 +1,124 @@
+/* Home.css */
+
+.oh-home-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.oh-home-hero {
+  padding: var(--oh-space-16) 0 var(--oh-space-12);
+  text-align: center;
+}
+
+.oh-home-hero h1 {
+  font-size: var(--oh-text-5xl);
+  max-width: 22ch;
+  margin: 0 auto var(--oh-space-6);
+  line-height: 1.15;
+}
+
+.oh-home-hero .sub {
+  max-width: 58ch;
+  margin: 0 auto var(--oh-space-8);
+  color: var(--oh-muted);
+  font-size: var(--oh-text-lg);
+}
+
+.cta-row {
+  display: flex;
+  gap: var(--oh-space-4);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.held-line-wrap {
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+.held-line {
+  width: 100%;
+  height: 64px;
+}
+
+.oh-sec {
+  padding: var(--oh-space-16) 0;
+}
+
+.oh-sec-title {
+  font-size: var(--oh-text-3xl);
+  max-width: 24ch;
+  margin-bottom: var(--oh-space-10);
+}
+
+.oh-sec-title.dark {
+  color: #fff;
+}
+
+.oh-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--oh-space-6);
+}
+
+.oh-sec-community {
+  background: rgba(37, 99, 235, 0.04);
+}
+
+.dashed-card {
+  border-style: dashed !important;
+  background: transparent !important;
+}
+
+.oh-sec-dark {
+  background: var(--oh-navy);
+  color: #fff;
+}
+
+.ladder-sec {
+  text-align: center;
+}
+
+.ladder-sec .oh-sec-title {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.ladder-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--oh-space-6);
+  max-width: 960px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+.step-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.step-num {
+  font-family: var(--oh-font-head);
+  font-weight: 700;
+  color: var(--oh-violet);
+  font-size: var(--oh-text-sm);
+  margin-bottom: var(--oh-space-3);
+  display: block;
+}
+
+.step-link {
+  margin-top: auto;
+  padding-top: var(--oh-space-4);
+  font-size: var(--oh-text-sm);
+  font-weight: 600;
+  color: var(--oh-blue);
+  text-decoration: underline;
+}
+
+@media (max-width: 900px) {
+  .oh-grid-3, .ladder-steps {
+    grid-template-columns: 1fr;
+  }
+}

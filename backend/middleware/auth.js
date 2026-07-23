@@ -45,11 +45,10 @@ exports.auth = async (req, res, next) => {
 exports.isStudent = async (req, res, next) => {
 	try {
 		const userDetails = await User.findOne({ email: req.user.email });
-
-		if (userDetails.accountType !== "Student") {
+		if (userDetails.accountType !== "Student" && userDetails.accountType !== "Client") {
 			return res.status(401).json({
 				success: false,
-				message: "This is a Protected Route for Students",
+				message: "This is a Protected Route for Clients/Students",
 			});
 		}
 		next();
@@ -59,6 +58,9 @@ exports.isStudent = async (req, res, next) => {
 			.json({ success: false, message: `User Role Can't be Verified` });
 	}
 };
+
+exports.isClient = exports.isStudent;
+
 exports.isAdmin = async (req, res, next) => {
 	try {
 		const userDetails = await User.findOne({ email: req.user.email });
@@ -76,17 +78,15 @@ exports.isAdmin = async (req, res, next) => {
 			.json({ success: false, message: `User Role Can't be Verified` });
 	}
 };
+
 exports.isInstructor = async (req, res, next) => {
 	try {
 		const userDetails = await User.findOne({ email: req.user.email });
-		console.log(userDetails);
 
-		console.log(userDetails.accountType);
-
-		if (userDetails.accountType !== "Instructor") {
+		if (userDetails.accountType !== "Instructor" && userDetails.accountType !== "Practitioner") {
 			return res.status(401).json({
 				success: false,
-				message: "This is a Protected Route for Instructor",
+				message: "This is a Protected Route for Practitioners/Instructors",
 			});
 		}
 		next();
@@ -96,3 +96,24 @@ exports.isInstructor = async (req, res, next) => {
 			.json({ success: false, message: `User Role Can't be Verified` });
 	}
 };
+
+exports.isPractitioner = exports.isInstructor;
+
+exports.isOrgAdmin = async (req, res, next) => {
+	try {
+		const userDetails = await User.findOne({ email: req.user.email });
+
+		if (userDetails.accountType !== "OrgAdmin") {
+			return res.status(401).json({
+				success: false,
+				message: "This is a Protected Route for OrgAdmin",
+			});
+		}
+		next();
+	} catch (error) {
+		return res
+			.status(500)
+			.json({ success: false, message: `User Role Can't be Verified` });
+	}
+};
+

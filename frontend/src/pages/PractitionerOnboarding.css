@@ -1,0 +1,202 @@
+/* PractitionerOnboarding.css */
+
+.onboarding-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.onboarding-content {
+  flex: 1;
+  padding-top: var(--oh-space-12);
+  padding-bottom: var(--oh-space-16);
+  max-width: 840px;
+}
+
+.onboarding-header {
+  text-align: center;
+  margin-bottom: var(--oh-space-10);
+}
+
+.onboarding-header h1 {
+  font-size: var(--oh-text-4xl);
+  font-weight: 700;
+  margin-top: var(--oh-space-2);
+}
+
+.onboarding-header .sub {
+  color: var(--oh-muted);
+  font-size: var(--oh-text-md);
+  margin-top: var(--oh-space-2);
+}
+
+.ribbon-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--oh-space-3);
+  margin-bottom: var(--oh-space-8);
+}
+
+.ribbon-step {
+  display: flex;
+  align-items: center;
+  gap: var(--oh-space-3);
+  padding: var(--oh-space-3) var(--oh-space-4);
+  background: var(--oh-card);
+  border: 1px solid var(--oh-rule);
+  border-radius: var(--oh-r-lg);
+  opacity: 0.55;
+  transition: opacity var(--oh-t-base) var(--oh-ease), border-color var(--oh-t-base) var(--oh-ease);
+}
+
+.ribbon-step.active {
+  opacity: 1;
+  border-color: var(--oh-blue);
+  box-shadow: var(--oh-shadow-sm);
+}
+
+.step-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--oh-mist);
+  color: var(--oh-navy);
+  font-family: var(--oh-font-head);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.ribbon-step.active .step-circle {
+  background: var(--oh-grad);
+  color: #fff;
+}
+
+.step-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.step-label {
+  font-size: var(--oh-text-sm);
+  font-weight: 600;
+  color: var(--oh-navy);
+}
+
+.step-time {
+  font-size: 11px;
+  color: var(--oh-muted);
+}
+
+.step-form-card {
+  box-shadow: var(--oh-shadow);
+}
+
+.step-body h2 {
+  font-size: var(--oh-text-2xl);
+  font-weight: 700;
+  margin-bottom: var(--oh-space-2);
+}
+
+.step-body p {
+  color: var(--oh-muted);
+  font-size: var(--oh-text-base);
+  margin-bottom: var(--oh-space-6);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oh-space-2);
+  margin-bottom: var(--oh-space-5);
+}
+
+.form-group label {
+  font-size: var(--oh-text-sm);
+  font-weight: 600;
+  color: var(--oh-navy);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: var(--oh-r-md);
+  border: 1px solid var(--oh-rule);
+  font-family: var(--oh-font-body);
+  font-size: var(--oh-text-base);
+  outline: none;
+  background: var(--oh-mist);
+  transition: border-color var(--oh-t-fast) var(--oh-ease);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: var(--oh-blue);
+  background: #fff;
+}
+
+.input-handle-prefix {
+  display: flex;
+  align-items: center;
+  background: var(--oh-mist);
+  border: 1px solid var(--oh-rule);
+  border-radius: var(--oh-r-md);
+  padding-left: 14px;
+  overflow: hidden;
+}
+
+.input-handle-prefix span {
+  font-weight: 600;
+  color: var(--oh-muted);
+  font-size: var(--oh-text-sm);
+}
+
+.input-handle-prefix input {
+  border: none;
+  background: transparent;
+}
+
+.btn-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--oh-space-4);
+  margin-top: var(--oh-space-8);
+}
+
+.finish-step {
+  text-align: center;
+  padding: var(--oh-space-8) 0;
+}
+
+.lead-link {
+  font-family: var(--oh-font-head);
+  font-size: var(--oh-text-2xl);
+  font-weight: 700;
+  color: var(--oh-blue);
+  background: var(--oh-blue-light);
+  padding: var(--oh-space-4) var(--oh-space-6);
+  border-radius: var(--oh-r-pill);
+  display: inline-block;
+  margin: var(--oh-space-4) 0;
+}
+
+.notice-box {
+  background: var(--oh-warn-light);
+  border: 1px solid var(--oh-warn);
+  border-radius: var(--oh-r-md);
+  padding: var(--oh-space-4);
+  font-size: var(--oh-text-sm);
+  color: var(--oh-navy);
+  margin-top: var(--oh-space-6);
+}
+
+@media (max-width: 768px) {
+  .ribbon-bar {
+    grid-template-columns: 1fr 1fr;
+  }
+}

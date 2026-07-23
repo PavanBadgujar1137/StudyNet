@@ -1,0 +1,121 @@
+/* ClientApp.css */
+
+.client-app-shell {
+  min-height: 100vh;
+  background: var(--oh-mist);
+}
+
+.client-app-top {
+  background: #fff;
+  border-bottom: 1px solid var(--oh-rule);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.top-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+
+.me-badge {
+  display: flex;
+  align-items: center;
+  gap: var(--oh-space-3);
+  font-size: var(--oh-text-sm);
+  color: var(--oh-muted);
+}
+
+.av-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--oh-grad);
+  color: #fff;
+  font-family: var(--oh-font-head);
+  font-weight: 700;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.client-app-tabs {
+  background: #fff;
+  border-bottom: 1px solid var(--oh-rule);
+  position: sticky;
+  top: 61px;
+  z-index: 39;
+  overflow-x: auto;
+}
+
+.tabs-inner {
+  display: flex;
+  gap: var(--oh-space-2);
+}
+
+.tab-btn {
+  padding: 14px 18px;
+  font-size: var(--oh-text-sm);
+  font-weight: 500;
+  color: var(--oh-muted);
+  border: none;
+  background: transparent;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: color var(--oh-t-fast) var(--oh-ease);
+}
+
+.tab-btn:hover {
+  color: var(--oh-navy);
+}
+
+.tab-btn.on {
+  color: var(--oh-blue);
+  border-bottom-color: var(--oh-violet);
+  font-weight: 600;
+}
+
+.tab-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--oh-violet);
+}
+
+.client-app-view {
+  padding-top: var(--oh-space-8);
+  padding-bottom: var(--oh-space-16);
+  max-width: 960px;
+}
+
+.tab-hd {
+  margin-bottom: var(--oh-space-8);
+}
+
+.tab-hd .k {
+  font-size: var(--oh-text-xs);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--oh-violet);
+  margin-bottom: 8px;
+}
+
+.tab-hd h1 {
+  font-size: var(--oh-text-3xl);
+  margin-bottom: 6px;
+}
+
+.tab-hd p {
+  color: var(--oh-muted);
+  font-size: var(--oh-text-base);
+  max-width: 58ch;
+}

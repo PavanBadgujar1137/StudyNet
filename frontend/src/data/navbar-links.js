@@ -4,16 +4,31 @@ export const NavbarLinks = [
     path: "/",
   },
   {
-    title: "Courses",
-    path: "/all-courses",
+    title: "For Organizations",
+    path: "/for-organizations",
   },
   {
-    title: "About Us",
-    path: "/about",
+    title: "Find a Practitioner",
+    path: "/find-a-practitioner",
   },
   {
-    title: "Contact Us",
-    path: "/contact",
+    title: "Talk to Human",
+    path: "/talk-to-human",
+  },
+  {
+    title: "Client Journey",
+    path: "/client-journey",
+  },
+  {
+    title: "Start Free",
+    path: "/start-free",
+  },
+  {
+    title: "Co-Pilot",
+    path: "/co-pilot",
+  },
+  {
+    title: "Pricing",
+    path: "/pricing",
   },
 ];
-

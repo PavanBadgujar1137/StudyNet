@@ -55,8 +55,8 @@ function Navbar() {
         </div>
 
         {/* Center: Navigation Links */}
-        <nav className="hidden md:block absolute left-1/2 -translate-x-1/2">
-          <ul className="flex items-center gap-x-8 text-slate-700 font-semibold text-sm">
+        <nav className="hidden lg:block">
+          <ul className="flex items-center gap-x-4 xl:gap-x-6 text-slate-700 font-semibold text-xs xl:text-sm whitespace-nowrap">
             {NavbarLinks.map((link, index) => (
               <li key={index}>
                 {link.title === "Catalog" ? (

@@ -27,10 +27,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    // Define the role field with type String and enum values of "Admin", "Student", or "Visitor"
+    // OpenHand account types (with backward compatible Student & Instructor)
     accountType: {
       type: String,
-      enum: ["Admin", "Student", "Instructor"],
+      enum: ["Admin", "Client", "Practitioner", "OrgAdmin", "Student", "Instructor"],
       required: true,
     },
     active: {
@@ -46,6 +46,16 @@ const userSchema = new mongoose.Schema(
       required: true,
       ref: "Profile",
     },
+    practitionerProfile: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "PractitionerProfile",
+    },
+    circleMemberships: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "CircleMembership",
+      },
+    ],
     courses: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -74,7 +84,6 @@ const userSchema = new mongoose.Schema(
         ref: "Batch",
       },
     ],
-
   },
   { timestamps: true }
 )

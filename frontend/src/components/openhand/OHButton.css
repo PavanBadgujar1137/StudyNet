@@ -1,0 +1,96 @@
+/* OHButton.css — all button styles using design tokens only */
+
+.oh-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--oh-space-2);
+  font-family: var(--oh-font-body);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  border-radius: var(--oh-r-pill);
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+  transition: filter var(--oh-t-base) var(--oh-ease),
+              transform var(--oh-t-fast) var(--oh-ease),
+              border-color var(--oh-t-base) var(--oh-ease),
+              box-shadow var(--oh-t-base) var(--oh-ease);
+}
+
+/* ─── Sizes ──────────────────────────────────────────────────────── */
+.oh-btn--sm  { padding: 8px 18px;  font-size: var(--oh-text-sm);  }
+.oh-btn--md  { padding: 12px 24px; font-size: var(--oh-text-base); }
+.oh-btn--lg  { padding: 15px 32px; font-size: var(--oh-text-md);   }
+.oh-btn--full{ width: 100%; }
+
+/* ─── Primary — gradient pill ────────────────────────────────────── */
+.oh-btn--primary {
+  background: var(--oh-grad);
+  color: #ffffff;
+  box-shadow: 0 4px 20px -6px rgba(124, 58, 237, 0.45);
+}
+.oh-btn--primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0);
+  transition: background var(--oh-t-base) var(--oh-ease);
+  border-radius: inherit;
+}
+.oh-btn--primary:hover::after  { background: rgba(255,255,255,0.10); }
+.oh-btn--primary:active::after { background: rgba(0,0,0,0.08); }
+.oh-btn--primary:hover  { box-shadow: 0 8px 28px -6px rgba(124, 58, 237, 0.60); transform: translateY(-1px); }
+.oh-btn--primary:active { transform: translateY(0); }
+.oh-btn--primary:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ─── Ghost — border pill ────────────────────────────────────────── */
+.oh-btn--ghost {
+  background: var(--oh-card);
+  color: var(--oh-navy);
+  border: 1.5px solid var(--oh-rule);
+}
+.oh-btn--ghost:hover {
+  border-color: var(--oh-blue);
+  color: var(--oh-blue);
+  box-shadow: var(--oh-shadow-sm);
+  transform: translateY(-1px);
+}
+.oh-btn--ghost:active { transform: translateY(0); }
+.oh-btn--ghost:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ─── Ghost on dark (dark surface) ──────────────────────────────── */
+.oh-dark .oh-btn--ghost {
+  background: transparent;
+  color: #fff;
+  border-color: rgba(255,255,255,0.24);
+}
+.oh-dark .oh-btn--ghost:hover {
+  border-color: rgba(255,255,255,0.60);
+  color: #fff;
+}
+
+/* ─── Text ───────────────────────────────────────────────────────── */
+.oh-btn--text {
+  background: transparent;
+  color: var(--oh-blue);
+  padding: 4px 0;
+  border-radius: 0;
+  font-weight: 600;
+}
+.oh-btn--text:hover { color: var(--oh-violet); }
+.oh-btn--text::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--oh-grad);
+  border-radius: 2px;
+  transition: width var(--oh-t-base) var(--oh-ease);
+}
+.oh-btn--text:hover::before { width: 100%; }

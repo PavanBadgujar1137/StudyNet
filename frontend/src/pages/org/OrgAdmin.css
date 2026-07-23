@@ -1,0 +1,41 @@
+/* OrgAdmin.css */
+
+.org-portal-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.org-portal-content {
+  flex: 1;
+  padding-top: var(--oh-space-12);
+  padding-bottom: var(--oh-space-16);
+}
+
+.org-header {
+  margin-bottom: var(--oh-space-8);
+}
+
+.org-header h1 {
+  font-size: var(--oh-text-4xl);
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.org-header .sub {
+  color: var(--oh-muted);
+  font-size: var(--oh-text-md);
+  margin-top: 4px;
+}
+
+.org-privacy-box h3 {
+  color: #fff;
+  font-size: var(--oh-text-xl);
+  margin-bottom: 8px;
+}
+
+.org-privacy-box p {
+  color: #C6CAE8;
+  font-size: var(--oh-text-base);
+  line-height: 1.6;
+}
