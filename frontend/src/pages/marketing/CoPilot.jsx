@@ -1,6 +1,5 @@
 import React from 'react'
 import {
-  OHNav,
   OHFooter,
   OHButton,
   OHEyebrow,
@@ -9,7 +8,6 @@ import {
   OHCardBody,
   OHConsentGate,
 } from '../../components/openhand'
-import './CoPilot.css'
 
 export function CoPilot() {
   return (

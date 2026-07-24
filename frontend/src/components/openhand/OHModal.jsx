@@ -5,7 +5,6 @@
  */
 import React, { useEffect, useRef } from 'react'
 import ReactDOM from 'react-dom'
-import './OHModal.css'
 
 export function OHModal({
   open = false,

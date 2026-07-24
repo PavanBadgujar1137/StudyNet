@@ -3,7 +3,6 @@
  * Filter chips with on/off state. Used in find-a-practitioner filters.
  */
 import React from 'react'
-import './OHChip.css'
 
 export function OHChip({ label, active = false, onClick, disabled = false }) {
   return (

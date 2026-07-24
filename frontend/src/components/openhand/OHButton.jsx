@@ -4,7 +4,6 @@
  * Sizes: sm | md (default) | lg
  */
 import React from 'react'
-import './OHButton.css'
 
 export function OHButton({
   variant = 'primary',

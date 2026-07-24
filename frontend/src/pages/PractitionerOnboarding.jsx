@@ -1,8 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { OHNav, OHFooter, OHButton, OHEyebrow, OHCard } from '../components/openhand'
+import { OHFooter, OHButton, OHEyebrow, OHCard } from '../components/openhand'
 import toast from 'react-hot-toast'
-import './PractitionerOnboarding.css'
 
 export function PractitionerOnboarding() {
   const navigate = useNavigate()

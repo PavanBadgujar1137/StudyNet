@@ -8,7 +8,6 @@
  * compute: (values) => { net, gross, fee, bestPlan, bestPlanNote }
  */
 import React, { useState, useCallback } from 'react'
-import './OHRangeCalculator.css'
 
 const fmt = (n) => Math.round(n).toLocaleString('en-IN')
 

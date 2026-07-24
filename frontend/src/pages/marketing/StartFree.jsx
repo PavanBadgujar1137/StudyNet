@@ -1,13 +1,11 @@
 import React from 'react'
 import {
-  OHNav,
   OHFooter,
   OHButton,
   OHEyebrow,
   OHCard,
   OHRangeCalculator,
 } from '../../components/openhand'
-import './StartFree.css'
 
 export function StartFree() {
   const calcCompute = (val) => {
@@ -53,9 +51,9 @@ export function StartFree() {
       {/* 4-step ribbon */}
       <section className="oh-sec" id="setup">
         <div className="oh-wrap">
-          <div className="sec-head">
-            <h2>Four steps between you and your first paid client</h2>
-            <p>Most practitioners finish this in a single sitting. You can stop anywhere and come back — nothing is lost.</p>
+          <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-10">
+            <h2 className="oh-sec-title text-center mx-auto mb-3">Four steps between you and your first paid client</h2>
+            <p className="sub text-center mx-auto max-w-2xl">Most practitioners finish this in a single sitting. You can stop anywhere and come back — nothing is lost.</p>
           </div>
 
           <div className="ribbon-vertical">
@@ -102,8 +100,10 @@ export function StartFree() {
       <section className="oh-sec" id="money">
         <div className="oh-wrap">
           <OHCard surface="navy" pad="lg" className="revenue-card">
-            <h2>How you actually get paid</h2>
-            <p className="rev-sub">You hold space. OpenHand handles the invoice, the reminder, the receipt, the GST line, and the follow-up. Three ways money reaches you — and you can run all three at once.</p>
+            <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-10">
+              <h2 className="text-3xl font-bold text-white mb-3">How you actually get paid</h2>
+              <p className="text-indigo-200 text-base max-w-2xl text-center">You hold space. OpenHand handles the invoice, the reminder, the receipt, the GST line, and the follow-up. Three ways money reaches you — and you can run all three at once.</p>
+            </div>
 
             <div className="streams-grid">
               <div className="stream-box">
@@ -156,9 +156,9 @@ export function StartFree() {
       {/* What's in the free plan */}
       <section className="oh-sec">
         <div className="oh-wrap">
-          <div className="sec-head">
-            <h2>What's in the free plan</h2>
-            <p>Not a crippled trial. A real, working practice you can earn from indefinitely.</p>
+          <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-10">
+            <h2 className="oh-sec-title text-center mx-auto mb-3">What's in the free plan</h2>
+            <p className="sub text-center mx-auto max-w-2xl">Not a crippled trial. A real, working practice you can earn from indefinitely.</p>
           </div>
           <div className="oh-grid-3">
             <OHCard surface="white" pad="lg">
@@ -180,8 +180,10 @@ export function StartFree() {
       {/* Closing CTA */}
       <section className="oh-sec text-center">
         <div className="oh-wrap">
-          <h2 className="oh-sec-title center">You already know how to hold space.</h2>
-          <p className="closing-sub">The rest — the booking link, the invoice, the reminder, the receipt — is what we're for.</p>
+          <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-10">
+            <h2 className="oh-sec-title text-center mx-auto mb-3">You already know how to hold space.</h2>
+            <p className="sub text-center mx-auto max-w-2xl">The rest — the booking link, the invoice, the reminder, the receipt — is what we're for.</p>
+          </div>
           <div className="cta-row center-row">
             <OHButton href="/signup" size="lg">Create my practice space</OHButton>
             <OHButton href="/talk-to-human" variant="ghost" size="lg">Talk to a real human →</OHButton>

@@ -1,6 +1,5 @@
 import React from 'react'
-import { OHNav, OHFooter, OHButton, OHEyebrow, OHCard, OHCardTitle, OHCardBody } from '../../components/openhand'
-import './ForOrganizations.css'
+import { OHFooter, OHButton, OHEyebrow, OHCard, OHCardTitle, OHCardBody } from '../../components/openhand'
 
 export function ForOrganizations() {
   return (
@@ -26,9 +25,11 @@ export function ForOrganizations() {
       {/* Section 1: EAP vs OpenHand Circles */}
       <section className="oh-sec">
         <div className="oh-wrap">
-          <div className="sec-head">
-            <h2>Why traditional EAPs hit 3% utilization</h2>
-            <p>Employees don't use EAPs because they feel clinical, bureaucratic, and unsafe. Here is what happens when you switch to peer circles.</p>
+          <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-10">
+            <h2 className="oh-sec-title text-center mx-auto mb-3">Why traditional EAPs hit 3% utilization</h2>
+            <p className="sub text-center mx-auto max-w-2xl">
+              Employees don't use EAPs because they feel clinical, bureaucratic, and unsafe. Here is what happens when you switch to peer circles.
+            </p>
           </div>
           <div className="cmp-table-wrap">
             <table className="cmp-table">
@@ -74,9 +75,11 @@ export function ForOrganizations() {
       {/* Section 2: 8-Week Pilot Flow */}
       <section className="oh-sec oh-sec-community">
         <div className="oh-wrap">
-          <div className="sec-head">
-            <h2>An 8-week pilot designed for zero friction</h2>
-            <p>From initial team scoping to post-pilot impact report — launched in under 10 days.</p>
+          <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-10">
+            <h2 className="oh-sec-title text-center mx-auto mb-3">An 8-week pilot designed for zero friction</h2>
+            <p className="sub text-center mx-auto max-w-2xl">
+              From initial team scoping to post-pilot impact report — launched in under 10 days.
+            </p>
           </div>
           <div className="pilot-flow-grid">
             <OHCard surface="white" pad="md">
@@ -103,12 +106,14 @@ export function ForOrganizations() {
       {/* Section 3: B2B Pricing Tiers */}
       <section className="oh-sec">
         <div className="oh-wrap">
-          <div className="sec-head">
-            <h2>Organization Plans</h2>
-            <p>Simple, transparent pricing per circle container or company-wide roll-out.</p>
+          <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-10">
+            <h2 className="oh-sec-title text-center mx-auto mb-3">Organization Plans</h2>
+            <p className="sub text-center mx-auto max-w-2xl">
+              Simple, transparent pricing per circle container or company-wide roll-out.
+            </p>
           </div>
           <div className="b2b-plans-grid">
-            <OHCard surface="white" pad="lg">
+            <OHCard surface="white" pad="lg" className="plan-card">
               <h3>Single Team Pilot</h3>
               <p className="b2b-who">One 6-week circle for up to 12 employees.</p>
               <div className="b2b-price">₹75,000<small> /pilot container</small></div>
@@ -121,9 +126,8 @@ export function ForOrganizations() {
               <OHButton href="/talk-to-human" variant="ghost" fullWidth>Request Pilot →</OHButton>
             </OHCard>
 
-            <OHCard surface="navy" pad="lg" className="feat-b2b">
-              <span className="featured-badge">Recommended</span>
-              <h3>Multi-Circle Pod</h3>
+            <OHCard surface="navy" pad="lg" className="feat-b2b plan-card">
+              <span className="featured-badge">RECOMMENDED</span>
               <p className="b2b-who">Up to 4 parallel circles for department-wide coverage.</p>
               <div className="b2b-price">₹2,40,000<small> /quarter</small></div>
               <ul className="b2b-list">
@@ -135,7 +139,7 @@ export function ForOrganizations() {
               <OHButton href="/talk-to-human" fullWidth>Book Org Consultation →</OHButton>
             </OHCard>
 
-            <OHCard surface="white" pad="lg">
+            <OHCard surface="white" pad="lg" className="plan-card">
               <h3>Enterprise Practice</h3>
               <p className="b2b-who">Custom annual roll-out with internal or external practitioners.</p>
               <div className="b2b-price">Custom<small> /annual</small></div>
@@ -148,8 +152,8 @@ export function ForOrganizations() {
               <OHButton href="/talk-to-human" variant="ghost" fullWidth>Talk to Founders →</OHButton>
             </OHCard>
           </div>
-          <p className="disclaim-text margin-top-sm">
-            All prices subject to applicable GST. Custom corporate billing, PO-based invoices, and MSME terms available on request.
+          <p className="disclaim-text margin-top-sm text-center mx-auto">
+            PO-based invoices, and MSME terms available on request.
           </p>
         </div>
       </section>
@@ -157,9 +161,11 @@ export function ForOrganizations() {
       {/* Section 4: What HR sees / Never sees */}
       <section className="oh-sec" id="flywheel">
         <div className="oh-wrap">
-          <div className="sec-head">
-            <h2>Privacy &amp; Telemetry Rails</h2>
-            <p>We built query-layer privacy controls so HR gets actionable aggregate metrics without ever compromising employee trust.</p>
+          <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-10">
+            <h2 className="oh-sec-title text-center mx-auto mb-3">Privacy &amp; Telemetry Rails</h2>
+            <p className="sub text-center mx-auto max-w-2xl">
+              We built query-layer privacy controls so HR gets actionable aggregate metrics without ever compromising employee trust.
+            </p>
           </div>
           <div className="privacy-rails-grid">
             <OHCard surface="white" pad="lg" className="rail-card rail-sees">

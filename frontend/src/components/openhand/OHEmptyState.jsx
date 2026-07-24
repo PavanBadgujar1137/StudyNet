@@ -4,7 +4,6 @@
  * type: 'no-data' | 'no-results' | 'no-clients' | 'no-offers' | 'no-circle'
  */
 import React from 'react'
-import './OHEmptyState.css'
 
 const ICONS = {
   'no-data': (

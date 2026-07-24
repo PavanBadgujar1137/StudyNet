@@ -8,7 +8,6 @@ import Circles from './Circles'
 import SessionRoom from './SessionRoom'
 import PayoutsInvoices from './PayoutsInvoices'
 import GrowthTools from './GrowthTools'
-import './PractitionerApp.css'
 
 export function PractitionerApp() {
   const [activeSection, setActiveSection] = useState('dash')

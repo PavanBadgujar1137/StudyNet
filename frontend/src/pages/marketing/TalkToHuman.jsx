@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import {
-  OHNav,
   OHFooter,
   OHButton,
   OHEyebrow,
@@ -8,7 +7,6 @@ import {
 } from '../../components/openhand'
 import { apiConnector } from '../../services/apiConnector'
 import toast from 'react-hot-toast'
-import './TalkToHuman.css'
 
 export function TalkToHuman() {
   const [formData, setFormData] = useState({

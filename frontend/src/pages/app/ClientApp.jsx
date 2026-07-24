@@ -6,7 +6,6 @@ import CheckIn from './client/CheckIn'
 import MyCircle from './client/MyCircle'
 import SessionsResources from './client/SessionsResources'
 import Reflections from './client/Reflections'
-import './ClientApp.css'
 
 export function ClientApp() {
   const [activeTab, setActiveTab] = useState('journey')

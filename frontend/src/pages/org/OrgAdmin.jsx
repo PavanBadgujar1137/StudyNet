@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react'
-import { OHNav, OHFooter, OHCard, OHEyebrow, OHButton } from '../../components/openhand'
+import { OHFooter, OHCard, OHEyebrow, OHButton } from '../../components/openhand'
 import { apiConnector } from '../../services/apiConnector'
 import toast from 'react-hot-toast'
-import './OrgAdmin.css'
 
 export function OrgAdmin() {
   const [stats, setStats] = useState(null)

@@ -9,7 +9,6 @@ import { useSelector, useDispatch } from 'react-redux'
 import OHLogo from './OHLogo'
 import OHButton from './OHButton'
 import { logout } from '../../services/operations/authAPI'
-import './OHNav.css'
 
 const PUBLIC_LINKS = [
   { label: 'Home',                to: '/' },

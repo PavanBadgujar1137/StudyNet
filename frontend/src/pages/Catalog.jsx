@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react"
 import { useSelector } from "react-redux"
 import { useParams, Link } from "react-router-dom"
-import { FaBook, FaChevronRight } from "react-icons/fa"
+import { FaChevronRight } from "react-icons/fa"
 
 import Footer from "../components/Common/Footer"
 import CourseCard from "../components/core/Catalog/Course_Card"

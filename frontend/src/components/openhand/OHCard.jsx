@@ -5,7 +5,6 @@
  * lift:    boolean — hover-lift animation
  */
 import React from 'react'
-import './OHCard.css'
 
 export function OHCard({
   surface = 'white',

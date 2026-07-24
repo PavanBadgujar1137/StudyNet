@@ -6,7 +6,6 @@
  * items: [{ date, title, body, icon?, tag? }]
  */
 import React, { useRef, useEffect, useState } from 'react'
-import './OHTimeline.css'
 
 function TimelineItem({ item, index, visible }) {
   return (

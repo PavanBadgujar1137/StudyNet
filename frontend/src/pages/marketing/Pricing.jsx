@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react'
 import {
-  OHNav,
   OHFooter,
   OHButton,
   OHEyebrow,
@@ -9,7 +8,6 @@ import {
   OHRangeCalculator,
 } from '../../components/openhand'
 import { apiConnector } from '../../services/apiConnector'
-import './Pricing.css'
 
 export function Pricing() {
   useEffect(() => {

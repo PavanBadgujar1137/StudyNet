@@ -1,23 +1,14 @@
 import React, { useEffect, useState, useRef } from 'react'
-import { Link } from 'react-router-dom'
 import {
   OHFooter,
   OHButton,
   OHEyebrow,
 } from '../../components/openhand'
 import { 
-  FiUser, 
-  FiUserCheck, 
-  FiClock, 
-  FiCheckCircle, 
   FiShield, 
-  FiSparkles, 
-  FiArrowRight, 
-  FiZap,
   FiTrendingUp,
   FiLock
 } from 'react-icons/fi'
-import './ClientJourney.css'
 
 const STAGES = [
   {

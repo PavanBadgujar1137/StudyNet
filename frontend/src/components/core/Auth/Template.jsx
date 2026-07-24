@@ -3,7 +3,6 @@ import { Link } from "react-router-dom"
 import logoIcon from "../../../assets/Logo/Logo-Icon.png"
 import LoginForm from "./LoginForm"
 import SignupForm from "./SignupForm"
-import "./Template.css"
 
 function Template({ title, description1, description2, formType }) {
   const { loading } = useSelector((state) => state.auth)

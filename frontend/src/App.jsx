@@ -1,7 +1,6 @@
 import { useEffect } from "react"
 
 import Certificate from "./pages/Certificate"
-import "./App.css"
 // Redux
 import { useDispatch, useSelector } from "react-redux"
 // React Router

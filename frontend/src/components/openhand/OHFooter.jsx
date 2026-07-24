@@ -16,7 +16,6 @@ import {
   FiGlobe, 
   FiHeart 
 } from 'react-icons/fi'
-import './OHFooter.css'
 
 const LINKS = [
   { 

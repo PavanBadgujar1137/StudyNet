@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import logoIcon from "../../assets/Logo/Logo-Icon.png";
 import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin, FaYoutube } from "react-icons/fa";
 import { FiArrowRight, FiCheck, FiMail, FiHeart } from "react-icons/fi";
-import "./Footer.css";
 
 const Footer = () => {
   const [email, setEmail] = useState("");

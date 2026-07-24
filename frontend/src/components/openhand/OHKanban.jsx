@@ -7,7 +7,6 @@
  * cards:   [{ id, stageId, title, subtitle?, tags?, avatar? }]
  */
 import React, { useState } from 'react'
-import './OHKanban.css'
 
 export function OHKanban({
   columns = [],

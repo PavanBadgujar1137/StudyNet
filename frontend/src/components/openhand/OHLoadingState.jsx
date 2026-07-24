@@ -4,7 +4,6 @@
  * Used on every data view that hits a real endpoint.
  */
 import React from 'react'
-import './OHLoadingState.css'
 
 export function OHSkeleton({ width, height = 20, radius = 8, className = '' }) {
   return (

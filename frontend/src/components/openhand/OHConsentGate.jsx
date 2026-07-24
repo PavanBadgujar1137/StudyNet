@@ -7,7 +7,6 @@
  *   - Any revocation stops recording immediately
  */
 import React, { useState } from 'react'
-import './OHConsentGate.css'
 
 const CONSENT_TYPES = {
   copilot_notes: {

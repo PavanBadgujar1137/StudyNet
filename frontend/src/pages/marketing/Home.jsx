@@ -1,6 +1,5 @@
 import React from 'react'
-import { OHNav, OHFooter, OHButton, OHEyebrow, OHCard, OHCardTitle, OHCardBody } from '../../components/openhand'
-import './Home.css'
+import { OHFooter, OHButton, OHEyebrow, OHCard, OHCardTitle, OHCardBody } from '../../components/openhand'
 
 export function Home() {
   return (
@@ -41,8 +40,10 @@ export function Home() {
       {/* Section 1: Built around how you actually work */}
       <section className="oh-sec">
         <div className="oh-wrap">
-          <OHEyebrow>Not modules. Practice.</OHEyebrow>
-          <h2 className="oh-sec-title">Built around how you actually work with people</h2>
+          <div className="flex flex-col items-center text-center mb-10">
+            <OHEyebrow>Not modules. Practice.</OHEyebrow>
+            <h2 className="oh-sec-title mx-auto text-center mb-0">Built around how you actually work with people</h2>
+          </div>
           <div className="oh-grid-3">
             <OHCard lift pad="md">
               <OHCardTitle>Client check-ins</OHCardTitle>
@@ -69,8 +70,10 @@ export function Home() {
       {/* Section 2: People heal in circles */}
       <section className="oh-sec oh-sec-community">
         <div className="oh-wrap">
-          <OHEyebrow>The part corporate LMS forgets</OHEyebrow>
-          <h2 className="oh-sec-title">People heal in circles, not in isolation</h2>
+          <div className="flex flex-col items-center text-center mb-10">
+            <OHEyebrow>The part corporate LMS forgets</OHEyebrow>
+            <h2 className="oh-sec-title mx-auto text-center mb-0">People heal in circles, not in isolation</h2>
+          </div>
           <div className="oh-grid-3">
             <OHCard lift pad="md">
               <OHCardTitle>Peer circles</OHCardTitle>
@@ -97,8 +100,10 @@ export function Home() {
       {/* Section 3: AI that sounds like you */}
       <section className="oh-sec">
         <div className="oh-wrap">
-          <OHEyebrow>Quietly intelligent</OHEyebrow>
-          <h2 className="oh-sec-title">AI that sounds like you, not like a bot</h2>
+          <div className="flex flex-col items-center text-center mb-10">
+            <OHEyebrow>Quietly intelligent</OHEyebrow>
+            <h2 className="oh-sec-title mx-auto text-center mb-0">AI that sounds like you, not like a bot</h2>
+          </div>
           <div className="oh-grid-3">
             <OHCard pad="md" className="dashed-card">
               <OHCardTitle>AI reflection prompts</OHCardTitle>
@@ -125,8 +130,10 @@ export function Home() {
       {/* Section 4: Built for trust */}
       <section className="oh-sec oh-sec-dark">
         <div className="oh-wrap">
-          <OHEyebrow dark>Held with care</OHEyebrow>
-          <h2 className="oh-sec-title dark">Built for the trust your work depends on</h2>
+          <div className="flex flex-col items-center text-center mb-10">
+            <OHEyebrow dark>Held with care</OHEyebrow>
+            <h2 className="oh-sec-title dark mx-auto text-center mb-0">Built for the trust your work depends on</h2>
+          </div>
           <div className="oh-grid-3">
             <OHCard surface="navy" pad="md">
               <OHCardTitle>Confidentiality by design</OHCardTitle>

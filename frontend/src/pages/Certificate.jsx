@@ -3,8 +3,7 @@ import { toPng } from "html-to-image"
 import { useSelector } from "react-redux"
 
 import { getUserEnrolledCourses } from "../services/operations/profileAPI"
-import certificateTemplate from "./Certificate.png"
-import "./Certificate.css"
+import certificateTemplate from "../assets/Images/Certificate.png"
 
 const Certificate = () => {
   const { user } = useSelector((state) => state.profile)
