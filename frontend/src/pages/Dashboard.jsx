@@ -1,7 +1,5 @@
 import { useSelector } from "react-redux"
-import { Outlet } from "react-router-dom"
-
-import Sidebar from "../components/core/Dashboard/Sidebar"
+import MainDashboard from "../components/core/Dashboard/MainDashboard"
 
 function Dashboard() {
   const { loading: profileLoading } = useSelector((state) => state.profile)
@@ -9,22 +7,14 @@ function Dashboard() {
 
   if (profileLoading || authLoading) {
     return (
-      <div className="grid min-h-[calc(100vh-3.5rem)] place-items-center">
+      <div className="grid min-h-screen w-full place-items-center bg-slate-50">
         <div className="spinner"></div>
       </div>
     )
   }
 
-  return (
-    <div className="relative flex h-[calc(100vh-4rem)] w-full overflow-hidden bg-slate-50 text-navy">
-      <Sidebar />
-      <main className="dashboard-scroll h-full min-w-0 flex-1 bg-slate-50 overflow-y-auto">
-        <div className="mx-auto w-11/12 max-w-[1200px] py-10 pb-24 text-left">
-          <Outlet />
-        </div>
-      </main>
-    </div>
-  )
+  // Render MainDashboard directly for all dashboard paths
+  return <MainDashboard />
 }
 
 export default Dashboard

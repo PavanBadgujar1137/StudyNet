@@ -14,7 +14,6 @@ const { Server } = require("socket.io")
 
 const userRoutes = require("./routes/user")
 const profileRoutes = require("./routes/profile")
-const courseRoutes = require("./routes/Course")
 const paymentRoutes = require("./routes/Payments")
 const contactUsRoute = require("./routes/Contact")
 const liveClassRoutes = require("./routes/liveClass")  // Phase 2
@@ -87,7 +86,6 @@ const orgRoutes = require("./routes/org")
 
 app.use("/api/v1/auth", userRoutes)
 app.use("/api/v1/profile", profileRoutes)
-app.use("/api/v1/course", courseRoutes)
 app.use("/api/v1/payment", paymentRoutes)
 app.use("/api/v1/reach", contactUsRoute)
 app.use("/api/v1/live", liveClassRoutes)       // Phase 2 — Live Classes

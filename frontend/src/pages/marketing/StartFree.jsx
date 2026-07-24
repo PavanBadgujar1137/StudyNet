@@ -44,16 +44,20 @@ export function StartFree() {
             <OHButton href="/signup" size="lg">Create my practice space</OHButton>
             <OHButton href="/client-journey" variant="ghost" size="lg">See a client journey →</OHButton>
           </div>
-          <p className="trust-note">Free forever on the Starter plan · You keep 100% until your first ₹25,000</p>
+          <p className="trust-note text-center w-full mx-auto">Free forever on the Starter plan · You keep 100% until your first ₹25,000</p>
         </div>
       </header>
 
       {/* 4-step ribbon */}
-      <section className="oh-sec" id="setup">
-        <div className="oh-wrap">
-          <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-10">
-            <h2 className="oh-sec-title text-center mx-auto mb-3">Four steps between you and your first paid client</h2>
-            <p className="sub text-center mx-auto max-w-2xl">Most practitioners finish this in a single sitting. You can stop anywhere and come back — nothing is lost.</p>
+      <section className="oh-sec pt-2 pb-6" id="setup">
+        <div className="oh-wrap max-w-[1400px] mx-auto">
+          <div className="w-full text-center flex flex-col items-center justify-center mx-auto mb-6">
+            <h2 className="text-center w-full text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight mb-2" style={{ color: '#0F172A' }}>
+              Four steps between you and your first paid client
+            </h2>
+            <p className="text-center w-full text-sm sm:text-base font-bold leading-relaxed" style={{ color: '#334155' }}>
+              Most practitioners finish this in a single sitting. You can stop anywhere and come back — nothing is lost.
+            </p>
           </div>
 
           <div className="ribbon-vertical">

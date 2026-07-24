@@ -1,6 +1,6 @@
 import { useForm } from "react-hook-form"
 import { useDispatch, useSelector } from "react-redux"
-import { useNavigate } from "react-router-dom"
+import { FiUser, FiCalendar, FiPhone, FiInfo, FiCheck } from "react-icons/fi"
 
 import { updateProfile } from "../../../../services/operations/SettingsAPI"
 
@@ -9,7 +9,6 @@ const genders = ["Male", "Female", "Non-Binary", "Prefer not to say", "Other"]
 export default function EditProfile() {
   const { user } = useSelector((state) => state.profile)
   const { token } = useSelector((state) => state.auth)
-  const navigate = useNavigate()
   const dispatch = useDispatch()
 
   const {
@@ -26,17 +25,26 @@ export default function EditProfile() {
     }
   }
 
+  const inputClass = "w-full rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 focus:outline-none transition-all"
+  const labelClass = "text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5"
+
   return (
     <form onSubmit={handleSubmit(submitProfileForm)} className="flex flex-col gap-6">
       {/* Profile Information Box */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-6 md:p-8 shadow-sm flex flex-col gap-6 text-left">
-        <h2 className="font-fraunces text-navy text-lg font-bold border-b border-slate-100 pb-3">
-          Profile Information
-        </h2>
+      <div className="rounded-3xl border border-slate-200/80 bg-white p-6 md:p-8 shadow-sm flex flex-col gap-6 text-left">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
+              <FiUser className="text-indigo-600" /> Personal Information
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">Update your personal details and contact information</p>
+          </div>
+        </div>
 
-        <div className="flex flex-col gap-5 lg:flex-row">
-          <div className="flex flex-col gap-1.5 lg:w-[48%]">
-            <label htmlFor="firstName" className="lable-style">
+        {/* First & Last Name */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="firstName" className={labelClass}>
               First Name
             </label>
             <input
@@ -44,19 +52,19 @@ export default function EditProfile() {
               name="firstName"
               id="firstName"
               placeholder="Enter first name"
-              className="form-style"
+              className={inputClass}
               {...register("firstName", { required: true })}
               defaultValue={user?.firstName}
             />
             {errors.firstName && (
-              <span className="text-[11px] text-red-500">
+              <span className="text-[11px] font-semibold text-rose-500">
                 Please enter your first name.
               </span>
             )}
           </div>
 
-          <div className="flex flex-col gap-1.5 lg:w-[48%]">
-            <label htmlFor="lastName" className="lable-style">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="lastName" className={labelClass}>
               Last Name
             </label>
             <input
@@ -64,28 +72,29 @@ export default function EditProfile() {
               name="lastName"
               id="lastName"
               placeholder="Enter last name"
-              className="form-style"
+              className={inputClass}
               {...register("lastName", { required: true })}
               defaultValue={user?.lastName}
             />
             {errors.lastName && (
-              <span className="text-[11px] text-red-500">
+              <span className="text-[11px] font-semibold text-rose-500">
                 Please enter your last name.
               </span>
             )}
           </div>
         </div>
 
-        <div className="flex flex-col gap-5 lg:flex-row">
-          <div className="flex flex-col gap-1.5 lg:w-[48%]">
-            <label htmlFor="dateOfBirth" className="lable-style">
-              Date of Birth
+        {/* DOB & Gender */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="dateOfBirth" className={labelClass}>
+              <FiCalendar className="text-indigo-500" /> Date of Birth
             </label>
             <input
               type="date"
               name="dateOfBirth"
               id="dateOfBirth"
-              className="form-style"
+              className={inputClass}
               {...register("dateOfBirth", {
                 required: {
                   value: true,
@@ -99,20 +108,20 @@ export default function EditProfile() {
               defaultValue={user?.additionalDetails?.dateOfBirth}
             />
             {errors.dateOfBirth && (
-              <span className="text-[11px] text-red-500">
+              <span className="text-[11px] font-semibold text-rose-500">
                 {errors.dateOfBirth.message}
               </span>
             )}
           </div>
 
-          <div className="flex flex-col gap-1.5 lg:w-[48%]">
-            <label htmlFor="gender" className="lable-style">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="gender" className={labelClass}>
               Gender
             </label>
             <select
               name="gender"
               id="gender"
-              className="form-style"
+              className={inputClass}
               {...register("gender", { required: true })}
               defaultValue={user?.additionalDetails?.gender}
             >
@@ -125,24 +134,25 @@ export default function EditProfile() {
               })}
             </select>
             {errors.gender && (
-              <span className="text-[11px] text-red-500">
+              <span className="text-[11px] font-semibold text-rose-500">
                 Please select your gender.
               </span>
             )}
           </div>
         </div>
 
-        <div className="flex flex-col gap-5 lg:flex-row">
-          <div className="flex flex-col gap-1.5 lg:w-[48%]">
-            <label htmlFor="contactNumber" className="lable-style">
-              Contact Number
+        {/* Contact & Bio */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="contactNumber" className={labelClass}>
+              <FiPhone className="text-indigo-500" /> Contact Number
             </label>
             <input
               type="tel"
               name="contactNumber"
               id="contactNumber"
               placeholder="Enter Contact Number"
-              className="form-style"
+              className={inputClass}
               {...register("contactNumber", {
                 required: {
                   value: true,
@@ -154,27 +164,27 @@ export default function EditProfile() {
               defaultValue={user?.additionalDetails?.contactNumber}
             />
             {errors.contactNumber && (
-              <span className="text-[11px] text-red-500">
+              <span className="text-[11px] font-semibold text-rose-500">
                 {errors.contactNumber.message}
               </span>
             )}
           </div>
 
-          <div className="flex flex-col gap-1.5 lg:w-[48%]">
-            <label htmlFor="about" className="lable-style">
-              About / Bio
+          <div className="flex flex-col gap-2">
+            <label htmlFor="about" className={labelClass}>
+              <FiInfo className="text-indigo-500" /> About / Bio
             </label>
             <input
               type="text"
               name="about"
               id="about"
               placeholder="Enter Bio Details"
-              className="form-style"
+              className={inputClass}
               {...register("about", { required: true })}
               defaultValue={user?.additionalDetails?.about}
             />
             {errors.about && (
-              <span className="text-[11px] text-red-500">
+              <span className="text-[11px] font-semibold text-rose-500">
                 Please enter your About bio.
               </span>
             )}
@@ -182,23 +192,29 @@ export default function EditProfile() {
         </div>
       </div>
 
-      <div className="flex justify-end gap-3 mt-2">
-        <button
-          type="button"
-          onClick={() => {
-            navigate("/dashboard/my-profile")
-          }}
-          className="rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-6 py-2.5 text-xs transition-all hover:scale-95"
-        >
-          Cancel
-        </button>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
         <button
           type="submit"
-          className="rounded-full bg-royal-blue hover:bg-royal-blue/90 text-white font-bold px-6 py-2.5 text-xs transition-all hover:scale-95 shadow-sm"
+          style={{
+            background: 'linear-gradient(135deg, #1F5FE0 0%, #8A2BE0 100%)',
+            color: '#FFFFFF',
+            padding: '12px 28px',
+            borderRadius: '12px',
+            fontWeight: 700,
+            fontSize: '13px',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            boxShadow: '0 4px 14px rgba(31, 95, 224, 0.35)',
+            transition: 'all 0.15s ease'
+          }}
         >
-          Save Details
+          <FiCheck style={{ fontSize: '16px' }} /> Save Details
         </button>
       </div>
     </form>
   )
 }
+

@@ -1,5 +1,4 @@
 const RecordedLecture = require("../models/RecordedLecture")
-const Course = require("../models/Course")
 const cloudinary = require("cloudinary").v2
 
 // ─────────────────────────────────────────────────────────────────────────────

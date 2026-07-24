@@ -19,7 +19,7 @@ import {
 
 const LINKS = [
   { 
-    group: 'Product',      
+    group: 'PRODUCT',      
     items: [
       { label: 'Pricing',           to: '/pricing' },
       { label: 'Find a practitioner', to: '/find-a-practitioner' },
@@ -28,16 +28,16 @@ const LINKS = [
     ]
   },
   { 
-    group: 'For practitioners', 
+    group: 'FOR PRACTITIONERS', 
     items: [
       { label: 'Start free',        to: '/start-free', badge: 'Free' },
       { label: 'For organizations', to: '/for-organizations' },
       { label: 'Talk to a human',   to: '/talk-to-human' },
-      { label: 'Onboarding',        to: '/onboarding' },
+      { label: 'Onboarding',        to: '/onboarding/practitioner' },
     ]
   },
   { 
-    group: 'Resources', 
+    group: 'RESOURCES', 
     items: [
       { label: 'Platform Status',   to: '/start-free' },
       { label: 'Documentation',     to: '/co-pilot' },
@@ -46,12 +46,12 @@ const LINKS = [
     ]
   },
   { 
-    group: 'Legal',        
+    group: 'LEGAL',        
     items: [
-      { label: 'Privacy policy',    to: '/privacy' },
-      { label: 'Terms of service',  to: '/terms' },
-      { label: 'Data & consent',    to: '/data-consent' },
-      { label: 'Security',          to: '/security' },
+      { label: 'Privacy policy',    to: '/pricing' },
+      { label: 'Terms of service',  to: '/pricing' },
+      { label: 'Data & consent',    to: '/pricing' },
+      { label: 'Security',          to: '/pricing' },
     ]
   },
 ]
@@ -70,57 +70,81 @@ export function OHFooter() {
   }
 
   return (
-    <footer className="oh-footer" role="contentinfo">
-      {/* Glow ambient background elements */}
-      <div className="oh-footer__glow oh-footer__glow--left" aria-hidden="true" />
-      <div className="oh-footer__glow oh-footer__glow--right" aria-hidden="true" />
+    <footer 
+      className="oh-footer relative w-full overflow-hidden font-sans mt-16"
+      style={{
+        backgroundColor: '#070D1B',
+        background: 'linear-gradient(180deg, #09132C 0%, #030712 100%)',
+        borderTop: '2px solid #2563EB',
+        color: '#FFFFFF',
+        display: 'block',
+        position: 'relative',
+        zIndex: 50
+      }}
+      role="contentinfo"
+    >
+      {/* Top Gradient Accent Line */}
+      <div 
+        className="absolute top-0 left-0 right-0 h-[3px] z-10"
+        style={{
+          background: 'linear-gradient(90deg, #2563EB 0%, #3B82F6 50%, #60A5FA 100%)'
+        }}
+      />
 
-      {/* Accent top gradient border line */}
-      <div className="oh-footer__top-accent" aria-hidden="true" />
+      {/* Background Glow Effect */}
+      <div 
+        className="absolute -top-32 -left-32 w-96 h-96 rounded-full pointer-events-none blur-3xl opacity-25"
+        style={{ background: 'radial-gradient(circle, #2563EB 0%, rgba(37,99,235,0) 70%)' }}
+      />
+      <div 
+        className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full pointer-events-none blur-3xl opacity-25"
+        style={{ background: 'radial-gradient(circle, #3B82F6 0%, rgba(59,130,246,0) 70%)' }}
+      />
 
-      {/* Main Footer Container */}
-      <div className="oh-wrap oh-footer__container">
-
-        {/* ── Main Grid: Brand + Navigation Columns ── */}
-        <div className="oh-footer__main-grid">
-
-          {/* Brand Column */}
-          <div className="oh-footer__brand">
-            <Link to="/" className="oh-footer__logo-link" aria-label="OpenHand home">
-              <OHLogo variant="full-color" size={36} className="oh-footer__logo-mark" />
+      {/* Main Container */}
+      <div className="relative z-10 max-w-[1340px] mx-auto px-6 sm:px-8 pt-16 pb-12">
+        
+        {/* Main Grid: Brand & Links */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 pb-12 border-b border-blue-900/50">
+          
+          {/* Brand Column (5 cols) */}
+          <div className="lg:col-span-5 flex flex-col gap-4">
+            <Link to="/" className="inline-flex items-center group w-fit" aria-label="OpenHand home">
+              <OHLogo variant="full-color" size={38} />
             </Link>
 
-            <h4 className="oh-footer__tagline">
-              Your Growth, <span className="oh-footer__tagline-accent">Our Guidance.</span>
+            <h4 className="text-2xl font-black tracking-tight" style={{ color: '#FFFFFF' }}>
+              Your Growth, <span style={{ color: '#60A5FA' }}>Our Guidance.</span>
             </h4>
 
-            <p className="oh-footer__sub">
+            <p className="text-sm font-medium leading-relaxed max-w-md" style={{ color: '#E2E8F0' }}>
               The next-generation platform connecting clients with qualified practitioners — powered by intelligent co-pilot tools.
             </p>
 
             {/* Platform Status Indicator Badge */}
-            <div className="oh-footer__status-badge">
-              <span className="oh-footer__status-dot" aria-hidden="true" />
-              <span className="oh-footer__status-text">
-                <strong>1,200+</strong> Practitioners Active on <span className="oh-footer__status-domain">openhand.live</span>
+            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full border w-fit mt-1" style={{ backgroundColor: '#0F172A', borderColor: '#3B82F6' }}>
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_10px_#10B981] animate-pulse" />
+              <span className="text-xs font-semibold" style={{ color: '#FFFFFF' }}>
+                <strong style={{ color: '#FFFFFF' }}>1,200+</strong> Practitioners Active on <span className="font-bold" style={{ color: '#60A5FA' }}>openhand.live</span>
               </span>
             </div>
 
             {/* Initiative Tag */}
-            <div className="oh-footer__initiative-tag">
-              <FiGlobe style={{ marginRight: 6 }} />
-              A Magnificent U initiative, built by <strong>Zweibel AI</strong>.
+            <div className="flex items-center text-xs font-medium gap-1.5 mt-1" style={{ color: '#CBD5E1' }}>
+              <FiGlobe style={{ color: '#60A5FA' }} />
+              <span>A Magnificent U initiative, built by <strong className="font-bold" style={{ color: '#60A5FA' }}>Zweibel AI</strong>.</span>
             </div>
 
             {/* Social Links */}
-            <div className="oh-footer__socials">
+            <div className="flex items-center gap-3 mt-2">
               {SOCIAL_LINKS.map(({ icon: Icon, href, label }) => (
                 <a
                   key={label}
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="oh-footer__social-btn"
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-base hover:-translate-y-1 transition-all duration-200 shadow-md"
+                  style={{ backgroundColor: '#0F172A', border: '1px solid #3B82F6', color: '#60A5FA' }}
                   aria-label={label}
                   title={label}
                 >
@@ -130,18 +154,31 @@ export function OHFooter() {
             </div>
           </div>
 
-          {/* Navigation Columns */}
-          <div className="oh-footer__nav-grid">
+          {/* Navigation Grid (7 cols) */}
+          <div className="lg:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-8">
             {LINKS.map((group) => (
-              <div key={group.group} className="oh-footer__col">
-                <h5 className="oh-footer__col-head">{group.group}</h5>
-                <ul className="oh-footer__col-list">
+              <div key={group.group} className="flex flex-col gap-4">
+                <div>
+                  <h5 className="text-sm font-extrabold tracking-wider font-mono uppercase" style={{ color: '#60A5FA' }}>
+                    {group.group}
+                  </h5>
+                  <div className="w-8 h-[3px] rounded-full mt-2" style={{ backgroundColor: '#2563EB' }} />
+                </div>
+
+                <ul className="flex flex-col gap-3">
                   {group.items.map((item) => (
-                    <li key={item.label} className="oh-footer__col-item">
-                      <Link to={item.to} className="oh-footer__link">
-                        <span className="oh-footer__link-text">{item.label}</span>
+                    <li key={item.label}>
+                      <Link 
+                        to={item.to} 
+                        className="inline-flex items-center gap-2 text-sm font-semibold hover:translate-x-1 transition-all duration-200"
+                        style={{ color: '#FFFFFF' }}
+                      >
+                        <span className="hover:text-blue-400">{item.label}</span>
                         {item.badge && (
-                          <span className={`oh-footer__pill oh-footer__pill--${item.badge.toLowerCase()}`}>
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{
+                            backgroundColor: item.badge === 'AI' ? '#3B82F6' : '#10B981',
+                            color: '#FFFFFF'
+                          }}>
                             {item.badge}
                           </span>
                         )}
@@ -155,27 +192,26 @@ export function OHFooter() {
 
         </div>
 
-        {/* ── Bottom Bar ── */}
-        <div className="oh-footer__bottom">
-          <div className="oh-footer__bottom-left">
-            <p className="oh-footer__copyright">
-              © {new Date().getFullYear()} <strong>OpenHand</strong> · All rights reserved.
-            </p>
-            <span className="oh-footer__divider" aria-hidden="true">•</span>
-            <span className="oh-footer__made">
-              Crafted with <FiHeart className="oh-footer__heart-icon" /> by Zweibel AI
+        {/* Bottom Bar */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 text-xs font-semibold" style={{ color: '#E2E8F0' }}>
+          <div className="flex flex-wrap items-center gap-2 text-center sm:text-left">
+            <span>© {new Date().getFullYear()} <strong className="font-bold" style={{ color: '#FFFFFF' }}>OpenHand</strong> · All rights reserved.</span>
+            <span className="hidden sm:inline text-blue-500">•</span>
+            <span className="inline-flex items-center gap-1.5">
+              Crafted with <FiHeart className="text-red-500 animate-pulse" /> by <strong style={{ color: '#60A5FA' }}>Zweibel AI</strong>
             </span>
           </div>
 
-          <div className="oh-footer__bottom-right">
+          <div>
             <button
               onClick={scrollToTop}
-              className="oh-footer__back-top-btn"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border text-xs font-bold hover:-translate-y-0.5 transition-all duration-200 shadow-md"
+              style={{ backgroundColor: '#0F172A', borderColor: '#3B82F6', color: '#FFFFFF' }}
               aria-label="Back to top"
               type="button"
             >
               <span>Back to top</span>
-              <FiArrowUp className="oh-footer__back-top-icon" />
+              <FiArrowUp className="text-sm" style={{ color: '#60A5FA' }} />
             </button>
           </div>
         </div>

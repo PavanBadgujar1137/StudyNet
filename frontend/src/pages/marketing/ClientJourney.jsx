@@ -276,25 +276,29 @@ export function ClientJourney() {
       {/* Powered by Claude Co-Pilot Section */}
       <section className="oh-copilot-section" id="copilot">
         <div className="oh-wrap">
-          <OHEyebrow dark>Powered by Claude AI</OHEyebrow>
-          <h2 className="oh-copilot__heading">A second pair of ears in every session.</h2>
-          <p className="oh-copilot__sub">
-            You're listening to a person. You shouldn't also be tracking frameworks, remembering what they said in week two, and planning the next question. That's what the co-pilot is for — and it only ever speaks to you.
-          </p>
-
           <div className="oh-copilot__grid">
 
-            {/* Left Column: 4 Feature Items */}
-            <div className="oh-copilot__list">
-              {COPILOT_FEATURES.map((item) => (
-                <div key={item.n} className="oh-copilot__item">
-                  <div className="oh-copilot__num">{item.n}</div>
-                  <div>
-                    <h3 className="oh-copilot__item-title">{item.title}</h3>
-                    <p className="oh-copilot__item-desc">{item.desc}</p>
+            {/* Left Column: Header + 4 Feature Items */}
+            <div className="flex flex-col gap-6">
+              <div>
+                <OHEyebrow dark>Powered by Claude AI</OHEyebrow>
+                <h2 className="oh-copilot__heading">A second pair of ears in every session.</h2>
+                <p className="oh-copilot__sub">
+                  You're listening to a person. You shouldn't also be tracking frameworks, remembering what they said in week two, and planning the next question. That's what the co-pilot is for — and it only ever speaks to you.
+                </p>
+              </div>
+
+              <div className="oh-copilot__list">
+                {COPILOT_FEATURES.map((item) => (
+                  <div key={item.n} className="oh-copilot__item">
+                    <div className="oh-copilot__num">{item.n}</div>
+                    <div>
+                      <h3 className="oh-copilot__item-title">{item.title}</h3>
+                      <p className="oh-copilot__item-desc">{item.desc}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
 
             {/* Right Column: Live Session Co-Pilot Mock Panel */}
@@ -342,7 +346,7 @@ export function ClientJourney() {
                 </div>
 
                 <div className="oh-copilot__panel-foot">
-                  <FiLock style={{ marginRight: 4 }} /> Visible only to you · Client consented at 00:00
+                  <FiLock style={{ marginRight: 6 }} /> Visible only to you · Client consented at 00:00
                 </div>
               </div>
             </div>

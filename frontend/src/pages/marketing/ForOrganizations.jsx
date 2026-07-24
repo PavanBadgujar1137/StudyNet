@@ -1,192 +1,501 @@
 import React from 'react'
-import { OHFooter, OHButton, OHEyebrow, OHCard, OHCardTitle, OHCardBody } from '../../components/openhand'
+import { Link } from 'react-router-dom'
+import { OHFooter } from '../../components/openhand'
 
 export function ForOrganizations() {
   return (
-    <div className="oh-org-page">
-
+    <div className="org-page">
       {/* Hero */}
-      <header className="oh-org-hero">
+      <header className="org-hero">
         <div className="oh-wrap">
-          <OHEyebrow>For Organizations</OHEyebrow>
+          <span className="org-eyebrow">For organizations</span>
           <h1>
-            Employee wellbeing that doesn't feel like <span className="oh-grad-text">an EAP nobody opens.</span>
+            Your EAP exists. <span className="org-grad-text">Nobody's using it.</span>
           </h1>
-          <p className="sub">
-            Private circles, vetted practitioners, and reporting that respects confidentiality — built for teams that actually care about their people.
+          <p>
+            Employee mental health benefits are widely reported to sit largely unused. Not because people don't need them — because a phone number to a stranger isn't how anyone actually opens up. We sell circles instead.
           </p>
-          <div className="cta-row">
-            <OHButton href="/talk-to-human" size="lg">Scope a pilot for your team</OHButton>
-            <OHButton href="#flywheel" variant="ghost" size="lg">How the circle flywheel works →</OHButton>
+          <div className="org-cta-row">
+            <Link to="/talk-to-human" className="org-btn">Request a pilot for one team</Link>
+            <a href="#how" className="org-btn-ghost">See how a rollout works →</a>
           </div>
         </div>
       </header>
 
-      {/* Section 1: EAP vs OpenHand Circles */}
-      <section className="oh-sec">
+      {/* Section 1: Traditional EAP vs OpenHand Circles */}
+      <section className="org-sec">
         <div className="oh-wrap">
-          <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-10">
-            <h2 className="oh-sec-title text-center mx-auto mb-3">Why traditional EAPs hit 3% utilization</h2>
-            <p className="sub text-center mx-auto max-w-2xl">
-              Employees don't use EAPs because they feel clinical, bureaucratic, and unsafe. Here is what happens when you switch to peer circles.
-            </p>
-          </div>
-          <div className="cmp-table-wrap">
-            <table className="cmp-table">
-              <thead>
-                <tr>
-                  <th>Dimension</th>
-                  <th>Traditional EAP</th>
-                  <th className="us-col">OpenHand Circles</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Format</td>
-                  <td>Transactional 1:1 sessions via helpline</td>
-                  <td className="us-col">Fixed 6-to-8 week private cohort containers</td>
-                </tr>
-                <tr>
-                  <td>Utilization</td>
-                  <td>Avg. 2% to 4% company-wide</td>
-                  <td className="us-col">Avg. 68% active cohort engagement</td>
-                </tr>
-                <tr>
-                  <td>Privacy &amp; Trust</td>
-                  <td>Feared HR reporting &amp; corporate oversight</td>
-                  <td className="us-col">Query-level strict confidentiality (aggregate HR view only)</td>
-                </tr>
-                <tr>
-                  <td>Practitioner Quality</td>
-                  <td>Assigned randomly from generic network</td>
-                  <td className="us-col">Specialized, verified practitioners with explicit modality notes</td>
-                </tr>
-                <tr>
-                  <td>Ongoing Impact</td>
-                  <td>Stops when session budget expires</td>
-                  <td className="us-col">Self-organizing accountability peer pods that last long-term</td>
-                </tr>
-              </tbody>
-            </table>
+          <div className="org-split">
+            <div className="org-pane">
+              <div className="tag">The traditional EAP</div>
+              <h3>A helpline most people never call</h3>
+              <p>
+                Access is technically universal. Uptake isn't. Each step in the funnel loses people, and the ones who need it most fall out earliest.
+              </p>
+              <div className="org-funnel">
+                <div className="funnel-step">
+                  <div className="funnel-head">
+                    <span className="funnel-label">Employees covered</span>
+                    <span className="funnel-val">100%</span>
+                  </div>
+                  <div className="funnel-track">
+                    <div className="funnel-fill f-gray-1" style={{ width: '100%' }}>
+                      <span className="funnel-bar-text">Everyone has access</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="funnel-step">
+                  <div className="funnel-head">
+                    <span className="funnel-label">Know it exists</span>
+                    <span className="funnel-val">~60%</span>
+                  </div>
+                  <div className="funnel-track">
+                    <div className="funnel-fill f-gray-2" style={{ width: '60%' }}>
+                      <span className="funnel-bar-text">Remember the benefit</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="funnel-step">
+                  <div className="funnel-head">
+                    <span className="funnel-label">Would consider using it</span>
+                    <span className="funnel-val">~25%</span>
+                  </div>
+                  <div className="funnel-track">
+                    <div className="funnel-fill f-gray-3" style={{ width: '25%' }}></div>
+                    <span className="funnel-outside-text">Trust it's confidential</span>
+                  </div>
+                </div>
+
+                <div className="funnel-step">
+                  <div className="funnel-head">
+                    <span className="funnel-label">Actually book</span>
+                    <span className="funnel-val badge-red">Single Digits</span>
+                  </div>
+                  <div className="funnel-track">
+                    <div className="funnel-fill f-red" style={{ width: '9%' }}></div>
+                    <span className="funnel-outside-text text-red">High stigma & friction drop-off</span>
+                  </div>
+                </div>
+              </div>
+              <p className="org-note">
+                Illustrative funnel shape based on widely reported low EAP utilisation. Verify against your own provider's numbers.
+              </p>
+            </div>
+
+            <div className="org-pane dark">
+              <div className="tag">OpenHand circles</div>
+              <h3>A room your people already belong to</h3>
+              <p>
+                Eight colleagues, one practitioner, six weeks, a shared topic. Joining is a normal thing your team does — not a confession you make to HR.
+              </p>
+              <div className="org-funnel">
+                <div className="funnel-step">
+                  <div className="funnel-head">
+                    <span className="funnel-label">Invited to a circle</span>
+                    <span className="funnel-val">100%</span>
+                  </div>
+                  <div className="funnel-track">
+                    <div className="funnel-fill f-blue-1" style={{ width: '100%' }}>
+                      <span className="funnel-bar-text">Team-level invitation</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="funnel-step">
+                  <div className="funnel-head">
+                    <span className="funnel-label">Attend session one</span>
+                    <span className="funnel-val">Higher</span>
+                  </div>
+                  <div className="funnel-track">
+                    <div className="funnel-fill f-blue-2" style={{ width: '75%' }}>
+                      <span className="funnel-bar-text">Peers are visibly going</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="funnel-step">
+                  <div className="funnel-head">
+                    <span className="funnel-label">Complete the circle</span>
+                    <span className="funnel-val">Higher still</span>
+                  </div>
+                  <div className="funnel-track">
+                    <div className="funnel-fill f-purple-1" style={{ width: '60%' }}>
+                      <span className="funnel-bar-text">Group accountability</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="funnel-step">
+                  <div className="funnel-head">
+                    <span className="funnel-label">Continue after</span>
+                    <span className="funnel-val">Ongoing</span>
+                  </div>
+                  <div className="funnel-track">
+                    <div className="funnel-fill f-purple-2" style={{ width: '45%' }}>
+                      <span className="funnel-bar-text">1:1 or membership</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <p className="org-note" style={{ color: '#8B90B8' }}>
+                Directional model, not measured results. Report your real pilot numbers once you have them.
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Section 2: 8-Week Pilot Flow */}
-      <section className="oh-sec oh-sec-community">
+      {/* Section 2: Rollout Flow SVG Diagram */}
+      <section className="org-sec" id="how">
         <div className="oh-wrap">
-          <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-10">
-            <h2 className="oh-sec-title text-center mx-auto mb-3">An 8-week pilot designed for zero friction</h2>
-            <p className="sub text-center mx-auto max-w-2xl">
-              From initial team scoping to post-pilot impact report — launched in under 10 days.
-            </p>
+          <div className="org-sec-head">
+            <h2>A pilot runs in eight weeks</h2>
+            <p>One team first. If it doesn't move anything, you've lost eight weeks and one invoice — not a year-long contract.</p>
           </div>
-          <div className="pilot-flow-grid">
-            <OHCard surface="white" pad="md">
-              <span className="step-tag">Phase 1 · Week 1</span>
-              <OHCardTitle>Team Scoping &amp; Match</OHCardTitle>
-              <OHCardBody>Select your team focus area (burnout, parenting, leadership, high anxiety) and match with a verified senior practitioner.</OHCardBody>
-            </OHCard>
+          <div className="org-flow">
+            <svg
+              className="org-flowsvg"
+              viewBox="0 0 1000 250"
+              role="img"
+              aria-label="Eight week pilot rollout flow from scoping to review"
+            >
+              <defs>
+                <linearGradient id="fg" x1="0" y1="0" x2="1000" y2="0">
+                  <stop offset="0" stopColor="#1F5FE0" />
+                  <stop offset="0.5" stopColor="#4733C9" />
+                  <stop offset="1" stopColor="#8A2BE0" />
+                </linearGradient>
+                <marker
+                  id="ar"
+                  viewBox="0 0 10 10"
+                  refX="9"
+                  refY="5"
+                  markerWidth="7"
+                  markerHeight="7"
+                  orient="auto"
+                >
+                  <path
+                    d="M1 1L9 5L1 9"
+                    fill="none"
+                    stroke="#8A2BE0"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </marker>
+              </defs>
+              <line
+                x1="70"
+                y1="120"
+                x2="930"
+                y2="120"
+                stroke="url(#fg)"
+                strokeWidth="3"
+                strokeLinecap="round"
+                markerEnd="url(#ar)"
+                opacity="0.85"
+              />
 
-            <OHCard surface="white" pad="md">
-              <span className="step-tag">Phase 2 · Weeks 2–7</span>
-              <OHCardTitle>6-Week Private Container</OHCardTitle>
-              <OHCardBody>Weekly live circle sessions, encrypted async check-ins, and peer pod accountability threads.</OHCardBody>
-            </OHCard>
+              <g>
+                <circle cx="90" cy="120" r="26" fill="#fff" stroke="#1F5FE0" strokeWidth="2.5" />
+                <text x="90" y="126" textAnchor="middle" className="ttl" fontSize="14" fill="#1F5FE0">1</text>
+                <text x="90" y="70" textAnchor="middle" className="wk" fontSize="10.5">WEEK 0</text>
+                <text x="90" y="176" textAnchor="middle" className="ttl" fontSize="13.5">Scope</text>
+                <text x="90" y="196" textAnchor="middle" className="sub" fontSize="11.5">Pick one team</text>
+                <text x="90" y="212" textAnchor="middle" className="sub" fontSize="11.5">and one theme</text>
+              </g>
 
-            <OHCard surface="white" pad="md">
-              <span className="step-tag">Phase 3 · Week 8</span>
-              <OHCardTitle>Aggregate Impact Report</OHCardTitle>
-              <OHCardBody>HR receives aggregated wellbeing shift metrics, attendance telemetry, and recommendations for org roll-out.</OHCardBody>
-            </OHCard>
+              <g>
+                <circle cx="258" cy="120" r="26" fill="#fff" stroke="#3352D6" strokeWidth="2.5" />
+                <text x="258" y="126" textAnchor="middle" className="ttl" fontSize="14" fill="#3352D6">2</text>
+                <text x="258" y="70" textAnchor="middle" className="wk" fontSize="10.5">WEEK 1</text>
+                <text x="258" y="176" textAnchor="middle" className="ttl" fontSize="13.5">Match</text>
+                <text x="258" y="196" textAnchor="middle" className="sub" fontSize="11.5">Practitioner from our</text>
+                <text x="258" y="212" textAnchor="middle" className="sub" fontSize="11.5">panel, or bring yours</text>
+              </g>
+
+              <g>
+                <circle cx="426" cy="120" r="26" fill="#fff" stroke="#4733C9" strokeWidth="2.5" />
+                <text x="426" y="126" textAnchor="middle" className="ttl" fontSize="14" fill="#4733C9">3</text>
+                <text x="426" y="70" textAnchor="middle" className="wk" fontSize="10.5">WEEK 2</text>
+                <text x="426" y="176" textAnchor="middle" className="ttl" fontSize="13.5">Invite</text>
+                <text x="426" y="196" textAnchor="middle" className="sub" fontSize="11.5">Opt-in, capped at 8,</text>
+                <text x="426" y="212" textAnchor="middle" className="sub" fontSize="11.5">names never sent to HR</text>
+              </g>
+
+              <g>
+                <circle cx="594" cy="120" r="26" fill="#fff" stroke="#6B33D2" strokeWidth="2.5" />
+                <text x="594" y="126" textAnchor="middle" className="ttl" fontSize="14" fill="#6B33D2">4</text>
+                <text x="594" y="70" textAnchor="middle" className="wk" fontSize="10.5">WEEKS 3–8</text>
+                <text x="594" y="176" textAnchor="middle" className="ttl" fontSize="13.5">Run the circle</text>
+                <text x="594" y="196" textAnchor="middle" className="sub" fontSize="11.5">Six weekly sessions</text>
+                <text x="594" y="212" textAnchor="middle" className="sub" fontSize="11.5">plus check-ins between</text>
+              </g>
+
+              <g>
+                <circle cx="762" cy="120" r="26" fill="#fff" stroke="#8A2BE0" strokeWidth="2.5" />
+                <text x="762" y="126" textAnchor="middle" className="ttl" fontSize="14" fill="#8A2BE0">5</text>
+                <text x="762" y="70" textAnchor="middle" className="wk" fontSize="10.5">WEEK 9</text>
+                <text x="762" y="176" textAnchor="middle" className="ttl" fontSize="13.5">Review</text>
+                <text x="762" y="196" textAnchor="middle" className="sub" fontSize="11.5">Aggregate-only report,</text>
+                <text x="762" y="212" textAnchor="middle" className="sub" fontSize="11.5">renew or walk away</text>
+              </g>
+            </svg>
           </div>
         </div>
       </section>
 
-      {/* Section 3: B2B Pricing Tiers */}
-      <section className="oh-sec">
+      {/* Section 3: What your organization gets */}
+      <section className="org-sec">
         <div className="oh-wrap">
-          <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-10">
-            <h2 className="oh-sec-title text-center mx-auto mb-3">Organization Plans</h2>
-            <p className="sub text-center mx-auto max-w-2xl">
-              Simple, transparent pricing per circle container or company-wide roll-out.
-            </p>
+          <div className="org-sec-head">
+            <h2>What your organization gets</h2>
           </div>
-          <div className="b2b-plans-grid">
-            <OHCard surface="white" pad="lg" className="plan-card">
-              <h3>Single Team Pilot</h3>
-              <p className="b2b-who">One 6-week circle for up to 12 employees.</p>
-              <div className="b2b-price">₹75,000<small> /pilot container</small></div>
-              <ul className="b2b-list">
-                <li>1 Dedicated Senior Practitioner</li>
-                <li>6 Live group circle calls</li>
-                <li>Encrypted client check-in app</li>
-                <li>Aggregate impact summary</li>
-              </ul>
-              <OHButton href="/talk-to-human" variant="ghost" fullWidth>Request Pilot →</OHButton>
-            </OHCard>
+          <div className="org-grid3">
+            <div className="org-card">
+              <div className="ic">
+                <svg viewBox="0 0 24 24">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+              </div>
+              <h3>Circles, not helplines</h3>
+              <p>Capped at eight people, led by a vetted practitioner, on a theme your team actually named — burnout, managing up, new-parent transitions.</p>
+            </div>
 
-            <OHCard surface="navy" pad="lg" className="feat-b2b plan-card">
-              <span className="featured-badge">RECOMMENDED</span>
-              <p className="b2b-who">Up to 4 parallel circles for department-wide coverage.</p>
-              <div className="b2b-price">₹2,40,000<small> /quarter</small></div>
-              <ul className="b2b-list">
-                <li>Up to 48 employee seats</li>
-                <li>Dedicated Account Specialist</li>
-                <li>Co-pilot session note synthesis</li>
-                <li>Quarterly HR Insights Telemetry</li>
-              </ul>
-              <OHButton href="/talk-to-human" fullWidth>Book Org Consultation →</OHButton>
-            </OHCard>
+            <div className="org-card">
+              <div className="ic">
+                <svg viewBox="0 0 24 24">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
+                </svg>
+              </div>
+              <h3>Confidentiality that holds</h3>
+              <p>You get participation rates and themes. You never get names, transcripts, or who said what. That's what makes people show up.</p>
+            </div>
 
-            <OHCard surface="white" pad="lg" className="plan-card">
-              <h3>Enterprise Practice</h3>
-              <p className="b2b-who">Custom annual roll-out with internal or external practitioners.</p>
-              <div className="b2b-price">Custom<small> /annual</small></div>
-              <ul className="b2b-list">
-                <li>Unlimited circles &amp; employee seats</li>
-                <li>Bring your own practitioner panel</li>
-                <li>Single Sign-On (SSO / SAML)</li>
-                <li>Custom branding &amp; custom domain</li>
-              </ul>
-              <OHButton href="/talk-to-human" variant="ghost" fullWidth>Talk to Founders →</OHButton>
-            </OHCard>
+            <div className="org-card">
+              <div className="ic">
+                <svg viewBox="0 0 24 24">
+                  <path d="M3 3v18h18M7 15l4-5 4 3 5-7" />
+                </svg>
+              </div>
+              <h3>Reporting leadership can act on</h3>
+              <p>Aggregate participation, completion, and theme clustering. Enough to make a budget case; never enough to identify an individual.</p>
+            </div>
+
+            <div className="org-card">
+              <div className="ic">
+                <svg viewBox="0 0 24 24">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                </svg>
+              </div>
+              <h3>Priced per seat, not per headcount</h3>
+              <p>You pay for people who actually take part. No more buying coverage for 400 employees so that nine can use it.</p>
+            </div>
+
+            <div className="org-card">
+              <div className="ic">
+                <svg viewBox="0 0 24 24">
+                  <path d="M20 6 9 17l-5-5" />
+                </svg>
+              </div>
+              <h3>Your own practitioners, if you have them</h3>
+              <p>Already work with counsellors? Bring them onto OpenHand and keep the relationship. We're infrastructure, not a replacement.</p>
+            </div>
+
+            <div className="org-card">
+              <div className="ic">
+                <svg viewBox="0 0 24 24">
+                  <path d="M12 8v4l3 3M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+              </div>
+              <h3>1:1 access when a circle isn't enough</h3>
+              <p>Anyone in a circle can escalate to private sessions with the same practitioner. Continuity, not a fresh referral to a stranger.</p>
+            </div>
           </div>
-          <p className="disclaim-text margin-top-sm text-center mx-auto">
-            PO-based invoices, and MSME terms available on request.
+        </div>
+      </section>
+
+      {/* Section 4: Pilot Pricing Tiers */}
+      <section className="org-sec">
+        <div className="oh-wrap">
+          <div className="org-sec-head">
+            <h2>Pilot pricing</h2>
+            <p>Per participating seat. Nothing for the employees who don't take part.</p>
+          </div>
+          <div className="org-tiers">
+            <div className="org-tier">
+              <h3>Single circle</h3>
+              <div className="size">One team, 8 seats, 6 weeks</div>
+              <div className="amt">₹1,20,000</div>
+              <div className="per">≈ ₹15,000 per participating employee</div>
+              <ul>
+                <li>Vetted practitioner matched</li>
+                <li>6 live group sessions</li>
+                <li>Weekly check-ins between sessions</li>
+                <li>Aggregate completion report</li>
+              </ul>
+              <Link to="/talk-to-human" className="org-btn-ghost">Request a pilot</Link>
+            </div>
+
+            <div className="org-tier feat">
+              <span className="badge">Most companies start here</span>
+              <h3>Department programme</h3>
+              <div className="size">4 circles, 32 seats, running quarterly</div>
+              <div className="amt">
+                ₹4,20,000<span style={{ fontSize: '15px', fontWeight: 500 }}> /quarter</span>
+              </div>
+              <div className="per">≈ ₹13,125 per participating employee</div>
+              <ul>
+                <li>Everything in Single circle</li>
+                <li>Choice of themes per circle</li>
+                <li>1:1 escalation pathway included</li>
+                <li>Quarterly leadership review</li>
+                <li>Manager briefing session</li>
+              </ul>
+              <Link to="/talk-to-human" className="org-btn">Talk to a founder</Link>
+            </div>
+
+            <div className="org-tier">
+              <h3>Organization-wide</h3>
+              <div className="size">Rolling circles across the company</div>
+              <div className="amt">Custom</div>
+              <div className="per">Volume rates from ₹9,000/seat</div>
+              <ul>
+                <li>Everything in Department</li>
+                <li>Your own practitioner panel</li>
+                <li>Branded employee app</li>
+                <li>SSO and HRIS integration</li>
+                <li>Named account contact</li>
+              </ul>
+              <Link to="/talk-to-human" className="org-btn-ghost">Talk to a founder</Link>
+            </div>
+          </div>
+          <p className="org-note">
+            Indicative pricing for planning purposes. Final rates depend on circle count, practitioner mix, and contract length — confirm on a call before budgeting.
           </p>
         </div>
       </section>
 
-      {/* Section 4: What HR sees / Never sees */}
-      <section className="oh-sec" id="flywheel">
+      {/* Section 5: Marketplace Loop Flywheel SVG Diagram */}
+      <section className="org-sec">
         <div className="oh-wrap">
-          <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-10">
-            <h2 className="oh-sec-title text-center mx-auto mb-3">Privacy &amp; Telemetry Rails</h2>
-            <p className="sub text-center mx-auto max-w-2xl">
-              We built query-layer privacy controls so HR gets actionable aggregate metrics without ever compromising employee trust.
+          <div className="org-loop">
+            <h2>Why this is better for the practitioners too</h2>
+            <p>
+              Corporate circles aren't a side business bolted onto a coaching platform. They're the engine that makes the whole thing work — because they hand our practitioners paid, filled work they'd otherwise have to go find themselves.
             </p>
-          </div>
-          <div className="privacy-rails-grid">
-            <OHCard surface="white" pad="lg" className="rail-card rail-sees">
-              <h3 className="rail-head see-title">✓ What HR sees</h3>
-              <ul>
-                <li>Aggregate participation percentage across team</li>
-                <li>Anonymized average sleep and stress index shifts</li>
-                <li>Circle completion rates and cohort feedback averages</li>
-                <li>High-level focus area distribution (e.g. 40% burnout, 30% parenting)</li>
-              </ul>
-            </OHCard>
+            <svg
+              className="org-loopsvg"
+              viewBox="0 0 940 300"
+              role="img"
+              aria-label="Circular flywheel diagram showing companies funding circles, practitioners earning, clients continuing, and the directory attracting more practitioners"
+            >
+              <defs>
+                <linearGradient id="fg2" x1="408" y1="88" x2="532" y2="212">
+                  <stop offset="0" stopColor="#1F5FE0" />
+                  <stop offset="1" stopColor="#8A2BE0" />
+                </linearGradient>
+                <marker
+                  id="ar2"
+                  viewBox="0 0 10 10"
+                  refX="8"
+                  refY="5"
+                  markerWidth="7"
+                  markerHeight="7"
+                  orient="auto"
+                >
+                  <path
+                    d="M1 1L9 5L1 9"
+                    fill="none"
+                    stroke="#9BB4FF"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </marker>
+              </defs>
 
-            <OHCard surface="white" pad="lg" className="rail-card rail-never">
-              <h3 className="rail-head never-title">✗ What HR NEVER sees</h3>
+              <path d="M250 60 H690" stroke="#9BB4FF" strokeWidth="2" opacity="0.5" markerEnd="url(#ar2)" fill="none" />
+              <path d="M810 105 V195" stroke="#9BB4FF" strokeWidth="2" opacity="0.5" markerEnd="url(#ar2)" fill="none" />
+              <path d="M690 240 H250" stroke="#9BB4FF" strokeWidth="2" opacity="0.5" markerEnd="url(#ar2)" fill="none" />
+              <path d="M130 195 V105" stroke="#9BB4FF" strokeWidth="2" opacity="0.5" markerEnd="url(#ar2)" fill="none" />
+
+              <g>
+                <rect x="30" y="28" width="200" height="76" rx="14" fill="rgba(255,255,255,.07)" stroke="rgba(255,255,255,.16)" />
+                <text x="130" y="58" textAnchor="middle" className="lt">Companies buy circles</text>
+                <text x="130" y="80" textAnchor="middle">Higher contract value</text>
+              </g>
+
+              <g>
+                <rect x="710" y="28" width="200" height="76" rx="14" fill="rgba(255,255,255,.07)" stroke="rgba(255,255,255,.16)" />
+                <text x="810" y="58" textAnchor="middle" className="lt">Practitioners get paid work</text>
+                <text x="810" y="80" textAnchor="middle">Filled seats, no marketing</text>
+              </g>
+
+              <g>
+                <rect x="710" y="196" width="200" height="76" rx="14" fill="rgba(255,255,255,.07)" stroke="rgba(255,255,255,.16)" />
+                <text x="810" y="226" textAnchor="middle" className="lt">Employees continue privately</text>
+                <text x="810" y="248" textAnchor="middle">1:1 and memberships</text>
+              </g>
+
+              <g>
+                <rect x="30" y="196" width="200" height="76" rx="14" fill="rgba(255,255,255,.07)" stroke="rgba(255,255,255,.16)" />
+                <text x="130" y="226" textAnchor="middle" className="lt">Directory gets deeper</text>
+                <text x="130" y="248" textAnchor="middle">Better practitioners join</text>
+              </g>
+
+              <g>
+                <circle cx="470" cy="150" r="62" fill="none" stroke="url(#fg2)" strokeWidth="2.5" />
+                <text x="470" y="145" textAnchor="middle" className="lt" fontSize="15">OpenHand</text>
+                <text x="470" y="166" textAnchor="middle" fontSize="11.5">takes a cut of each</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 6: Confidentiality (HR Sees vs Never Sees) */}
+      <section className="org-sec">
+        <div className="oh-wrap">
+          <div className="org-sec-head">
+            <h2>What HR sees, and what HR never sees</h2>
+            <p>This distinction is the entire reason people participate. We put it in the contract.</p>
+          </div>
+          <div className="org-conf">
+            <div className="box see">
+              <h3>You do see</h3>
               <ul>
-                <li>Individual employee names or email addresses in telemetry</li>
-                <li>Which specific employees attended or missed calls</li>
-                <li>Individual check-in notes, mood history, or reflection answers</li>
-                <li>Session transcriptions or co-pilot notes</li>
+                <li>How many seats were taken up</li>
+                <li>Completion rate across the circle</li>
+                <li>Themes raised, clustered and anonymised</li>
+                <li>Aggregate wellbeing direction over time</li>
+                <li>Whether people escalated to 1:1 (count only)</li>
               </ul>
-            </OHCard>
+            </div>
+            <div className="box never">
+              <h3>You never see</h3>
+              <ul>
+                <li>Who joined which circle</li>
+                <li>Anything an individual said</li>
+                <li>Session recordings or transcripts</li>
+                <li>Individual check-in responses</li>
+                <li>Who escalated to private sessions</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Closing CTA */}
+      <section className="org-close">
+        <div className="oh-wrap">
+          <h2>Start with one team.</h2>
+          <p>Eight weeks, eight seats, one invoice. If the numbers don't move, you walk away knowing something true.</p>
+          <div className="org-cta-row">
+            <Link to="/talk-to-human" className="org-btn">Request a pilot</Link>
+            <Link to="/find-a-practitioner" className="org-btn-ghost">See our practitioners →</Link>
           </div>
         </div>
       </section>

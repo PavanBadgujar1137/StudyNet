@@ -1,4 +1,4 @@
-import { FiTrash2 } from "react-icons/fi"
+import { FiTrash2, FiAlertTriangle } from "react-icons/fi"
 import { useDispatch, useSelector } from "react-redux"
 import { useNavigate } from "react-router-dom"
 
@@ -10,39 +10,60 @@ export default function DeleteAccount() {
   const navigate = useNavigate()
 
   async function handleDeleteAccount() {
-    try {
-      dispatch(deleteProfile(token, navigate))
-    } catch (error) {
-      console.log("ERROR MESSAGE - ", error.message)
+    if (window.confirm("Are you sure you want to permanently delete your account? This action cannot be undone.")) {
+      try {
+        dispatch(deleteProfile(token, navigate))
+      } catch (error) {
+        console.log("ERROR MESSAGE - ", error.message)
+      }
     }
   }
 
   return (
-    <>
-      <div className="my-8 flex flex-row gap-5 rounded-2xl border border-red-200 bg-red-50/40 p-6 md:p-8 text-left">
-        <div className="flex aspect-square h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-600 shrink-0 shadow-sm">
-          <FiTrash2 className="text-xl" />
-        </div>
-        <div className="flex flex-col gap-2">
-          <h3 className="text-lg font-bold text-red-800 font-fraunces">
+    <div style={{ background: '#FEF2F2', border: '1px solid #FECDD3', borderRadius: '24px', padding: '28px', display: 'flex', gap: '20px', alignItems: 'flex-start', textAlign: 'left' }}>
+      <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#FEE2E2', color: '#DC2626', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 2px 6px rgba(220,38,38,0.1)' }}>
+        <FiAlertTriangle style={{ fontSize: '22px' }} />
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: 1 }}>
+        <div>
+          <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#991B1B', margin: 0 }}>
             Delete Account
           </h3>
-          <div className="text-sm text-slate-600 leading-relaxed max-w-xl">
-            <p className="font-semibold text-red-700/90">Would you like to delete your account?</p>
-            <p className="mt-1">
-              This account may contain enrolled spaces or active learning sessions. Deleting your account is
-              permanent and will remove all the content associated with it.
-            </p>
-          </div>
+          <p style={{ fontSize: '12px', color: '#9F1239', margin: '2px 0 0', fontWeight: 600 }}>Permanent account removal</p>
+        </div>
+        
+        <div style={{ fontSize: '13px', color: '#475569', lineHeight: '1.6', maxWidth: '600px' }}>
+          <p style={{ fontWeight: 700, color: '#991B1B', margin: 0 }}>Would you like to delete your account?</p>
+          <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#64748B' }}>
+            Deleting your account is permanent and will remove all your data, enrolled spaces, progress history, and active sessions. This action cannot be reverted.
+          </p>
+        </div>
+
+        <div style={{ paddingTop: '8px' }}>
           <button
             type="button"
-            className="w-fit cursor-pointer text-sm font-bold text-red-600 hover:text-red-700 hover:underline transition-colors mt-1 text-left"
+            style={{
+              background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+              color: '#FFFFFF',
+              border: 'none',
+              padding: '12px 24px',
+              borderRadius: '12px',
+              fontWeight: 700,
+              fontSize: '13px',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: '0 4px 14px rgba(220, 38, 38, 0.4)',
+              transition: 'all 0.15s ease'
+            }}
             onClick={handleDeleteAccount}
           >
-            I want to delete my account.
+            <FiTrash2 style={{ fontSize: '15px' }} /> Delete My Account Permanently
           </button>
         </div>
       </div>
-    </>
+    </div>
   )
 }
+

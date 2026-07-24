@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { FiUpload } from "react-icons/fi"
+import { FiUpload, FiCamera } from "react-icons/fi"
 import { useDispatch, useSelector } from "react-redux"
 
 import { updateDisplayPicture } from "../../../../services/operations/SettingsAPI"
@@ -56,41 +56,80 @@ export default function ChangeProfilePicture() {
   }, [imageFile])
 
   return (
-    <div className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white p-6 md:p-8 shadow-sm text-navy text-left">
-      <div className="flex items-center gap-4">
-        <img
-          src={previewSource || user?.image}
-          alt={`profile-${user?.firstName}`}
-          className="aspect-square w-16 h-16 rounded-full object-cover border border-slate-200 p-0.5 shadow-sm shrink-0 animate-fadeIn"
-        />
-        <div className="space-y-2">
-          <h3 className="font-fraunces text-navy text-lg font-bold">Change Profile Picture</h3>
-          <div className="flex flex-row gap-3">
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              className="hidden"
-              accept="image/png, image/gif, image/jpeg"
-            />
-            <button
-              onClick={handleClick}
-              disabled={loading}
-              className="rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-5 text-xs transition-all hover:scale-95"
-            >
-              Select Image
-            </button>
-            <button
-              onClick={handleFileUpload}
-              disabled={loading || !imageFile}
-              className="rounded-full bg-royal-blue hover:bg-royal-blue/90 disabled:bg-royal-blue/40 text-white font-semibold py-2 px-5 text-xs transition-all hover:scale-95 shadow-sm flex items-center gap-1.5"
-            >
-              {loading ? "Uploading..." : "Upload"}
-              {!loading && <FiUpload className="text-xs" />}
-            </button>
-          </div>
+    <div className="rounded-3xl border border-slate-200/80 bg-white p-6 md:p-8 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6 text-left">
+      <div className="flex items-center gap-5">
+        <div className="relative">
+          <img
+            src={previewSource || user?.image}
+            alt={`profile-${user?.firstName}`}
+            className="aspect-square w-20 h-20 rounded-2xl object-cover ring-4 ring-slate-100 shadow-md bg-slate-800"
+          />
+          <button 
+            type="button" 
+            onClick={handleClick}
+            className="absolute -bottom-1 -right-1 p-2 rounded-xl bg-indigo-600 text-white shadow-md hover:bg-indigo-700 transition-all"
+            title="Choose new image"
+          >
+            <FiCamera className="text-xs" />
+          </button>
         </div>
+
+        <div className="space-y-1">
+          <h3 className="text-base font-bold text-slate-900">Profile Picture</h3>
+          <p className="text-xs text-slate-500 max-w-sm">PNG, JPG or GIF (max 5MB). Recommended square aspect ratio.</p>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', maxWidth: '400px', justifyContent: 'flex-end' }}>
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          className="hidden"
+          accept="image/png, image/gif, image/jpeg"
+        />
+        <button
+          onClick={handleClick}
+          disabled={loading}
+          style={{
+            background: '#F1F5F9',
+            color: '#334155',
+            border: '1px solid #CBD5E1',
+            padding: '10px 20px',
+            borderRadius: '12px',
+            fontWeight: 700,
+            fontSize: '12px',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease'
+          }}
+        >
+          Select Image
+        </button>
+        <button
+          onClick={handleFileUpload}
+          disabled={loading || !imageFile}
+          style={{
+            background: 'linear-gradient(135deg, #1F5FE0 0%, #8A2BE0 100%)',
+            color: '#FFFFFF',
+            border: 'none',
+            padding: '10px 20px',
+            borderRadius: '12px',
+            fontWeight: 700,
+            fontSize: '12px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            opacity: (loading || !imageFile) ? 0.5 : 1,
+            boxShadow: '0 4px 12px rgba(31, 95, 224, 0.35)',
+            transition: 'all 0.15s ease'
+          }}
+        >
+          {loading ? "Uploading..." : "Upload New Photo"}
+          {!loading && <FiUpload style={{ fontSize: '13px' }} />}
+        </button>
       </div>
     </div>
   )
 }
+

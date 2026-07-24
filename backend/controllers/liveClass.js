@@ -1,6 +1,5 @@
 const { v4: uuidv4 } = require("uuid")
 const LiveClass = require("../models/LiveClass")
-const Course = require("../models/Course")
 const User = require("../models/User")
 const mailSender = require("../utils/mailSender")
 const {

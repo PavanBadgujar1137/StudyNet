@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 // ─── OpenHand Global Styles (Design Tokens, Tailwind, Components & Pages)
 import "./styles/global.css";
+import "./styles/openhand-apps.css";
 import App from "./App";
 
 import { BrowserRouter } from "react-router-dom";

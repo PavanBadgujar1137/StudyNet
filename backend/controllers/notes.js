@@ -1,5 +1,4 @@
 const Note = require("../models/Note")
-const Course = require("../models/Course")
 const { uploadImageToCloudinary } = require("../utils/imageUploader")
 
 // ─────────────────────────────────────────────────────────────────────────────
