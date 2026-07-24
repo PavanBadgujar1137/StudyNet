@@ -168,7 +168,7 @@ export function ClientJourney() {
       <header className="oh-journey-hero">
         <div className="oh-wrap">
           <OHEyebrow>Step Two of Three</OHEyebrow>
-          <h1 className="oh-journey-hero__title">
+          <h1 className="oh-journey-hero__title whitespace-nowrap text-center w-full mx-auto">
             Ninety days, <span className="oh-grad-text">from stranger to changed.</span>
           </h1>
           <p className="oh-journey-hero__sub">

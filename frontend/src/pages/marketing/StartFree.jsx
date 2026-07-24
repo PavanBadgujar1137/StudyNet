@@ -34,7 +34,7 @@ export function StartFree() {
       <header className="oh-startfree-hero">
         <div className="oh-wrap">
           <OHEyebrow>Step one of three</OHEyebrow>
-          <h1>
+          <h1 className="whitespace-nowrap text-center w-full mx-auto">
             Your practice, <span className="oh-grad-text">live in 20 minutes.</span>
           </h1>
           <p className="sub">

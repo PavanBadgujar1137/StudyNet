@@ -9,7 +9,7 @@ export function ForOrganizations() {
       <header className="org-hero">
         <div className="oh-wrap">
           <span className="org-eyebrow">For organizations</span>
-          <h1>
+          <h1 className="whitespace-nowrap text-center w-full mx-auto">
             Your EAP exists. <span className="org-grad-text">Nobody's using it.</span>
           </h1>
           <p>
