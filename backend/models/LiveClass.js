@@ -16,7 +16,7 @@ const liveClassSchema = new mongoose.Schema(
     course: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Course",
-      required: true,
+      required: false,
     },
     // Optional section context
     section: { type: mongoose.Schema.Types.ObjectId, ref: "Section" },
@@ -45,18 +45,17 @@ const liveClassSchema = new mongoose.Schema(
       default: "scheduled",
     },
 
-    // ── 100ms.live (HMS) integration fields ──────────────────────────────────
+    // ── Zoom integration fields ──────────────────────────────────────────────
     streamProvider: {
       type: String,
-      enum: ["hms", "agora", "zoom", "custom"],
-      default: "hms",
+      enum: ["zoom", "hms", "agora", "custom"],
+      default: "zoom",
     },
-    // HMS room ID created via HMS Management API
-    hmsRoomId: { type: String, select: false }, // hidden from public queries
-    // HMS room code for students joining (short code, not the auth token)
-    hmsRoomCode: { type: String, select: false },
-    // Only set when the instructor "starts" the class and opens the room
-    hmsRoomEnabled: { type: Boolean, default: false },
+    // Zoom Meeting details generated via Zoom API or provided link
+    zoomMeetingId: { type: String },
+    zoomJoinUrl: { type: String },
+    zoomStartUrl: { type: String, select: false }, // host start link hidden from public queries
+    zoomPassword: { type: String },
 
     // Chat
     chatEnabled: { type: Boolean, default: true },

@@ -3422,11 +3422,18 @@ details > summary::-webkit-details-marker { display: none; }
 
 /* FAQ Accordion */
 .talk-faq {
-  max-width: 800px;
+  max-width: 1140px;
   margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .talk-faq {
+    grid-template-columns: 1fr;
+  }
 }
 
 .talk-q-card {

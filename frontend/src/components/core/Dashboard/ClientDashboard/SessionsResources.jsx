@@ -1,58 +1,67 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { FiVideo, FiExternalLink } from 'react-icons/fi'
 
-export function SessionsResources({ practitionerName = 'Meera' }) {
+export function SessionsResources({ practitionerName = 'Meera', dashboardData }) {
+  const navigate = useNavigate()
   const [selectedNotes, setSelectedNotes] = useState(null)
+  const upcomingClasses = dashboardData?.upcomingClasses || []
 
   return (
     <div id="sessions">
       <div className="hd">
         <div className="k">Sessions &amp; resources</div>
         <h1>Everything in one place</h1>
-        <p>Your bookings, your recordings where you've agreed to them, and whatever {practitionerName} has shared with you.</p>
+        <p>Your Zoom live classes, bookings, and whatever {practitionerName} has shared with you.</p>
       </div>
 
       <div className="card" style={{ marginBottom: '20px' }}>
-        <div className="sechd"><h3>Coming up</h3><a href="#">Book another →</a></div>
-        <div className="srow">
-          <div className="sdate"><b>24</b><span>Jul</span></div>
-          <div className="info"><b>1:1 with Dr. Meera Iyer</b><span>Session 4 · 60 minutes · 10:00 am</span></div>
-          <div className="go"><span className="pill up">Confirmed</span></div>
+        <div className="sechd">
+          <h3>Coming up (Zoom Live Classes)</h3>
         </div>
-        <div className="srow">
-          <div className="sdate"><b>04</b><span>Aug</span></div>
-          <div className="info"><b>Anxiety circle — week 1</b><span>Group · 90 minutes · 7:00 pm</span></div>
-          <div className="go"><span className="pill up">Confirmed</span></div>
-        </div>
-      </div>
 
-      <div className="card" style={{ marginBottom: '20px' }}>
-        <div className="sechd"><h3>Past sessions</h3></div>
-        <div className="srow">
-          <div className="sdate"><b>08</b><span>Jul</span></div>
-          <div className="info"><b>Session 3</b><span>60 minutes · notes shared with you</span></div>
-          <div className="go">
-            <button className="mini" onClick={() => setSelectedNotes('Session 3: Worked on Sunday-evening maps and breathing exercises.')}>Read notes</button>
+        {upcomingClasses.length > 0 ? (
+          upcomingClasses.map((cls) => (
+            <div key={cls._id} className="srow" style={{ alignItems: 'center' }}>
+              <div className="sdate">
+                <b>{new Date(cls.scheduledStart).getDate()}</b>
+                <span>{new Date(cls.scheduledStart).toLocaleString('default', { month: 'short' })}</span>
+              </div>
+              <div className="info">
+                <b>{cls.title}</b>
+                <span>
+                  Instructor: Dr. {cls.instructor?.firstName || practitionerName} · {new Date(cls.scheduledStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
+              <div className="go">
+                <button
+                  onClick={() => navigate(`/live/${cls._id}`)}
+                  className="btn"
+                  style={{ padding: '8px 16px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <FiVideo size={14} /> Join Zoom Class
+                </button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div style={{ padding: '16px 0', color: '#64748B', fontSize: '13px' }}>
+            No upcoming Zoom live classes scheduled at this moment.
           </div>
-        </div>
-        <div className="srow">
-          <div className="sdate"><b>01</b><span>Jul</span></div>
-          <div className="info"><b>Session 2</b><span>60 minutes</span></div>
-          <div className="go"><span className="pill past">Completed</span></div>
-        </div>
-        <div className="srow">
-          <div className="sdate"><b>17</b><span>Jun</span></div>
-          <div className="info"><b>Session 1</b><span>60 minutes · first session</span></div>
-          <div className="go"><span className="pill past">Completed</span></div>
-        </div>
-        <p className="note">Meera chooses what to share with you. Anything not shared stays in her private notes — that's normal clinical practice.</p>
+        )}
+      </div>
+
+      <div className="card" style={{ marginBottom: '20px' }}>
+        <div className="sechd"><h3>Past sessions & notes</h3></div>
+        <p style={{ fontSize: '13px', color: '#64748B' }}>Past session recordings and practitioner notes will appear here as sessions conclude.</p>
       </div>
 
       <div className="card">
-        <div className="sechd"><h3>Shared with you</h3></div>
+        <div className="sechd"><h3>Shared Study Materials</h3></div>
         <div className="res">
-          <div className="rc"><div className="ty">Reading</div><b>What regulation actually means</b><span>10 min · shared 20 July</span></div>
-          <div className="rc"><div className="ty">Audio</div><b>Four-count breathing</b><span>6 min · shared 8 July</span></div>
-          <div className="rc"><div className="ty">Worksheet</div><b>Sunday-evening map</b><span>PDF · shared 1 July</span></div>
+          <div className="rc"><div className="ty">Reading</div><b>Course Study Guide</b><span>PDF · Updated recently</span></div>
+          <div className="rc"><div className="ty">Audio</div><b>Mindful Focus Audio</b><span>10 min · Audio guide</span></div>
+          <div className="rc"><div className="ty">Worksheet</div><b>Self-Reflection Workbook</b><span>PDF · Workspace resource</span></div>
         </div>
       </div>
 

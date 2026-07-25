@@ -13,6 +13,8 @@ export const endpoints = {
 // PROFILE ENDPOINTS
 export const profileEndpoints = {
   GET_USER_DETAILS_API: BASE_URL + "/profile/getUserDetails",
+  GET_CLIENT_DASHBOARD_API: BASE_URL + "/profile/client-dashboard",
+  GET_PRACTITIONER_DASHBOARD_API: BASE_URL + "/profile/practitioner-dashboard",
 }
 // CONTACT-US API
 export const contactusEndpoint = {

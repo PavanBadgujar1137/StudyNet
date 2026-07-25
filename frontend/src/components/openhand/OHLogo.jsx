@@ -1,12 +1,11 @@
 /**
  * OpenHand — Logo Component
- * Uses the official OpenHand infinity-into-open-hand logo image asset.
+ * Uses the official OpenHand logo mark with optional subtag.
  * 4 variants: full-color | dark-navy | icon-only | white-on-navy
  */
 import React from 'react'
 import logoIcon from '../../assets/Logo/Logo-Icon-transparent.png'
 
-/* ─── Icon: Official OpenHand Logo Asset ─────────────────────────── */
 function IconMark({ size = 36 }) {
   return (
     <img
@@ -22,10 +21,6 @@ function IconMark({ size = 36 }) {
   )
 }
 
-/**
- * variant: 'full-color' | 'dark-navy' | 'icon-only' | 'white-on-navy'
- * size: icon size in px (wordmark scales proportionally)
- */
 export function OHLogo({ variant = 'full-color', size = 36, className = '' }) {
   const textColor = {
     'full-color':    '#FFFFFF',
@@ -54,8 +49,13 @@ export function OHLogo({ variant = 'full-color', size = 36, className = '' }) {
     <span style={wrapStyle} className={className}>
       <IconMark size={size} />
       {variant !== 'icon-only' && (
-        <span style={textStyle}>
-          Open<span style={{ background: 'linear-gradient(90deg, #60A5FA, #A78BFA)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Hand</span>
+        <span style={{ display: 'inline-flex', flexDirection: 'column' }}>
+          <span style={textStyle}>
+            Open<span style={{ background: 'linear-gradient(90deg, #60A5FA, #A78BFA)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Hand</span>
+          </span>
+          <span style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#60A5FA', opacity: 0.85, marginTop: '2px' }}>
+            Your Growth, Our Guidance.
+          </span>
         </span>
       )}
     </span>

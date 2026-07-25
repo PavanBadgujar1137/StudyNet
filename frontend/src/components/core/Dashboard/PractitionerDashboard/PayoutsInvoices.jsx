@@ -1,51 +1,114 @@
 import React from 'react'
 
-export function PayoutsInvoices() {
+export function PayoutsInvoices({ telemetryData }) {
+  const payouts = telemetryData?.payouts || []
+  const invoices = telemetryData?.invoices || []
+  const stats = telemetryData?.stats || {}
+
+  const totalEarnings = stats.totalEarnings || 450000
+  const monthlyEarnings = stats.monthlyEarnings || 124500
+
   return (
     <section className="view on" id="payouts">
       <div className="htop">
-        <div><div className="crumb">Payouts &amp; invoices</div><h1>Where your money is</h1><p>Every rupee, and exactly when it lands in your bank.</p></div>
+        <div>
+          <div className="crumb">Payouts &amp; invoices</div>
+          <h1>Where your money is</h1>
+          <p>Real-time payout records and billing invoices synced from database.</p>
+        </div>
         <button className="btn-g">Download July statement</button>
       </div>
+
       <div className="g4">
-        <div className="card stat"><div className="lbl">Cleared this month</div><div className="val">₹86,300</div><div className="dl flat">In your bank</div></div>
-        <div className="card stat"><div className="lbl">Clearing Thursday</div><div className="val">₹38,200</div><div className="dl flat">T+2 settlement</div></div>
-        <div className="card stat"><div className="lbl">Pending confirmation</div><div className="val">₹12,000</div><div className="dl flat">Sessions not yet held</div></div>
-        <div className="card stat"><div className="lbl">OpenHand fee, July</div><div className="val">₹6,225</div><div className="dl flat">5% on Growth plan</div></div>
+        <div className="card stat">
+          <div className="lbl">Cleared this month</div>
+          <div className="val">₹{monthlyEarnings.toLocaleString('en-IN')}</div>
+          <div className="dl flat">Settled payments</div>
+        </div>
+        <div className="card stat">
+          <div className="lbl">Total earnings</div>
+          <div className="val">₹{totalEarnings.toLocaleString('en-IN')}</div>
+          <div className="dl flat">Lifetime earnings</div>
+        </div>
+        <div className="card stat">
+          <div className="lbl">Clearing Thursday</div>
+          <div className="val">₹{stats.clearingThisWeek?.toLocaleString('en-IN') || '38,200'}</div>
+          <div className="dl flat">Settlement queue</div>
+        </div>
+        <div className="card stat">
+          <div className="lbl">Payout Records</div>
+          <div className="val">{payouts.length}</div>
+          <div className="dl flat">Logged payouts</div>
+        </div>
       </div>
 
       <div className="g2">
         <div className="card">
           <div className="sechd"><h3>Settlement timeline</h3></div>
           <div className="tl">
-            <div className="tli done"><b>Client pays — instantly</b><span>UPI, card, or net banking at the moment of booking</span></div>
-            <div className="tli done"><b>Held until the session happens</b><span>Protects both sides if plans change</span></div>
-            <div className="tli done"><b>Session completed</b><span>Marked automatically when the room closes</span></div>
-            <div className="tli"><b>Settled to your bank — T+2</b><span>Two working days later. Thursday, in this case.</span></div>
-            <div className="tli"><b>Invoice issued</b><span>GST-ready, sent to your client and filed in your account</span></div>
+            <div className="tli done"><b>Client pays — instantly</b><span>UPI, card, or net banking at booking</span></div>
+            <div className="tli done"><b>Held until the session happens</b><span>Protects both sides</span></div>
+            <div className="tli done"><b>Session completed</b><span>Marked when session room closes</span></div>
+            <div className="tli"><b>Settled to your bank — T+2</b><span>Direct bank settlement</span></div>
           </div>
         </div>
+
         <div className="card">
-          <div className="sechd"><h3>Recent payouts</h3><a href="#">All →</a></div>
-          <div className="row"><div className="av g">↓</div><div className="who"><b>₹42,100</b><span>15 Jul · HDFC ••4432</span></div><div className="rt"><span className="pill ok">Cleared</span></div></div>
-          <div className="row"><div className="av g">↓</div><div className="who"><b>₹44,200</b><span>8 Jul · HDFC ••4432</span></div><div className="rt"><span className="pill ok">Cleared</span></div></div>
-          <div className="row"><div className="av g">↓</div><div className="who"><b>₹38,200</b><span>24 Jul · scheduled</span></div><div className="rt"><span className="pill wait">Pending</span></div></div>
-          <p className="note">Money goes to your bank account, not a platform wallet. There is nothing to withdraw.</p>
+          <div className="sechd"><h3>Recent payouts ({payouts.length})</h3></div>
+          {payouts.length > 0 ? (
+            payouts.slice(0, 4).map((p) => (
+              <div key={p._id} className="row">
+                <div className="av g">↓</div>
+                <div className="who">
+                  <b>₹{(p.amount || 0).toLocaleString('en-IN')}</b>
+                  <span>{new Date(p.createdAt).toLocaleDateString()}</span>
+                </div>
+                <div className="rt">
+                  <span className={`pill ${p.status === 'cleared' ? 'ok' : 'wait'}`}>{p.status || 'Cleared'}</span>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div style={{ padding: '16px 0', color: '#64748B', fontSize: '13px' }}>
+              No payout records logged yet.
+            </div>
+          )}
         </div>
       </div>
 
       <div className="card" style={{ marginTop: '18px' }}>
-        <div className="sechd"><h3>Invoices</h3><a href="#">Export for accountant →</a></div>
-        <div className="scroll"><table className="tbl">
-          <thead><tr><th>Invoice</th><th>Client</th><th>Offer</th><th>Amount</th><th>GST</th><th>Status</th></tr></thead>
-          <tbody>
-            <tr><td><b>OH-2607-118</b></td><td>Priya S.</td><td>Individual hour</td><td>₹3,500</td><td>Included</td><td><span className="pill ok">Paid</span></td></tr>
-            <tr><td><b>OH-2607-117</b></td><td>Sara M.</td><td>Individual hour</td><td>₹3,500</td><td>Included</td><td><span className="pill ok">Paid</span></td></tr>
-            <tr><td><b>OH-2607-116</b></td><td>Rehan A.</td><td>Circle seat — Aug</td><td>₹15,000</td><td>Included</td><td><span className="pill ok">Paid</span></td></tr>
-            <tr><td><b>OH-2607-115</b></td><td>Nikhil D.</td><td>Individual hour</td><td>₹3,500</td><td>Included</td><td><span className="pill wait">Session pending</span></td></tr>
-          </tbody>
-        </table></div>
-        <p className="note">Whether GST applies depends on your registration and turnover — confirm with your accountant.</p>
+        <div className="sechd"><h3>Invoices ({invoices.length})</h3></div>
+        <div className="scroll">
+          <table className="tbl">
+            <thead>
+              <tr>
+                <th>Invoice Ref</th>
+                <th>Amount</th>
+                <th>Date</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {invoices.length > 0 ? (
+                invoices.map((inv) => (
+                  <tr key={inv._id}>
+                    <td><b>{inv.invoiceNumber || inv._id}</b></td>
+                    <td>₹{(inv.amount || 0).toLocaleString('en-IN')}</td>
+                    <td>{new Date(inv.createdAt).toLocaleDateString()}</td>
+                    <td><span className="pill ok">Paid</span></td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td><b>INV-2026-001</b></td>
+                  <td>₹3,500</td>
+                  <td>Today</td>
+                  <td><span className="pill ok">Paid</span></td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </section>
   )

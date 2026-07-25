@@ -1,27 +1,32 @@
 import React from 'react'
 
-export function MyJourney({ clientName = 'Priya', practitionerName = 'Meera', checkInCount = 10 }) {
+export function MyJourney({ clientName = 'Client', practitionerName = 'Meera', dashboardData, loading }) {
+  const daysActive = dashboardData?.user?.daysActive || 1
+  const checkInCount = dashboardData?.checkInCount || 0
+  const streak = dashboardData?.streak || 0
+  const milestones = dashboardData?.milestones || []
+
   return (
     <div id="journey">
       <div className="hd">
         <div className="k">My journey</div>
-        <h1>You're 34 days in, {clientName}.</h1>
+        <h1>You're {daysActive} day{daysActive > 1 ? 's' : ''} in, {clientName}.</h1>
         <p>This is your path — only you and {practitionerName} can see it. There's no score, no comparison with anyone else, and no wrong pace.</p>
       </div>
 
       <div className="card" style={{ marginBottom: '22px' }}>
         <div className="sechd">
           <h3>Your check-in rhythm</h3>
-          <span style={{ fontSize: '13px', color: 'var(--muted)' }}>You set this yourself: 3 times a week</span>
+          <span style={{ fontSize: '13px', color: 'var(--muted)' }}>Current streak: <b>{streak} day{streak !== 1 ? 's' : ''}</b> ({checkInCount} total check-ins)</span>
         </div>
         <div className="streak">
-          <div className="sd f">M</div>
-          <div className="sd">T</div>
-          <div className="sd f">W</div>
-          <div className="sd">T</div>
-          <div className="sd f">F</div>
-          <div className="sd">S</div>
-          <div className="sd today">Today</div>
+          <div className={`sd ${streak >= 1 ? 'f' : ''}`}>M</div>
+          <div className={`sd ${streak >= 2 ? 'f' : ''}`}>T</div>
+          <div className={`sd ${streak >= 3 ? 'f' : ''}`}>W</div>
+          <div className={`sd ${streak >= 4 ? 'f' : ''}`}>T</div>
+          <div className={`sd ${streak >= 5 ? 'f' : ''}`}>F</div>
+          <div className={`sd ${streak >= 6 ? 'f' : ''}`}>S</div>
+          <div className={`sd today ${checkInCount > 0 ? 'f' : ''}`}>Today</div>
         </div>
         <p className="note">Missed a day? Nothing breaks. Come back whenever — the point is the noticing, not the streak.</p>
       </div>
@@ -40,54 +45,37 @@ export function MyJourney({ clientName = 'Priya', practitionerName = 'Meera', ch
         </svg>
 
         <div className="step done">
-          <div className="mark"><div className="ring">✓</div><div className="when">17 June</div></div>
+          <div className="mark"><div className="ring">✓</div><div className="when">Step 1</div></div>
           <div className="bub">
-            <h3>You booked a first session</h3>
-            <p>You filled in six questions before you'd even met her, so the first hour went straight to what mattered instead of warming up.</p>
+            <h3>You created your StudyNet account</h3>
+            <p>Your personalized space was initialized, connected with your practitioner and course resources.</p>
             <span className="tagline">Where it started</span>
           </div>
         </div>
 
-        <div className="step done">
-          <div className="mark"><div className="ring">✓</div><div className="when">24 June</div></div>
+        <div className={`step ${checkInCount > 0 ? 'done' : 'now'}`}>
+          <div className="mark"><div className="ring">{checkInCount > 0 ? '✓' : '2'}</div><div className="when">{checkInCount > 0 ? `${checkInCount} Logged` : 'Action'}</div></div>
           <div className="bub">
-            <h3>You checked in for the first time</h3>
-            <p>Eleven seconds. You picked "stretched thin" and wrote two lines about Sunday evenings.</p>
-            <span className="tagline">First check-in</span>
+            <h3>Daily Check-in Rhythm</h3>
+            <p>{checkInCount > 0 ? `You have logged ${checkInCount} check-ins so far. Keep up the rhythm!` : 'Log your first daily check-in to track your mood and sleep rhythm.'}</p>
+            <span className="tagline">{checkInCount > 0 ? 'Active Rhythm' : 'Next Step'}</span>
           </div>
         </div>
 
-        <div className="step done">
-          <div className="mark"><div className="ring">✓</div><div className="when">8 July</div></div>
+        <div className={`step ${dashboardData?.upcomingClasses?.length ? 'done' : 'locked'}`}>
+          <div className="mark"><div className="ring">3</div><div className="when">Live</div></div>
           <div className="bub">
-            <h3>Three sessions in — something shifted</h3>
-            <p>You told {practitionerName} you'd noticed the pattern before she named it. That's the part that doesn't show up in any chart.</p>
-            <span className="tagline">Session 3</span>
-          </div>
-        </div>
-
-        <div className="step now">
-          <div className="mark"><div className="ring">4</div><div className="when">Now</div></div>
-          <div className="bub">
-            <h3>You joined the August circle</h3>
-            <p>Seven other people, six weeks, starting 4 August. You'll meet them on the first evening. Nobody has to say more than they want to.</p>
-            <span className="tagline">Starts in 14 days</span>
+            <h3>Zoom Live Classes & Sessions</h3>
+            <p>{dashboardData?.upcomingClasses?.length ? `You have ${dashboardData.upcomingClasses.length} live Zoom class(es) scheduled.` : 'Enroll in live classes to join Zoom sessions with your instructor.'}</p>
+            <span className="tagline">Live Learning</span>
           </div>
         </div>
 
         <div className="step locked">
-          <div className="mark"><div className="ring">5</div><div className="when">Week 6</div></div>
+          <div className="mark"><div className="ring">4</div><div className="when">Ongoing</div></div>
           <div className="bub">
-            <h3>Circle completes</h3>
-            <p>You'll have the option to keep going — the ongoing circle, more 1:1 sessions, or a pause. All three are fine.</p>
-          </div>
-        </div>
-
-        <div className="step locked">
-          <div className="mark"><div className="ring">6</div><div className="when">Later</div></div>
-          <div className="bub">
-            <h3>Wherever this goes next</h3>
-            <p>Some people finish here. Some stay for years. You'll decide, not us.</p>
+            <h3>Peer Support & Growth Circles</h3>
+            <p>Join group cohorts to share reflections, track milestones, and learn alongside peers.</p>
           </div>
         </div>
       </div>
@@ -95,12 +83,19 @@ export function MyJourney({ clientName = 'Priya', practitionerName = 'Meera', ch
       <div className="card" style={{ marginTop: '8px' }}>
         <div className="sechd"><h3>Milestones you've reached</h3></div>
         <div className="ms">
-          <div className="mcard got"><span className="ic">◆</span><b>First session</b><span>17 June</span></div>
-          <div className="mcard got"><span className="ic">◆</span><b>{checkInCount} check-ins</b><span>12 July</span></div>
-          <div className="mcard got"><span className="ic">◆</span><b>Joined a circle</b><span>19 July</span></div>
-          <div className="mcard"><span className="ic">◇</span><b>Finish a circle</b><span>Not yet</span></div>
+          {milestones.length > 0 ? (
+            milestones.map((m) => (
+              <div key={m.id} className={`mcard ${m.achieved ? 'got' : ''}`}>
+                <span className="ic">{m.achieved ? '◆' : '◇'}</span>
+                <b>{m.label}</b>
+                <span>{m.date}</span>
+              </div>
+            ))
+          ) : (
+            <div className="mcard got"><span className="ic">◆</span><b>Joined Platform</b><span>Today</span></div>
+          )}
         </div>
-        <p className="note">Milestones are private by default. If you ever want to share one, that's your choice — and it never includes anything you wrote.</p>
+        <p className="note">Milestones are private by default. If you ever want to share one, that's your choice.</p>
       </div>
     </div>
   )

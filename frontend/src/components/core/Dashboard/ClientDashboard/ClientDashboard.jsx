@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { 
   FiMapPin, 
@@ -20,19 +20,35 @@ import MyCircle from './MyCircle'
 import SessionsResources from './SessionsResources'
 import Reflections from './Reflections'
 import Settings from '../Settings'
+import { fetchClientDashboardData } from '../../../../services/operations/dashboardAPI'
 
 export function ClientDashboard() {
   const [activeTab, setActiveTab] = useState('journey')
-  const [checkInCount, setCheckInCount] = useState(10)
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
-  const { user } = useSelector((state) => state.profile)
+  const [dashboardData, setDashboardData] = useState(null)
+  const [loading, setLoading] = useState(true)
 
-  const clientName = user?.firstName || 'Test'
-  const practitionerName = 'Dr. Meera Iyer'
-  const practitionerFirstName = 'Meera'
+  const { user } = useSelector((state) => state.profile)
+  const { token } = useSelector((state) => state.auth)
+
+  const clientName = user?.firstName || 'Client'
+  const practitionerName = dashboardData?.practitioner?.name || 'Dr. Meera Iyer'
+  const practitionerFirstName = dashboardData?.practitioner?.firstName || 'Meera'
+
+  const loadData = async () => {
+    if (!token) return
+    setLoading(true)
+    const data = await fetchClientDashboardData(token)
+    if (data) setDashboardData(data)
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    loadData()
+  }, [token])
 
   const handleCheckInSuccess = () => {
-    setCheckInCount((prev) => prev + 1)
+    loadData()
   }
 
   const navItems = [
@@ -148,10 +164,12 @@ export function ClientDashboard() {
             {/* Practitioner Widget */}
             <div className="oh-practitioner-card">
               <div className="oh-practitioner-header">
-                <div className="oh-practitioner-av">MI</div>
+                <div className="oh-practitioner-av">
+                  {practitionerFirstName.slice(0, 2).toUpperCase()}
+                </div>
                 <div>
                   <h4 className="oh-practitioner-name">{practitionerName}</h4>
-                  <p className="oh-practitioner-role">Clinical Psychologist</p>
+                  <p className="oh-practitioner-role">Clinical Practitioner</p>
                 </div>
               </div>
 
@@ -181,7 +199,7 @@ export function ClientDashboard() {
           title="Click to edit profile & account details"
         >
           <div className="oh-sidebar-user-av">
-            {clientName.slice(0, 1)}{user?.lastName?.slice(0, 1) || 'S'}
+            {clientName.slice(0, 1)}{user?.lastName?.slice(0, 1) || ''}
           </div>
           <div>
             <h4 className="oh-sidebar-user-name">{clientName}</h4>
@@ -249,19 +267,40 @@ export function ClientDashboard() {
         {/* View Content */}
         <div className="oh-view-body view on">
           {activeTab === 'journey' && (
-            <MyJourney clientName={clientName} practitionerName={practitionerFirstName} checkInCount={checkInCount} />
+            <MyJourney 
+              clientName={clientName} 
+              practitionerName={practitionerFirstName} 
+              dashboardData={dashboardData}
+              loading={loading}
+            />
           )}
           {activeTab === 'checkin' && (
-            <CheckIn clientName={clientName} practitionerName={practitionerFirstName} onCheckInSuccess={handleCheckInSuccess} />
+            <CheckIn 
+              clientName={clientName} 
+              practitionerName={practitionerFirstName} 
+              dashboardData={dashboardData}
+              onCheckInSuccess={handleCheckInSuccess} 
+            />
           )}
           {activeTab === 'circle' && (
-            <MyCircle clientName={clientName} practitionerName={practitionerFirstName} />
+            <MyCircle 
+              clientName={clientName} 
+              practitionerName={practitionerFirstName} 
+              dashboardData={dashboardData}
+            />
           )}
           {activeTab === 'sessions' && (
-            <SessionsResources practitionerName={practitionerFirstName} />
+            <SessionsResources 
+              practitionerName={practitionerFirstName} 
+              dashboardData={dashboardData}
+            />
           )}
           {activeTab === 'reflections' && (
-            <Reflections practitionerName={practitionerFirstName} />
+            <Reflections 
+              practitionerName={practitionerFirstName} 
+              dashboardData={dashboardData}
+              onReflectionUpdate={loadData}
+            />
           )}
           {activeTab === 'profile' && (
             <Settings />
@@ -273,4 +312,3 @@ export function ClientDashboard() {
 }
 
 export default ClientDashboard
-

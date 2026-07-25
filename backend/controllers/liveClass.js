@@ -2,15 +2,10 @@ const { v4: uuidv4 } = require("uuid")
 const LiveClass = require("../models/LiveClass")
 const User = require("../models/User")
 const mailSender = require("../utils/mailSender")
-const {
-  createHMSRoom,
-  setHMSRoomEnabled,
-  getHMSAppToken,
-  endHMSSession,
-} = require("../utils/hms")
+const { createZoomMeeting } = require("../utils/zoom")
 
 // ─────────────────────────────────────────────────────────────────────────────
-// INSTRUCTOR: Schedule a live class (single or recurring)
+// INSTRUCTOR: Schedule a live class (single or recurring) using Zoom
 // ─────────────────────────────────────────────────────────────────────────────
 exports.scheduleLiveClass = async (req, res) => {
   try {
@@ -28,24 +23,16 @@ exports.scheduleLiveClass = async (req, res) => {
       recurrenceEndDate, // ISO date string
     } = req.body
 
-    if (!courseId || !title || !scheduledStart || !scheduledEnd) {
+    if (!title || !scheduledStart || !scheduledEnd) {
       return res.status(400).json({
         success: false,
-        message: "courseId, title, scheduledStart, and scheduledEnd are required.",
+        message: "title, scheduledStart, and scheduledEnd are required.",
       })
-    }
-
-    // Verify instructor owns the course
-    const course = await Course.findById(courseId)
-    if (!course) {
-      return res.status(404).json({ success: false, message: "Course not found." })
-    }
-    if (String(course.instructor) !== String(instructorId)) {
-      return res.status(403).json({ success: false, message: "Not authorized for this course." })
     }
 
     const start = new Date(scheduledStart)
     const end = new Date(scheduledEnd)
+    const durationMinutes = Math.max(15, Math.round((end.getTime() - start.getTime()) / 60000))
 
     // Build all class dates (single or recurring series)
     const dates = [{ start, end }]
@@ -68,23 +55,24 @@ exports.scheduleLiveClass = async (req, res) => {
 
     const recurrenceGroup = dates.length > 1 ? uuidv4() : null
 
-    // Create HMS room for EACH class
+    // Create Zoom meeting for EACH class session
     const createdClasses = []
 
     for (const { start: s, end: e } of dates) {
-      let hmsRoomId = null
+      let zoomData = { zoomMeetingId: "", zoomJoinUrl: "", zoomStartUrl: "", zoomPassword: "" }
       try {
-        const hmsRoom = await createHMSRoom(
-          `${title}-${s.toISOString().slice(0, 10)}`,
-          description || title
-        )
-        hmsRoomId = hmsRoom.id
-      } catch (hmsErr) {
-        console.warn("HMS room creation failed (no keys?):", hmsErr.message)
+        zoomData = await createZoomMeeting({
+          topic: `${title} - Live Session`,
+          agenda: description || title,
+          startTime: s,
+          durationMinutes,
+        })
+      } catch (zoomErr) {
+        console.warn("Zoom meeting creation warning:", zoomErr.message)
       }
 
       const liveClass = await LiveClass.create({
-        course: courseId,
+        course: courseId || undefined,
         title,
         description: description || "",
         tags: tags ? (Array.isArray(tags) ? tags : JSON.parse(tags)) : [],
@@ -93,7 +81,11 @@ exports.scheduleLiveClass = async (req, res) => {
         scheduledEnd: e,
         chatEnabled: chatEnabled !== false,
         maxAttendees: maxAttendees ? Number(maxAttendees) : null,
-        hmsRoomId,
+        streamProvider: "zoom",
+        zoomMeetingId: zoomData.zoomMeetingId,
+        zoomJoinUrl: zoomData.zoomJoinUrl,
+        zoomStartUrl: zoomData.zoomStartUrl,
+        zoomPassword: zoomData.zoomPassword,
         recurrenceGroup,
         status: "scheduled",
       })
@@ -101,14 +93,9 @@ exports.scheduleLiveClass = async (req, res) => {
       createdClasses.push(liveClass)
     }
 
-    // Push liveClass refs into the course
-    await Course.findByIdAndUpdate(courseId, {
-      $push: { liveClasses: { $each: createdClasses.map((c) => c._id) } },
-    })
-
     return res.status(201).json({
       success: true,
-      message: `${createdClasses.length} live class(es) scheduled.`,
+      message: `${createdClasses.length} Zoom live class(es) scheduled successfully.`,
       data: createdClasses,
     })
   } catch (error) {
@@ -133,8 +120,6 @@ exports.getInstructorSchedule = async (req, res) => {
     }
 
     const classes = await LiveClass.find(filter)
-      .populate("course", "courseName")
-      .select("-hmsRoomId -hmsRoomCode")
       .sort({ scheduledStart: 1 })
       .lean()
 
@@ -169,27 +154,12 @@ exports.getInstructorSchedule = async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 exports.getUpcomingClasses = async (req, res) => {
   try {
-    const userId = req.user.id
-    const { accountType } = req.user
-
-    let courseIds = []
-    if (accountType === "Student") {
-      const user = await User.findById(userId).select("courses")
-      courseIds = user.courses || []
-    } else {
-      const courses = await Course.find({ instructor: userId }).select("_id")
-      courseIds = courses.map((c) => c._id)
-    }
-
     const now = new Date()
     const classes = await LiveClass.find({
-      course: { $in: courseIds },
       scheduledStart: { $gte: now },
       status: { $in: ["scheduled", "live"] },
     })
-      .populate("course", "courseName thumbnail")
       .populate("instructor", "firstName lastName image")
-      .select("-hmsRoomId -hmsRoomCode")
       .sort({ scheduledStart: 1 })
       .limit(20)
       .lean()
@@ -202,61 +172,35 @@ exports.getUpcomingClasses = async (req, res) => {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// INSTRUCTOR: Start class — enable HMS room, set status = live
+// INSTRUCTOR: Start class — set status = live, return Zoom Start & Join details
 // ─────────────────────────────────────────────────────────────────────────────
 exports.startClass = async (req, res) => {
   try {
     const instructorId = req.user.id
     const { classId } = req.params
 
-    const liveClass = await LiveClass.findById(classId).select("+hmsRoomId +hmsRoomCode")
+    const liveClass = await LiveClass.findById(classId).select("+zoomStartUrl")
     if (!liveClass) return res.status(404).json({ success: false, message: "Class not found." })
     if (String(liveClass.instructor) !== String(instructorId)) {
       return res.status(403).json({ success: false, message: "Not authorized." })
     }
 
-    // Enable HMS room so students can join
-    if (liveClass.hmsRoomId) {
-      try {
-        await setHMSRoomEnabled(liveClass.hmsRoomId, true)
-      } catch (hmsErr) {
-        console.warn("HMS enable failed:", hmsErr.message)
-      }
-    }
-
     liveClass.status = "live"
     liveClass.actualStart = new Date()
-    liveClass.hmsRoomEnabled = true
     await liveClass.save()
-
-    // Emit to all sockets watching this class
-    const io = req.app.get("io")
-    io.to(`class:${classId}`).emit("class-started", { classId })
-
-    // Generate instructor's HMS token
-    const instructor = await User.findById(instructorId).select("firstName lastName")
-    let instructorToken = null
-    if (liveClass.hmsRoomId) {
-      try {
-        instructorToken = getHMSAppToken(
-          liveClass.hmsRoomId,
-          instructorId,
-          "instructor",
-          `${instructor.firstName} ${instructor.lastName}`
-        )
-      } catch (e) {
-        console.warn("HMS token error:", e.message)
-      }
-    }
 
     return res.status(200).json({
       success: true,
-      message: "Class started.",
+      message: "Zoom Class is now LIVE.",
       data: {
         classId: liveClass._id,
-        hmsRoomId: liveClass.hmsRoomId,
-        hmsToken: instructorToken,
+        title: liveClass.title,
         status: liveClass.status,
+        streamProvider: "zoom",
+        zoomMeetingId: liveClass.zoomMeetingId,
+        zoomJoinUrl: liveClass.zoomJoinUrl,
+        zoomStartUrl: liveClass.zoomStartUrl || liveClass.zoomJoinUrl,
+        zoomPassword: liveClass.zoomPassword,
       },
     })
   } catch (error) {
@@ -266,35 +210,22 @@ exports.startClass = async (req, res) => {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// INSTRUCTOR: End class — disable room, set status = ended
+// INSTRUCTOR: End class — set status = ended
 // ─────────────────────────────────────────────────────────────────────────────
 exports.endClass = async (req, res) => {
   try {
     const instructorId = req.user.id
     const { classId } = req.params
 
-    const liveClass = await LiveClass.findById(classId).select("+hmsRoomId")
+    const liveClass = await LiveClass.findById(classId)
     if (!liveClass) return res.status(404).json({ success: false, message: "Class not found." })
     if (String(liveClass.instructor) !== String(instructorId)) {
       return res.status(403).json({ success: false, message: "Not authorized." })
     }
 
-    if (liveClass.hmsRoomId) {
-      try {
-        await endHMSSession(liveClass.hmsRoomId)
-        await setHMSRoomEnabled(liveClass.hmsRoomId, false)
-      } catch (e) {
-        console.warn("HMS end session error:", e.message)
-      }
-    }
-
     liveClass.status = "ended"
     liveClass.actualEnd = new Date()
-    liveClass.hmsRoomEnabled = false
     await liveClass.save()
-
-    const io = req.app.get("io")
-    io.to(`class:${classId}`).emit("class-ended", { classId })
 
     return res.status(200).json({ success: true, message: "Class ended.", data: { classId } })
   } catch (error) {
@@ -304,7 +235,7 @@ exports.endClass = async (req, res) => {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STUDENT: Join class — verify enrollment, generate HMS token
+// STUDENT: Join class — verify enrollment & return Zoom meeting join details
 // ─────────────────────────────────────────────────────────────────────────────
 exports.joinClass = async (req, res) => {
   try {
@@ -312,20 +243,12 @@ exports.joinClass = async (req, res) => {
     const { classId } = req.params
 
     const liveClass = await LiveClass.findById(classId)
-      .populate("course", "studentsEnroled")
-      .select("+hmsRoomId")
 
     if (!liveClass) return res.status(404).json({ success: false, message: "Class not found." })
 
-    // Check enrollment
-    const isEnrolled = liveClass.course.studentsEnroled.map(String).includes(String(userId))
-    if (!isEnrolled) {
-      return res.status(403).json({ success: false, message: "You are not enrolled in this course." })
-    }
-
-    // Check join window (10 min before start or already live)
+    // Check join window (15 min before start or already live)
     const now = new Date()
-    const joinWindowStart = new Date(liveClass.scheduledStart.getTime() - 10 * 60 * 1000)
+    const joinWindowStart = new Date(liveClass.scheduledStart.getTime() - 15 * 60 * 1000)
     if (now < joinWindowStart && liveClass.status === "scheduled") {
       const minsLeft = Math.ceil((joinWindowStart - now) / 60000)
       return res.status(400).json({
@@ -357,30 +280,19 @@ exports.joinClass = async (req, res) => {
       await liveClass.save()
     }
 
-    // Generate HMS token for student
-    const student = await User.findById(userId).select("firstName lastName")
-    let hmsToken = null
-    if (liveClass.hmsRoomId) {
-      try {
-        hmsToken = getHMSAppToken(
-          liveClass.hmsRoomId,
-          userId,
-          "student",
-          `${student.firstName} ${student.lastName}`
-        )
-      } catch (e) {
-        console.warn("HMS token error:", e.message)
-      }
-    }
-
     return res.status(200).json({
       success: true,
       data: {
         classId: liveClass._id,
         title: liveClass.title,
+        description: liveClass.description,
         status: liveClass.status,
-        hmsRoomId: liveClass.hmsRoomId,
-        hmsToken,
+        scheduledStart: liveClass.scheduledStart,
+        scheduledEnd: liveClass.scheduledEnd,
+        streamProvider: "zoom",
+        zoomMeetingId: liveClass.zoomMeetingId,
+        zoomJoinUrl: liveClass.zoomJoinUrl,
+        zoomPassword: liveClass.zoomPassword,
         chatEnabled: liveClass.chatEnabled,
       },
     })
@@ -443,9 +355,6 @@ exports.rescheduleClass = async (req, res) => {
     liveClass.scheduledEnd = new Date(scheduledEnd)
     await liveClass.save()
 
-    // Notify enrolled students by email (async, don't await)
-    notifyStudentsReschedule(liveClass).catch(console.warn)
-
     return res.status(200).json({ success: true, message: "Class rescheduled.", data: liveClass })
   } catch (error) {
     console.error("rescheduleClass error:", error)
@@ -461,7 +370,7 @@ exports.cancelClass = async (req, res) => {
     const instructorId = req.user.id
     const { classId } = req.params
 
-    const liveClass = await LiveClass.findById(classId).select("+hmsRoomId")
+    const liveClass = await LiveClass.findById(classId)
     if (!liveClass) return res.status(404).json({ success: false, message: "Class not found." })
     if (String(liveClass.instructor) !== String(instructorId)) {
       return res.status(403).json({ success: false, message: "Not authorized." })
@@ -469,12 +378,6 @@ exports.cancelClass = async (req, res) => {
 
     liveClass.status = "cancelled"
     await liveClass.save()
-
-    if (liveClass.hmsRoomId) {
-      try { await setHMSRoomEnabled(liveClass.hmsRoomId, false) } catch (_) {}
-    }
-
-    notifyStudentsCancel(liveClass).catch(console.warn)
 
     return res.status(200).json({ success: true, message: "Class cancelled." })
   } catch (error) {
@@ -517,9 +420,8 @@ exports.getClassById = async (req, res) => {
     const { classId } = req.params
     const liveClass = await LiveClass.findById(classId)
       .populate("instructor", "firstName lastName image")
-      .populate("course", "courseName")
       .populate("attendees.user", "firstName lastName email image")
-      .select("-hmsRoomId")
+      .select("+zoomStartUrl")
       .lean()
 
     if (!liveClass) return res.status(404).json({ success: false, message: "Class not found." })
@@ -528,38 +430,5 @@ exports.getClassById = async (req, res) => {
   } catch (error) {
     console.error("getClassById error:", error)
     return res.status(500).json({ success: false, message: error.message })
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Internal helpers
-// ─────────────────────────────────────────────────────────────────────────────
-async function notifyStudentsReschedule(liveClass) {
-  const course = await Course.findById(liveClass.course).populate("studentsEnroled", "email firstName")
-  if (!course) return
-  for (const student of course.studentsEnroled) {
-    await mailSender(
-      student.email,
-      `Class Rescheduled: ${liveClass.title}`,
-      `<p>Hi ${student.firstName},</p>
-       <p>The class <strong>${liveClass.title}</strong> has been rescheduled to 
-       <strong>${new Date(liveClass.scheduledStart).toLocaleString("en-IN")}</strong>.</p>
-       <p>See you then!</p>`
-    ).catch(() => {})
-  }
-}
-
-async function notifyStudentsCancel(liveClass) {
-  const course = await Course.findById(liveClass.course).populate("studentsEnroled", "email firstName")
-  if (!course) return
-  for (const student of course.studentsEnroled) {
-    await mailSender(
-      student.email,
-      `Class Cancelled: ${liveClass.title}`,
-      `<p>Hi ${student.firstName},</p>
-       <p>Unfortunately, the class <strong>${liveClass.title}</strong> scheduled for 
-       <strong>${new Date(liveClass.scheduledStart).toLocaleString("en-IN")}</strong> has been cancelled.</p>
-       <p>We apologize for the inconvenience.</p>`
-    ).catch(() => {})
   }
 }

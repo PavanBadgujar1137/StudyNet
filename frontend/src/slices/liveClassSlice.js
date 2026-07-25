@@ -9,9 +9,11 @@ const initialState = {
   currentClass: null,
   currentClassLoading: false,
 
-  // HMS token for joining
-  hmsToken: null,
-  hmsRoomId: null,
+  // Zoom Meeting details for joining/starting
+  zoomMeetingId: null,
+  zoomJoinUrl: null,
+  zoomStartUrl: null,
+  zoomPassword: null,
 
   // Scheduling form state
   scheduleFormOpen: false,
@@ -50,13 +52,17 @@ const liveClassSlice = createSlice({
       state.currentClass = action.payload
       state.currentClassLoading = false
     },
-    setHMSCredentials(state, action) {
-      state.hmsToken = action.payload.hmsToken
-      state.hmsRoomId = action.payload.hmsRoomId
+    setZoomCredentials(state, action) {
+      state.zoomMeetingId = action.payload.zoomMeetingId
+      state.zoomJoinUrl = action.payload.zoomJoinUrl
+      state.zoomStartUrl = action.payload.zoomStartUrl
+      state.zoomPassword = action.payload.zoomPassword
     },
-    clearHMSCredentials(state) {
-      state.hmsToken = null
-      state.hmsRoomId = null
+    clearZoomCredentials(state) {
+      state.zoomMeetingId = null
+      state.zoomJoinUrl = null
+      state.zoomStartUrl = null
+      state.zoomPassword = null
     },
     setStats(state, action) {
       state.stats = action.payload
@@ -71,7 +77,6 @@ const liveClassSlice = createSlice({
     },
     addChatMessage(state, action) {
       state.chatMessages.push(action.payload)
-      // Keep last 200 messages in memory
       if (state.chatMessages.length > 200) {
         state.chatMessages = state.chatMessages.slice(-200)
       }
@@ -98,8 +103,8 @@ export const {
   setClasses,
   setCurrentClassLoading,
   setCurrentClass,
-  setHMSCredentials,
-  clearHMSCredentials,
+  setZoomCredentials,
+  clearZoomCredentials,
   setStats,
   openScheduleForm,
   closeScheduleForm,

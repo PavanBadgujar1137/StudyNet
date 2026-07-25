@@ -2,215 +2,13 @@ import React, { useEffect, useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { useSelector } from "react-redux"
 import {
-  HMSRoomProvider,
-  useHMSActions,
-  useHMSStore,
-  selectIsConnectedToRoom,
-  selectPeers,
-  selectLocalPeer,
-} from "@100mslive/react-sdk"
-import { io } from "socket.io-client"
-import {
-  FiMic, FiMicOff, FiVideo, FiVideoOff, FiPhoneCall,
-  FiMessageSquare, FiUsers, FiActivity,
+  FiVideo, FiCopy, FiExternalLink, FiCalendar, FiClock,
+  FiUser, FiCheckCircle, FiPlayCircle, FiPower, FiShield, FiTv
 } from "react-icons/fi"
 import toast from "react-hot-toast"
 
-import { SOCKET_BASE_URL } from "../services/apis"
 import { joinClass, leaveClass, startClass, endClass } from "../services/operations/liveClassAPI"
-import LiveChat from "../components/core/LiveClass/LiveChat"
-import AttendeeList from "../components/core/LiveClass/AttendeeList"
 
-// ── Inside Room Component (HMS Enabled context) ─────────────────────────────────
-const RoomStage = ({ classDetails, hmsToken, socket }) => {
-  const navigate = useNavigate()
-  const hmsActions = useHMSActions()
-  const isConnected = useHMSStore(selectIsConnectedToRoom)
-  const peers = usePeers()
-  const localPeer = useHMSStore(selectLocalPeer)
-  const { user } = useSelector((s) => s.profile)
-  const { token } = useSelector((s) => s.auth)
-
-  const [micOn, setMicOn] = useState(true)
-  const [camOn, setCamOn] = useState(true)
-  const [sidebarTab, setSidebarTab] = useState("chat") // chat | users
-
-  const isInstructor = user?.accountType === "Instructor"
-
-  useEffect(() => {
-    if (hmsToken && !isConnected && user) {
-      hmsActions.join({
-        userName: `${user.firstName} ${user.lastName}`,
-        authToken: hmsToken,
-      })
-    }
-
-    return () => {
-      if (isConnected) {
-        hmsActions.leave()
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hmsToken, isConnected])
-
-  const toggleMic = async () => {
-    await hmsActions.setLocalAudioEnabled(!micOn)
-    setMicOn(!micOn)
-  }
-
-  const toggleCam = async () => {
-    await hmsActions.setLocalVideoEnabled(!camOn)
-    setCamOn(!camOn)
-  }
-
-  const handleEndClass = async () => {
-    if (isInstructor) {
-      if (window.confirm("End the live class session for all students?")) {
-        await endClass(token, classDetails._id)
-        await hmsActions.leave()
-        navigate("/dashboard/instructor")
-      }
-    } else {
-      await leaveClass(token, classDetails._id)
-      await hmsActions.leave()
-      navigate("/dashboard/enrolled-courses")
-    }
-  }
-
-  // Find instructor stream
-  const instructorPeer = peers.find((p) => p.roleName === "instructor")
-  const activeStreamPeer = instructorPeer || localPeer
-
-  return (
-    <div className="flex flex-col lg:flex-row gap-5 h-[calc(100vh-80px)] p-4 max-w-7xl mx-auto">
-      {/* Main Video Area */}
-      <div className="flex-1 flex flex-col bg-richblack-950 border border-richblack-800 rounded-2xl overflow-hidden relative">
-        {/* Video Screen */}
-        <div className="flex-1 flex items-center justify-center bg-black relative">
-          {activeStreamPeer && activeStreamPeer.videoTrack ? (
-            <VideoTile peer={activeStreamPeer} />
-          ) : (
-            <div className="text-center space-y-3">
-              <div className="w-16 h-16 rounded-full bg-purple-500/10 text-purple-400 flex items-center justify-center mx-auto animate-pulse">
-                <FiActivity size={32} />
-              </div>
-              <p className="text-richblack-300 text-sm">
-                {isInstructor ? "Prepare your camera/microphone to go live" : "Waiting for the instructor to start streaming..."}
-              </p>
-            </div>
-          )}
-
-          {/* Status Badge */}
-          <div className="absolute top-4 left-4 flex gap-2">
-            <span className="px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-full animate-pulse">
-              🔴 LIVE
-            </span>
-            <span className="px-3 py-1 bg-black/60 backdrop-blur-sm text-richblack-200 text-xs rounded-full">
-              {classDetails.title}
-            </span>
-          </div>
-        </div>
-
-        {/* Control Bar */}
-        <div className="bg-richblack-900 border-t border-richblack-800 px-6 py-4 flex items-center justify-between">
-          <div className="flex gap-2">
-            <button
-              onClick={toggleMic}
-              className={`p-3 rounded-xl transition-all ${
-                micOn ? "bg-richblack-700 hover:bg-richblack-600 text-richblack-100" : "bg-red-600 text-white"
-              }`}
-            >
-              {micOn ? <FiMic size={18} /> : <FiMicOff size={18} />}
-            </button>
-            <button
-              onClick={toggleCam}
-              className={`p-3 rounded-xl transition-all ${
-                camOn ? "bg-richblack-700 hover:bg-richblack-600 text-richblack-100" : "bg-red-600 text-white"
-              }`}
-            >
-              {camOn ? <FiVideo size={18} /> : <FiVideoOff size={18} />}
-            </button>
-          </div>
-
-          <button
-            onClick={handleEndClass}
-            className="flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white text-xs font-bold rounded-xl transition-all"
-          >
-            <FiPhoneCall size={16} /> {isInstructor ? "End Class" : "Leave Class"}
-          </button>
-        </div>
-      </div>
-
-      {/* Right Sidebar (Chat & Users) */}
-      <div className="w-full lg:w-80 flex flex-col h-full gap-4">
-        {/* Tab Selector */}
-        <div className="flex bg-richblack-800 border border-richblack-700 p-1 rounded-xl">
-          <button
-            onClick={() => setSidebarTab("chat")}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-all ${
-              sidebarTab === "chat" ? "bg-richblack-700 text-purple-400" : "text-richblack-400 hover:text-richblack-200"
-            }`}
-          >
-            <FiMessageSquare size={14} /> Chat
-          </button>
-          <button
-            onClick={() => setSidebarTab("users")}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-all ${
-              sidebarTab === "users" ? "bg-richblack-700 text-purple-400" : "text-richblack-400 hover:text-richblack-200"
-            }`}
-          >
-            <FiUsers size={14} /> Users
-          </button>
-        </div>
-
-        {/* Sidebar Component */}
-        <div className="flex-1 h-0 min-h-0">
-          {sidebarTab === "chat" ? (
-            <LiveChat socket={socket} classId={classDetails._id} />
-          ) : (
-            <AttendeeList socket={socket} />
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ── Helper Video Tile Component ──────────────────────────────────────────────
-const VideoTile = ({ peer }) => {
-  const hmsActions = useHMSActions()
-  const videoRef = React.useRef(null)
-
-  useEffect(() => {
-    const videoElem = videoRef.current
-    if (videoElem && peer.videoTrack) {
-      hmsActions.attachVideo(peer.videoTrack, videoElem)
-    }
-    return () => {
-      if (videoElem && peer.videoTrack) {
-        hmsActions.detachVideo(peer.videoTrack)
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [peer.videoTrack])
-
-  return (
-    <video
-      ref={videoRef}
-      autoPlay
-      muted={peer.isLocal}
-      playsInline
-      className="w-full h-full object-contain rounded-xl"
-    />
-  )
-}
-
-// Custom hook to select peers from HMS Store
-function usePeers() {
-  return useHMSStore(selectPeers)
-}
-
-// ── Main Page Component (Outer wrapper) ───────────────────────────────────────
 export default function LiveClassRoom() {
   const { classId } = useParams()
   const navigate = useNavigate()
@@ -218,105 +16,358 @@ export default function LiveClassRoom() {
   const { user } = useSelector((s) => s.profile)
 
   const [classDetails, setClassDetails] = useState(null)
-  const [hmsToken, setHmsToken] = useState(null)
-  const [socket, setSocket] = useState(null)
+  const [loading, setLoading] = useState(true)
   const [starting, setStarting] = useState(false)
+  const [embedMode, setEmbedMode] = useState(false)
+  const [copiedField, setCopiedField] = useState(null)
 
-  // 1. Initial Load & Join authorization
+  const isInstructor = user?.accountType === "Instructor"
+
   useEffect(() => {
-    const initSession = async () => {
-      // Connect real-time socket
-      const socketClient = io(`${SOCKET_BASE_URL}/live`, {
-        transports: ["websocket"],
-      })
-      setSocket(socketClient)
-
-      // Fetch class details from API
+    const fetchDetails = async () => {
+      setLoading(true)
       const details = await joinClass(token, classId)
       if (!details) {
-        navigate("/dashboard/enrolled-courses")
+        navigate(isInstructor ? "/dashboard/instructor" : "/dashboard/enrolled-courses")
         return
       }
-
       setClassDetails(details)
-      setHmsToken(details.hmsToken)
-
-      // Socket Join event
-      socketClient.emit("join-room", {
-        classId: details.classId,
-        userId: user?._id,
-        userName: `${user?.firstName} ${user?.lastName}`,
-        role: user?.accountType === "Instructor" ? "instructor" : "student",
-      })
-
-      // Listen for socket events
-      socketClient.on("class-ended", () => {
-        toast("The class session has been ended.")
-        navigate(user?.accountType === "Instructor" ? "/dashboard/instructor" : "/dashboard/enrolled-courses")
-      })
+      setLoading(false)
     }
 
-    initSession()
-
-    return () => {
-      if (socket) {
-        socket.disconnect()
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchDetails()
   }, [classId, token])
 
-  // Instructor Action: Trigger LIVE state
   const handleStartStream = async () => {
     setStarting(true)
     const streamDetails = await startClass(token, classId)
     if (streamDetails) {
-      setHmsToken(streamDetails.hmsToken)
-      setClassDetails((prev) => ({ ...prev, status: "live" }))
+      setClassDetails((prev) => ({
+        ...prev,
+        status: "live",
+        zoomStartUrl: streamDetails.zoomStartUrl,
+        zoomJoinUrl: streamDetails.zoomJoinUrl,
+        zoomMeetingId: streamDetails.zoomMeetingId,
+        zoomPassword: streamDetails.zoomPassword,
+      }))
+      toast.success("Zoom meeting session activated!")
     }
     setStarting(false)
   }
 
-  if (!classDetails) {
+  const handleEndClass = async () => {
+    if (isInstructor) {
+      if (window.confirm("Are you sure you want to end this Zoom live class for all students?")) {
+        await endClass(token, classId)
+        toast.success("Class ended.")
+        navigate("/dashboard/instructor")
+      }
+    } else {
+      await leaveClass(token, classId)
+      navigate("/dashboard/enrolled-courses")
+    }
+  }
+
+  const copyToClipboard = (text, fieldName) => {
+    if (!text) return
+    navigator.clipboard.writeText(text)
+    setCopiedField(fieldName)
+    toast.success(`Copied ${fieldName} to clipboard!`)
+    setTimeout(() => setCopiedField(null), 2500)
+  }
+
+  const launchZoom = (url) => {
+    if (!url) {
+      toast.error("Zoom meeting URL not available")
+      return
+    }
+    window.open(url, "_blank", "noopener,noreferrer")
+  }
+
+  if (loading) {
     return (
       <div className="min-h-screen bg-richblack-900 flex items-center justify-center text-richblack-300">
-        <div className="flex flex-col items-center gap-3">
-          <FiActivity size={32} className="animate-spin text-purple-400" />
-          <p>Connecting to Live Class Room...</p>
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-sm font-medium tracking-wide">Connecting to Zoom Meeting Room...</p>
         </div>
       </div>
     )
   }
 
-  // Instructor setup state (before clicking "Start Stream")
-  if (user?.accountType === "Instructor" && classDetails.status === "scheduled") {
-    return (
-      <div className="min-h-screen bg-richblack-900 flex items-center justify-center p-4">
-        <div className="bg-richblack-800 border border-richblack-700 p-8 rounded-2xl max-w-md w-full text-center space-y-6">
-          <div className="w-16 h-16 rounded-full bg-purple-500/10 text-purple-400 flex items-center justify-center mx-auto">
-            <FiVideo size={32} />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-richblack-5">{classDetails.title}</h2>
-            <p className="text-richblack-400 text-xs mt-1.5">
-              Ready to go live? Students will be notified when you click start.
-            </p>
-          </div>
-          <button
-            onClick={handleStartStream}
-            disabled={starting}
-            className="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold text-xs rounded-xl shadow-lg transition-all"
-          >
-            {starting ? "Starting Room..." : "Start Streaming Now"}
-          </button>
-        </div>
-      </div>
-    )
-  }
+  if (!classDetails) return null
+
+  const activeZoomUrl = isInstructor
+    ? classDetails.zoomStartUrl || classDetails.zoomJoinUrl
+    : classDetails.zoomJoinUrl
 
   return (
-    <HMSRoomProvider>
-      <RoomStage classDetails={classDetails} hmsToken={hmsToken} socket={socket} />
-    </HMSRoomProvider>
+    <div className="min-h-[calc(100vh-3.5rem)] bg-gradient-to-b from-richblack-950 via-richblack-900 to-richblack-950 p-4 md:p-8 text-richblack-200">
+      <div className="max-w-6xl mx-auto space-y-6">
+        
+        {/* Top Header Card */}
+        <div className="bg-richblack-800/80 backdrop-blur-xl border border-richblack-700/70 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
+          {/* Subtle Ambient Glow */}
+          <div className="absolute -top-24 -right-24 w-72 h-72 bg-purple-600/15 blur-3xl rounded-full pointer-events-none"></div>
+          <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-blue-600/15 blur-3xl rounded-full pointer-events-none"></div>
+
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-3 max-w-2xl">
+              <div className="flex flex-wrap items-center gap-3">
+                {classDetails.status === "live" ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-600/90 text-white text-xs font-bold rounded-full shadow-lg shadow-red-600/30 animate-pulse">
+                    <span className="w-2 h-2 rounded-full bg-white animate-ping"></span>
+                    LIVE ON ZOOM
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-500/20 text-purple-300 border border-purple-500/30 text-xs font-semibold rounded-full">
+                    <FiCalendar size={12} /> SCHEDULED
+                  </span>
+                )}
+                <span className="px-3 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-medium rounded-full">
+                  Zoom Integration
+                </span>
+              </div>
+
+              <h1 className="text-2xl md:text-3xl font-extrabold text-richblack-5 tracking-tight">
+                {classDetails.title}
+              </h1>
+
+              {classDetails.description && (
+                <p className="text-richblack-300 text-sm leading-relaxed">
+                  {classDetails.description}
+                </p>
+              )}
+            </div>
+
+            {/* Quick Action Button */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              {isInstructor && classDetails.status === "scheduled" ? (
+                <button
+                  onClick={handleStartStream}
+                  disabled={starting}
+                  className="flex items-center justify-center gap-2.5 px-6 py-3.5 bg-gradient-to-r from-purple-600 via-purple-500 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white text-sm font-bold rounded-xl shadow-xl shadow-purple-600/25 transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50"
+                >
+                  <FiPlayCircle size={18} />
+                  {starting ? "Initializing Zoom..." : "Start Zoom Meeting"}
+                </button>
+              ) : (
+                <button
+                  onClick={() => launchZoom(activeZoomUrl)}
+                  className="flex items-center justify-center gap-2.5 px-6 py-3.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-xl shadow-xl shadow-blue-600/30 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+                >
+                  <FiExternalLink size={18} />
+                  {isInstructor ? "Launch Zoom as Host" : "Join Zoom Meeting"}
+                </button>
+              )}
+
+              <button
+                onClick={handleEndClass}
+                className="flex items-center justify-center gap-2 px-4 py-3.5 bg-richblack-700/80 hover:bg-red-950/40 hover:text-red-400 border border-richblack-600 hover:border-red-500/40 text-richblack-200 text-sm font-semibold rounded-xl transition-all"
+              >
+                <FiPower size={16} />
+                {isInstructor ? "End Session" : "Leave"}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Grid Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          {/* Main Display Container */}
+          <div className="lg:col-span-2 space-y-6">
+            <div className="bg-richblack-950 border border-richblack-800 rounded-3xl overflow-hidden shadow-xl min-h-[380px] flex flex-col justify-between relative">
+              
+              {/* Header inside screen */}
+              <div className="p-4 bg-richblack-900/90 border-b border-richblack-800 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-blue-600/20 text-blue-400 flex items-center justify-center">
+                    <FiVideo size={18} />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-bold text-richblack-5">Zoom Meeting Experience</h3>
+                    <p className="text-[10px] text-richblack-400">High-Definition Audio & Video Portal</p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setEmbedMode(!embedMode)}
+                  className="flex items-center gap-1.5 text-xs text-purple-400 hover:text-purple-300 px-3 py-1.5 rounded-lg bg-purple-500/10 border border-purple-500/20 transition-all"
+                >
+                  <FiTv size={14} />
+                  {embedMode ? "Switch to Launch View" : "Embed Web Preview"}
+                </button>
+              </div>
+
+              {/* Screen Body */}
+              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-radial from-richblack-900 to-richblack-950 relative">
+                {embedMode && activeZoomUrl ? (
+                  <iframe
+                    src={activeZoomUrl}
+                    title="Zoom Web Client"
+                    className="w-full h-[420px] rounded-xl border border-richblack-800 shadow-inner"
+                    allow="camera; microphone; fullscreen; display-capture"
+                  />
+                ) : (
+                  <div className="max-w-md space-y-6 py-6">
+                    <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-blue-600/30 to-purple-600/30 border border-blue-500/30 flex items-center justify-center mx-auto shadow-2xl text-blue-400 animate-pulse">
+                      <FiVideo size={40} />
+                    </div>
+
+                    <div className="space-y-2">
+                      <h3 className="text-xl font-bold text-richblack-5">
+                        {classDetails.status === "live"
+                          ? "Zoom Session Active"
+                          : "Ready for Zoom Meeting"}
+                      </h3>
+                      <p className="text-xs text-richblack-300 leading-relaxed">
+                        Click below to launch the Zoom meeting application directly or access the room through your browser.
+                      </p>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                      <button
+                        onClick={() => launchZoom(activeZoomUrl)}
+                        className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
+                      >
+                        <FiExternalLink size={16} />
+                        Open in Zoom App / Web
+                      </button>
+                      
+                      <button
+                        onClick={() => setEmbedMode(true)}
+                        className="px-6 py-3 bg-richblack-800 hover:bg-richblack-700 text-richblack-200 border border-richblack-700 font-semibold text-xs rounded-xl transition-all"
+                      >
+                        Try Web Embed
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Bottom Footer Info */}
+              <div className="px-6 py-3.5 bg-richblack-900/60 border-t border-richblack-800/80 flex items-center justify-between text-xs text-richblack-400">
+                <span className="flex items-center gap-1.5">
+                  <FiShield size={14} className="text-emerald-400" />
+                  Encrypted Zoom Meeting
+                </span>
+                <span>StudyNet Video Integration</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Sidebar - Meeting Details & Credentials */}
+          <div className="space-y-6">
+            {/* Meeting Credentials Card */}
+            <div className="bg-richblack-800/90 border border-richblack-700 rounded-3xl p-6 shadow-xl space-y-5">
+              <h2 className="text-base font-bold text-richblack-5 flex items-center gap-2 border-b border-richblack-700 pb-3">
+                <FiVideo className="text-purple-400" size={18} />
+                Zoom Meeting Details
+              </h2>
+
+              {/* Meeting ID */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-semibold text-richblack-400 uppercase tracking-wider">
+                  Meeting ID
+                </label>
+                <div className="flex items-center justify-between bg-richblack-900 border border-richblack-700 rounded-xl px-3.5 py-2.5">
+                  <span className="font-mono text-sm text-richblack-100 font-semibold">
+                    {classDetails.zoomMeetingId || "Generating..."}
+                  </span>
+                  <button
+                    onClick={() => copyToClipboard(classDetails.zoomMeetingId, "Meeting ID")}
+                    className="p-1.5 text-richblack-400 hover:text-purple-400 transition-colors"
+                    title="Copy Meeting ID"
+                  >
+                    {copiedField === "Meeting ID" ? <FiCheckCircle className="text-emerald-400" size={16} /> : <FiCopy size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Passcode */}
+              {classDetails.zoomPassword && (
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-semibold text-richblack-400 uppercase tracking-wider">
+                    Passcode
+                  </label>
+                  <div className="flex items-center justify-between bg-richblack-900 border border-richblack-700 rounded-xl px-3.5 py-2.5">
+                    <span className="font-mono text-sm text-richblack-100 font-semibold">
+                      {classDetails.zoomPassword}
+                    </span>
+                    <button
+                      onClick={() => copyToClipboard(classDetails.zoomPassword, "Passcode")}
+                      className="p-1.5 text-richblack-400 hover:text-purple-400 transition-colors"
+                      title="Copy Passcode"
+                    >
+                      {copiedField === "Passcode" ? <FiCheckCircle className="text-emerald-400" size={16} /> : <FiCopy size={16} />}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Join Link Copy */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-semibold text-richblack-400 uppercase tracking-wider">
+                  Direct Join Link
+                </label>
+                <div className="flex items-center justify-between bg-richblack-900 border border-richblack-700 rounded-xl px-3.5 py-2.5 gap-2">
+                  <span className="font-mono text-xs text-richblack-300 truncate">
+                    {classDetails.zoomJoinUrl || "No link available"}
+                  </span>
+                  <button
+                    onClick={() => copyToClipboard(classDetails.zoomJoinUrl, "Join Link")}
+                    className="p-1.5 text-richblack-400 hover:text-purple-400 transition-colors flex-shrink-0"
+                    title="Copy Join Link"
+                  >
+                    {copiedField === "Join Link" ? <FiCheckCircle className="text-emerald-400" size={16} /> : <FiCopy size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Launch Button */}
+              <button
+                onClick={() => launchZoom(activeZoomUrl)}
+                className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
+              >
+                <FiExternalLink size={16} />
+                Open Zoom Session
+              </button>
+            </div>
+
+            {/* Class Schedule Information Card */}
+            <div className="bg-richblack-800/90 border border-richblack-700 rounded-3xl p-6 shadow-xl space-y-4 text-xs text-richblack-300">
+              <h3 className="font-bold text-richblack-100 text-sm border-b border-richblack-700 pb-2">
+                Session Guidelines
+              </h3>
+              
+              <div className="flex items-center gap-3">
+                <FiClock className="text-purple-400 flex-shrink-0" size={16} />
+                <span>
+                  Starts:{" "}
+                  <strong className="text-richblack-100">
+                    {classDetails.scheduledStart
+                      ? new Date(classDetails.scheduledStart).toLocaleString()
+                      : "Now"}
+                  </strong>
+                </span>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <FiUser className="text-purple-400 flex-shrink-0" size={16} />
+                <span>
+                  Host: <strong className="text-richblack-100">{isInstructor ? "You (Instructor)" : "Course Instructor"}</strong>
+                </span>
+              </div>
+
+              <div className="pt-2 border-t border-richblack-700/60 text-[11px] text-richblack-400">
+                Ensure you have the Zoom Client installed or grant permission to launch the Zoom web player when prompted.
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
   )
 }

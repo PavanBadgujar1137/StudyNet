@@ -10,19 +10,16 @@ const express = require("express")
 const cookieParser = require("cookie-parser")
 const cors = require("cors")
 const fileUpload = require("express-fileupload")
-const { Server } = require("socket.io")
 
 const userRoutes = require("./routes/user")
 const profileRoutes = require("./routes/profile")
 const paymentRoutes = require("./routes/Payments")
 const contactUsRoute = require("./routes/Contact")
-const liveClassRoutes = require("./routes/liveClass")  // Phase 2
-const recordedLectureRoutes = require("./routes/recordedLecture") // Phase 3
-const noteRoutes = require("./routes/notes") // Phase 3
+const liveClassRoutes = require("./routes/liveClass")
+const recordedLectureRoutes = require("./routes/recordedLecture")
+const noteRoutes = require("./routes/notes")
 const database = require("./config/database")
 const { cloudinaryConnect } = require("./config/cloudinary")
-const { initLiveRoomSocket } = require("./socket/liveRoom")  // Phase 2
-
 
 const PORT = process.env.PORT || 4000
 
@@ -33,24 +30,7 @@ if (!fs.existsSync(tempFileDir)) {
 }
 
 const app = express()
-
-// Wrap Express with http.createServer so Socket.io can share the same port
 const server = http.createServer(app)
-
-// Initialize Socket.io (Phase 2: live class rooms will use /live namespace)
-const io = new Server(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"],
-  },
-})
-
-// Attach io to app so controllers can emit events if needed
-app.set("io", io)
-
-// Initialize Socket.io live room namespace (Phase 2)
-initLiveRoomSocket(io)
-
 
 // Connecting to database
 database.connect()
@@ -71,7 +51,7 @@ app.use(
   })
 )
 
-// Connecting to cloudinary
+// Connecting to Cloudinary
 cloudinaryConnect()
 
 const practitionerRoutes = require("./routes/practitioner")
@@ -88,9 +68,9 @@ app.use("/api/v1/auth", userRoutes)
 app.use("/api/v1/profile", profileRoutes)
 app.use("/api/v1/payment", paymentRoutes)
 app.use("/api/v1/reach", contactUsRoute)
-app.use("/api/v1/live", liveClassRoutes)       // Phase 2 — Live Classes
-app.use("/api/v1/lecture", recordedLectureRoutes) // Phase 3 — Recorded Lectures
-app.use("/api/v1/note", noteRoutes)            // Phase 3 — Study Materials / Notes
+app.use("/api/v1/live", liveClassRoutes)
+app.use("/api/v1/lecture", recordedLectureRoutes)
+app.use("/api/v1/note", noteRoutes)
 
 // OpenHand Core API Routes
 app.use("/api/v1/practitioners", practitionerRoutes)
@@ -103,7 +83,6 @@ app.use("/api/v1/copilot", copilotRoutes)
 app.use("/api/v1/plans", plansRoutes)
 app.use("/api/v1/org", orgRoutes)
 
-
 // Testing the server
 app.get("/", (req, res) => {
   return res.json({
@@ -112,7 +91,6 @@ app.get("/", (req, res) => {
   })
 })
 
-// Use server.listen (not app.listen) so Socket.io works on same port
 server.listen(PORT, () => {
   console.log(`App is listening at ${PORT}`)
   if (!process.env.RAZORPAY_KEY || !process.env.RAZORPAY_SECRET) {

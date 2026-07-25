@@ -8,12 +8,14 @@ const {
   updateDisplayPicture,
   getEnrolledCourses,
   instructorDashboard,
+  getClientDashboardData,
+  getPractitionerDashboardData,
 } = require("../controllers/profile")
 
 // ********************************************************************************************************
 //                                      Profile routes
 // ********************************************************************************************************
-// Delet User Account
+// Delete User Account
 router.delete("/deleteProfile", auth, deleteAccount)
 router.put("/updateProfile", auth, updateProfile)
 router.get("/getUserDetails", auth, getAllUserDetails)
@@ -21,5 +23,9 @@ router.get("/getUserDetails", auth, getAllUserDetails)
 router.get("/getEnrolledCourses", auth, getEnrolledCourses)
 router.put("/updateDisplayPicture", auth, updateDisplayPicture)
 router.get("/instructorDashboard", auth, isInstructor, instructorDashboard)
+
+// Aggregated Dashboard Endpoints
+router.get("/client-dashboard", auth, getClientDashboardData)
+router.get("/practitioner-dashboard", auth, getPractitionerDashboardData)
 
 module.exports = router

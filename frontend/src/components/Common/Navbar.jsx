@@ -25,7 +25,7 @@ function Navbar() {
               <span className="text-xl md:text-2xl font-bold tracking-tight text-navy leading-none">
                 Open<span className="bg-gradient-to-r from-royal-blue to-violet bg-clip-text text-transparent">Hand</span>
               </span>
-              <span className="text-[10px] uppercase font-bold tracking-widest text-royal-blue/70">Learning &amp; Practice Platform</span>
+              <span className="text-[10px] uppercase font-bold tracking-widest text-royal-blue/70">Your Growth, Our Guidance.</span>
             </div>
           </Link>
         </div>

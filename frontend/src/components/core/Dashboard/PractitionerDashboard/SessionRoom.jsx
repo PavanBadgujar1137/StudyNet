@@ -1,40 +1,87 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { FiVideo, FiExternalLink, FiPlayCircle } from 'react-icons/fi'
 
-export function SessionRoom() {
+export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData }) {
+  const navigate = useNavigate()
   const [coPilotOn, setCoPilotOn] = useState(true)
+  const upcomingClasses = telemetryData?.upcomingClasses || []
 
   return (
     <section className="view on" id="room">
       <div className="htop">
-        <div><div className="crumb">Live session</div><h1>Priya S. — Session 3</h1><p>Consent given at 00:00 · recording will delete in 30 days</p></div>
-        <button className="btn-g">End &amp; draft notes</button>
+        <div>
+          <div className="crumb">Live session room</div>
+          <h1>Zoom Live Session Hub</h1>
+          <p>{upcomingClasses.length} class(es)/session(s) configured for Zoom streaming.</p>
+        </div>
+        {upcomingClasses.length > 0 && (
+          <button
+            className="btn"
+            onClick={() => navigate(`/live/${upcomingClasses[0]._id}`)}
+          >
+            Launch Active Zoom Room
+          </button>
+        )}
       </div>
-      <div className="room">
-        <div className="stage">
-          <div className="bar"><span className="livep"><i></i> Live</span><span className="t">24:16 · 60 min booked</span></div>
-          <div className="vid"><div className="ini">PS</div></div>
-          <div className="self">You</div>
-          <div className="ctrls">
-            <div className="ctrl"><svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3ZM19 10v2a7 7 0 0 1-14 0v-2M12 19v4"/></svg></div>
-            <div className="ctrl"><svg viewBox="0 0 24 24"><path d="M23 7l-7 5 7 5V7ZM14 5H3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Z"/></svg></div>
-            <div className="ctrl"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></div>
-            <div className="ctrl end"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></div>
-          </div>
+
+      <div className="card" style={{ marginBottom: '20px' }}>
+        <div className="sechd">
+          <h3>Your Zoom Live Sessions</h3>
         </div>
 
-        <div className="cop">
-          <div className="h"><b>Co-pilot</b><div className="tog" onClick={() => setCoPilotOn(!coPilotOn)}><i style={{ right: coPilotOn ? '3px' : 'auto', left: coPilotOn ? 'auto' : '3px' }}></i></div></div>
-          {coPilotOn ? (
-            <div className="b">
-              <div className="sug"><div className="k">Try asking</div><p>"You said 'I should be over it by now' — whose voice is the 'should' in?"</p><div className="a"><span className="chp">Use</span><span className="chp">Not now</span></div></div>
-              <div className="sug"><div className="k">Pattern across sessions</div><p>Third time work has come up right after family. Worth naming the link?</p><div className="a"><span className="chp">Flag for notes</span></div></div>
-              <div className="sug"><div className="k">Technique that fits</div><p>Two-chair work — she's holding both sides herself. Script ready.</p><div className="a"><span className="chp">Open script</span><span className="chp">Save</span></div></div>
+        {upcomingClasses.length > 0 ? (
+          upcomingClasses.map((cls) => (
+            <div key={cls._id} className="row" style={{ alignItems: 'center', padding: '14px', borderBottom: '1px solid #E2E8F0' }}>
+              <div className="av" style={{ background: '#2563EB', color: '#FFF' }}>
+                <FiVideo size={16} />
+              </div>
+              <div className="who">
+                <b>{cls.title}</b>
+                <span>
+                  Start Time: {new Date(cls.scheduledStart).toLocaleString()}
+                </span>
+              </div>
+              <div className="rt">
+                <button
+                  className="btn"
+                  style={{ padding: '8px 16px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  onClick={() => navigate(`/live/${cls._id}`)}
+                >
+                  <FiExternalLink size={14} /> Open Zoom Portal
+                </button>
+              </div>
             </div>
-          ) : (
-            <div className="b" style={{ padding: '24px', textAlign: 'center', color: '#8B90B8', fontSize: '13px' }}>Co-pilot paused</div>
-          )}
-          <div className="f">Visible only to you · Priya can end this any time</div>
+          ))
+        ) : (
+          <div style={{ padding: '24px', textAlign: 'center', color: '#64748B' }}>
+            <p style={{ marginBottom: '12px' }}>No live Zoom class currently scheduled.</p>
+            <button className="btn" onClick={() => navigate('/dashboard')}>
+              Schedule a Zoom Class
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="cop" style={{ width: '100%', marginTop: '20px' }}>
+        <div className="h">
+          <b>Practitioner Co-Pilot Assistant</b>
+          <div className="tog" onClick={() => setCoPilotOn(!coPilotOn)}>
+            <i style={{ right: coPilotOn ? '3px' : 'auto', left: coPilotOn ? 'auto' : '3px' }}></i>
+          </div>
         </div>
+        {coPilotOn ? (
+          <div className="b">
+            <div className="sug">
+              <div className="k">Dynamic Session Prompt</div>
+              <p>"Review client's recent check-in rhythm and previous reflection notes."</p>
+            </div>
+          </div>
+        ) : (
+          <div className="b" style={{ padding: '24px', textAlign: 'center', color: '#8B90B8', fontSize: '13px' }}>
+            Co-pilot paused
+          </div>
+        )}
       </div>
     </section>
   )

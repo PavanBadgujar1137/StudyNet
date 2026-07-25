@@ -13,7 +13,6 @@ import {
   FiMessageCircle,
   FiSliders,
   FiPlay,
-  FiLock,
   FiActivity
 } from 'react-icons/fi'
 
@@ -462,48 +461,7 @@ export function Home() {
         </div>
       </section>
 
-      {/* Section 4: Built for trust (Dark Glass Vault) */}
-      <section className="oh-sec oh-sec-dark">
-        <div className="oh-wrap">
-          <div className="sec-head-center light-text">
-            <span className="oh-sec-tag dark">Held With Care</span>
-            <h2>Built for the trust your work depends on</h2>
-            <p>Security and client confidentiality embedded directly into the infrastructure.</p>
-          </div>
 
-          <div className="oh-grid-3">
-            <div className="trust-card">
-              <div className="trust-ic">
-                <FiLock />
-              </div>
-              <h3>Confidentiality by Design</h3>
-              <p>
-                Private cohorts and client data are strictly isolated and access-controlled from the ground up — never shared with third parties.
-              </p>
-            </div>
-
-            <div className="trust-card">
-              <div className="trust-ic">
-                <FiShield />
-              </div>
-              <h3>Ethical-Practice Standards</h3>
-              <p>
-                Co-designed alongside active practitioners, with ethical guardrails that strictly honor ICF and counseling ethics codes.
-              </p>
-            </div>
-
-            <div className="trust-card">
-              <div className="trust-ic">
-                <FiHeart />
-              </div>
-              <h3>Protected Conversations</h3>
-              <p>
-                Session records, check-in data, and notes are encrypted end-to-end and never used to train public AI models.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Section 5: 3-step action ladder */}
       <section className="oh-sec ladder-sec">

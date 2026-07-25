@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { 
   FiGrid, 
@@ -21,14 +21,31 @@ import SessionRoom from './SessionRoom'
 import PayoutsInvoices from './PayoutsInvoices'
 import GrowthTools from './GrowthTools'
 import Settings from '../Settings'
+import { fetchPractitionerDashboardData } from '../../../../services/operations/dashboardAPI'
 
 export function PractitionerDashboard() {
   const [activeSection, setActiveSection] = useState('dash')
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
-  const { user } = useSelector((state) => state.profile)
+  const [telemetryData, setTelemetryData] = useState(null)
+  const [loading, setLoading] = useState(true)
 
-  const practitionerName = `${user?.firstName || 'Dr. Meera'} ${user?.lastName || 'Iyer'}`
+  const { user } = useSelector((state) => state.profile)
+  const { token } = useSelector((state) => state.auth)
+
+  const practitionerName = user ? `Dr. ${user.firstName} ${user.lastName}` : 'Dr. Meera Iyer'
   const initials = `${user?.firstName?.slice(0, 1) || 'M'}${user?.lastName?.slice(0, 1) || 'I'}`
+
+  const loadData = async () => {
+    if (!token) return
+    setLoading(true)
+    const data = await fetchPractitionerDashboardData(token)
+    if (data) setTelemetryData(data)
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    loadData()
+  }, [token])
 
   const practiceItems = [
     { id: 'dash', label: 'Dashboard', icon: <FiGrid /> },
@@ -254,14 +271,35 @@ export function PractitionerDashboard() {
 
         {/* View Content */}
         <div className="oh-view-body main">
-          {activeSection === 'dash' && <Overview practitionerName={practitionerName} setActiveSection={setActiveSection} />}
-          {activeSection === 'offers' && <MyOffers />}
-          {activeSection === 'clients' && <MyClients setActiveSection={setActiveSection} />}
-          {activeSection === 'circles' && <Circles />}
-          {activeSection === 'room' && <SessionRoom practitionerName={practitionerName} />}
-          {activeSection === 'payouts' && <PayoutsInvoices />}
-          {activeSection === 'growth' && <GrowthTools />}
-          {activeSection === 'profile' && <Settings />}
+          {activeSection === 'dash' && (
+            <Overview 
+              practitionerName={practitionerName} 
+              setActiveSection={setActiveSection}
+              telemetryData={telemetryData}
+              loading={loading}
+            />
+          )}
+          {activeSection === 'offers' && (
+            <MyOffers telemetryData={telemetryData} onUpdate={loadData} />
+          )}
+          {activeSection === 'clients' && (
+            <MyClients setActiveSection={setActiveSection} telemetryData={telemetryData} />
+          )}
+          {activeSection === 'circles' && (
+            <Circles telemetryData={telemetryData} onUpdate={loadData} />
+          )}
+          {activeSection === 'room' && (
+            <SessionRoom practitionerName={practitionerName} telemetryData={telemetryData} />
+          )}
+          {activeSection === 'payouts' && (
+            <PayoutsInvoices telemetryData={telemetryData} />
+          )}
+          {activeSection === 'growth' && (
+            <GrowthTools telemetryData={telemetryData} />
+          )}
+          {activeSection === 'profile' && (
+            <Settings />
+          )}
         </div>
       </main>
     </div>

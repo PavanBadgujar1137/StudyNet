@@ -5,11 +5,9 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import OHLogo from './OHLogo'
 import { 
-  FaTwitter, 
+  FaInstagram, 
   FaLinkedin, 
-  FaGithub, 
-  FaYoutube, 
-  FaDiscord 
+  FaYoutube 
 } from 'react-icons/fa'
 import { 
   FiArrowUp, 
@@ -57,11 +55,9 @@ const LINKS = [
 ]
 
 const SOCIAL_LINKS = [
-  { icon: FaTwitter, href: 'https://twitter.com', label: 'Twitter / X' },
+  { icon: FaInstagram, href: 'https://instagram.com', label: 'Instagram' },
   { icon: FaLinkedin, href: 'https://linkedin.com', label: 'LinkedIn' },
-  { icon: FaGithub, href: 'https://github.com', label: 'GitHub' },
   { icon: FaYoutube, href: 'https://youtube.com', label: 'YouTube' },
-  { icon: FaDiscord, href: 'https://discord.com', label: 'Discord' },
 ]
 
 export function OHFooter() {
@@ -132,7 +128,7 @@ export function OHFooter() {
             {/* Initiative Tag */}
             <div className="flex items-center text-xs font-medium gap-1.5 mt-1" style={{ color: '#CBD5E1' }}>
               <FiGlobe style={{ color: '#60A5FA' }} />
-              <span>A Magnificent U initiative, built by <strong className="font-bold" style={{ color: '#60A5FA' }}>Zweibel AI</strong>.</span>
+              <span>A Magnificent Us initiative, built by <strong className="font-bold" style={{ color: '#60A5FA' }}>Zwiebel AI</strong>.</span>
             </div>
 
             {/* Social Links */}
@@ -198,7 +194,7 @@ export function OHFooter() {
             <span>© {new Date().getFullYear()} <strong className="font-bold" style={{ color: '#FFFFFF' }}>OpenHand</strong> · All rights reserved.</span>
             <span className="hidden sm:inline text-blue-500">•</span>
             <span className="inline-flex items-center gap-1.5">
-              Crafted with <FiHeart className="text-red-500 animate-pulse" /> by <strong style={{ color: '#60A5FA' }}>Zweibel AI</strong>
+              Crafted with <FiHeart className="text-red-500 animate-pulse" /> by <strong style={{ color: '#60A5FA' }}>Zwiebel AI</strong>
             </span>
           </div>
 

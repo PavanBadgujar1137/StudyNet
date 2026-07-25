@@ -172,7 +172,7 @@ export function TalkToHuman() {
             Talk to <span className="talk-grad-text">a real human.</span>
           </h1>
           <p>
-            Not a chatbot, not an SDR reading a script. One of the two people who built OpenHand, for twenty-five to forty minutes, about your practice specifically.
+            Not a chatbot, not an SDR reading a script. One of the two people who built OpenHand, for fifteen to twenty minutes, about your practice specifically.
           </p>
 
           {/* Key Assurance Stats */}
@@ -183,7 +183,7 @@ export function TalkToHuman() {
             </div>
             <div className="stat-divider"></div>
             <div className="stat-item">
-              <span className="stat-num">25–45m</span>
+              <span className="stat-num">15–20m</span>
               <span className="stat-lbl">1:1 Dedicated Call</span>
             </div>
             <div className="stat-divider"></div>
@@ -240,7 +240,7 @@ export function TalkToHuman() {
               onClick={() => setSelectedFounder('anamika')}
             >
               <div className="fcard-badge">
-                <FiClock className="fcard-ic" /> 25-45 min
+                <FiClock className="fcard-ic" /> 15-20 min
               </div>
               <div className="fcard-top">
                 <div className="av">AN</div>
@@ -250,7 +250,7 @@ export function TalkToHuman() {
                 </div>
               </div>
               <p>
-                Talk to Anamika if your questions are about the practice itself — how to shape a cohort, what to charge, whether your material works as a six-week container or a self-paced program.
+                Talk to Dr. Anamika if your questions are about the practice itself — how to shape a cohort, what to charge, whether your material works as a six-week container or a self-paced program.
               </p>
               <div className="talk-tags">
                 <span>Cohort Architecture</span>
@@ -281,7 +281,7 @@ export function TalkToHuman() {
               onClick={() => setSelectedFounder('rajendra')}
             >
               <div className="fcard-badge">
-                <FiClock className="fcard-ic" /> 25-45 min
+                <FiClock className="fcard-ic" /> 15-20 min
               </div>
               <div className="fcard-top">
                 <div className="av">RP</div>
@@ -291,7 +291,7 @@ export function TalkToHuman() {
                 </div>
               </div>
               <p>
-                Talk to Rajendra if your questions are about the harder edges — client confidentiality, ethical use of the in-session co-pilot, working with organisations, or moving an existing caseload across.
+                Talk to Dr. Rajendra if your questions are about the harder edges — client confidentiality, ethical use of the in-session co-pilot, working with organisations, or moving an existing caseload across.
               </p>
               <div className="talk-tags">
                 <span>Data Confidentiality</span>
