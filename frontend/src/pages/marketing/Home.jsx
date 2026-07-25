@@ -6,20 +6,16 @@ import {
   FiCheckCircle,
   FiUsers,
   FiZap,
-  FiShield,
   FiArrowRight,
-  FiHeart,
   FiLayers,
   FiMessageCircle,
   FiSliders,
-  FiPlay,
   FiActivity
 } from 'react-icons/fi'
 
 export function Home() {
   // Box Time UI state
   const [activeBoxIndex, setActiveBoxIndex] = useState(0)
-  const [coPilotActive, setCoPilotActive] = useState(true)
 
   const boxTimeSlots = [
     {
@@ -580,14 +576,18 @@ export function Home() {
           </div>
 
           <div className="infographic-timeline-trail">
-            {/* Smooth Connecting Line */}
-            <div className="timeline-beam"></div>
+            {/* Base Track Beam with Moving Train Light Spark */}
+            <div className="timeline-beam">
+              <div className="train-car-spark"></div>
+              <div className="train-track-fill"></div>
+            </div>
 
             <div className="timeline-steps-row">
               {/* Step 01 */}
-              <div className="timeline-step-item">
+              <div className="timeline-step-item flow-step-1">
                 <div className="timeline-node">
                   <span className="node-num">01</span>
+                  <span className="step-glow-ring"></span>
                 </div>
                 <div className="timeline-info">
                   <h3>Start your free practice space</h3>
@@ -598,9 +598,10 @@ export function Home() {
               </div>
 
               {/* Step 02 */}
-              <div className="timeline-step-item">
+              <div className="timeline-step-item flow-step-2">
                 <div className="timeline-node">
                   <span className="node-num">02</span>
+                  <span className="step-glow-ring"></span>
                 </div>
                 <div className="timeline-info">
                   <h3>See a sample client journey</h3>
@@ -611,9 +612,10 @@ export function Home() {
               </div>
 
               {/* Step 03 */}
-              <div className="timeline-step-item">
+              <div className="timeline-step-item flow-step-3">
                 <div className="timeline-node">
                   <span className="node-num">03</span>
+                  <span className="step-glow-ring"></span>
                 </div>
                 <div className="timeline-info">
                   <h3>Talk to a real human</h3>

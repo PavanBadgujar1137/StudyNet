@@ -4647,7 +4647,7 @@ details > summary::-webkit-details-marker { display: none; }
 }
 
 
-/* 2. Start Where You're Comfortable - Pure Infographic Timeline (No Box Cards) */
+/* 2. Start Where You're Comfortable - Train Flow Timeline Infographic */
 .pathway-sec {
   padding: 100px 0 120px;
 }
@@ -4657,22 +4657,61 @@ details > summary::-webkit-details-marker { display: none; }
   margin-top: 64px;
 }
 
-/* Horizontal Gradient Beam Line */
+/* Horizontal Track Line Base */
 .timeline-beam {
   position: absolute;
   top: 32px;
   left: 10%;
   right: 10%;
-  height: 4px;
-  background: linear-gradient(90deg, #2563EB 0%, #7C3AED 50%, #059669 100%);
-  border-radius: 4px;
-  box-shadow: 0 0 16px rgba(124, 58, 237, 0.4);
+  height: 6px;
+  background: rgba(9, 19, 44, 0.08);
+  border-radius: 6px;
   z-index: 0;
+  overflow: visible;
+}
+
+/* Moving Train Light Spark Capsule */
+.train-car-spark {
+  position: absolute;
+  top: -4px;
+  width: 54px;
+  height: 14px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 0%, #FFFFFF 60%, #60A5FA 100%);
+  box-shadow: 0 0 18px #60A5FA, 0 0 30px #7C3AED;
+  z-index: 3;
+  animation: train-light-travel 4.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes train-light-travel {
+  0% { left: 0%; opacity: 0; }
+  8% { opacity: 1; }
+  92% { opacity: 1; }
+  100% { left: calc(100% - 54px); opacity: 0; }
+}
+
+/* Flowing Track Progress Line Fill */
+.train-track-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #2563EB 0%, #7C3AED 50%, #059669 100%);
+  border-radius: 6px;
+  box-shadow: 0 0 18px rgba(124, 58, 237, 0.6);
+  z-index: 1;
+  animation: track-fill-flow 4.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes track-fill-flow {
+  0% { width: 0%; opacity: 0.3; }
+  90% { width: 100%; opacity: 1; }
+  100% { width: 100%; opacity: 0; }
 }
 
 .timeline-steps-row {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 40px;
@@ -4683,10 +4722,12 @@ details > summary::-webkit-details-marker { display: none; }
   flex-direction: column;
   align-items: center;
   text-align: center;
+  position: relative;
 }
 
 /* Milestone Node Circle */
 .timeline-node {
+  position: relative;
   width: 68px;
   height: 68px;
   border-radius: 50%;
@@ -4697,6 +4738,36 @@ details > summary::-webkit-details-marker { display: none; }
   box-shadow: 0 10px 25px rgba(9, 19, 44, 0.3), 0 0 0 6px #FFFFFF;
   margin-bottom: 28px;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  z-index: 2;
+}
+
+/* Sequential 1-by-1 Step Flow Glow Ring */
+.step-glow-ring {
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  pointer-events: none;
+}
+
+.flow-step-1 .step-glow-ring {
+  border-color: #2563EB;
+  animation: step-flow-pulse 4.8s ease-in-out infinite 0.2s;
+}
+
+.flow-step-2 .step-glow-ring {
+  border-color: #7C3AED;
+  animation: step-flow-pulse 4.8s ease-in-out infinite 2.2s;
+}
+
+.flow-step-3 .step-glow-ring {
+  border-color: #059669;
+  animation: step-flow-pulse 4.8s ease-in-out infinite 4.0s;
+}
+
+@keyframes step-flow-pulse {
+  0%, 100% { opacity: 0.15; transform: scale(0.9); }
+  25%, 55% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 30px currentColor; }
 }
 
 .timeline-step-item:hover .timeline-node {
@@ -4739,6 +4810,24 @@ details > summary::-webkit-details-marker { display: none; }
   font-weight: 700;
   text-decoration: none;
   transition: all 0.25s ease;
+}
+
+/* 1-by-1 Sequential Button Flow Animations */
+.flow-step-1 .timeline-cta-btn {
+  animation: btn-flow-lift 4.8s ease-in-out infinite 0.2s;
+}
+
+.flow-step-2 .timeline-cta-btn {
+  animation: btn-flow-lift 4.8s ease-in-out infinite 2.2s;
+}
+
+.flow-step-3 .timeline-cta-btn {
+  animation: btn-flow-lift 4.8s ease-in-out infinite 4.0s;
+}
+
+@keyframes btn-flow-lift {
+  0%, 100% { transform: translateY(0); filter: brightness(1); }
+  25%, 55% { transform: translateY(-5px); filter: brightness(1.25); box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25); }
 }
 
 .btn-blue {

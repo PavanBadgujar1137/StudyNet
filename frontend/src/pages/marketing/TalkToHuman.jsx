@@ -6,7 +6,6 @@ import toast from 'react-hot-toast'
 import {
   FiCheck,
   FiClock,
-  FiUser,
   FiChevronDown,
   FiMessageSquare,
   FiArrowRight,

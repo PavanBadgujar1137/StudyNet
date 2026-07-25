@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useSelector } from 'react-redux'
 import { 
   FiMapPin, 
@@ -35,17 +35,17 @@ export function ClientDashboard() {
   const practitionerName = dashboardData?.practitioner?.name || 'Dr. Meera Iyer'
   const practitionerFirstName = dashboardData?.practitioner?.firstName || 'Meera'
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!token) return
     setLoading(true)
     const data = await fetchClientDashboardData(token)
     if (data) setDashboardData(data)
     setLoading(false)
-  }
+  }, [token])
 
   useEffect(() => {
     loadData()
-  }, [token])
+  }, [loadData])
 
   const handleCheckInSuccess = () => {
     loadData()

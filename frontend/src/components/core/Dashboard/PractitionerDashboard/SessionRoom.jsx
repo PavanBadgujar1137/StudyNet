@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FiVideo, FiExternalLink, FiPlayCircle } from 'react-icons/fi'
+import { FiVideo, FiExternalLink } from 'react-icons/fi'
 
 export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData }) {
   const navigate = useNavigate()

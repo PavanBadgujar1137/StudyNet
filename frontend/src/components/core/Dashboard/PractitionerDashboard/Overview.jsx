@@ -56,7 +56,14 @@ export function Overview({ practitionerName = 'Dr. Meera Iyer', setActiveSection
         <div className="card">
           <div className="sechd">
             <h3>Earnings & Payout Overview</h3>
-            <a href="#" onClick={(e) => { e.preventDefault(); setActiveSection('payouts'); }}>Full report →</a>
+            <button
+              type="button"
+              className="link-btn"
+              style={{ background: 'none', border: 'none', padding: 0, color: '#2563EB', cursor: 'pointer', font: 'inherit', fontWeight: 600 }}
+              onClick={() => setActiveSection('payouts')}
+            >
+              Full report →
+            </button>
           </div>
           <svg className="spark" viewBox="0 0 620 150" preserveAspectRatio="none" role="img" aria-label="Bar chart of monthly earnings">
             <defs>
@@ -85,7 +92,14 @@ export function Overview({ practitionerName = 'Dr. Meera Iyer', setActiveSection
         <div className="card">
           <div className="sechd">
             <h3>Scheduled Zoom Sessions ({upcomingClasses.length})</h3>
-            <a href="#" onClick={(e) => { e.preventDefault(); setActiveSection('room'); }}>Manage →</a>
+            <button
+              type="button"
+              className="link-btn"
+              style={{ background: 'none', border: 'none', padding: 0, color: '#2563EB', cursor: 'pointer', font: 'inherit', fontWeight: 600 }}
+              onClick={() => setActiveSection('room')}
+            >
+              Manage →
+            </button>
           </div>
 
           {upcomingClasses.length > 0 ? (
