@@ -37,8 +37,8 @@ const STAGES = [
     side: 'right',
     who: 'Client',
     whoType: 'cl',
-    title: 'The first session — and the co-pilot beside you',
-    desc: "You hold the session. With their consent, OpenHand's Claude-powered co-pilot listens quietly and offers you a next question, a technique that fits, or a gentle flag when something's worth returning to. Your client never sees it. You stay present instead of scribbling notes.",
+    title: 'The first session — and AURA beside you',
+    desc: "You hold the session. With their consent, OpenHand's AURA-powered engine listens quietly and offers you a next question, a technique that fits, or a gentle flag when something's worth returning to. Your client never sees it. You stay present instead of scribbling notes.",
     earn: 'Session notes drafted for you — ready to approve in 90 seconds',
   },
   {
@@ -87,7 +87,7 @@ const COPILOT_FEATURES = [
   {
     n: '01',
     title: 'It listens, with permission',
-    desc: 'Your client explicitly consents before any session is transcribed. They can withdraw it at any time, mid-session, and the co-pilot goes silent immediately.',
+    desc: 'Your client explicitly consents before any session is transcribed. They can withdraw it at any time, mid-session, and AURA goes silent immediately.',
   },
   {
     n: '02',
@@ -273,7 +273,7 @@ export function ClientJourney() {
         </div>
       </section>
 
-      {/* Powered by Claude Co-Pilot Section */}
+      {/* Powered by AURA Section */}
       <section className="oh-copilot-section" id="copilot">
         <div className="oh-wrap">
           <div className="oh-copilot__grid">
@@ -281,10 +281,10 @@ export function ClientJourney() {
             {/* Left Column: Header + 4 Feature Items */}
             <div className="flex flex-col gap-6">
               <div>
-                <OHEyebrow dark>Powered by Claude AI</OHEyebrow>
+                <OHEyebrow dark>Powered by AURA AI</OHEyebrow>
                 <h2 className="oh-copilot__heading">A second pair of ears in every session.</h2>
                 <p className="oh-copilot__sub">
-                  You're listening to a person. You shouldn't also be tracking frameworks, remembering what they said in week two, and planning the next question. That's what the co-pilot is for — and it only ever speaks to you.
+                  You're listening to a person. You shouldn't also be tracking frameworks, remembering what they said in week two, and planning the next question. That's what AURA is for — and it only ever speaks to you.
                 </p>
               </div>
 
@@ -301,12 +301,12 @@ export function ClientJourney() {
               </div>
             </div>
 
-            {/* Right Column: Live Session Co-Pilot Mock Panel */}
+            {/* Right Column: Live Session AURA Mock Panel */}
             <div className="oh-copilot__panel-wrap">
               <div className="oh-copilot__panel">
                 <div className="oh-copilot__panel-top">
                   <span className="oh-copilot__live-tag">
-                    <span className="oh-copilot__live-dot" /> Live Co-Pilot
+                    <span className="oh-copilot__live-dot" /> Live AURA
                   </span>
                   <span className="oh-copilot__session-time">Session 3 · 24:16</span>
                 </div>
@@ -360,7 +360,7 @@ export function ClientJourney() {
               Where we draw the line
             </h3>
             <p className="oh-copilot__consent-desc">
-              The co-pilot never speaks to your client, never diagnoses, and never sends anything on your behalf. Recordings are encrypted, retained only as long as you choose, and are not used to train external models. You are the practitioner. It's an instrument, and you're holding it.
+              AURA never speaks to your client, never diagnoses, and never sends anything on your behalf. Recordings are encrypted, retained only as long as you choose, and are not used to train external models. You are the practitioner. It's an instrument, and you're holding it.
             </p>
           </div>
 

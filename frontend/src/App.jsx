@@ -70,6 +70,7 @@ function App() {
         <Route path="/for-organizations" element={<ForOrganizations />} />
         <Route path="/find-a-practitioner" element={<FindAPractitioner />} />
         <Route path="/co-pilot" element={<CoPilot />} />
+        <Route path="/aura" element={<CoPilot />} />
         <Route path="/client-journey" element={<ClientJourney />} />
         <Route path="/start-free" element={<StartFree />} />
         <Route path="/talk-to-human" element={<TalkToHuman />} />

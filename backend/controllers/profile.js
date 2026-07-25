@@ -293,7 +293,7 @@ exports.getPractitionerDashboardData = async (req, res) => {
     // Clients
     const allStudents = await User.find({ accountType: "Student" }).select("firstName lastName email image createdAt").limit(20)
 
-    // Co-pilot session notes awaiting approval
+    // AURA session notes awaiting approval
     const pendingNotes = await SessionNoteDraft.find({ practitioner: userId, status: "draft" })
 
     return res.status(200).json({

@@ -72,7 +72,7 @@ export function MyClients({ setActiveSection, telemetryData }) {
 
         <div className="card">
           <div className="sechd"><h3>Draft Session Notes</h3></div>
-          <p className="note">Session notes and co-pilot drafts are stored securely for approved sessions.</p>
+          <p className="note">Session notes and AURA drafts are stored securely for approved sessions.</p>
         </div>
       </div>
     </section>

@@ -24,8 +24,8 @@ export const NavbarLinks = [
     path: "/start-free",
   },
   {
-    title: "Co-Pilot",
-    path: "/co-pilot",
+    title: "AURA",
+    path: "/aura",
   },
   {
     title: "Pricing",

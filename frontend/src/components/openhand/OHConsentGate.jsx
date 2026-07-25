@@ -1,7 +1,7 @@
 /**
  * OpenHand — Consent Gate
- * Co-pilot consent UI — explicit, revocable mid-session, logged to ConsentLog.
- * Per co-pilot.html always/never rails:
+ * AURA consent UI — explicit, revocable mid-session, logged to ConsentLog.
+ * Per aura.html always/never rails:
  *   - Nothing records without live, revocable consent
  *   - Consent displayed prominently during session
  *   - Any revocation stops recording immediately
@@ -12,11 +12,11 @@ const CONSENT_TYPES = {
   copilot_notes: {
     label: 'Session notes only',
     description:
-      'After the session, the co-pilot will draft session notes and suggested reflection prompts for your review. You approve before anything is saved.',
+      'After the session, AURA will draft session notes and suggested reflection prompts for your review. You approve before anything is saved.',
     risk: 'low',
   },
   copilot_audio: {
-    label: 'Live in-session co-pilot',
+    label: 'Live in-session AURA',
     description:
       'During this session, audio will be transcribed in real time to generate live suggestions — visible only to you, not your client. You can revoke this any time.',
     risk: 'medium',
@@ -56,7 +56,7 @@ export function OHConsentGate({
           </svg>
         </div>
         <div>
-          <h3 className="oh-consent__title">Co-pilot consent</h3>
+          <h3 className="oh-consent__title">AURA consent</h3>
           <p className="oh-consent__sub">
             For <strong>{clientName}</strong> — this session only.
             Revocable at any time.
@@ -93,11 +93,11 @@ export function OHConsentGate({
         })}
       </div>
 
-      {/* Hard rules (from co-pilot.html always/never rails) */}
+      {/* Hard rules (from aura.html always/never rails) */}
       <div className="oh-consent__rules">
         <p className="oh-consent__rules-title">Always / never</p>
         <ul>
-          <li>✓ Only you see co-pilot suggestions — never your client</li>
+          <li>✓ Only you see AURA suggestions — never your client</li>
           <li>✓ Notes save only after your approval</li>
           <li>✗ Never diagnoses or suggests medication</li>
           <li>✗ Never messages your client directly</li>

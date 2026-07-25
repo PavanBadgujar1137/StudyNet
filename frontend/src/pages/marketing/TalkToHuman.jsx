@@ -85,7 +85,7 @@ export function TalkToHuman() {
       a: "Plenty of practitioners run both concurrently for a transition phase. We'll assist you in migrating your calendar, your offers, and your existing clients without any mandatory hard cutover date.",
     },
     {
-      q: 'Can I turn the in-session co-pilot off?',
+      q: 'Can I turn the in-session AURA off?',
       a: "Yes, entirely — at either the account level or on a per-session basis. It is opt-in for you and separately consented by your client. OpenHand sessions function seamlessly with or without it.",
     },
   ]
@@ -291,11 +291,11 @@ export function TalkToHuman() {
                 </div>
               </div>
               <p>
-                Talk to Dr. Rajendra if your questions are about the harder edges — client confidentiality, ethical use of the in-session co-pilot, working with organisations, or moving an existing caseload across.
+                Talk to Dr. Rajendra if your questions are about the harder edges — client confidentiality, ethical use of the in-session AURA, working with organisations, or moving an existing caseload across.
               </p>
               <div className="talk-tags">
                 <span>Data Confidentiality</span>
-                <span>Ethical AI Co-pilot</span>
+                <span>Ethical AI AURA</span>
                 <span>Caseload Migration</span>
               </div>
               <button

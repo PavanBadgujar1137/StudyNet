@@ -48,12 +48,12 @@ export function CoPilot() {
         <div className="oh-wrap">
           <div className="copilot-hgrid">
             <div>
-              <span className="copilot-eyebrow">Powered by Claude</span>
+              <span className="copilot-eyebrow">Powered by AURA</span>
               <h1>
                 You can't listen properly <span className="copilot-grad-text">and take notes.</span>
               </h1>
               <p>
-                So don't. The co-pilot listens alongside you — with your client's explicit consent — and hands you the next question, the technique that fits, and the thread you'd otherwise have missed. Your client never sees a word of it.
+                So don't. AURA listens alongside you — with your client's explicit consent — and hands you the next question, the technique that fits, and the thread you'd otherwise have missed. Your client never sees a word of it.
               </p>
               <div className="copilot-cta-row">
                 <Link to="/start-free" className="copilot-btn">Try it in a session</Link>
@@ -111,7 +111,7 @@ export function CoPilot() {
               className="copilot-archsvg"
               viewBox="0 0 900 370"
               role="img"
-              aria-label="Architecture diagram showing session audio flowing through a consent gate to transcription, then to Claude with practitioner context, producing practitioner-only suggestions and post-session drafts"
+              aria-label="Architecture diagram showing session audio flowing through a consent gate to transcription, then to AURA Engine with practitioner context, producing practitioner-only suggestions and post-session drafts"
             >
               <defs>
                 <linearGradient id="ag" x1="0" y1="0" x2="1" y2="0">
@@ -181,9 +181,9 @@ export function CoPilot() {
 
               <path d="M 622 73 H 682" stroke="#2563EB" strokeWidth="2" markerEnd="url(#a1)" fill="none" />
 
-              {/* 4. Claude AI Box */}
+              {/* 4. AURA AI Box */}
               <rect x="688" y="40" width="192" height="66" rx="14" fill="url(#ag)" shadow="0 10px 25px rgba(37,99,235,0.3)" />
-              <text x="784" y="66" textAnchor="middle" className="lbl-white">Claude</text>
+              <text x="784" y="66" textAnchor="middle" className="lbl-white">AURA</text>
               <text x="784" y="86" textAnchor="middle" className="sm-white">Reasons over the thread</text>
 
               {/* ROW 2 & FEEDBACK LOOPS */}
@@ -194,10 +194,10 @@ export function CoPilot() {
               <text x="784" y="283" textAnchor="middle" className="sm">Your method notes</text>
               <text x="784" y="297" textAnchor="middle" className="sm">Prior session summaries</text>
 
-              {/* Upward Arrow: Your Context -> Claude */}
+              {/* Upward Arrow: Your Context -> AURA */}
               <path d="M 784 240 V 114" stroke="#7C3AED" strokeWidth="2" markerEnd="url(#a2)" fill="none" />
 
-              {/* Downward Arrow: Claude -> Practitioner Panel */}
+              {/* Downward Arrow: AURA -> Practitioner Panel */}
               <path d="M 710 106 V 170 H 530 V 232" stroke="#2563EB" strokeWidth="2" markerEnd="url(#a1)" fill="none" />
 
               {/* 6. Practitioner-only panel */}
@@ -365,7 +365,7 @@ export function CoPilot() {
               The questions practitioners ask us
             </h2>
             <p className="text-slate-700 text-base font-semibold mt-2" style={{ color: '#334155' }}>
-              Everything you need to know about how the co-pilot operates within your clinical boundaries.
+              Everything you need to know about how AURA operates within your clinical boundaries.
             </p>
           </div>
 

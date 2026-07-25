@@ -55,7 +55,7 @@ exports.revokeConsent = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Consent revoked immediately. Co-pilot recording stopped.",
+      message: "Consent revoked immediately. AURA recording stopped.",
     })
   } catch (error) {
     return res.status(500).json({

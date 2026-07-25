@@ -18,7 +18,7 @@ const consentLogSchema = new mongoose.Schema(
     },
     consentType: {
       type: String,
-      enum: ["copilot_audio", "copilot_notes"],
+      enum: ["copilot_audio", "copilot_notes", "aura_audio", "aura_notes"],
       required: true,
     },
     grantedAt: { type: Date, default: Date.now },

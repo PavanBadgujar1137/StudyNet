@@ -47,11 +47,11 @@ export function Home() {
       boxNum: '02',
       tag: 'Time Box: 60 Mins',
       title: 'Live Circle Container',
-      subtitle: 'Real-time session with AI Co-pilot',
-      desc: 'Built-in video space designed to feel like a living room. Optional real-time Co-pilot assists with key transcript themes without intruding on your presence.',
+      subtitle: 'Real-time session with AI AURA',
+      desc: 'Built-in video space designed to feel like a living room. Optional real-time AURA assists with key transcript themes without intruding on your presence.',
       features: [
         'Zero-lag HD video with spatial audio',
-        'Opt-in AI Co-pilot for session insights',
+        'Opt-in AI AURA for session insights',
         'One-click instant summary & action items',
       ],
       previewWidget: {
@@ -418,8 +418,8 @@ export function Home() {
         </div>
       </section>
 
-      {/* Section 3: AI that sounds like you */}
-      <section className="oh-sec">
+      {/* Section 3: AI Robot Infographic - Quietly Intelligent */}
+      <section className="oh-sec ai-infographic-sec">
         <div className="oh-wrap">
           <div className="sec-head-center">
             <span className="oh-sec-tag">Quietly Intelligent</span>
@@ -427,35 +427,142 @@ export function Home() {
             <p>Enhance your human presence with automated reflection tools tuned strictly to your practice voice.</p>
           </div>
 
-          <div className="oh-grid-3">
-            <div className="ai-card">
-              <div className="ai-ic-wrap">
-                <FiZap />
-              </div>
-              <h3>AI Reflection Prompts</h3>
-              <p>
-                Clients receive thoughtful, personalized reflection prompts between sessions — written in the exact tone and framework you set.
-              </p>
+          <div className="robot-orbit-container">
+            {/* Background SVG Orbit Track Rings */}
+            <div className="orbit-rings-bg" aria-hidden="true">
+              <svg className="orbit-rings-svg" viewBox="0 0 640 640">
+                <circle cx="320" cy="320" r="270" stroke="rgba(124, 58, 237, 0.25)" strokeWidth="2" strokeDasharray="8 8" fill="none" />
+                <circle cx="320" cy="320" r="190" stroke="rgba(37, 99, 235, 0.2)" strokeWidth="1.5" fill="none" />
+                <circle cx="320" cy="320" r="110" stroke="rgba(124, 58, 237, 0.15)" strokeWidth="1" fill="none" />
+              </svg>
             </div>
 
-            <div className="ai-card">
-              <div className="ai-ic-wrap">
-                <FiMessageCircle />
+            {/* Center Fixed Robot Mascot */}
+            <div className="orbit-center-robot">
+              <div className="robot-aura-glow"></div>
+              
+              <div className="robot-mascot-wrapper">
+                <svg className="robot-svg" viewBox="0 0 240 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  {/* Robot Antenna & Spark */}
+                  <path d="M120 45 V15" stroke="url(#robot-grad-1)" strokeWidth="4" strokeLinecap="round" />
+                  <circle cx="120" cy="12" r="7" fill="#7C3AED" className="robot-antenna-tip" />
+                  <circle cx="120" cy="12" r="14" fill="#7C3AED" opacity="0.35" className="robot-antenna-pulse" />
+
+                  {/* Robot Head */}
+                  <rect x="65" y="45" width="110" height="80" rx="28" fill="url(#robot-head-grad)" stroke="url(#robot-stroke-grad)" strokeWidth="3" />
+
+                  {/* Visor Screen */}
+                  <rect x="78" y="58" width="84" height="54" rx="18" fill="#09132C" />
+
+                  {/* Robot Eyes */}
+                  <g className="robot-eyes">
+                    <circle cx="102" cy="80" r="10" fill="#60A5FA" />
+                    <circle cx="102" cy="80" r="4" fill="#FFFFFF" />
+                    
+                    <circle cx="138" cy="80" r="10" fill="#60A5FA" />
+                    <circle cx="138" cy="80" r="4" fill="#FFFFFF" />
+                  </g>
+
+                  {/* Animated Voice Equalizer Mouth */}
+                  <g className="robot-mouth-equalizer">
+                    <rect x="98" y="98" width="4" height="6" rx="2" fill="#7C3AED" className="eq-bar bar-1" />
+                    <rect x="106" y="96" width="4" height="10" rx="2" fill="#60A5FA" className="eq-bar bar-2" />
+                    <rect x="114" y="94" width="4" height="14" rx="2" fill="#34D399" className="eq-bar bar-3" />
+                    <rect x="122" y="96" width="4" height="10" rx="2" fill="#60A5FA" className="eq-bar bar-4" />
+                    <rect x="130" y="98" width="4" height="6" rx="2" fill="#7C3AED" className="eq-bar bar-5" />
+                  </g>
+
+                  {/* Ears / Side Audio Sensors */}
+                  <rect x="53" y="68" width="12" height="34" rx="6" fill="#1E293B" stroke="#60A5FA" strokeWidth="1.5" />
+                  <rect x="175" y="68" width="12" height="34" rx="6" fill="#1E293B" stroke="#60A5FA" strokeWidth="1.5" />
+
+                  {/* Neck Joint */}
+                  <rect x="104" y="125" width="32" height="12" rx="4" fill="#334155" />
+
+                  {/* Robot Body / Chest */}
+                  <path d="M55 145 C55 137, 185 137, 185 145 L195 240 C195 255, 45 255, 45 240 Z" fill="url(#robot-body-grad)" stroke="url(#robot-stroke-grad)" strokeWidth="3" />
+
+                  {/* Chest Arc Reactor / Practice Core */}
+                  <circle cx="120" cy="185" r="24" fill="#0F172A" stroke="url(#robot-grad-1)" strokeWidth="2.5" />
+                  <circle cx="120" cy="185" r="14" fill="url(#core-glow)" className="robot-core-pulse" />
+                  <path d="M113 185 L127 185 M120 178 L120 192" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
+
+                  {/* Robot Arms */}
+                  <rect x="25" y="152" width="20" height="65" rx="10" fill="url(#robot-head-grad)" stroke="url(#robot-stroke-grad)" strokeWidth="2" />
+                  <rect x="195" y="152" width="20" height="65" rx="10" fill="url(#robot-head-grad)" stroke="url(#robot-stroke-grad)" strokeWidth="2" />
+
+                  {/* Gradients */}
+                  <defs>
+                    <linearGradient id="robot-grad-1" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="#2563EB" />
+                      <stop offset="100%" stopColor="#7C3AED" />
+                    </linearGradient>
+                    <linearGradient id="robot-head-grad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#FFFFFF" />
+                      <stop offset="100%" stopColor="#F1F5F9" />
+                    </linearGradient>
+                    <linearGradient id="robot-body-grad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#F8FAFC" />
+                      <stop offset="100%" stopColor="#E2E8F0" />
+                    </linearGradient>
+                    <linearGradient id="robot-stroke-grad" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="#60A5FA" />
+                      <stop offset="100%" stopColor="#A855F7" />
+                    </linearGradient>
+                    <radialGradient id="core-glow" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stopColor="#60A5FA" />
+                      <stop offset="100%" stopColor="#7C3AED" />
+                    </radialGradient>
+                  </defs>
+                </svg>
               </div>
-              <h3>Human-Sounding Nudges</h3>
-              <p>
-                Automated check-ins that read naturally like a personal note from you, ensuring clients never feel like they fell into a cold email drip campaign.
-              </p>
+
+              <div className="robot-status-badge">
+                <span className="status-live-dot"></span>
+                <span>AURA Voice Intelligence</span>
+              </div>
             </div>
 
-            <div className="ai-card">
-              <div className="ai-ic-wrap">
-                <FiLayers />
+            {/* Rotating Orbit System Ring with 3 Points */}
+            <div className="orbit-rotating-ring">
+              {/* Orbit Point 1 */}
+              <div className="orbit-node node-1">
+                <div className="node-card-inner">
+                  <div className="node-ic-box">
+                    <FiZap />
+                  </div>
+                  <div className="node-text">
+                    <h3>AI Reflection Prompts</h3>
+                    <span className="node-pill">Tuned to your voice</span>
+                  </div>
+                </div>
               </div>
-              <h3>Notes-to-Content Converter</h3>
-              <p>
-                Turn your anonymised session notes into your next lesson or client resource automatically — your expertise, beautifully structured.
-              </p>
+
+              {/* Orbit Point 2 */}
+              <div className="orbit-node node-2">
+                <div className="node-card-inner">
+                  <div className="node-ic-box">
+                    <FiMessageCircle />
+                  </div>
+                  <div className="node-text">
+                    <h3>Human-Sounding Nudges</h3>
+                    <span className="node-pill">Zero bot-drip feel</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Orbit Point 3 */}
+              <div className="orbit-node node-3">
+                <div className="node-card-inner">
+                  <div className="node-ic-box">
+                    <FiLayers />
+                  </div>
+                  <div className="node-text">
+                    <h3>Notes-to-Content Converter</h3>
+                    <span className="node-pill">Automatic structuring</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -463,8 +570,8 @@ export function Home() {
 
 
 
-      {/* Section 5: 3-step action ladder */}
-      <section className="oh-sec ladder-sec">
+      {/* Section 5: Start Where You're Comfortable - Pure Infographic Timeline (No Box Cards) */}
+      <section className="oh-sec pathway-sec">
         <div className="oh-wrap">
           <div className="sec-head-center">
             <span className="oh-sec-tag">Start Where You're Comfortable</span>
@@ -472,32 +579,49 @@ export function Home() {
             <p>Choose how you'd like to explore OpenHand for your practice.</p>
           </div>
 
-          <div className="ladder-steps">
-            <div className="step-card">
-              <span className="step-num">Step One</span>
-              <h3>Start your free practice space</h3>
-              <p>Set up your space in minutes. No credit card required, no time limit to explore.</p>
-              <Link to="/start-free" className="step-link">
-                Start free space <FiArrowRight style={{ marginLeft: '6px' }} />
-              </Link>
-            </div>
+          <div className="infographic-timeline-trail">
+            {/* Smooth Connecting Line */}
+            <div className="timeline-beam"></div>
 
-            <div className="step-card">
-              <span className="step-num">Step Two</span>
-              <h3>See a sample client journey</h3>
-              <p>Walk through what a client actually experiences, from check-in to circle cohort.</p>
-              <Link to="/client-journey" className="step-link">
-                View sample journey <FiArrowRight style={{ marginLeft: '6px' }} />
-              </Link>
-            </div>
+            <div className="timeline-steps-row">
+              {/* Step 01 */}
+              <div className="timeline-step-item">
+                <div className="timeline-node">
+                  <span className="node-num">01</span>
+                </div>
+                <div className="timeline-info">
+                  <h3>Start your free practice space</h3>
+                  <Link to="/start-free" className="timeline-cta-btn btn-blue">
+                    Start free space <FiArrowRight style={{ marginLeft: '6px' }} />
+                  </Link>
+                </div>
+              </div>
 
-            <div className="step-card">
-              <span className="step-num">Step Three</span>
-              <h3>Talk to a real human</h3>
-              <p>Have questions specific to your practice? Book 25 minutes with our co-founders.</p>
-              <Link to="/talk-to-human" className="step-link">
-                Book a conversation <FiArrowRight style={{ marginLeft: '6px' }} />
-              </Link>
+              {/* Step 02 */}
+              <div className="timeline-step-item">
+                <div className="timeline-node">
+                  <span className="node-num">02</span>
+                </div>
+                <div className="timeline-info">
+                  <h3>See a sample client journey</h3>
+                  <Link to="/client-journey" className="timeline-cta-btn btn-purple">
+                    View sample journey <FiArrowRight style={{ marginLeft: '6px' }} />
+                  </Link>
+                </div>
+              </div>
+
+              {/* Step 03 */}
+              <div className="timeline-step-item">
+                <div className="timeline-node">
+                  <span className="node-num">03</span>
+                </div>
+                <div className="timeline-info">
+                  <h3>Talk to a real human</h3>
+                  <Link to="/talk-to-human" className="timeline-cta-btn btn-emerald">
+                    Book a conversation <FiArrowRight style={{ marginLeft: '6px' }} />
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </div>

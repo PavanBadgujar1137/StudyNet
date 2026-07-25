@@ -265,7 +265,7 @@ export function ClientDashboard() {
         </div>
 
         {/* View Content */}
-        <div className="oh-view-body view on">
+        <div className="oh-view-body">
           {activeTab === 'journey' && (
             <MyJourney 
               clientName={clientName} 

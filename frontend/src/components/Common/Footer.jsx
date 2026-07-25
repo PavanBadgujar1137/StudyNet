@@ -23,7 +23,7 @@ const Footer = () => {
       { label: "For Organizations", to: "/for-organizations" },
       { label: "Find a Practitioner", to: "/find-practitioner" },
       { label: "Pricing", to: "/pricing" },
-      { label: "Co-Pilot AI", to: "/copilot" },
+      { label: "AURA AI", to: "/aura" },
     ],
     Resources: [
       { label: "Course Catalog", to: "/courses" },

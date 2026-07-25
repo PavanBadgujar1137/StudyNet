@@ -17,7 +17,7 @@ const PUBLIC_LINKS = [
   { label: 'Talk to human',       to: '/talk-to-human' },
   { label: 'Client journey',      to: '/client-journey' },
   { label: 'Start free',          to: '/start-free' },
-  { label: 'Co-pilot',            to: '/co-pilot' },
+  { label: 'AURA',                to: '/aura' },
   { label: 'Pricing',             to: '/pricing' },
 ]
 

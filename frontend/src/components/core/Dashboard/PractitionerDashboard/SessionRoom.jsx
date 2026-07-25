@@ -65,7 +65,7 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
 
       <div className="cop" style={{ width: '100%', marginTop: '20px' }}>
         <div className="h">
-          <b>Practitioner Co-Pilot Assistant</b>
+          <b>Practitioner AURA Assistant</b>
           <div className="tog" onClick={() => setCoPilotOn(!coPilotOn)}>
             <i style={{ right: coPilotOn ? '3px' : 'auto', left: coPilotOn ? 'auto' : '3px' }}></i>
           </div>
@@ -79,7 +79,7 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
           </div>
         ) : (
           <div className="b" style={{ padding: '24px', textAlign: 'center', color: '#8B90B8', fontSize: '13px' }}>
-            Co-pilot paused
+            AURA paused
           </div>
         )}
       </div>

@@ -21,7 +21,7 @@ const LINKS = [
     items: [
       { label: 'Pricing',           to: '/pricing' },
       { label: 'Find a practitioner', to: '/find-a-practitioner' },
-      { label: 'Co-pilot AI',       to: '/co-pilot', badge: 'AI' },
+      { label: 'AURA AI',           to: '/aura', badge: 'AI' },
       { label: 'Client journey',    to: '/client-journey' },
     ]
   },
@@ -38,7 +38,7 @@ const LINKS = [
     group: 'RESOURCES', 
     items: [
       { label: 'Platform Status',   to: '/start-free' },
-      { label: 'Documentation',     to: '/co-pilot' },
+      { label: 'Documentation',     to: '/aura' },
       { label: 'Community',         to: '/find-a-practitioner' },
       { label: 'Help & Support',    to: '/talk-to-human' },
     ]
@@ -114,7 +114,7 @@ export function OHFooter() {
             </h4>
 
             <p className="text-sm font-medium leading-relaxed max-w-md" style={{ color: '#E2E8F0' }}>
-              The next-generation platform connecting clients with qualified practitioners — powered by intelligent co-pilot tools.
+              The next-generation platform connecting clients with qualified practitioners — powered by intelligent AURA tools.
             </p>
 
             {/* Platform Status Indicator Badge */}

@@ -122,7 +122,7 @@ export function Overview({ practitionerName = 'Dr. Meera Iyer', setActiveSection
           <div className="row">
             <div className="av g">!</div>
             <div className="who">
-              <b>Session notes & co-pilot drafts</b>
+              <b>Session notes & AURA drafts</b>
               <span>Review AI drafted notes from recent sessions</span>
             </div>
             <div className="rt">

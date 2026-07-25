@@ -139,7 +139,7 @@ export function Pricing() {
                   <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> One private circle</li>
                   <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> UPI, cards, net banking, Stripe</li>
                   <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Client check-ins &amp; reflection prompts</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Post-session co-pilot notes</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Post-session AURA notes</li>
                   <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Listed in the practitioner directory</li>
                 </ul>
               </div>
@@ -166,7 +166,7 @@ export function Pricing() {
                   <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> Everything in Starter</li>
                   <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> Unlimited circles &amp; cohorts</li>
                   <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> Recurring memberships</li>
-                  <li className="flex items-center gap-2.5 font-semibold text-white"><span className="text-sky-400 font-bold text-base">✓</span> <b>Live in-session co-pilot</b></li>
+                  <li className="flex items-center gap-2.5 font-semibold text-white"><span className="text-sky-400 font-bold text-base">✓</span> <b>Live in-session AURA</b></li>
                   <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> WhatsApp reminders &amp; broadcasts</li>
                   <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> GST-ready invoices</li>
                   <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> Priority placement in directory</li>
@@ -268,7 +268,7 @@ export function Pricing() {
                 <tr><td className="p-4 font-semibold text-slate-900">Branded mobile app</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ On Practice</td><td className="yes p-4 text-slate-600">On enterprise</td><td className="no p-4 text-slate-400">✕ No</td><td className="yes p-4 text-slate-600">Core offering</td></tr>
                 <tr><td className="p-4 font-semibold text-slate-900">Client check-ins &amp; mood tracking</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Yes</td><td className="no p-4 text-slate-400">✕ No</td><td className="no p-4 text-slate-400">✕ No</td><td className="no p-4 text-slate-400">✕ No</td></tr>
                 <tr><td className="p-4 font-semibold text-slate-900">Consent-gated session recording</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Yes</td><td className="no p-4 text-slate-400">✕ No</td><td className="no p-4 text-slate-400">✕ No</td><td className="no p-4 text-slate-400">✕ No</td></tr>
-                <tr><td className="p-4 font-semibold text-slate-900">Live in-session AI co-pilot</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Yes</td><td className="no p-4 text-slate-400">✕ No</td><td className="no p-4 text-slate-400">✕ No</td><td className="no p-4 text-slate-400">✕ No</td></tr>
+                <tr><td className="p-4 font-semibold text-slate-900">Live in-session AI AURA</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Yes</td><td className="no p-4 text-slate-400">✕ No</td><td className="no p-4 text-slate-400">✕ No</td><td className="no p-4 text-slate-400">✕ No</td></tr>
                 <tr><td className="p-4 font-semibold text-slate-900">Clinician-founded</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Two doctors</td><td className="no p-4 text-slate-400">✕ No</td><td className="no p-4 text-slate-400">✕ No</td><td className="no p-4 text-slate-400">✕ No</td></tr>
                 <tr><td className="p-4 font-semibold text-slate-900">B2B employee wellbeing</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Yes</td><td className="no p-4 text-slate-400">✕ No</td><td className="no p-4 text-slate-400">✕ No</td><td className="no p-4 text-slate-400">✕ No</td></tr>
               </tbody>

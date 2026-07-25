@@ -146,7 +146,7 @@
   background: var(--violet);
 }
 .client-app-shell .view {
-  padding: 34px 0 70px;
+  padding: 0 0 40px;
 }
 
 .client-app-shell .hd {
@@ -1952,7 +1952,7 @@
 .oh-viewport-header {
   background: #ffffff;
   border-bottom: 1px solid var(--rule);
-  padding: 16px 28px;
+  padding: 18px 36px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1960,6 +1960,7 @@
   position: sticky;
   top: 64px;
   z-index: 20;
+  box-sizing: border-box;
 }
 
 .oh-viewport-title {
@@ -2015,6 +2016,7 @@
   max-width: 1440px;
   width: 100%;
   margin: 0 auto;
+  box-sizing: border-box;
 }
 
 @media (max-width: 1024px) {

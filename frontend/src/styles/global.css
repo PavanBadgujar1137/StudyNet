@@ -1393,7 +1393,7 @@ details > summary::-webkit-details-marker { display: none; }
   .oh-footer__nav-grid { grid-template-columns: 1fr; }
 }
 
-/* ─── Marketing: Co-Pilot Page (Client Spec Matching) ─────────────────── */
+/* ─── Marketing: AURA Page (Client Spec Matching) ─────────────────── */
 .copilot-page {
   --ink: #0E1235;
   --ink-2: #2A2F5C;
@@ -4324,17 +4324,481 @@ details > summary::-webkit-details-marker { display: none; }
   color: var(--violet);
 }
 
-@media (max-width: 900px) {
-  .boxtime-layout,
-  .oh-grid-3,
-  .ladder-steps {
-    grid-template-columns: 1fr;
+/* ==========================================
+   NEW NON-BOX INFOGRAPHIC SECTIONS
+   ========================================== */
+
+/* 1. Quietly Intelligent AI Orbit Infographic */
+.ai-infographic-sec {
+  position: relative;
+  background: radial-gradient(circle at 50% 50%, rgba(124, 58, 237, 0.09) 0%, rgba(37, 99, 235, 0.04) 50%, transparent 80%);
+  padding: 80px 0 110px;
+  overflow: hidden;
+}
+
+.robot-orbit-container {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  height: 520px;
+  margin: 32px auto 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Background Orbit Rings SVG */
+.orbit-rings-bg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.orbit-rings-svg {
+  width: 540px;
+  height: 540px;
+  animation: pulse-rings 8s infinite alternate ease-in-out;
+}
+
+@keyframes pulse-rings {
+  0% { transform: scale(0.98); opacity: 0.8; }
+  100% { transform: scale(1.02); opacity: 1; }
+}
+
+/* Center Robot Stage */
+.orbit-center-robot {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.robot-mascot-wrapper {
+  position: relative;
+  z-index: 2;
+  animation: robot-float-stage 4.5s ease-in-out infinite;
+}
+
+@keyframes robot-float-stage {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+
+.robot-aura-glow {
+  position: absolute;
+  top: 30px;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.45) 0%, rgba(96, 165, 250, 0.3) 50%, rgba(0,0,0,0) 75%);
+  filter: blur(34px);
+  border-radius: 50%;
+  z-index: 1;
+  animation: aura-glow-pulse 3.5s infinite ease-in-out;
+}
+
+@keyframes aura-glow-pulse {
+  0%, 100% { opacity: 0.6; transform: scale(0.92); }
+  50% { opacity: 1; transform: scale(1.18); }
+}
+
+.robot-svg {
+  width: 220px;
+  height: 260px;
+  filter: drop-shadow(0 20px 40px rgba(124, 58, 237, 0.28));
+}
+
+/* Robot Inner SVG Animations */
+.robot-antenna-tip {
+  animation: antenna-glow-anim 1.5s infinite alternate;
+}
+
+@keyframes antenna-glow-anim {
+  0% { fill: #7C3AED; }
+  100% { fill: #60A5FA; filter: drop-shadow(0 0 10px #60A5FA); }
+}
+
+.robot-core-pulse {
+  transform-origin: 120px 185px;
+  animation: core-pulse-anim 2s infinite ease-in-out;
+}
+
+@keyframes core-pulse-anim {
+  0%, 100% { opacity: 0.75; transform: scale(0.92); }
+  50% { opacity: 1; transform: scale(1.22); }
+}
+
+.eq-bar {
+  transform-origin: bottom;
+  animation: eq-bounce-anim 1.2s infinite ease-in-out alternate;
+}
+
+.bar-1 { animation-delay: 0.1s; }
+.bar-2 { animation-delay: 0.3s; }
+.bar-3 { animation-delay: 0.5s; }
+.bar-4 { animation-delay: 0.2s; }
+.bar-5 { animation-delay: 0.4s; }
+
+@keyframes eq-bounce-anim {
+  0% { transform: scaleY(0.35); }
+  100% { transform: scaleY(1.35); }
+}
+
+.robot-status-badge {
+  position: relative;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 6px 16px;
+  background: rgba(9, 19, 44, 0.92);
+  backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(124, 58, 237, 0.4);
+  border-radius: 999px;
+  color: #FFFFFF;
+  font-size: 12.5px;
+  font-weight: 700;
+  box-shadow: 0 10px 24px rgba(9, 19, 44, 0.3);
+}
+
+.status-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 10px #10B981;
+  animation: status-pulse-anim 2s infinite;
+}
+
+@keyframes status-pulse-anim {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+/* 360-Degree Smooth Orbiting Nodes Layer */
+.orbit-rotating-ring {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.orbit-node {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  pointer-events: auto;
+}
+
+/* Pause rotation smoothly when cursor holds over any orbit node */
+.robot-orbit-container:hover .orbit-node {
+  animation-play-state: paused;
+}
+
+/* Node 1: Starts at Top (-90deg) */
+.node-1 {
+  animation: smooth-orbit-1 28s linear infinite;
+}
+
+@keyframes smooth-orbit-1 {
+  0% {
+    transform: rotate(-90deg) translate(220px) rotate(90deg);
   }
-  .oh-sec-dark {
-    padding: 48px 24px;
-    border-radius: 24px;
+  100% {
+    transform: rotate(270deg) translate(220px) rotate(-270deg);
   }
 }
+
+/* Node 2: Starts at Bottom Right (+30deg) */
+.node-2 {
+  animation: smooth-orbit-2 28s linear infinite;
+}
+
+@keyframes smooth-orbit-2 {
+  0% {
+    transform: rotate(30deg) translate(220px) rotate(-30deg);
+  }
+  100% {
+    transform: rotate(390deg) translate(220px) rotate(-390deg);
+  }
+}
+
+/* Node 3: Starts at Bottom Left (+150deg) */
+.node-3 {
+  animation: smooth-orbit-3 28s linear infinite;
+}
+
+@keyframes smooth-orbit-3 {
+  0% {
+    transform: rotate(150deg) translate(220px) rotate(-150deg);
+  }
+  100% {
+    transform: rotate(510deg) translate(220px) rotate(-510deg);
+  }
+}
+
+/* Upright & Rock-Solid Node Card Inner */
+.node-card-inner {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(16px);
+  border: 2px solid rgba(124, 58, 237, 0.28);
+  border-radius: 999px;
+  padding: 10px 22px 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 14px 35px -8px rgba(37, 99, 235, 0.2);
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+  white-space: nowrap;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+}
+
+.node-card-inner:hover {
+  transform: translate(-50%, -50%) scale(1.08);
+  border-color: #7C3AED;
+  box-shadow: 0 22px 50px -10px rgba(124, 58, 237, 0.4);
+  background: #FFFFFF;
+}
+
+@keyframes counter-rotate-orbit {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+
+.node-ic-box {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.14) 0%, rgba(124, 58, 237, 0.18) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #7C3AED;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.node-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.node-text h3 {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--navy);
+  margin: 0;
+}
+
+.node-pill {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #2563EB;
+}
+
+/* Mobile responsive orbit view */
+@media (max-width: 768px) {
+  .robot-orbit-container {
+    height: auto;
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  .orbit-rings-bg {
+    display: none;
+  }
+
+  .orbit-rotating-ring {
+    position: relative;
+    width: 100%;
+    height: auto;
+    border-radius: 0;
+    animation: none;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .orbit-node {
+    position: relative;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+  }
+
+  .node-card-inner {
+    animation: none;
+    border-radius: 20px;
+    white-space: normal;
+    width: 100%;
+    max-width: 320px;
+  }
+}
+
+
+/* 2. Start Where You're Comfortable - Pure Infographic Timeline (No Box Cards) */
+.pathway-sec {
+  padding: 100px 0 120px;
+}
+
+.infographic-timeline-trail {
+  position: relative;
+  margin-top: 64px;
+}
+
+/* Horizontal Gradient Beam Line */
+.timeline-beam {
+  position: absolute;
+  top: 32px;
+  left: 10%;
+  right: 10%;
+  height: 4px;
+  background: linear-gradient(90deg, #2563EB 0%, #7C3AED 50%, #059669 100%);
+  border-radius: 4px;
+  box-shadow: 0 0 16px rgba(124, 58, 237, 0.4);
+  z-index: 0;
+}
+
+.timeline-steps-row {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
+}
+
+.timeline-step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* Milestone Node Circle */
+.timeline-node {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #09132C 0%, #1E293B 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 25px rgba(9, 19, 44, 0.3), 0 0 0 6px #FFFFFF;
+  margin-bottom: 28px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.timeline-step-item:hover .timeline-node {
+  transform: scale(1.12);
+  box-shadow: 0 14px 30px rgba(124, 58, 237, 0.4), 0 0 0 6px #FFFFFF;
+}
+
+.node-num {
+  font-size: 22px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #60A5FA 0%, #C084FC 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Clean Headline + CTA Button (NO Box Container!) */
+.timeline-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: 280px;
+}
+
+.timeline-info h3 {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--navy);
+  line-height: 1.35;
+  margin: 0;
+}
+
+.timeline-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 26px;
+  border-radius: 999px;
+  font-size: 14.5px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.25s ease;
+}
+
+.btn-blue {
+  background: #2563EB;
+  color: #FFFFFF;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.3);
+}
+
+.btn-blue:hover {
+  background: #1D4ED8;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.45);
+}
+
+.btn-purple {
+  background: #7C3AED;
+  color: #FFFFFF;
+  box-shadow: 0 6px 18px rgba(124, 58, 237, 0.3);
+}
+
+.btn-purple:hover {
+  background: #6D28D9;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(124, 58, 237, 0.45);
+}
+
+.btn-emerald {
+  background: #059669;
+  color: #FFFFFF;
+  box-shadow: 0 6px 18px rgba(5, 150, 105, 0.3);
+}
+
+.btn-emerald:hover {
+  background: #047857;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(5, 150, 105, 0.45);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 900px) {
+  .ai-robot-showcase {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .bubble-pointer {
+    display: none;
+  }
+
+  .timeline-beam {
+    display: none;
+  }
+
+  .timeline-steps-row {
+    grid-template-columns: 1fr;
+    gap: 48px;
+  }
+}
+
+
 
 
 

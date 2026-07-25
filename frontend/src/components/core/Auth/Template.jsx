@@ -37,7 +37,7 @@ function Template({ title, description1, description2, formType }) {
 
               {/* Feature pills */}
               <div className="auth-pills">
-                <span className="auth-pill">🧠 AI Co-Pilot</span>
+                <span className="auth-pill">🧠 AI AURA</span>
                 <span className="auth-pill">🌀 Private Circles</span>
                 <span className="auth-pill">💳 Instant Payouts</span>
                 <span className="auth-pill">📋 Clinical Notes</span>
