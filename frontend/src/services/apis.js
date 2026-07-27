@@ -58,9 +58,21 @@ export const noteEndpoints = {
   TRACK_DOWNLOAD_API: BASE_URL + "/note",                   // + "/:noteId/download"
 }
 
+// CHAT ENDPOINTS
+export const chatEndpoints = {
+  GET_GLOBAL_CHAT_API: BASE_URL + "/chat/global",
+  SEND_GLOBAL_CHAT_API: BASE_URL + "/chat/global",
+  GET_GROUP_CHAT_API: BASE_URL + "/chat/group",           // + "/:practitionerId"
+  SEND_GROUP_CHAT_API: BASE_URL + "/chat/group",          // + "/:practitionerId"
+  GET_DIRECT_CHAT_API: BASE_URL + "/chat/direct",         // + "/:targetUserId"
+  SEND_DIRECT_CHAT_API: BASE_URL + "/chat/direct",        // + "/:targetUserId"
+  GET_CHAT_CONTACTS_API: BASE_URL + "/chat/contacts",
+}
+
 // SOCKET BASE URL (for Socket.io client)
 export const SOCKET_BASE_URL = process.env.REACT_APP_BASE_URL
   ? process.env.REACT_APP_BASE_URL.replace("/api/v1", "")
   : "http://localhost:4000"
+
 
 

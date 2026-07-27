@@ -377,29 +377,40 @@
 /* Streak */
 .client-app-shell .streak {
   display: flex;
-  gap: 7px;
+  gap: 8px;
   margin: 14px 0;
+  flex-wrap: wrap;
 }
 .client-app-shell .sd {
   flex: 1;
+  min-width: 90px;
   height: 44px;
-  border-radius: 10px;
-  background: rgba(14, 18, 53, 0.06);
+  border-radius: 12px;
+  background: rgba(14, 18, 53, 0.05);
+  border: 1px solid rgba(14, 18, 53, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11.5px;
-  color: var(--muted);
+  font-size: 12.5px;
+  color: #475569;
   font-weight: 600;
+  padding: 0 10px;
+  transition: all 0.2s ease;
 }
 .client-app-shell .sd.f {
-  background: var(--grad);
+  background: linear-gradient(135deg, #1F5FE0, #8A2BE0);
+  border-color: transparent;
   color: #fff;
+  box-shadow: 0 4px 12px rgba(31, 95, 224, 0.2);
 }
 .client-app-shell .sd.today {
-  border: 2px solid var(--violet);
-  background: rgba(138, 43, 224, 0.08);
-  color: var(--violet);
+  border: 2px solid #8A2BE0;
+  background: rgba(138, 43, 224, 0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #7C3AED;
+  font-weight: 700;
+  box-shadow: 0 4px 16px rgba(138, 43, 224, 0.2);
 }
 
 /* Check-in Form */
@@ -1676,7 +1687,9 @@
    ========================================================================== */
 .oh-dashboard-layout {
   display: flex;
-  min-height: calc(100vh - 64px);
+  height: calc(100vh - 64px);
+  max-height: calc(100vh - 64px);
+  overflow: hidden;
   background: var(--mist);
 }
 
@@ -1688,9 +1701,7 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  position: sticky;
-  top: 64px;
-  height: calc(100vh - 64px);
+  height: 100%;
   overflow-y: auto;
   z-index: 30;
   transition: transform 0.3s ease;
@@ -1945,6 +1956,8 @@
 .oh-main-viewport {
   flex: 1;
   min-width: 0;
+  height: 100%;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
 }
@@ -1958,7 +1971,7 @@
   justify-content: space-between;
   gap: 16px;
   position: sticky;
-  top: 64px;
+  top: 0;
   z-index: 20;
   box-sizing: border-box;
 }

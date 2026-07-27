@@ -25,51 +25,55 @@ function Template({ title, description1, description2, formType }) {
             <div className="auth-brand-inner">
               {/* Logo + wordmark */}
               <Link to="/" className="auth-logo-link">
-                <img src={logoIcon} alt="OpenHand Logo" className="auth-logo-img" />
+                <img src={logoIcon} alt="StudyNet Logo" className="auth-logo-img" />
                 <span className="auth-wordmark">
-                  Open<span className="auth-wordmark-accent">Hand</span>
+                  Study<span className="auth-wordmark-accent">Net</span>
                 </span>
               </Link>
 
               <p className="auth-brand-tagline">
-                "Your Growth, Our Guidance."
+                Next-Gen Educational &amp; Practice Space Platform
               </p>
 
               {/* Feature pills */}
               <div className="auth-pills">
-                <span className="auth-pill">🧠 AI AURA</span>
-                <span className="auth-pill">🌀 Private Circles</span>
-                <span className="auth-pill">💳 Instant Payouts</span>
-                <span className="auth-pill">📋 Clinical Notes</span>
+                <span className="auth-pill">📹 HD Zoom Live Classes</span>
+                <span className="auth-pill">📚 Smart Course Hub</span>
+                <span className="auth-pill">📊 Telemetry &amp; Check-ins</span>
+                <span className="auth-pill">👥 Peer Growth Circles</span>
               </div>
 
-              {/* Quote block */}
+              {/* Platform Overview block */}
               <div className="auth-quote">
-                <p>"I stopped using four separate tools the week I joined OpenHand."</p>
-                <span>— Dr. Meera Iyer, Growth Practitioner</span>
+                <p>"Empowering instructors to build spaces and students to learn with live video streaming, daily check-ins, and automated certificates."</p>
+                <span>StudyNet Platform Ecosystem</span>
               </div>
 
               {/* Trust row */}
               <div className="auth-trust">
                 <div className="auth-trust-dot" />
-                <span>Trusted by 1,200+ practitioners across India</span>
+                <span>Live MongoDB Database &amp; Zoom API Connected</span>
               </div>
             </div>
 
-            {/* Decorative card floating */}
+            {/* Platform Feature Highlight Card */}
             <div className="auth-float-card">
               <div className="auth-float-card__row">
-                <div className="auth-av">MI</div>
-                <div>
-                  <b>Meera Iyer</b>
-                  <span>₹1,24,500 this month</span>
+                <div className="auth-av" style={{ background: 'linear-gradient(135deg, #2563EB, #7C3AED)' }}>
+                  📹
                 </div>
-                <div className="auth-float-card__badge">▲ 18%</div>
+                <div>
+                  <b>Zoom Live Session Hub</b>
+                  <span>In-Dashboard HD Video &amp; Telemetry</span>
+                </div>
+                <div className="auth-float-card__badge" style={{ background: 'rgba(52,211,153,0.15)', color: '#34D399' }}>
+                  🔴 LIVE
+                </div>
               </div>
               <div className="auth-float-card__bar">
-                <div className="auth-float-card__fill" style={{ width: "78%" }} />
+                <div className="auth-float-card__fill" style={{ width: "100%", background: "linear-gradient(90deg, #10B981, #2563EB)" }} />
               </div>
-              <p className="auth-float-card__sub">Next payout clears Thursday</p>
+              <p className="auth-float-card__sub">Secure Encrypted Authentication &amp; Live Synchronization</p>
             </div>
           </div>
 

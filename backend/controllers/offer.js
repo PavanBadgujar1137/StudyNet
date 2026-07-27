@@ -4,20 +4,24 @@ const PractitionerProfile = require("../models/PractitionerProfile")
 exports.createOffer = async (req, res) => {
   try {
     const userId = req.user.id
-    const { type, title, description, price, durationMinutes, maxSeats, weekCount, program, tags } = req.body
+    const { type, kind, title, description, price, durationMinutes, maxSeats, weekCount, program, tags } = req.body
 
-    if (!type || !title || price === undefined) {
+    if (!title || price === undefined || price === null || price === "") {
       return res.status(400).json({
         success: false,
-        message: "Offer type, title, and price are required",
+        message: "Offer title and price are required",
       })
     }
 
+    const rawType = (type || kind || "session").toLowerCase()
+    const validTypes = ["session", "circle", "program"]
+    const finalType = validTypes.includes(rawType) ? rawType : "session"
+
     const offer = await Offer.create({
       practitioner: userId,
-      type,
+      type: finalType,
       title,
-      description,
+      description: description || "",
       price: Number(price),
       durationMinutes: durationMinutes ? Number(durationMinutes) : 50,
       maxSeats: maxSeats ? Number(maxSeats) : undefined,
@@ -26,6 +30,17 @@ exports.createOffer = async (req, res) => {
       tags: Array.isArray(tags) ? tags : [],
       status: "published",
     })
+
+    // Auto-update PractitionerProfile sessionRate & formats
+    const userOffers = await Offer.find({ practitioner: userId, status: "published" })
+    if (userOffers.length > 0) {
+      const minRate = Math.min(...userOffers.map((o) => o.price || 0))
+      const formats = [...new Set(userOffers.map((o) => (o.type === "circle" ? "circle" : "1:1")))]
+      await PractitionerProfile.findOneAndUpdate(
+        { user: userId },
+        { sessionRate: minRate, formats }
+      )
+    }
 
     return res.status(201).json({
       success: true,
@@ -86,6 +101,46 @@ exports.updateOffer = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to update offer",
+      error: error.message,
+    })
+  }
+}
+
+exports.deleteOffer = async (req, res) => {
+  try {
+    const { offerId } = req.params
+    const userId = req.user.id
+
+    const offer = await Offer.findOneAndDelete({ _id: offerId, practitioner: userId })
+
+    if (!offer) {
+      return res.status(404).json({
+        success: false,
+        message: "Offer not found or unauthorized",
+      })
+    }
+
+    // Recalculate profile rate & formats
+    const remainingOffers = await Offer.find({ practitioner: userId, status: "published" })
+    if (remainingOffers.length > 0) {
+      const minRate = Math.min(...remainingOffers.map((o) => o.price || 0))
+      const formats = [...new Set(remainingOffers.map((o) => (o.type === "circle" ? "circle" : "1:1")))]
+      await PractitionerProfile.findOneAndUpdate(
+        { user: userId },
+        { sessionRate: minRate, formats }
+      )
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Offer deleted successfully",
+      offerId,
+    })
+  } catch (error) {
+    console.error("Delete Offer Error:", error)
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete offer",
       error: error.message,
     })
   }

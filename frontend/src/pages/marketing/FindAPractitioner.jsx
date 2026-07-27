@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   OHFooter,
   OHButton,
@@ -42,112 +42,6 @@ const SORT_OPTIONS = [
   { value: 'rate_high', label: 'Price: High to Low' },
 ]
 
-// High-quality curated sample practitioner profiles
-const SAMPLE_PRACTITIONERS = [
-  {
-    _id: 'p1',
-    user: { firstName: 'Dr. Ananya', lastName: 'Sharma' },
-    credentials: 'Ph.D. Clinical Psychology · RCI Licensed',
-    verificationStatus: 'verified',
-    avatarInitials: 'AS',
-    bio: 'Specializing in anxiety management, somatic trauma recovery, and mindfulness-based cognitive therapy for working professionals.',
-    specialties: ['Anxiety & Stress', 'Trauma & Recovery', 'Mindfulness'],
-    languages: ['English', 'Hindi', 'Marathi'],
-    formats: ['1:1 Sessions', 'Group Circles'],
-    sessionRate: 2500,
-    rating: 4.9,
-    reviewCount: 48,
-    availabilityText: 'Available Tomorrow',
-    handle: 'dr-ananya-sharma',
-    onlineNow: true,
-  },
-  {
-    _id: 'p2',
-    user: { firstName: 'Rohan', lastName: 'Mehta' },
-    credentials: 'ICF Master Certified Coach (MCC) · Ex-Google',
-    verificationStatus: 'verified',
-    avatarInitials: 'RM',
-    bio: 'Helping senior leaders and founders navigate career burnout, emotional agility, and sustainable high performance.',
-    specialties: ['Career & Burnout', 'Mindfulness'],
-    languages: ['English', 'Hindi'],
-    formats: ['1:1 Sessions', 'Membership'],
-    sessionRate: 3200,
-    rating: 5.0,
-    reviewCount: 62,
-    availabilityText: 'Next slot Thursday',
-    handle: 'rohan-mehta',
-    onlineNow: true,
-  },
-  {
-    _id: 'p3',
-    user: { firstName: 'Priya', lastName: 'Nambiar' },
-    credentials: 'M.Sc. Counseling Psychology · Somatic Guide',
-    verificationStatus: 'verified',
-    avatarInitials: 'PN',
-    bio: 'Warm, empathetic relationship therapist focused on attachment patterns, grief, and conscious partnership dynamics.',
-    specialties: ['Relationships', 'Grief & Loss'],
-    languages: ['English', 'Hindi', 'Tamil'],
-    formats: ['1:1 Sessions', 'Group Circles'],
-    sessionRate: 2200,
-    rating: 4.8,
-    reviewCount: 34,
-    availabilityText: 'Available Today',
-    handle: 'priya-nambiar',
-    onlineNow: false,
-  },
-  {
-    _id: 'p4',
-    user: { firstName: 'Kavita', lastName: 'Reddy' },
-    credentials: 'Certified Circle Facilitator · Growth Guide',
-    verificationStatus: 'verified',
-    avatarInitials: 'KR',
-    bio: 'Facilitating supportive peer circles for working mothers, parenting stress, and emotional replenishment.',
-    specialties: ['Parenting', 'Anxiety & Stress', 'Mindfulness'],
-    languages: ['English', 'Hindi', 'Telugu'],
-    formats: ['Group Circles', 'Membership'],
-    sessionRate: 1800,
-    rating: 4.9,
-    reviewCount: 51,
-    availabilityText: 'Cohort Starts Monday',
-    handle: 'kavita-reddy',
-    onlineNow: true,
-  },
-  {
-    _id: 'p5',
-    user: { firstName: 'Devansh', lastName: 'Verma' },
-    credentials: 'M.A. Applied Psychology · Somatic Practitioner',
-    verificationStatus: 'verified',
-    avatarInitials: 'DV',
-    bio: 'Trauma-informed practitioner specializing in nervous system regulation, men’s emotional health, and chronic stress.',
-    specialties: ['Trauma & Recovery', 'Anxiety & Stress'],
-    languages: ['English', 'Hindi'],
-    formats: ['1:1 Sessions'],
-    sessionRate: 2800,
-    rating: 4.9,
-    reviewCount: 29,
-    availabilityText: 'Available Friday',
-    handle: 'devansh-verma',
-    onlineNow: false,
-  },
-  {
-    _id: 'p6',
-    user: { firstName: 'Sunita', lastName: 'Joshi' },
-    credentials: 'Certified Life & Transition Coach · NLP Master',
-    verificationStatus: 'verified',
-    avatarInitials: 'SJ',
-    bio: 'Guiding individuals through major life transitions, career pivots, and building deeply fulfilling personal relationships.',
-    specialties: ['Relationships', 'Career & Burnout'],
-    languages: ['English', 'Hindi', 'Gujarati'],
-    formats: ['1:1 Sessions', 'Group Circles'],
-    sessionRate: 2000,
-    rating: 4.7,
-    reviewCount: 40,
-    availabilityText: 'Available Tomorrow',
-    handle: 'sunita-joshi',
-    onlineNow: true,
-  },
-]
-
 export function FindAPractitioner() {
   const [practitioners, setPractitioners] = useState([])
   const [loading, setLoading] = useState(true)
@@ -156,26 +50,58 @@ export function FindAPractitioner() {
   const [fmtFilter, setFmtFilter] = useState('all')
   const [langFilter, setLangFilter] = useState('all')
   const [sortBy, setSortBy] = useState('featured')
+  
+  // Dynamic API Pagination state
+  const [page, setPage] = useState(1)
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalPractitioners: 0,
+    limit: 6,
+    hasPrev: false,
+    hasNext: false,
+  })
+
+  // Reset to page 1 whenever search filters or sort change
+  const handleFilterChange = (setter, value) => {
+    setter(value)
+    setPage(1)
+  }
 
   useEffect(() => {
     async function loadDirectory() {
       setLoading(true)
       try {
         const params = new URLSearchParams()
+        params.append('page', page)
+        params.append('limit', 6)
         if (needFilter !== 'all') params.append('need', needFilter)
         if (fmtFilter !== 'all') params.append('fmt', fmtFilter)
         if (langFilter !== 'all') params.append('lang', langFilter)
         if (searchQuery) params.append('q', searchQuery)
+        if (sortBy) params.append('sort', sortBy)
 
         const res = await apiConnector('GET', `/api/v1/practitioners?${params.toString()}`)
-        if (res?.data?.success && res.data.data?.length > 0) {
+        if (res?.data?.success && Array.isArray(res.data.data)) {
           setPractitioners(res.data.data)
+          if (res.data.pagination) {
+            setPagination(res.data.pagination)
+          } else {
+            setPagination({
+              currentPage: 1,
+              totalPages: 1,
+              totalPractitioners: res.data.data.length,
+              limit: 6,
+              hasPrev: false,
+              hasNext: false,
+            })
+          }
         } else {
-          setPractitioners(SAMPLE_PRACTITIONERS)
+          setPractitioners([])
         }
       } catch (err) {
         console.error('Failed to fetch practitioners:', err)
-        setPractitioners(SAMPLE_PRACTITIONERS)
+        setPractitioners([])
       } finally {
         setLoading(false)
       }
@@ -183,52 +109,15 @@ export function FindAPractitioner() {
 
     const timer = setTimeout(loadDirectory, 150)
     return () => clearTimeout(timer)
-  }, [needFilter, fmtFilter, langFilter, searchQuery])
+  }, [needFilter, fmtFilter, langFilter, searchQuery, sortBy, page])
 
-  // Filter & Sort practitioners dynamically
-  const filteredPractitioners = useMemo(() => {
-    let result = [...practitioners]
-
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase()
-      result = result.filter((p) => {
-        const fullName = `${p.user?.firstName || ''} ${p.user?.lastName || ''}`.toLowerCase()
-        const creds = (p.credentials || '').toLowerCase()
-        const bio = (p.bio || '').toLowerCase()
-        const specs = (p.specialties || []).join(' ').toLowerCase()
-        return fullName.includes(q) || creds.includes(q) || bio.includes(q) || specs.includes(q)
-      })
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= pagination.totalPages) {
+      setPage(newPage)
+      const sec = document.querySelector('.dir-sec')
+      if (sec) sec.scrollIntoView({ behavior: 'smooth' })
     }
-
-    if (needFilter !== 'all') {
-      result = result.filter((p) =>
-        p.specialties?.some((s) => s.toLowerCase().includes(needFilter.toLowerCase()))
-      )
-    }
-
-    if (fmtFilter !== 'all') {
-      result = result.filter((p) =>
-        p.formats?.some((f) => f.toLowerCase().includes(fmtFilter.toLowerCase()))
-      )
-    }
-
-    if (langFilter !== 'all') {
-      result = result.filter((p) =>
-        p.languages?.some((l) => l.toLowerCase() === langFilter.toLowerCase())
-      )
-    }
-
-    // Sort logic
-    if (sortBy === 'rating') {
-      result.sort((a, b) => (b.rating || 5) - (a.rating || 5))
-    } else if (sortBy === 'rate_low') {
-      result.sort((a, b) => (a.sessionRate || 0) - (b.sessionRate || 0))
-    } else if (sortBy === 'rate_high') {
-      result.sort((a, b) => (b.sessionRate || 0) - (a.sessionRate || 0))
-    }
-
-    return result
-  }, [practitioners, searchQuery, needFilter, fmtFilter, langFilter, sortBy])
+  }
 
   const hasActiveFilters = searchQuery || needFilter !== 'all' || fmtFilter !== 'all' || langFilter !== 'all'
 
@@ -238,6 +127,7 @@ export function FindAPractitioner() {
     setFmtFilter('all')
     setLangFilter('all')
     setSortBy('featured')
+    setPage(1)
   }
 
   return (
@@ -283,7 +173,7 @@ export function FindAPractitioner() {
               {SPECIALTIES.map((spec) => (
                 <button
                   key={spec.value}
-                  onClick={() => setNeedFilter(spec.value)}
+                  onClick={() => handleFilterChange(setNeedFilter, spec.value)}
                   className={`dir-cat-tab ${needFilter === spec.value ? 'active' : ''}`}
                 >
                   {spec.label}
@@ -301,10 +191,10 @@ export function FindAPractitioner() {
                   className="dir-search-input-field"
                   placeholder="Search by practitioner name, specialty, or keywords…"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => handleFilterChange(setSearchQuery, e.target.value)}
                 />
                 {searchQuery && (
-                  <button onClick={() => setSearchQuery('')} className="search-clear-x">✕</button>
+                  <button onClick={() => handleFilterChange(setSearchQuery, '')} className="search-clear-x">✕</button>
                 )}
               </div>
 
@@ -314,7 +204,7 @@ export function FindAPractitioner() {
                 <div className="select-pill-wrap">
                   <select
                     value={fmtFilter}
-                    onChange={(e) => setFmtFilter(e.target.value)}
+                    onChange={(e) => handleFilterChange(setFmtFilter, e.target.value)}
                     className="dir-select-pill"
                   >
                     {FORMATS.map((f) => (
@@ -327,7 +217,7 @@ export function FindAPractitioner() {
                 <div className="select-pill-wrap">
                   <select
                     value={langFilter}
-                    onChange={(e) => setLangFilter(e.target.value)}
+                    onChange={(e) => handleFilterChange(setLangFilter, e.target.value)}
                     className="dir-select-pill"
                   >
                     {LANGUAGES.map((l) => (
@@ -340,7 +230,7 @@ export function FindAPractitioner() {
                 <div className="select-pill-wrap">
                   <select
                     value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
+                    onChange={(e) => handleFilterChange(setSortBy, e.target.value)}
                     className="dir-select-pill dir-sort-pill"
                   >
                     {SORT_OPTIONS.map((s) => (
@@ -361,7 +251,7 @@ export function FindAPractitioner() {
             {/* 3. Results Count Bar */}
             <div className="dir-results-info-row">
               <span className="dir-results-count">
-                Showing <strong>{loading ? '…' : filteredPractitioners.length}</strong> verified guide{filteredPractitioners.length === 1 ? '' : 's'}
+                Showing <strong>{loading ? '…' : practitioners.length}</strong> of <strong>{pagination.totalPractitioners || practitioners.length}</strong> verified guide{pagination.totalPractitioners === 1 ? '' : 's'} {pagination.totalPages > 1 && `(Page ${pagination.currentPage} of ${pagination.totalPages})`}
               </span>
               {hasActiveFilters && (
                 <span className="dir-active-filter-tag">
@@ -378,7 +268,7 @@ export function FindAPractitioner() {
               <OHCardSkeleton />
               <OHCardSkeleton />
             </div>
-          ) : filteredPractitioners.length === 0 ? (
+          ) : practitioners.length === 0 ? (
             <div className="dir-empty-wrap">
               <OHEmptyState
                 type="no-results"
@@ -390,72 +280,114 @@ export function FindAPractitioner() {
               </button>
             </div>
           ) : (
-            <div className="dir-grid">
-              {filteredPractitioners.map((p) => {
-                const name = `${p.user?.firstName || ''} ${p.user?.lastName || ''}`.trim() || 'Practitioner'
-                const rating = p.rating || 4.9
-                const reviewCount = p.reviewCount || 35
-                const isVerified = p.verificationStatus === 'verified' || true
+            <>
+              <div className="dir-grid">
+                {practitioners.map((p) => {
+                  const name = `${p.user?.firstName || ''} ${p.user?.lastName || ''}`.trim() || 'Practitioner'
+                  const rating = p.rating || 4.9
+                  const reviewCount = p.reviewCount || 35
+                  const isVerified = p.verificationStatus === 'verified' || true
 
-                return (
-                  <article key={p._id} className="practitioner-card">
-                    {/* Header: Avatar + Meta */}
-                    <div className="p-card-head">
-                      <div className="p-avatar-wrap">
-                        <div className="p-avatar">{p.avatarInitials || name.slice(0, 2).toUpperCase()}</div>
-                        {p.onlineNow && <span className="p-online-dot" title="Accepting clients" />}
-                      </div>
-
-                      <div className="p-meta-wrap">
-                        <div className="p-name-row">
-                          <h3 className="p-name">{name}</h3>
-                          {isVerified && (
-                            <span className="p-verified-badge" title="Verified Credential">✓ Verified</span>
-                          )}
+                  return (
+                    <article key={p._id} className="practitioner-card">
+                      {/* Header: Avatar + Meta */}
+                      <div className="p-card-head">
+                        <div className="p-avatar-wrap">
+                          <div className="p-avatar">{p.avatarInitials || name.slice(0, 2).toUpperCase()}</div>
+                          {p.onlineNow && <span className="p-online-dot" title="Accepting clients" />}
                         </div>
-                        <div className="p-credentials">{p.credentials}</div>
-                        <div className="p-rating-row">
-                          <span className="p-rating-star">★ {rating}</span>
-                          <span className="p-rating-count">({reviewCount} reviews)</span>
+
+                        <div className="p-meta-wrap">
+                          <div className="p-name-row">
+                            <h3 className="p-name">{name}</h3>
+                            {isVerified && (
+                              <span className="p-verified-badge" title="Verified Credential">✓ Verified</span>
+                            )}
+                          </div>
+                          <div className="p-credentials">{p.credentials}</div>
+                          <div className="p-rating-row">
+                            <span className="p-rating-star">★ {rating}</span>
+                            <span className="p-rating-count">({reviewCount} reviews)</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Bio */}
-                    <p className="p-bio-text">{p.bio}</p>
+                      {/* Bio */}
+                      <p className="p-bio-text">{p.bio}</p>
 
-                    {/* Specialty Chips */}
-                    <div className="p-specialty-tags">
-                      {p.specialties?.map((t, i) => (
-                        <span key={i} className="p-specialty-pill">{t}</span>
-                      ))}
-                    </div>
-
-                    {/* Languages & Formats info line */}
-                    <div className="p-info-meta">
-                      <span className="info-item">🌐 {p.languages ? p.languages.slice(0, 2).join(', ') : 'English'}</span>
-                      <span className="info-item">👥 {p.formats ? p.formats.join(' & ') : '1:1 & Circles'}</span>
-                    </div>
-
-                    {/* Footer: Price & Availability */}
-                    <div className="p-card-foot">
-                      <div className="p-rate-box">
-                        <span className="p-rate-amount">₹{p.sessionRate?.toLocaleString('en-IN') || '2,500'}</span>
-                        <span className="p-rate-unit"> /session</span>
+                      {/* Specialty Chips */}
+                      <div className="p-specialty-tags">
+                        {p.specialties?.map((t, i) => (
+                          <span key={i} className="p-specialty-pill">{t}</span>
+                        ))}
                       </div>
-                      <div className="p-avail-badge">
-                        🟢 {p.availabilityText || 'Available this week'}
-                      </div>
-                    </div>
 
-                    {/* CTA Button */}
-                    <OHButton href={`/practice/handle/${p.handle || ''}`} fullWidth className="p-book-btn">
-                      View Profile &amp; Book →
-                    </OHButton>
-                  </article>
-                )
-              })}
-            </div>
+                      {/* Published Offers Badge Line */}
+                      {p.offers && p.offers.length > 0 && (
+                        <div style={{ marginBottom: '10px', fontSize: '11.5px', color: '#2563EB', fontWeight: 600, background: '#EFF6FF', padding: '4px 10px', borderRadius: '8px', border: '1px solid #DBEAFE' }}>
+                          🏷️ {p.offers.length} Offer{p.offers.length > 1 ? 's' : ''}: {p.offers.map((o) => `${o.title} (₹${o.price})`).slice(0, 2).join(' · ')}
+                        </div>
+                      )}
+
+                      {/* Languages & Formats info line */}
+                      <div className="p-info-meta">
+                        <span className="info-item">🌐 {p.languages ? p.languages.slice(0, 2).join(', ') : 'English'}</span>
+                        <span className="info-item">👥 {p.formats ? p.formats.join(' & ') : '1:1 & Circles'}</span>
+                      </div>
+
+                      {/* Footer: Price & Availability */}
+                      <div className="p-card-foot">
+                        <div className="p-rate-box">
+                          <span className="p-rate-amount">₹{p.sessionRate?.toLocaleString('en-IN') || '2,500'}</span>
+                          <span className="p-rate-unit"> /session</span>
+                        </div>
+                        <div className="p-avail-badge">
+                          🟢 {p.availabilityText || 'Available this week'}
+                        </div>
+                      </div>
+
+                      {/* CTA Button */}
+                      <OHButton href={`/practice/handle/${p.handle || ''}`} fullWidth className="p-book-btn">
+                        View Profile &amp; Book →
+                      </OHButton>
+                    </article>
+                  )
+                })}
+              </div>
+
+              {/* Dynamic Pagination Bar (Previous 1 2 3 ... Next) */}
+              {pagination.totalPages > 1 && (
+                <div className="dir-pagination-wrap">
+                  <button
+                    onClick={() => handlePageChange(page - 1)}
+                    disabled={!pagination.hasPrev}
+                    className="dir-page-btn"
+                  >
+                    ← Previous
+                  </button>
+
+                  <div className="dir-page-numbers">
+                    {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((pNum) => (
+                      <button
+                        key={pNum}
+                        onClick={() => handlePageChange(pNum)}
+                        className={`dir-page-num ${page === pNum ? 'active' : ''}`}
+                      >
+                        {pNum}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={() => handlePageChange(page + 1)}
+                    disabled={!pagination.hasNext}
+                    className="dir-page-btn"
+                  >
+                    Next →
+                  </button>
+                </div>
+              )}
+            </>
           )}
 
           {/* Join Network CTA Banner */}

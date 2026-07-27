@@ -1018,6 +1018,19 @@ details > summary::-webkit-details-marker { display: none; }
 .info-item { font-weight: 500; }
 
 .p-card-foot { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.p-rate-amount { font-family: var(--oh-font-head); font-weight: 800; font-size: 17px; color: var(--oh-navy); }
+.p-rate-unit { font-size: 12px; color: var(--oh-muted); font-weight: 500; }
+.p-avail-badge { font-size: 11.5px; font-weight: 600; color: #059669; background: rgba(16, 185, 129, 0.08); padding: 4px 10px; border-radius: 999px; }
+
+/* Directory Pagination Controls */
+.dir-pagination-wrap { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 40px; margin-bottom: 24px; flex-wrap: wrap; }
+.dir-page-btn { font-family: var(--oh-font-body); font-size: 13.5px; font-weight: 600; color: var(--oh-navy); background: #ffffff; border: 1.5px solid rgba(13, 27, 61, 0.12); border-radius: 12px; padding: 8px 16px; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 6px; }
+.dir-page-btn:hover:not(:disabled) { border-color: #2563EB; color: #2563EB; background: rgba(37, 99, 235, 0.04); }
+.dir-page-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.dir-page-numbers { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.dir-page-num { font-family: var(--oh-font-body); font-size: 13.5px; font-weight: 600; width: 38px; height: 38px; border-radius: 10px; border: 1.5px solid rgba(13, 27, 61, 0.1); background: #ffffff; color: var(--oh-navy); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; }
+.dir-page-num:hover { border-color: #2563EB; color: #2563EB; }
+.dir-page-num.active { background: linear-gradient(135deg, #2563EB 0%, #7C3AED 100%); color: #ffffff; border-color: transparent; font-weight: 700; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); }
 .p-rate-box { font-family: var(--oh-font-head); }
 .p-rate-amount { font-size: 18px; font-weight: 800; color: var(--oh-navy); }
 .p-rate-unit { font-size: 12px; font-weight: 500; color: var(--oh-muted); font-family: var(--oh-font-body); }

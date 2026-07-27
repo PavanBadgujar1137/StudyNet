@@ -65,6 +65,8 @@ const copilotRoutes = require("./routes/copilot")
 const plansRoutes = require("./routes/plans")
 const orgRoutes = require("./routes/org")
 
+const chatRoutes = require("./routes/chat")
+
 app.use("/api/v1/auth", userRoutes)
 app.use("/api/v1/profile", profileRoutes)
 app.use("/api/v1/payment", paymentRoutes)
@@ -72,6 +74,7 @@ app.use("/api/v1/reach", contactUsRoute)
 app.use("/api/v1/live", liveClassRoutes)
 app.use("/api/v1/lecture", recordedLectureRoutes)
 app.use("/api/v1/note", noteRoutes)
+app.use("/api/v1/chat", chatRoutes)
 
 // OpenHand Core API Routes
 app.use("/api/v1/practitioners", practitionerRoutes)

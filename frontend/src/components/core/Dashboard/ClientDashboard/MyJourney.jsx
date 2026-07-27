@@ -1,17 +1,20 @@
 import React from 'react'
 
-export function MyJourney({ clientName = 'Client', practitionerName = 'Meera', dashboardData, loading }) {
+export function MyJourney({ clientName = 'Student', practitionerName = 'your instructor', dashboardData, loading }) {
   const daysActive = dashboardData?.user?.daysActive || 1
   const checkInCount = dashboardData?.checkInCount || 0
   const streak = dashboardData?.streak || 0
   const milestones = dashboardData?.milestones || []
+
+  const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+  const todayDayName = new Date().toLocaleDateString('en-US', { weekday: 'long' })
 
   return (
     <div id="journey">
       <div className="hd">
         <div className="k">My journey</div>
         <h1>You're {daysActive} day{daysActive > 1 ? 's' : ''} in, {clientName}.</h1>
-        <p>This is your path — only you and {practitionerName} can see it. There's no score, no comparison with anyone else, and no wrong pace.</p>
+        <p>This is your personal learning path — kept private to you and your instructor. There's no score, no comparison with anyone else, and no wrong pace.</p>
       </div>
 
       <div className="card" style={{ marginBottom: '22px' }}>
@@ -20,13 +23,18 @@ export function MyJourney({ clientName = 'Client', practitionerName = 'Meera', d
           <span style={{ fontSize: '13px', color: 'var(--muted)' }}>Current streak: <b>{streak} day{streak !== 1 ? 's' : ''}</b> ({checkInCount} total check-ins)</span>
         </div>
         <div className="streak">
-          <div className={`sd ${streak >= 1 ? 'f' : ''}`}>M</div>
-          <div className={`sd ${streak >= 2 ? 'f' : ''}`}>T</div>
-          <div className={`sd ${streak >= 3 ? 'f' : ''}`}>W</div>
-          <div className={`sd ${streak >= 4 ? 'f' : ''}`}>T</div>
-          <div className={`sd ${streak >= 5 ? 'f' : ''}`}>F</div>
-          <div className={`sd ${streak >= 6 ? 'f' : ''}`}>S</div>
-          <div className={`sd today ${checkInCount > 0 ? 'f' : ''}`}>Today</div>
+          {daysOfWeek.map((dayName) => {
+            const isToday = dayName.toLowerCase() === todayDayName.toLowerCase()
+            return (
+              <div
+                key={dayName}
+                className={`sd ${isToday ? 'today' : ''}`}
+                style={isToday ? { backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' } : {}}
+              >
+                {dayName}
+              </div>
+            )
+          })}
         </div>
         <p className="note">Missed a day? Nothing breaks. Come back whenever — the point is the noticing, not the streak.</p>
       </div>

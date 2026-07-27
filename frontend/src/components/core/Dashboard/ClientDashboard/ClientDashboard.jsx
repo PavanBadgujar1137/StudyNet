@@ -20,6 +20,7 @@ import MyCircle from './MyCircle'
 import SessionsResources from './SessionsResources'
 import Reflections from './Reflections'
 import Settings from '../Settings'
+import CommunityChatHub from '../CommunityChatHub'
 import { fetchClientDashboardData } from '../../../../services/operations/dashboardAPI'
 
 export function ClientDashboard() {
@@ -31,9 +32,12 @@ export function ClientDashboard() {
   const { user } = useSelector((state) => state.profile)
   const { token } = useSelector((state) => state.auth)
 
-  const clientName = user?.firstName || 'Client'
-  const practitionerName = dashboardData?.practitioner?.name || 'Practitioner'
-  const practitionerFirstName = dashboardData?.practitioner?.firstName || 'Practitioner'
+  const clientName = user?.firstName || 'Student'
+  const practitionerObj = dashboardData?.practitioner
+  const practitionerName = practitionerObj?.firstName 
+    ? `Dr. ${practitionerObj.firstName} ${practitionerObj.lastName || ''}`.trim() 
+    : 'Your Instructor'
+  const practitionerFirstName = practitionerObj?.firstName || 'Instructor'
 
   const loadData = useCallback(async () => {
     if (!token) return
@@ -70,6 +74,13 @@ export function ClientDashboard() {
       label: 'My circle',
       icon: <FiUsers />,
       badge: 'Group',
+    },
+    {
+      id: 'community',
+      label: 'Community & Chat',
+      icon: <FiMessageSquare />,
+      badge: 'Live',
+      hasDot: true,
     },
     {
       id: 'sessions',
@@ -231,6 +242,7 @@ export function ClientDashboard() {
                 {activeTab === 'journey' && `Welcome back, ${clientName} 👋`}
                 {activeTab === 'checkin' && 'Daily Check-in Rhythm'}
                 {activeTab === 'circle' && 'Peer Support Circle'}
+                {activeTab === 'community' && 'Community & Chat Hub'}
                 {activeTab === 'sessions' && 'Sessions & Learning Resources'}
                 {activeTab === 'reflections' && 'Self Reflection Journal'}
                 {activeTab === 'profile' && 'Edit Profile & Account Settings'}
@@ -288,6 +300,9 @@ export function ClientDashboard() {
               practitionerName={practitionerFirstName} 
               dashboardData={dashboardData}
             />
+          )}
+          {activeTab === 'community' && (
+            <CommunityChatHub defaultPractitionerId={practitionerObj?._id} />
           )}
           {activeTab === 'sessions' && (
             <SessionsResources 

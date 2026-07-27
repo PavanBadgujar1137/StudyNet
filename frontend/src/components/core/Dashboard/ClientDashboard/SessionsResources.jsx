@@ -2,17 +2,18 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FiVideo } from 'react-icons/fi'
 
-export function SessionsResources({ practitionerName = 'Meera', dashboardData }) {
+export function SessionsResources({ practitionerName = 'your instructor', dashboardData }) {
   const navigate = useNavigate()
   const [selectedNotes, setSelectedNotes] = useState(null)
   const upcomingClasses = dashboardData?.upcomingClasses || []
+  const instructorTitle = practitionerName ? (practitionerName.includes('Instructor') ? practitionerName : `Dr. ${practitionerName}`) : 'your instructor'
 
   return (
     <div id="sessions">
       <div className="hd">
         <div className="k">Sessions &amp; resources</div>
         <h1>Everything in one place</h1>
-        <p>Your Zoom live classes, bookings, and whatever {practitionerName} has shared with you.</p>
+        <p>Your Zoom live classes, course materials, and resources shared by {instructorTitle}.</p>
       </div>
 
       <div className="card" style={{ marginBottom: '20px' }}>
@@ -30,7 +31,7 @@ export function SessionsResources({ practitionerName = 'Meera', dashboardData })
               <div className="info">
                 <b>{cls.title}</b>
                 <span>
-                  Instructor: Dr. {cls.instructor?.firstName || practitionerName} · {new Date(cls.scheduledStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  Instructor: {cls.instructor?.firstName ? `Dr. ${cls.instructor.firstName} ${cls.instructor.lastName || ''}` : instructorTitle} · {new Date(cls.scheduledStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
               <div className="go">
@@ -46,23 +47,19 @@ export function SessionsResources({ practitionerName = 'Meera', dashboardData })
           ))
         ) : (
           <div style={{ padding: '16px 0', color: '#64748B', fontSize: '13px' }}>
-            No upcoming Zoom live classes scheduled at this moment.
+            No upcoming Zoom live classes scheduled at this moment. Scheduled live classes will appear here.
           </div>
         )}
       </div>
 
       <div className="card" style={{ marginBottom: '20px' }}>
-        <div className="sechd"><h3>Past sessions & notes</h3></div>
-        <p style={{ fontSize: '13px', color: '#64748B' }}>Past session recordings and practitioner notes will appear here as sessions conclude.</p>
+        <div className="sechd"><h3>Past sessions &amp; notes</h3></div>
+        <p style={{ fontSize: '13px', color: '#64748B' }}>Past session recordings and instructor notes will appear here as live classes conclude.</p>
       </div>
 
       <div className="card">
-        <div className="sechd"><h3>Shared Study Materials</h3></div>
-        <div className="res">
-          <div className="rc"><div className="ty">Reading</div><b>Course Study Guide</b><span>PDF · Updated recently</span></div>
-          <div className="rc"><div className="ty">Audio</div><b>Mindful Focus Audio</b><span>10 min · Audio guide</span></div>
-          <div className="rc"><div className="ty">Worksheet</div><b>Self-Reflection Workbook</b><span>PDF · Workspace resource</span></div>
-        </div>
+        <div className="sechd"><h3>Course Study Materials &amp; Resources</h3></div>
+        <p style={{ fontSize: '13px', color: '#64748B' }}>Resource guides, audio walkthroughs, and worksheets uploaded for your enrolled courses will be accessible here.</p>
       </div>
 
       {selectedNotes && (

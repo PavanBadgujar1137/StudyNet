@@ -3,13 +3,14 @@ import { useSelector } from 'react-redux'
 import { apiConnector } from '../../../../services/apiConnector'
 import toast from 'react-hot-toast'
 
-export function Reflections({ practitionerName = 'Meera', dashboardData, onReflectionUpdate }) {
+export function Reflections({ practitionerName = 'your instructor', dashboardData, onReflectionUpdate }) {
   const { token } = useSelector((state) => state.auth)
   const [prompts, setPrompts] = useState([])
   const [answers, setAnswers] = useState({})
   const [loading, setLoading] = useState(false)
 
   const BASE_URL = process.env.REACT_APP_BASE_URL || 'http://localhost:4000/api/v1'
+  const instructorTitle = practitionerName ? (practitionerName.includes('Instructor') ? practitionerName : `Dr. ${practitionerName}`) : 'your instructor'
 
   const fetchPrompts = useCallback(async () => {
     if (!token) return
@@ -61,19 +62,19 @@ export function Reflections({ practitionerName = 'Meera', dashboardData, onRefle
       <div className="hd">
         <div className="k">Reflections</div>
         <h1>{pendingCount > 0 ? `${pendingCount} prompt(s) waiting for you` : 'Your Reflection Journal'}</h1>
-        <p>Written by {practitionerName} from your sessions. There's no deadline — skip any that don't land.</p>
+        <p>Written by {instructorTitle} from your sessions. There's no deadline — skip any that don't land.</p>
       </div>
 
       {loading ? (
         <div className="card" style={{ padding: '24px', textAlign: 'center', color: '#64748B' }}>Loading reflection prompts...</div>
       ) : prompts.length === 0 ? (
-        <div className="card" style={{ padding: '24px', textAlign: 'center', color: '#64748B' }}>No active reflection prompts available.</div>
+        <div className="card" style={{ padding: '24px', textAlign: 'center', color: '#64748B' }}>No active reflection prompts assigned yet. Your reflection journal notes will appear here.</div>
       ) : (
         prompts.map((p) => (
           <div key={p._id} className={`pr ${p.status === 'pending' ? 'unread' : ''}`}>
             <div className="meta">
-              <div className="a">{practitionerName.slice(0, 2).toUpperCase()}</div>
-              <b>Dr. {practitionerName}</b>
+              <div className="a">{instructorTitle.slice(0, 2).toUpperCase()}</div>
+              <b>{instructorTitle}</b>
               <span className="t">{new Date(p.createdAt).toLocaleDateString()}</span>
             </div>
             <div className="q">"{p.promptText}"</div>
@@ -101,7 +102,7 @@ export function Reflections({ practitionerName = 'Meera', dashboardData, onRefle
                     style={{ padding: '9px 20px', fontSize: '13.5px' }}
                     onClick={() => handleAction(p._id, 'answer', false)}
                   >
-                    Send to {practitionerName}
+                    Send to Instructor
                   </button>
                   <button className="mini" onClick={() => handleAction(p._id, 'answer', true)}>Keep private</button>
                   <button className="mini" onClick={() => handleAction(p._id, 'skip')}>Skip this one</button>
@@ -109,15 +110,15 @@ export function Reflections({ practitionerName = 'Meera', dashboardData, onRefle
               )}
               <span className="priv">
                 {p.status === 'answered'
-                  ? p.isPrivate ? 'Saved privately' : `Shared with ${practitionerName}`
-                  : p.status === 'skipped' ? 'Skipped' : `Only ${practitionerName} sees this`}
+                  ? p.isPrivate ? 'Saved privately' : `Shared with ${instructorTitle}`
+                  : p.status === 'skipped' ? 'Skipped' : `Only ${instructorTitle} sees this`}
               </span>
             </div>
           </div>
         ))
       )}
 
-      <p className="note">Skipping prompts doesn't affect anything. Your practitioner can see which ones you answered, never which ones you skipped and why.</p>
+      <p className="note">Skipping prompts doesn't affect anything. Your instructor can see which ones you answered, never which ones you skipped and why.</p>
     </div>
   )
 }

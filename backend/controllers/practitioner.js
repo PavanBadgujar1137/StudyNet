@@ -100,11 +100,11 @@ const SAMPLE_PRACTITIONERS = [
 
 exports.getPractitioners = async (req, res) => {
   try {
-    const { need, fmt, lang, q } = req.query
+    const { need, fmt, lang, q, page = 1, limit = 6, sort = "featured" } = req.query
 
+    // 1. Seed initial sample practitioners if collection empty
     let count = await PractitionerProfile.countDocuments()
     if (count === 0) {
-      // Seed sample practitioners if collection empty
       for (const pData of SAMPLE_PRACTITIONERS) {
         let u = await User.findOne({ email: pData.email })
         if (!u) {
@@ -114,7 +114,7 @@ exports.getPractitioners = async (req, res) => {
             email: pData.email,
             password: "hashed_dummy_password_openhand",
             accountType: "Practitioner",
-            additionalDetails: "600000000000000000000000", // placeholder
+            additionalDetails: "600000000000000000000000",
           })
         }
         const profile = await PractitionerProfile.create({
@@ -135,6 +135,34 @@ exports.getPractitioners = async (req, res) => {
       }
     }
 
+    // 2. Ensure ALL registered users with accountType "Practitioner" or "Instructor" have a PractitionerProfile
+    const registeredPractitioners = await User.find({
+      accountType: { $in: ["Practitioner", "Instructor"] },
+    })
+
+    for (const u of registeredPractitioners) {
+      let existingProfile = await PractitionerProfile.findOne({ user: u._id })
+      if (!existingProfile) {
+        const initials = `${u.firstName?.slice(0, 1) || 'P'}${u.lastName?.slice(0, 1) || 'R'}`.toUpperCase()
+        const createdProfile = await PractitionerProfile.create({
+          user: u._id,
+          credentials: "Verified Clinical Practitioner",
+          bio: `Certified practitioner specializing in holistic guidance, mental wellbeing, and client growth.`,
+          specialties: ["anxiety", "mindfulness", "career"],
+          formats: ["1:1", "circle"],
+          languages: ["English", "Hindi"],
+          sessionRate: 2500,
+          avatarInitials: initials,
+          handle: `${u.firstName.toLowerCase()}-${u.lastName.toLowerCase() || 'guide'}-${u._id.toString().slice(-4)}`,
+          verificationStatus: "verified",
+          availabilityText: "Accepting new clients",
+        })
+        u.practitionerProfile = createdProfile._id
+        await u.save()
+      }
+    }
+
+    // 3. Build query filters
     const queryFilter = {}
     if (need && need !== "all") {
       queryFilter.specialties = { $in: [new RegExp(need, "i")] }
@@ -146,23 +174,89 @@ exports.getPractitioners = async (req, res) => {
       queryFilter.languages = { $in: [new RegExp(lang, "i")] }
     }
 
-    let profiles = await PractitionerProfile.find(queryFilter).populate({
+    let allProfiles = await PractitionerProfile.find(queryFilter).populate({
       path: "user",
-      select: "firstName lastName email image",
+      select: "firstName lastName email image accountType",
+    }).lean()
+
+    // Ensure every profile has a valid user object (fallback for sample/directory profiles)
+    allProfiles = allProfiles.map((p) => {
+      if (!p.user) {
+        const handleParts = (p.handle || "verified-guide").split("-")
+        const fName = handleParts[0] ? handleParts[0].charAt(0).toUpperCase() + handleParts[0].slice(1) : "Verified"
+        const lName = handleParts[1] ? handleParts[1].charAt(0).toUpperCase() + handleParts[1].slice(1) : "Guide"
+        p.user = {
+          _id: p._id,
+          firstName: fName,
+          lastName: lName,
+          email: `${p.handle || "guide"}@openhand.example`,
+          accountType: "Practitioner",
+        }
+      }
+      return p
     })
 
+    // Attach active published offers & compute dynamic session rates
+    const Offer = require("../models/Offer")
+    for (let p of allProfiles) {
+      if (p.user?._id) {
+        const userOffers = await Offer.find({ practitioner: p.user._id, status: "published" }).lean()
+        p.offers = userOffers
+        if (userOffers.length > 0) {
+          const minPrice = Math.min(...userOffers.map((o) => o.price || 0))
+          p.sessionRate = minPrice
+          const offerFormats = [...new Set(userOffers.map((o) => (o.type === "circle" ? "Group Circles" : "1:1 Sessions")))]
+          if (offerFormats.length > 0) {
+            p.formats = offerFormats
+          }
+        }
+      }
+    }
+
+    // Filter out accounts that are not practitioners/instructors (if explicit accountType set)
+    allProfiles = allProfiles.filter(
+      (p) => !p.user?.accountType || ["Practitioner", "Instructor"].includes(p.user.accountType)
+    )
+
+    // Search query filtering
     if (q) {
       const qLower = q.toLowerCase().trim()
-      profiles = profiles.filter((p) => {
-        const fullText = `${p.user?.firstName} ${p.user?.lastName} ${p.credentials} ${p.bio} ${p.specialties.join(" ")}`.toLowerCase()
+      allProfiles = allProfiles.filter((p) => {
+        const offerTitles = (p.offers || []).map((o) => o.title).join(" ")
+        const fullText = `${p.user?.firstName} ${p.user?.lastName} ${p.credentials} ${p.bio} ${p.specialties?.join(" ")} ${offerTitles}`.toLowerCase()
         return fullText.includes(qLower)
       })
     }
 
+    // Sort profiles
+    if (sort === "rating") {
+      allProfiles.sort((a, b) => (b.rating || 5) - (a.rating || 5))
+    } else if (sort === "rate_low") {
+      allProfiles.sort((a, b) => (a.sessionRate || 0) - (b.sessionRate || 0))
+    } else if (sort === "rate_high") {
+      allProfiles.sort((a, b) => (b.sessionRate || 0) - (a.sessionRate || 0))
+    }
+
+    // 4. Calculate pagination
+    const pageNum = Math.max(1, parseInt(page, 10) || 1)
+    const limitNum = Math.max(1, parseInt(limit, 10) || 6)
+    const totalPractitioners = allProfiles.length
+    const totalPages = Math.ceil(totalPractitioners / limitNum) || 1
+
+    const startIndex = (pageNum - 1) * limitNum
+    const paginatedProfiles = allProfiles.slice(startIndex, startIndex + limitNum)
+
     return res.status(200).json({
       success: true,
-      count: profiles.length,
-      data: profiles,
+      data: paginatedProfiles,
+      pagination: {
+        currentPage: pageNum,
+        totalPages,
+        totalPractitioners,
+        limit: limitNum,
+        hasPrev: pageNum > 1,
+        hasNext: pageNum < totalPages,
+      },
     })
   } catch (error) {
     console.error("Get Practitioners Error:", error)

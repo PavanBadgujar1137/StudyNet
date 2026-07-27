@@ -1,14 +1,15 @@
 import React from 'react'
 
-export function MyCircle({ clientName = 'Client', practitionerName = 'Meera', dashboardData }) {
+export function MyCircle({ clientName = 'Student', practitionerName = 'your instructor', dashboardData }) {
   const memberships = dashboardData?.memberships || []
+  const instructorTitle = practitionerName ? (practitionerName.includes('Instructor') ? practitionerName : `Dr. ${practitionerName}`) : 'your instructor'
 
   return (
     <div id="circle">
       <div className="hd">
         <div className="k">My circle</div>
         <h1>Peer Support &amp; Growth Cohorts</h1>
-        <p>Small group cohorts led by Dr. {practitionerName}.</p>
+        <p>Small group cohorts led by certified StudyNet instructors.</p>
       </div>
 
       {memberships.length > 0 ? (
@@ -16,22 +17,14 @@ export function MyCircle({ clientName = 'Client', practitionerName = 'Meera', da
           <div key={m._id} className="crc" style={{ marginBottom: '20px' }}>
             <div className="k">{m.cohort?.name || 'Active Circle'}</div>
             <h2>{m.cohort?.topic || 'Peer Growth & Support Cohort'}</h2>
-            <p>Schedule: {m.cohort?.scheduleText || 'Weekly sessions'}. Facilitated by Dr. {practitionerName}.</p>
-            <div className="wkbar">
-              <div className="wk now"><div className="b"></div><span>Wk 1</span></div>
-              <div className="wk"><div className="b"></div><span>Wk 2</span></div>
-              <div className="wk"><div className="b"></div><span>Wk 3</span></div>
-              <div className="wk"><div className="b"></div><span>Wk 4</span></div>
-              <div className="wk"><div className="b"></div><span>Wk 5</span></div>
-              <div className="wk"><div className="b"></div><span>Wk 6</span></div>
-            </div>
+            <p>Schedule: {m.cohort?.scheduleText || 'Weekly sessions'}. Facilitated by {instructorTitle}.</p>
           </div>
         ))
       ) : (
         <div className="crc" style={{ marginBottom: '20px' }}>
           <div className="k">Group Cohorts</div>
           <h2>Explore Available Growth Circles</h2>
-          <p>You are not currently enrolled in an active circle cohort. Browse active circles to join a group led by Dr. {practitionerName}.</p>
+          <p>You are not currently enrolled in an active circle cohort. Enrolled circle cohorts and peer growth sessions will appear here as you join them.</p>
         </div>
       )}
 
@@ -47,12 +40,12 @@ export function MyCircle({ clientName = 'Client', practitionerName = 'Meera', da
         </div>
 
         <div className="card">
-          <div className="sechd"><h3>Circle Updates</h3></div>
+          <div className="sechd"><h3>Circle Guidelines & Updates</h3></div>
           <div className="feed">
             <div className="fitem">
-              <b>Dr. {practitionerName} shared guidelines</b>
+              <b>Peer Community Guidelines</b>
               <p>What's said in group circles stays in the circle. Participation is at your own comfort level.</p>
-              <div className="t">Recent</div>
+              <div className="t">Official Note</div>
             </div>
           </div>
         </div>

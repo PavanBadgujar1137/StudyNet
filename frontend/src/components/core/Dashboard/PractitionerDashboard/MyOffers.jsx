@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useSelector } from 'react-redux'
-import { FiPlus, FiTag, FiX } from 'react-icons/fi'
+import { FiPlus, FiTag, FiX, FiTrash2 } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import { apiConnector } from '../../../../services/apiConnector'
 
@@ -8,6 +8,7 @@ export function MyOffers({ telemetryData, onUpdate }) {
   const { token } = useSelector((state) => state.auth)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [deletingId, setDeletingId] = useState(null)
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -30,7 +31,15 @@ export function MyOffers({ telemetryData, onUpdate }) {
       const res = await apiConnector(
         'POST',
         `${BASE_URL}/offers`,
-        { title, description, price: Number(price), kind, duration },
+        { 
+          title, 
+          description, 
+          price: Number(price), 
+          type: kind.toLowerCase() === 'package' ? 'program' : kind.toLowerCase(), 
+          kind, 
+          duration,
+          durationMinutes: 60
+        },
         { Authorization: `Bearer ${token}` }
       )
 
@@ -49,6 +58,30 @@ export function MyOffers({ telemetryData, onUpdate }) {
       toast.error('Could not create offer')
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const handleDeleteOffer = async (offerId) => {
+    if (!window.confirm('Are you sure you want to delete this offer?')) return
+    setDeletingId(offerId)
+    try {
+      const res = await apiConnector(
+        'DELETE',
+        `${BASE_URL}/offers/${offerId}`,
+        null,
+        { Authorization: `Bearer ${token}` }
+      )
+      if (res?.data?.success) {
+        toast.success('Offer deleted successfully')
+        if (onUpdate) onUpdate()
+      } else {
+        toast.error(res?.data?.message || 'Failed to delete offer')
+      }
+    } catch (err) {
+      console.error('Delete offer error:', err)
+      toast.error('Could not delete offer')
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -83,10 +116,34 @@ export function MyOffers({ telemetryData, onUpdate }) {
       <div className="g3" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
         {offers.length > 0 ? (
           offers.map((offer) => (
-            <div key={offer._id} className="offer" style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '20px' }}>
-              <div className="kind" style={{ fontSize: '12px', fontWeight: 700, color: '#2563EB', textTransform: 'uppercase', marginBottom: '8px' }}>
-                {offer.kind || 'Session'}
+            <div key={offer._id} className="offer" style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '20px', position: 'relative' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <div className="kind" style={{ fontSize: '12px', fontWeight: 700, color: '#2563EB', textTransform: 'uppercase' }}>
+                  {offer.kind || offer.type || 'Session'}
+                </div>
+                <button
+                  onClick={() => handleDeleteOffer(offer._id)}
+                  disabled={deletingId === offer._id}
+                  title="Delete offer"
+                  style={{
+                    background: '#FEE2E2',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '6px 10px',
+                    color: '#DC2626',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <FiTrash2 size={13} /> {deletingId === offer._id ? 'Deleting...' : 'Delete'}
+                </button>
               </div>
+
               <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#0F172A', marginBottom: '6px' }}>{offer.title}</h4>
               <p className="d" style={{ fontSize: '13px', color: '#64748B', marginBottom: '12px' }}>{offer.description || 'Practice offer for clients'}</p>
               <div className="prc" style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', marginBottom: '4px' }}>
@@ -135,16 +192,36 @@ export function MyOffers({ telemetryData, onUpdate }) {
                   <th style={{ padding: '10px' }}>Price</th>
                   <th style={{ padding: '10px' }}>Enrolled</th>
                   <th style={{ padding: '10px' }}>Status</th>
+                  <th style={{ padding: '10px' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {offers.map((o) => (
                   <tr key={o._id} style={{ borderBottom: '1px solid #F1F5F9' }}>
                     <td style={{ padding: '10px' }}><b>{o.title}</b></td>
-                    <td style={{ padding: '10px' }}>{o.kind || 'Session'}</td>
+                    <td style={{ padding: '10px' }}>{o.kind || o.type || 'Session'}</td>
                     <td style={{ padding: '10px' }}>₹{o.price ? o.price.toLocaleString('en-IN') : '0'}</td>
                     <td style={{ padding: '10px' }}>{o.enrolledCount || 0}</td>
                     <td style={{ padding: '10px' }}><span style={{ color: '#166534', fontWeight: 700 }}>Active</span></td>
+                    <td style={{ padding: '10px' }}>
+                      <button
+                        onClick={() => handleDeleteOffer(o._id)}
+                        disabled={deletingId === o._id}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#DC2626',
+                          cursor: 'pointer',
+                          fontWeight: 600,
+                          fontSize: '12px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                      >
+                        <FiTrash2 size={14} /> Delete
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

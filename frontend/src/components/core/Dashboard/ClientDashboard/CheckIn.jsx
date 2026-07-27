@@ -3,13 +3,14 @@ import { useSelector } from 'react-redux'
 import { apiConnector } from '../../../../services/apiConnector'
 import toast from 'react-hot-toast'
 
-export function CheckIn({ clientName = 'Client', practitionerName = 'Meera', dashboardData, onCheckInSuccess }) {
+export function CheckIn({ clientName = 'Student', practitionerName = 'your instructor', dashboardData, onCheckInSuccess }) {
   const { token } = useSelector((state) => state.auth)
   const [selectedMood, setSelectedMood] = useState('steady')
   const [sleepScore, setSleepScore] = useState(7)
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
+  const instructorTitle = practitionerName ? (practitionerName.includes('Instructor') ? practitionerName : `Dr. ${practitionerName}`) : 'your instructor'
 
   const moods = [
     { key: 'low', label: 'Heavy', symbol: '◯' },
@@ -66,7 +67,7 @@ export function CheckIn({ clientName = 'Client', practitionerName = 'Meera', das
       <div className="hd">
         <div className="k">Check in</div>
         <h1>How are you today?</h1>
-        <p>Takes about fifteen seconds. {practitionerName} sees this before your next session, so you don't have to remember it all on the day.</p>
+        <p>Takes about fifteen seconds. {instructorTitle} can review your check-ins to track your ongoing progress.</p>
       </div>
 
       {!isSaved ? (

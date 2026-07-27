@@ -11,7 +11,8 @@ import {
   FiMenu, 
   FiX, 
   FiZap,
-  FiUser
+  FiUser,
+  FiMessageSquare
 } from 'react-icons/fi'
 import Overview from './Overview'
 import MyOffers from './MyOffers'
@@ -21,6 +22,7 @@ import SessionRoom from './SessionRoom'
 import PayoutsInvoices from './PayoutsInvoices'
 import GrowthTools from './GrowthTools'
 import Settings from '../Settings'
+import CommunityChatHub from '../CommunityChatHub'
 import { fetchPractitionerDashboardData } from '../../../../services/operations/dashboardAPI'
 
 export function PractitionerDashboard() {
@@ -49,6 +51,7 @@ export function PractitionerDashboard() {
 
   const practiceItems = [
     { id: 'dash', label: 'Dashboard', icon: <FiGrid /> },
+    { id: 'community', label: 'Community Hub', icon: <FiMessageSquare /> },
     { id: 'offers', label: 'My offers', icon: <FiTag /> },
     { id: 'clients', label: 'My clients', icon: <FiUsers /> },
     { id: 'circles', label: 'Circles', icon: <FiCircle /> },
@@ -247,6 +250,7 @@ export function PractitionerDashboard() {
               </div>
               <h1 className="oh-viewport-title">
                 {activeSection === 'dash' && `Welcome back, ${practitionerName} 👋`}
+                {activeSection === 'community' && 'Community & Chat Hub'}
                 {activeSection === 'offers' && 'My Practice Offers'}
                 {activeSection === 'clients' && 'Client Management Hub'}
                 {activeSection === 'circles' && 'Active Circles'}
@@ -278,6 +282,9 @@ export function PractitionerDashboard() {
               telemetryData={telemetryData}
               loading={loading}
             />
+          )}
+          {activeSection === 'community' && (
+            <CommunityChatHub />
           )}
           {activeSection === 'offers' && (
             <MyOffers telemetryData={telemetryData} onUpdate={loadData} />
