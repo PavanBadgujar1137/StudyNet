@@ -5,8 +5,8 @@ export function PayoutsInvoices({ telemetryData }) {
   const invoices = telemetryData?.invoices || []
   const stats = telemetryData?.stats || {}
 
-  const totalEarnings = stats.totalEarnings || 450000
-  const monthlyEarnings = stats.monthlyEarnings || 124500
+  const totalEarnings = stats.totalEarnings || 0
+  const monthlyEarnings = stats.monthlyEarnings || 0
 
   return (
     <section className="view on" id="payouts">
@@ -16,7 +16,6 @@ export function PayoutsInvoices({ telemetryData }) {
           <h1>Where your money is</h1>
           <p>Real-time payout records and billing invoices synced from database.</p>
         </div>
-        <button className="btn-g">Download July statement</button>
       </div>
 
       <div className="g4">
@@ -32,7 +31,7 @@ export function PayoutsInvoices({ telemetryData }) {
         </div>
         <div className="card stat">
           <div className="lbl">Clearing Thursday</div>
-          <div className="val">₹{stats.clearingThisWeek?.toLocaleString('en-IN') || '38,200'}</div>
+          <div className="val">₹{(stats.clearingThisWeek || 0).toLocaleString('en-IN')}</div>
           <div className="dl flat">Settlement queue</div>
         </div>
         <div className="card stat">
@@ -100,10 +99,9 @@ export function PayoutsInvoices({ telemetryData }) {
                 ))
               ) : (
                 <tr>
-                  <td><b>INV-2026-001</b></td>
-                  <td>₹3,500</td>
-                  <td>Today</td>
-                  <td><span className="pill ok">Paid</span></td>
+                  <td colSpan={4} style={{ textAlign: 'center', padding: '20px', color: '#64748B' }}>
+                    No billing invoices generated yet.
+                  </td>
                 </tr>
               )}
             </tbody>

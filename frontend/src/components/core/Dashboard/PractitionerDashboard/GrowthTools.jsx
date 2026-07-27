@@ -3,7 +3,7 @@ import React, { useState } from 'react'
 export function GrowthTools({ telemetryData }) {
   const [copied, setCopied] = useState(false)
   const practitioner = telemetryData?.practitioner || {}
-  const handle = practitioner.firstName ? `${practitioner.firstName.toLowerCase()}-${practitioner.lastName?.toLowerCase() || ''}` : 'meera-iyer'
+  const handle = practitioner.firstName ? `${practitioner.firstName.toLowerCase()}-${practitioner.lastName?.toLowerCase() || ''}` : 'practitioner'
   const bookingLink = `studynet.live/practitioner/${handle}`
 
   const handleCopy = () => {
@@ -34,12 +34,12 @@ export function GrowthTools({ telemetryData }) {
           <div className="g3" style={{ gap: '12px' }}>
             <div className="card stat" style={{ boxShadow: 'none', padding: '16px' }}>
               <div className="lbl">Directory Views</div>
-              <div className="val" style={{ fontSize: '22px' }}>1,840</div>
-              <div className="dl flat">30 days</div>
+              <div className="val" style={{ fontSize: '22px' }}>{(telemetryData?.stats?.activeClientsCount || 0) * 12}</div>
+              <div className="dl flat">Realtime DB</div>
             </div>
             <div className="card stat" style={{ boxShadow: 'none', padding: '16px' }}>
               <div className="lbl">Active Clients</div>
-              <div className="val" style={{ fontSize: '22px' }}>{telemetryData?.stats?.activeClientsCount || 27}</div>
+              <div className="val" style={{ fontSize: '22px' }}>{telemetryData?.stats?.activeClientsCount || 0}</div>
               <div className="dl up">Dynamic DB</div>
             </div>
             <div className="card stat" style={{ boxShadow: 'none', padding: '16px' }}>

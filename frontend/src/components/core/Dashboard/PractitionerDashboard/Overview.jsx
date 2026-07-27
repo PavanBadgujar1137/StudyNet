@@ -7,12 +7,12 @@ export function Overview({ practitionerName = 'Dr. Meera Iyer', setActiveSection
   const firstName = practitionerName.replace('Dr. ', '').split(' ')[0]
 
   const stats = telemetryData?.stats || {
-    monthlyEarnings: 124500,
-    totalEarnings: 450000,
-    activeClientsCount: 27,
-    clearingThisWeek: 38200,
-    circleSeatsFilled: 6,
-    totalCircleCapacity: 8,
+    monthlyEarnings: 0,
+    totalEarnings: 0,
+    activeClientsCount: 0,
+    clearingThisWeek: 0,
+    circleSeatsFilled: 0,
+    totalCircleCapacity: 0,
   }
 
   const upcomingClasses = telemetryData?.upcomingClasses || []

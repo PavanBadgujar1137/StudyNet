@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useSelector } from 'react-redux'
 import { apiConnector } from '../../../../services/apiConnector'
 import toast from 'react-hot-toast'
@@ -9,11 +9,13 @@ export function Reflections({ practitionerName = 'Meera', dashboardData, onRefle
   const [answers, setAnswers] = useState({})
   const [loading, setLoading] = useState(false)
 
-  const fetchPrompts = async () => {
+  const BASE_URL = process.env.REACT_APP_BASE_URL || 'http://localhost:4000/api/v1'
+
+  const fetchPrompts = useCallback(async () => {
     if (!token) return
     setLoading(true)
     try {
-      const res = await apiConnector('GET', 'http://localhost:4000/api/v1/reflections/prompts', null, {
+      const res = await apiConnector('GET', `${BASE_URL}/reflections`, null, {
         Authorization: `Bearer ${token}`,
       })
       if (res?.data?.success && res?.data?.prompts) {
@@ -24,11 +26,11 @@ export function Reflections({ practitionerName = 'Meera', dashboardData, onRefle
     } finally {
       setLoading(false)
     }
-  }
+  }, [token, BASE_URL])
 
   useEffect(() => {
     fetchPrompts()
-  }, [token])
+  }, [fetchPrompts])
 
   const handleAction = async (promptId, action, isPrivate = false) => {
     if (!token) return
@@ -37,7 +39,7 @@ export function Reflections({ practitionerName = 'Meera', dashboardData, onRefle
     try {
       const res = await apiConnector(
         'POST',
-        'http://localhost:4000/api/v1/reflections/answer',
+        `${BASE_URL}/reflections/answer`,
         { promptId, answerText, action, isPrivate },
         { Authorization: `Bearer ${token}` }
       )

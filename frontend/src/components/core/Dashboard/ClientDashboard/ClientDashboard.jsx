@@ -32,8 +32,8 @@ export function ClientDashboard() {
   const { token } = useSelector((state) => state.auth)
 
   const clientName = user?.firstName || 'Client'
-  const practitionerName = dashboardData?.practitioner?.name || 'Dr. Meera Iyer'
-  const practitionerFirstName = dashboardData?.practitioner?.firstName || 'Meera'
+  const practitionerName = dashboardData?.practitioner?.name || 'Practitioner'
+  const practitionerFirstName = dashboardData?.practitioner?.firstName || 'Practitioner'
 
   const loadData = useCallback(async () => {
     if (!token) return

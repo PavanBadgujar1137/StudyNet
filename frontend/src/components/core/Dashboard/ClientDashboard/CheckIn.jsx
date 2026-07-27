@@ -31,9 +31,10 @@ export function CheckIn({ clientName = 'Client', practitionerName = 'Meera', das
     setSaving(true)
 
     try {
+      const BASE_URL = process.env.REACT_APP_BASE_URL || 'http://localhost:4000/api/v1'
       const response = await apiConnector(
         'POST',
-        'http://localhost:4000/api/v1/checkins/submit',
+        `${BASE_URL}/checkins`,
         {
           mood: selectedMood,
           sleepScore,

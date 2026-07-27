@@ -220,7 +220,7 @@ exports.getClientDashboardData = async (req, res) => {
     const memberships = await CircleMembership.find({ user: userId }).populate("cohort")
 
     // Practitioner info placeholder/linked
-    const defaultPractitioner = await User.findOne({ accountType: "Practitioner" }).select("firstName lastName email image")
+    const defaultPractitioner = await User.findOne({ accountType: { $in: ["Practitioner", "Instructor"] } }).select("firstName lastName email image")
 
     // Dynamic milestones computed from real user activity
     const milestones = [
@@ -246,8 +246,8 @@ exports.getClientDashboardData = async (req, res) => {
           firstName: defaultPractitioner.firstName,
           avatar: defaultPractitioner.image,
         } : {
-          name: "Dr. Meera Iyer",
-          firstName: "Meera",
+          name: "Practitioner Portal",
+          firstName: "Practitioner",
           avatar: "",
         },
         checkInCount,
@@ -290,8 +290,14 @@ exports.getPractitionerDashboardData = async (req, res) => {
       .filter((p) => new Date(p.createdAt).getMonth() === new Date().getMonth())
       .reduce((sum, p) => sum + (p.amount || 0), 0)
 
-    // Clients
-    const allStudents = await User.find({ accountType: "Student" }).select("firstName lastName email image createdAt").limit(20)
+    const clearingThisWeek = payouts
+      .filter((p) => p.status === "pending" || p.status === "processing")
+      .reduce((sum, p) => sum + (p.amount || 0), 0)
+
+    // Enrolled Clients / Students
+    const allStudents = await User.find({ accountType: { $in: ["Student", "Client"] } })
+      .select("firstName lastName email image createdAt")
+      .sort({ createdAt: -1 })
 
     // AURA session notes awaiting approval
     const pendingNotes = await SessionNoteDraft.find({ practitioner: userId, status: "draft" })
@@ -301,20 +307,20 @@ exports.getPractitionerDashboardData = async (req, res) => {
       data: {
         practitioner: {
           id: user?._id,
-          name: user ? `Dr. ${user.firstName} ${user.lastName}` : "Dr. Meera Iyer",
-          firstName: user?.firstName || "Meera",
-          lastName: user?.lastName || "Iyer",
+          name: user ? `${user.firstName} ${user.lastName}` : "Practitioner",
+          firstName: user?.firstName || "Practitioner",
+          lastName: user?.lastName || "",
           email: user?.email || "",
           image: user?.image || "",
-          credentials: profile?.credentials || "Clinical Psychologist",
+          credentials: profile?.credentials || "Licensed Practitioner",
         },
         stats: {
-          monthlyEarnings: monthlyEarnings || 124500,
-          totalEarnings: totalEarnings || 450000,
-          activeClientsCount: allStudents.length || 27,
-          clearingThisWeek: 38200,
+          monthlyEarnings: monthlyEarnings,
+          totalEarnings: totalEarnings,
+          activeClientsCount: allStudents.length,
+          clearingThisWeek: clearingThisWeek,
           circleSeatsFilled: circles.reduce((sum, c) => sum + (c.enrolledCount || 0), 0),
-          totalCircleCapacity: circles.reduce((sum, c) => sum + (c.maxCapacity || 8), 0) || 8,
+          totalCircleCapacity: circles.reduce((sum, c) => sum + (c.maxCapacity || 0), 0),
         },
         upcomingClasses,
         offers,

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FiVideo, FiExternalLink } from 'react-icons/fi'
+import { FiVideo } from 'react-icons/fi'
 
 export function SessionsResources({ practitionerName = 'Meera', dashboardData }) {
   const navigate = useNavigate()

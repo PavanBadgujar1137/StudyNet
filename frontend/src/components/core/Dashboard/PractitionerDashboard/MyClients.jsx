@@ -45,11 +45,9 @@ export function MyClients({ setActiveSection, telemetryData }) {
                 ))
               ) : (
                 <tr>
-                  <td><b>Priya S.</b></td>
-                  <td>priya@example.com</td>
-                  <td>Active</td>
-                  <td><span className="pill ok">Active</span></td>
-                  <td><button className="mini" onClick={() => setActiveSection('room')}>Schedule Session</button></td>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: '24px', color: '#64748B' }}>
+                    No registered clients/students found in MongoDB database.
+                  </td>
                 </tr>
               )}
             </tbody>

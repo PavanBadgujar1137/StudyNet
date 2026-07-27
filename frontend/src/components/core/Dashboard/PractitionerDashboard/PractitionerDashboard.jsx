@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useSelector } from 'react-redux'
 import { 
   FiGrid, 
@@ -32,20 +32,20 @@ export function PractitionerDashboard() {
   const { user } = useSelector((state) => state.profile)
   const { token } = useSelector((state) => state.auth)
 
-  const practitionerName = user ? `Dr. ${user.firstName} ${user.lastName}` : 'Dr. Meera Iyer'
-  const initials = `${user?.firstName?.slice(0, 1) || 'M'}${user?.lastName?.slice(0, 1) || 'I'}`
+  const practitionerName = user ? `Dr. ${user.firstName} ${user.lastName}` : 'Practitioner'
+  const initials = `${user?.firstName?.slice(0, 1) || 'P'}${user?.lastName?.slice(0, 1) || 'R'}`
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!token) return
     setLoading(true)
     const data = await fetchPractitionerDashboardData(token)
     if (data) setTelemetryData(data)
     setLoading(false)
-  }
+  }, [token])
 
   useEffect(() => {
     loadData()
-  }, [token])
+  }, [loadData])
 
   const practiceItems = [
     { id: 'dash', label: 'Dashboard', icon: <FiGrid /> },
@@ -289,7 +289,7 @@ export function PractitionerDashboard() {
             <Circles telemetryData={telemetryData} onUpdate={loadData} />
           )}
           {activeSection === 'room' && (
-            <SessionRoom practitionerName={practitionerName} telemetryData={telemetryData} />
+            <SessionRoom practitionerName={practitionerName} telemetryData={telemetryData} onUpdate={loadData} setActiveSection={setActiveSection} />
           )}
           {activeSection === 'payouts' && (
             <PayoutsInvoices telemetryData={telemetryData} />

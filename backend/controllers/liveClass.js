@@ -242,14 +242,16 @@ exports.joinClass = async (req, res) => {
     const userId = req.user.id
     const { classId } = req.params
 
-    const liveClass = await LiveClass.findById(classId)
+    const liveClass = await LiveClass.findById(classId).select("+zoomStartUrl")
 
     if (!liveClass) return res.status(404).json({ success: false, message: "Class not found." })
 
-    // Check join window (15 min before start or already live)
+    const isInstructor = String(liveClass.instructor) === String(userId)
+
+    // Check join window for non-instructors (15 min before start or already live)
     const now = new Date()
     const joinWindowStart = new Date(liveClass.scheduledStart.getTime() - 15 * 60 * 1000)
-    if (now < joinWindowStart && liveClass.status === "scheduled") {
+    if (!isInstructor && now < joinWindowStart && liveClass.status === "scheduled") {
       const minsLeft = Math.ceil((joinWindowStart - now) / 60000)
       return res.status(400).json({
         success: false,
@@ -258,7 +260,7 @@ exports.joinClass = async (req, res) => {
       })
     }
 
-    if (liveClass.status === "ended") {
+    if (liveClass.status === "ended" && !isInstructor) {
       return res.status(400).json({ success: false, message: "This class has already ended." })
     }
     if (liveClass.status === "cancelled") {
@@ -266,7 +268,7 @@ exports.joinClass = async (req, res) => {
     }
 
     // Check capacity
-    if (liveClass.maxAttendees) {
+    if (!isInstructor && liveClass.maxAttendees) {
       const activeAttendees = liveClass.attendees.filter((a) => !a.leftAt).length
       if (activeAttendees >= liveClass.maxAttendees) {
         return res.status(400).json({ success: false, message: "Class is full." })
@@ -275,7 +277,7 @@ exports.joinClass = async (req, res) => {
 
     // Log join in attendees (if not already joined)
     const alreadyJoined = liveClass.attendees.some((a) => String(a.user) === String(userId))
-    if (!alreadyJoined) {
+    if (!alreadyJoined && !isInstructor) {
       liveClass.attendees.push({ user: userId, joinedAt: now })
       await liveClass.save()
     }
@@ -292,6 +294,7 @@ exports.joinClass = async (req, res) => {
         streamProvider: "zoom",
         zoomMeetingId: liveClass.zoomMeetingId,
         zoomJoinUrl: liveClass.zoomJoinUrl,
+        zoomStartUrl: liveClass.zoomStartUrl || liveClass.zoomJoinUrl,
         zoomPassword: liveClass.zoomPassword,
         chatEnabled: liveClass.chatEnabled,
       },

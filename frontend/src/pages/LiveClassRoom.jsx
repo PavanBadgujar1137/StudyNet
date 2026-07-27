@@ -18,10 +18,10 @@ export default function LiveClassRoom() {
   const [classDetails, setClassDetails] = useState(null)
   const [loading, setLoading] = useState(true)
   const [starting, setStarting] = useState(false)
-  const [embedMode, setEmbedMode] = useState(false)
+  const [embedMode, setEmbedMode] = useState(true)
   const [copiedField, setCopiedField] = useState(null)
 
-  const isInstructor = user?.accountType === "Instructor"
+  const isInstructor = user?.accountType === "Instructor" || user?.accountType === "Practitioner"
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -36,6 +36,7 @@ export default function LiveClassRoom() {
     }
 
     fetchDetails()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [classId, token])
 
   const handleStartStream = async () => {
@@ -100,6 +101,10 @@ export default function LiveClassRoom() {
   const activeZoomUrl = isInstructor
     ? classDetails.zoomStartUrl || classDetails.zoomJoinUrl
     : classDetails.zoomJoinUrl
+
+  const zoomWebEmbedUrl = classDetails.zoomMeetingId
+    ? `https://zoom.us/wc/${classDetails.zoomMeetingId}/join?pwd=${classDetails.zoomPassword || ''}`
+    : activeZoomUrl
 
   return (
     <div className="min-h-[calc(100vh-3.5rem)] bg-gradient-to-b from-richblack-950 via-richblack-900 to-richblack-950 p-4 md:p-8 text-richblack-200">
@@ -202,12 +207,12 @@ export default function LiveClassRoom() {
 
               {/* Screen Body */}
               <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-radial from-richblack-900 to-richblack-950 relative">
-                {embedMode && activeZoomUrl ? (
+                {embedMode ? (
                   <iframe
-                    src={activeZoomUrl}
-                    title="Zoom Web Client"
-                    className="w-full h-[420px] rounded-xl border border-richblack-800 shadow-inner"
-                    allow="camera; microphone; fullscreen; display-capture"
+                    src={zoomWebEmbedUrl}
+                    title="Zoom In-Dashboard Video Call"
+                    className="w-full h-[560px] rounded-xl border border-richblack-800 shadow-2xl bg-black"
+                    allow="camera; microphone; fullscreen; display-capture; autoplay"
                   />
                 ) : (
                   <div className="max-w-md space-y-6 py-6">
