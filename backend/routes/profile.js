@@ -10,6 +10,7 @@ const {
   instructorDashboard,
   getClientDashboardData,
   getPractitionerDashboardData,
+  updatePractitionerProfileDetails,
 } = require("../controllers/profile")
 
 // ********************************************************************************************************
@@ -18,6 +19,7 @@ const {
 // Delete User Account
 router.delete("/deleteProfile", auth, deleteAccount)
 router.put("/updateProfile", auth, updateProfile)
+router.put("/practitioner-details", auth, updatePractitionerProfileDetails)
 router.get("/getUserDetails", auth, getAllUserDetails)
 // Get Enrolled Courses
 router.get("/getEnrolledCourses", auth, getEnrolledCourses)

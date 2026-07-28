@@ -9,14 +9,13 @@ export function Reflections({ practitionerName = 'your instructor', dashboardDat
   const [answers, setAnswers] = useState({})
   const [loading, setLoading] = useState(false)
 
-  const BASE_URL = process.env.REACT_APP_BASE_URL || 'http://localhost:4000/api/v1'
   const instructorTitle = practitionerName ? (practitionerName.includes('Instructor') ? practitionerName : `Dr. ${practitionerName}`) : 'your instructor'
 
   const fetchPrompts = useCallback(async () => {
     if (!token) return
     setLoading(true)
     try {
-      const res = await apiConnector('GET', `${BASE_URL}/reflections`, null, {
+      const res = await apiConnector('GET', '/api/v1/reflections', null, {
         Authorization: `Bearer ${token}`,
       })
       if (res?.data?.success && res?.data?.prompts) {
@@ -27,7 +26,7 @@ export function Reflections({ practitionerName = 'your instructor', dashboardDat
     } finally {
       setLoading(false)
     }
-  }, [token, BASE_URL])
+  }, [token])
 
   useEffect(() => {
     fetchPrompts()
@@ -40,7 +39,7 @@ export function Reflections({ practitionerName = 'your instructor', dashboardDat
     try {
       const res = await apiConnector(
         'POST',
-        `${BASE_URL}/reflections/answer`,
+        '/api/v1/reflections/answer',
         { promptId, answerText, action, isPrivate },
         { Authorization: `Bearer ${token}` }
       )

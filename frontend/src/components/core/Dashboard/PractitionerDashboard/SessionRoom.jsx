@@ -440,8 +440,12 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
         {coPilotOn ? (
           <div className="b">
             <div className="sug">
-              <div className="k">Dynamic Session Prompt</div>
-              <p>"Review client's recent check-in rhythm and previous reflection notes before starting session."</p>
+              <div className="k">Session Preparation Prompt</div>
+              <p>
+                {upcomingClasses.length > 0
+                  ? `You have ${upcomingClasses.length} Zoom session(s) scheduled. Review client check-in rhythm and previous reflection notes before the next session: "${upcomingClasses[0].title}".`
+                  : `No sessions scheduled yet. When you add a Zoom class, AURA will generate client-specific preparation prompts here.`}
+              </p>
             </div>
           </div>
         ) : (

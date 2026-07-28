@@ -35,11 +35,19 @@ export default function Settings() {
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: '20px' }}>
             {/* Avatar */}
             <div style={{ position: 'relative' }}>
-              <img
-                src={user?.image}
-                alt={fullName}
-                style={{ width: '100px', height: '100px', borderRadius: '16px', border: '4px solid #0F172A', objectFit: 'cover', background: '#1E293B', boxShadow: '0 10px 20px rgba(0,0,0,0.3)' }}
-              />
+              {user?.image ? (
+                <img
+                  src={user.image}
+                  alt={fullName}
+                  style={{ width: '100px', height: '100px', borderRadius: '16px', border: '4px solid #0F172A', objectFit: 'cover', background: '#1E293B', boxShadow: '0 10px 20px rgba(0,0,0,0.3)' }}
+                />
+              ) : (
+                <div
+                  style={{ width: '100px', height: '100px', borderRadius: '16px', border: '4px solid #0F172A', background: 'linear-gradient(135deg, #4F46E5, #7C3AED)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', fontWeight: 900, color: '#FFFFFF', boxShadow: '0 10px 20px rgba(0,0,0,0.3)', letterSpacing: '-1px' }}
+                >
+                  {`${user?.firstName?.charAt(0) || ''}${user?.lastName?.charAt(0) || ''}`.toUpperCase() || '?'}
+                </div>
+              )}
               <span style={{ position: 'absolute', bottom: '4px', right: '4px', height: '14px', width: '14px', borderRadius: '50%', background: '#10B981', border: '3px solid #0F172A' }} title="Active Account" />
             </div>
 

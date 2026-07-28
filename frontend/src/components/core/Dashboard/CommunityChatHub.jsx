@@ -11,6 +11,7 @@ import {
   FiSmile,
   FiX,
   FiStar,
+  FiCheckCircle,
 } from "react-icons/fi"
 import {
   fetchGlobalMessages,
@@ -21,15 +22,10 @@ import {
   sendDirectMessage,
   fetchChatContacts,
 } from "../../../services/operations/chatAPI"
+import { apiConnector } from "../../../services/apiConnector"
 import { toast } from "react-hot-toast"
 
 const QUICK_EMOJIS = ["👍", "❤️", "🔥", "🚀", "👏", "💡", "💯", "✨"]
-
-const STARTER_PROMPTS = [
-  { icon: "👋", label: "Say Hello", text: "Hello everyone! Happy to connect with the community today." },
-  { icon: "❓", label: "Ask a Question", text: "Does anyone have recommendations for setting up a daily study routine?" },
-  { icon: "💡", label: "Share an Insight", text: "Just completed a great session! Consistency really makes all the difference." },
-]
 
 export default function CommunityChatHub({ defaultPractitionerId = null }) {
   const { token } = useSelector((state) => state.auth)
@@ -46,6 +42,10 @@ export default function CommunityChatHub({ defaultPractitionerId = null }) {
   const [selectedContact, setSelectedContact] = useState(null)
   const [searchTerm, setSearchTerm] = useState("")
 
+  // Dynamic Practitioner Circles List & Selected Circle
+  const [userCircles, setUserCircles] = useState([])
+  const [selectedCircle, setSelectedCircle] = useState(null)
+
   // Filter messages search term inside chat
   const [msgFilter, setMsgFilter] = useState("")
   const [showMsgSearch, setShowMsgSearch] = useState(false)
@@ -55,9 +55,6 @@ export default function CommunityChatHub({ defaultPractitionerId = null }) {
 
   const isPractitioner =
     user?.accountType === "Practitioner" || user?.accountType === "Instructor"
-  const practitionerId = isPractitioner
-    ? user?._id
-    : defaultPractitionerId || user?.practitionerProfile
 
   // Auto-scroll to bottom of message list
   const scrollToBottom = () => {
@@ -72,11 +69,42 @@ export default function CommunityChatHub({ defaultPractitionerId = null }) {
   const loadContacts = useCallback(async () => {
     if (!token) return
     const contactList = await fetchChatContacts(token)
-    setContacts(contactList)
-    if (contactList.length > 0 && !selectedContact) {
+    setContacts(contactList || [])
+    if (contactList?.length > 0 && !selectedContact) {
       setSelectedContact(contactList[0])
     }
   }, [token, selectedContact])
+
+  // Load User Circles (For Practitioner: circles created by them; For Client: circles joined by them)
+  const loadUserCircles = useCallback(async () => {
+    try {
+      const res = await apiConnector("GET", "/api/v1/circle/all")
+      if (res?.data?.success) {
+        const allCircles = res.data.circles || []
+        let filtered = []
+
+        if (isPractitioner) {
+          filtered = allCircles.filter(
+            (c) =>
+              String(c.practitioner?._id || c.practitioner) === String(user?._id)
+          )
+        } else {
+          filtered = allCircles.filter((c) =>
+            (c.members || []).some(
+              (m) => String(m._id || m) === String(user?._id)
+            )
+          )
+        }
+
+        setUserCircles(filtered)
+        if (filtered.length > 0 && !selectedCircle) {
+          setSelectedCircle(filtered[0])
+        }
+      }
+    } catch (err) {
+      console.error("Error loading user circles in chat:", err)
+    }
+  }, [isPractitioner, user?._id, selectedCircle])
 
   // Load message timeline depending on active tab
   const loadMessages = useCallback(async () => {
@@ -84,24 +112,29 @@ export default function CommunityChatHub({ defaultPractitionerId = null }) {
 
     if (activeTab === "global") {
       const data = await fetchGlobalMessages(token)
-      setMessages(data)
+      setMessages(data || [])
     } else if (activeTab === "circle") {
-      if (practitionerId) {
-        const data = await fetchGroupMessages(token, practitionerId)
-        setMessages(data)
+      const circleId = selectedCircle?._id || userCircles[0]?._id
+      if (circleId) {
+        const data = await fetchGroupMessages(token, circleId)
+        setMessages(data || [])
       } else {
         setMessages([])
       }
     } else if (activeTab === "direct") {
       if (selectedContact?._id) {
         const data = await fetchDirectMessages(token, selectedContact._id)
-        setMessages(data)
+        setMessages(data || [])
       } else {
         setMessages([])
       }
     }
     setLoading(false)
-  }, [token, activeTab, practitionerId, selectedContact])
+  }, [token, activeTab, selectedCircle, userCircles, selectedContact])
+
+  useEffect(() => {
+    loadUserCircles()
+  }, [loadUserCircles])
 
   useEffect(() => {
     loadMessages()
@@ -131,12 +164,17 @@ export default function CommunityChatHub({ defaultPractitionerId = null }) {
     if (activeTab === "global") {
       success = await sendGlobalMessage(token, textToSend)
     } else if (activeTab === "circle") {
-      if (practitionerId) {
-        success = await sendGroupMessage(token, practitionerId, textToSend)
+      const circleId = selectedCircle?._id || userCircles[0]?._id
+      if (circleId) {
+        success = await sendGroupMessage(token, circleId, textToSend)
+      } else {
+        toast.error("Please join or select a circle cohort first!")
       }
     } else if (activeTab === "direct") {
       if (selectedContact?._id) {
         success = await sendDirectMessage(token, selectedContact._id, textToSend)
+      } else {
+        toast.error("Please select a contact for direct messaging!")
       }
     }
 
@@ -183,10 +221,10 @@ export default function CommunityChatHub({ defaultPractitionerId = null }) {
         overflow: "hidden",
       }}
     >
-      {/* COMMUNITY HUB SIDEBAR (Placed right next to Main Navigation Sidebar) */}
+      {/* COMMUNITY HUB SIDEBAR */}
       <div
         style={{
-          width: "270px",
+          width: "280px",
           background: "#F8FAFC",
           borderRight: "1px solid #E2E8F0",
           display: "flex",
@@ -204,8 +242,9 @@ export default function CommunityChatHub({ defaultPractitionerId = null }) {
           </h2>
         </div>
 
-        {/* Channels List */}
+        {/* Primary Channels Tabs */}
         <div style={{ padding: "10px", display: "flex", flexDirection: "column", gap: "4px", borderBottom: "1px solid #E2E8F0" }}>
+          {/* # global-lounge */}
           <button
             onClick={() => setActiveTab("global")}
             style={{
@@ -232,8 +271,12 @@ export default function CommunityChatHub({ defaultPractitionerId = null }) {
             </span>
           </button>
 
+          {/* # practitioner-circle */}
           <button
-            onClick={() => setActiveTab("circle")}
+            onClick={() => {
+              setActiveTab("circle")
+              loadUserCircles()
+            }}
             style={{
               width: "100%",
               padding: "9px 12px",
@@ -254,10 +297,11 @@ export default function CommunityChatHub({ defaultPractitionerId = null }) {
               <span># practitioner-circle</span>
             </div>
             <span style={{ fontSize: "9px", padding: "2px 5px", borderRadius: "4px", background: activeTab === "circle" ? "rgba(255,255,255,0.2)" : "#E2E8F0", color: activeTab === "circle" ? "#FFF" : "#64748B" }}>
-              Cohort
+              {userCircles.length} Cohort(s)
             </span>
           </button>
 
+          {/* # direct-messages */}
           <button
             onClick={() => setActiveTab("direct")}
             style={{
@@ -285,407 +329,330 @@ export default function CommunityChatHub({ defaultPractitionerId = null }) {
           </button>
         </div>
 
-        {/* Direct Contacts List */}
+        {/* Dynamic Sidebar Sub-list (Circles or Direct Contacts) */}
         <div style={{ flex: 1, padding: "12px", display: "flex", flexDirection: "column", minHeight: 0 }}>
-          <div style={{ fontSize: "10px", fontWeight: 800, textTransform: "uppercase", color: "#64748B", marginBottom: "8px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span>Direct Contacts</span>
-            <span style={{ background: "#DBEAFE", color: "#1D4ED8", padding: "1px 6px", borderRadius: "6px", fontSize: "10px" }}>
-              {filteredContacts.length}
-            </span>
-          </div>
+          {activeTab === "circle" ? (
+            /* Practitioners / Joined Circles Sub-List */
+            <>
+              <div style={{ fontSize: "10px", fontWeight: 800, textTransform: "uppercase", color: "#64748B", marginBottom: "8px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span>{isPractitioner ? "Your Created Circles" : "Your Joined Circles"}</span>
+                <span style={{ background: "#DBEAFE", color: "#1D4ED8", padding: "1px 6px", borderRadius: "6px", fontSize: "10px" }}>
+                  {userCircles.length}
+                </span>
+              </div>
 
-          <div style={{ position: "relative", marginBottom: "8px" }}>
-            <FiSearch style={{ position: "absolute", left: "8px", top: "8px", color: "#94A3B8" }} size={12} />
-            <input
-              type="text"
-              placeholder="Search member..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{
-                width: "100%",
-                background: "#FFFFFF",
-                border: "1px solid #CBD5E1",
-                borderRadius: "8px",
-                paddingLeft: "28px",
-                paddingRight: "8px",
-                paddingTop: "6px",
-                paddingBottom: "6px",
-                fontSize: "12px",
-                color: "#0F172A",
-                outline: "none",
-              }}
-            />
-          </div>
-
-          <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "4px" }}>
-            {filteredContacts.length > 0 ? (
-              filteredContacts.map((contact) => {
-                const isSelected = activeTab === "direct" && selectedContact?._id === contact._id
-                const isPract =
-                  contact.accountType === "Practitioner" ||
-                  contact.accountType === "Instructor"
-
-                return (
-                  <div
-                    key={contact._id}
-                    onClick={() => {
-                      setActiveTab("direct")
-                      setSelectedContact(contact)
-                    }}
-                    style={{
-                      padding: "8px 10px",
-                      borderRadius: "8px",
-                      cursor: "pointer",
-                      background: isSelected ? "#EFF6FF" : "transparent",
-                      border: isSelected ? "1px solid #93C5FD" : "1px solid transparent",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}
-                  >
-                    <div style={{ position: "relative" }}>
+              <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "4px" }}>
+                {userCircles.length > 0 ? (
+                  userCircles.map((circle) => {
+                    const isSelected = selectedCircle?._id === circle._id
+                    return (
                       <div
+                        key={circle._id}
+                        onClick={() => setSelectedCircle(circle)}
                         style={{
-                          width: "28px",
-                          height: "28px",
+                          padding: "10px 12px",
                           borderRadius: "8px",
-                          background: "#2563EB",
-                          color: "#FFF",
+                          cursor: "pointer",
+                          background: isSelected ? "#EFF6FF" : "#FFFFFF",
+                          border: isSelected ? "1px solid #93C5FD" : "1px solid #E2E8F0",
                           display: "flex",
                           alignItems: "center",
-                          justifyContent: "center",
-                          fontWeight: 700,
-                          fontSize: "11px",
+                          gap: "8px",
                         }}
                       >
-                        {contact.image ? (
-                          <img
-                            src={contact.image}
-                            alt={contact.firstName}
-                            style={{ width: "100%", height: "100%", borderRadius: "8px", objectFit: "cover" }}
-                          />
-                        ) : (
-                          `${contact.firstName?.slice(0, 1) || "U"}`
-                        )}
+                        <div
+                          style={{
+                            width: "28px",
+                            height: "28px",
+                            borderRadius: "8px",
+                            background: "linear-gradient(135deg, #1F5FE0 0%, #8A2BE0 100%)",
+                            color: "#FFF",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontWeight: 800,
+                            fontSize: "12px",
+                          }}
+                        >
+                          👥
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: "12.5px", fontWeight: 800, color: "#0F172A", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            {circle.name}
+                          </div>
+                          <div style={{ fontSize: "10.5px", color: "#64748B" }}>
+                            {circle.seatsFilledCount || circle.members?.length || 1} members
+                          </div>
+                        </div>
                       </div>
-                      <span style={{ position: "absolute", bottom: "-1px", right: "-1px", width: "7px", height: "7px", background: "#22C55E", border: "1.5px solid #FFF", borderRadius: "50%" }}></span>
-                    </div>
-
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <span style={{ fontSize: "12px", fontWeight: 700, color: "#0F172A", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                          {contact.firstName} {contact.lastName || ""}
-                        </span>
-                        {isPract && (
-                          <span style={{ fontSize: "8px", background: "#FEF3C7", color: "#92400E", padding: "1px 4px", borderRadius: "4px", fontWeight: 800 }}>
-                            GUIDE
-                          </span>
-                        )}
-                      </div>
-                      <span style={{ fontSize: "10px", color: "#64748B", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "block" }}>
-                        {contact.email}
-                      </span>
-                    </div>
+                    )
+                  })
+                ) : (
+                  <div style={{ padding: "16px", textTransform: "none", fontSize: "12px", color: "#64748B", textAlign: "center", background: "#FFFFFF", borderRadius: "8px", border: "1px solid #E2E8F0" }}>
+                    {isPractitioner
+                      ? "No circles created yet. Click 'Open a new circle' in Circles section to start!"
+                      : "You haven't joined any circles yet. Click 'Join Circle Cohort' on the My Circle tab!"}
                   </div>
-                )
-              })
-            ) : (
-              <div style={{ padding: "12px", textAlign: "center", fontSize: "11px", color: "#94A3B8" }}>
-                No contacts found.
+                )}
               </div>
-            )}
-          </div>
+            </>
+          ) : activeTab === "direct" ? (
+            /* Direct Messaging Contacts List */
+            <>
+              <div style={{ fontSize: "10px", fontWeight: 800, textTransform: "uppercase", color: "#64748B", marginBottom: "8px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span>Direct Contacts</span>
+                <span style={{ background: "#DBEAFE", color: "#1D4ED8", padding: "1px 6px", borderRadius: "6px", fontSize: "10px" }}>
+                  {filteredContacts.length}
+                </span>
+              </div>
+
+              <div style={{ position: "relative", marginBottom: "8px" }}>
+                <FiSearch style={{ position: "absolute", left: "8px", top: "8px", color: "#94A3B8" }} size={12} />
+                <input
+                  type="text"
+                  placeholder="Search member..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  style={{
+                    width: "100%",
+                    background: "#FFFFFF",
+                    border: "1px solid #CBD5E1",
+                    borderRadius: "8px",
+                    paddingLeft: "28px",
+                    paddingRight: "8px",
+                    paddingTop: "6px",
+                    paddingBottom: "6px",
+                    fontSize: "12px",
+                    color: "#0F172A",
+                    outline: "none",
+                  }}
+                />
+              </div>
+
+              <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "4px" }}>
+                {filteredContacts.length > 0 ? (
+                  filteredContacts.map((contact) => {
+                    const isSelected = selectedContact?._id === contact._id
+                    const isPract =
+                      contact.accountType === "Practitioner" ||
+                      contact.accountType === "Instructor"
+
+                    return (
+                      <div
+                        key={contact._id}
+                        onClick={() => setSelectedContact(contact)}
+                        style={{
+                          padding: "8px 10px",
+                          borderRadius: "8px",
+                          cursor: "pointer",
+                          background: isSelected ? "#EFF6FF" : "#FFFFFF",
+                          border: isSelected ? "1px solid #93C5FD" : "1px solid #E2E8F0",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                        }}
+                      >
+                        <div style={{ position: "relative" }}>
+                          <div
+                            style={{
+                              width: "28px",
+                              height: "28px",
+                              borderRadius: "8px",
+                              background: "#2563EB",
+                              color: "#FFF",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontWeight: 700,
+                              fontSize: "11px",
+                            }}
+                          >
+                            {contact.image ? (
+                              <img
+                                src={contact.image}
+                                alt={contact.firstName}
+                                style={{ width: "100%", height: "100%", borderRadius: "8px", objectFit: "cover" }}
+                              />
+                            ) : (
+                              `${contact.firstName?.slice(0, 1) || "U"}`
+                            )}
+                          </div>
+                          <span style={{ position: "absolute", bottom: "-1px", right: "-1px", width: "7px", height: "7px", background: "#22C55E", border: "1.5px solid #FFF", borderRadius: "50%" }}></span>
+                        </div>
+
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ fontSize: "12px", fontWeight: 700, color: "#0F172A", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                              {contact.firstName} {contact.lastName || ""}
+                            </span>
+                            {isPract && (
+                              <span style={{ fontSize: "8px", background: "#FEF3C7", color: "#92400E", padding: "1px 4px", borderRadius: "4px", fontWeight: 800 }}>
+                                GUIDE
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: "10.5px", color: "#64748B", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            {contact.email}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })
+                ) : (
+                  <div style={{ padding: "16px", fontSize: "12px", color: "#64748B", textAlign: "center" }}>
+                    No contacts found.
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            /* Global Lounge Overview */
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textTransform: "none", color: "#64748B", fontSize: "12px", textAlign: "center", padding: "12px" }}>
+              <FiGlobe size={24} style={{ color: "#2563EB", marginBottom: "8px" }} />
+              <p style={{ margin: 0, fontWeight: 600 }}>Public Global Lounge</p>
+              <p style={{ margin: "4px 0 0 0", fontSize: "11px", color: "#94A3B8" }}>Open community space for all clients &amp; practitioners.</p>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* RIGHT MAIN WORKSPACE (Chat Feed & Input) */}
+      {/* CHAT MAIN CONVERSATION PANEL */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", background: "#FFFFFF" }}>
-        {/* Active Title Header */}
-        <div
-          style={{
-            padding: "12px 18px",
-            borderBottom: "1px solid #E2E8F0",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            background: "#F8FAFC",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontSize: "14px", fontWeight: 800, color: "#0F172A" }}>
-              {activeTab === "global" && "# global-lounge"}
-              {activeTab === "circle" && "# practitioner-circle"}
-              {activeTab === "direct" &&
-                (selectedContact
-                  ? `Direct: ${selectedContact.firstName} ${selectedContact.lastName || ""}`
-                  : "Direct Chat Thread")}
-            </span>
-            <span style={{ fontSize: "10px", fontWeight: 700, color: "#15803D", background: "#F0FDF4", border: "1px solid #BBF7D0", padding: "2px 8px", borderRadius: "12px", display: "flex", alignItems: "center", gap: "4px" }}>
-              <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#22C55E" }}></span> Live
+        {/* Chat Top Bar */}
+        <div style={{ padding: "14px 20px", borderBottom: "1px solid #E2E8F0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 800, color: "#0F172A", display: "flex", alignItems: "center", gap: "6px" }}>
+              {activeTab === "global" && <>🌐 # global-lounge</>}
+              {activeTab === "circle" && (
+                <>👥 {selectedCircle ? selectedCircle.name : "Practitioner Circle Cohort"}</>
+              )}
+              {activeTab === "direct" && (
+                <>💬 1:1 Direct Chat: {selectedContact ? `${selectedContact.firstName} ${selectedContact.lastName || ""}` : "Select Contact"}</>
+              )}
+            </h3>
+            <span style={{ fontSize: "11.5px", color: "#64748B" }}>
+              {activeTab === "global" && "Open community lounge for all registered clients and verified practitioners."}
+              {activeTab === "circle" && (selectedCircle?.topic || "Confidential group chat cohort for circle members.")}
+              {activeTab === "direct" && (selectedContact?.email || "1-on-1 private messaging channel.")}
             </span>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <button
-              onClick={() => setShowMsgSearch((prev) => !prev)}
-              style={{ padding: "6px 12px", background: "#FFFFFF", border: "1px solid #CBD5E1", borderRadius: "8px", fontSize: "12px", fontWeight: 700, cursor: "pointer", color: "#334155", display: "flex", alignItems: "center", gap: "4px" }}
-            >
-              <FiSearch size={13} /> Filter
-            </button>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <button
               onClick={loadMessages}
-              style={{ padding: "6px 12px", background: "#FFFFFF", border: "1px solid #CBD5E1", borderRadius: "8px", fontSize: "12px", fontWeight: 700, cursor: "pointer", color: "#334155", display: "flex", alignItems: "center", gap: "4px" }}
+              style={{ background: "#F1F5F9", border: "none", borderRadius: "8px", padding: "6px 10px", cursor: "pointer", color: "#475569", fontSize: "12px", fontWeight: 700, display: "flex", alignItems: "center", gap: "4px" }}
             >
-              <FiRefreshCw className={loading ? "animate-spin text-blue-600" : ""} size={13} /> Sync
+              <FiRefreshCw size={13} /> Refresh
             </button>
           </div>
         </div>
 
-        {/* Filter Drawer */}
-        {showMsgSearch && (
-          <div style={{ padding: "8px 16px", background: "#EFF6FF", borderBottom: "1px solid #BFDBFE", display: "flex", alignItems: "center", gap: "8px" }}>
-            <FiSearch style={{ color: "#2563EB" }} size={14} />
-            <input
-              type="text"
-              placeholder="Filter messages by text or sender..."
-              value={msgFilter}
-              onChange={(e) => setMsgFilter(e.target.value)}
-              style={{ flex: 1, background: "#FFFFFF", border: "1px solid #93C5FD", borderRadius: "6px", padding: "6px 10px", fontSize: "12px", color: "#0F172A", outline: "none" }}
-            />
-            {msgFilter && (
-              <button onClick={() => setMsgFilter("")} style={{ background: "none", border: "none", color: "#64748B", cursor: "pointer" }}>
-                <FiX size={14} />
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Messages Stream Scroll Container */}
-        <div style={{ flex: 1, padding: "16px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "10px", background: "#F8FAFC" }}>
-          {loading ? (
-            <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", color: "#64748B" }}>
-              Loading messages...
-            </div>
-          ) : displayedMessages.length > 0 ? (
-            displayedMessages.map((msg) => {
-              const isMine =
-                String(msg.sender?._id || msg.sender) === String(user?._id)
+        {/* Messages List Area */}
+        <div style={{ flex: 1, padding: "20px", overflowY: "auto", background: "#F8FAFC", display: "flex", flexDirection: "column", gap: "12px" }}>
+          {displayedMessages.length > 0 ? (
+            displayedMessages.map((msg, index) => {
+              const isMine = String(msg.sender?._id || msg.sender) === String(user?._id)
               const senderName = msg.sender?.firstName
                 ? `${msg.sender.firstName} ${msg.sender.lastName || ""}`
-                : "Community Member"
-              const senderRole = msg.sender?.accountType || "Student"
-              const formattedTime = msg.createdAt
-                ? new Date(msg.createdAt).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
-                : ""
-              const isDoc =
-                senderRole === "Practitioner" || senderRole === "Instructor"
+                : "Member"
+              const isPract =
+                msg.sender?.accountType === "Practitioner" ||
+                msg.sender?.accountType === "Instructor"
 
               return (
                 <div
-                  key={msg._id || Math.random()}
+                  key={msg._id || index}
                   style={{
-                    background: "#FFFFFF",
-                    border: "1px solid #E2E8F0",
-                    borderRadius: "10px",
-                    padding: "10px 14px",
                     display: "flex",
                     flexDirection: "column",
-                    gap: "4px",
+                    alignItems: isMine ? "flex-end" : "flex-start",
                   }}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <div
-                        style={{
-                          width: "24px",
-                          height: "24px",
-                          borderRadius: "6px",
-                          background: isDoc ? "#D97706" : "#2563EB",
-                          color: "#FFF",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontWeight: 700,
-                          fontSize: "11px",
-                        }}
-                      >
-                        {msg.sender?.image ? (
-                          <img src={msg.sender.image} alt={senderName} style={{ width: "100%", height: "100%", borderRadius: "6px", objectFit: "cover" }} />
-                        ) : (
-                          senderName.slice(0, 1)
-                        )}
-                      </div>
-                      <span style={{ fontSize: "12px", fontWeight: 800, color: "#0F172A" }}>
-                        {senderName}
+                  <div style={{ fontSize: "11px", color: "#64748B", marginBottom: "3px", display: "flex", alignItems: "center", gap: "4px" }}>
+                    <span style={{ fontWeight: 700, color: "#334155" }}>{senderName}</span>
+                    {isPract && (
+                      <span style={{ fontSize: "8px", background: "#FEF3C7", color: "#92400E", padding: "1px 4px", borderRadius: "4px", fontWeight: 800 }}>
+                        PRACTITIONER
                       </span>
-                      {isDoc ? (
-                        <span style={{ fontSize: "9px", fontWeight: 800, background: "#FEF3C7", color: "#92400E", padding: "1px 6px", borderRadius: "4px" }}>
-                          Practitioner
-                        </span>
-                      ) : (
-                        <span style={{ fontSize: "9px", fontWeight: 700, background: "#EFF6FF", color: "#1D4ED8", padding: "1px 6px", borderRadius: "4px" }}>
-                          {senderRole}
-                        </span>
-                      )}
-                      {isMine && (
-                        <span style={{ fontSize: "8px", fontWeight: 800, background: "#F1F5F9", color: "#475569", padding: "1px 4px", borderRadius: "4px" }}>
-                          YOU
-                        </span>
-                      )}
-                    </div>
-                    <span style={{ fontSize: "10px", color: "#94A3B8", fontFamily: "monospace" }}>
-                      {formattedTime}
-                    </span>
+                    )}
+                    <span>• {new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
                   </div>
-                  <div style={{ fontSize: "13px", color: "#1E293B", lineHeight: 1.4, paddingLeft: "30px" }}>
+
+                  <div
+                    style={{
+                      maxWidth: "70%",
+                      padding: "10px 14px",
+                      borderRadius: isMine ? "14px 14px 2px 14px" : "14px 14px 14px 2px",
+                      background: isMine ? "linear-gradient(135deg, #1F5FE0 0%, #8A2BE0 100%)" : "#FFFFFF",
+                      color: isMine ? "#FFFFFF" : "#0F172A",
+                      fontSize: "13.5px",
+                      lineHeight: 1.45,
+                      boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                      border: isMine ? "none" : "1px solid #E2E8F0",
+                    }}
+                  >
                     {msg.content}
                   </div>
                 </div>
               )
             })
           ) : (
-            <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "20px" }}>
-              <div style={{ width: "48px", height: "48px", borderRadius: "14px", background: "#EFF6FF", border: "1px solid #BFDBFE", color: "#2563EB", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "12px" }}>
-                <FiStar size={24} />
-              </div>
-              <h4 style={{ fontSize: "15px", fontWeight: 800, color: "#0F172A", marginBottom: "4px" }}>
-                Welcome to #{activeTab === "global" ? "global-lounge" : activeTab === "circle" ? "practitioner-circle" : "direct-messages"}
-              </h4>
-              <p style={{ fontSize: "12px", color: "#64748B", maxWidth: "360px", lineHeight: 1.4, marginBottom: "16px" }}>
-                No messages posted yet. Tap a prompt below to start the conversation!
-              </p>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: "8px", width: "100%", maxWidth: "420px" }}>
-                {STARTER_PROMPTS.map((prompt, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setInputText(prompt.text)}
-                    style={{ padding: "10px", background: "#FFFFFF", border: "1px solid #CBD5E1", borderRadius: "10px", textAlign: "left", cursor: "pointer" }}
-                  >
-                    <div style={{ fontSize: "16px", marginBottom: "2px" }}>{prompt.icon}</div>
-                    <div style={{ fontSize: "11px", fontWeight: 800, color: "#0F172A" }}>{prompt.label}</div>
-                    <div style={{ fontSize: "9px", color: "#64748B" }}>Tap to insert</div>
-                  </button>
-                ))}
-              </div>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#64748B", fontSize: "13px" }}>
+              <FiMessageSquare size={32} style={{ color: "#CBD5E1", marginBottom: "8px" }} />
+              <p style={{ margin: 0, fontWeight: 700 }}>No messages in this chat yet.</p>
+              <p style={{ margin: "4px 0 0 0", fontSize: "12px" }}>Be the first to say hello!</p>
             </div>
           )}
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Bottom Composition Dock */}
-        <div style={{ position: "relative", padding: "12px 16px", background: "#FFFFFF", borderTop: "1px solid #E2E8F0" }}>
-          {/* Popover Emoji Picker Grid */}
-          {showEmojiPicker && (
-            <div
-              style={{
-                position: "absolute",
-                bottom: "56px",
-                left: "48px",
-                background: "#FFFFFF",
-                border: "1px solid #CBD5E1",
-                borderRadius: "12px",
-                padding: "10px",
-                boxShadow: "0 10px 25px -5px rgba(0,0,0,0.15)",
-                display: "grid",
-                gridTemplateColumns: "repeat(4, 1fr)",
-                gap: "6px",
-                zIndex: 50,
-                width: "180px",
-              }}
-            >
-              {QUICK_EMOJIS.map((emoji, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => {
-                    handleQuickEmojiClick(emoji)
-                    setShowEmojiPicker(false)
-                  }}
-                  style={{
-                    padding: "6px",
-                    background: "#F8FAFC",
-                    border: "1px solid #E2E8F0",
-                    borderRadius: "6px",
-                    fontSize: "14px",
-                    cursor: "pointer",
-                    textAlign: "center",
-                  }}
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-          )}
+        {/* Chat Input Bar */}
+        <form
+          onSubmit={handleSendMessage}
+          style={{ padding: "14px 20px", borderTop: "1px solid #E2E8F0", background: "#FFFFFF", display: "flex", gap: "10px", alignItems: "center" }}
+        >
+          <input
+            type="text"
+            placeholder={
+              activeTab === "global"
+                ? "Send a message to global lounge..."
+                : activeTab === "circle"
+                ? `Message ${selectedCircle?.name || "circle cohort"}...`
+                : `Message ${selectedContact ? selectedContact.firstName : "contact"}...`
+            }
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            style={{
+              flex: 1,
+              padding: "12px 16px",
+              borderRadius: "12px",
+              border: "1px solid #CBD5E1",
+              fontSize: "14px",
+              outline: "none",
+            }}
+          />
 
-          <form onSubmit={handleSendMessage} style={{ display: "flex", gap: "8px" }}>
-            <button
-              type="button"
-              onClick={() => toast("Attachments coming soon!", { icon: "📎" })}
-              style={{ padding: "8px 12px", background: "#F1F5F9", border: "1px solid #CBD5E1", borderRadius: "8px", color: "#475569", cursor: "pointer" }}
-              title="Attach file"
-            >
-              <FiPaperclip size={15} />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setShowEmojiPicker((prev) => !prev)}
-              style={{
-                padding: "8px 12px",
-                background: showEmojiPicker ? "#EFF6FF" : "#F1F5F9",
-                border: showEmojiPicker ? "1px solid #93C5FD" : "1px solid #CBD5E1",
-                borderRadius: "8px",
-                color: showEmojiPicker ? "#2563EB" : "#475569",
-                cursor: "pointer",
-              }}
-              title="Add Emoji"
-            >
-              <FiSmile size={15} />
-            </button>
-
-            <input
-              type="text"
-              placeholder={
-                activeTab === "global"
-                  ? "Message #global-lounge..."
-                  : activeTab === "circle"
-                  ? "Message #practitioner-circle..."
-                  : selectedContact
-                  ? `Message ${selectedContact.firstName}...`
-                  : "Select a contact..."
-              }
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              disabled={activeTab === "direct" && !selectedContact}
-              style={{ flex: 1, background: "#FFFFFF", border: "1px solid #CBD5E1", borderRadius: "8px", padding: "8px 12px", fontSize: "13px", color: "#0F172A", outline: "none" }}
-            />
-
-            <button
-              type="submit"
-              disabled={!inputText.trim() || sending || (activeTab === "direct" && !selectedContact)}
-              style={{
-                padding: "8px 18px",
-                background: "linear-gradient(135deg, #1F5FE0 0%, #8A2BE0 100%)",
-                color: "#FFFFFF",
-                fontWeight: 700,
-                fontSize: "13px",
-                borderRadius: "8px",
-                border: "none",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                opacity: !inputText.trim() || sending || (activeTab === "direct" && !selectedContact) ? 0.5 : 1,
-              }}
-            >
-              <span>Send</span>
-              <FiSend size={13} />
-            </button>
-          </form>
-        </div>
+          <button
+            type="submit"
+            disabled={sending || !inputText.trim()}
+            style={{
+              padding: "12px 22px",
+              borderRadius: "12px",
+              background: "linear-gradient(135deg, #1F5FE0 0%, #8A2BE0 100%)",
+              color: "#FFFFFF",
+              fontWeight: 700,
+              fontSize: "14px",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              opacity: sending || !inputText.trim() ? 0.6 : 1,
+            }}
+          >
+            <FiSend size={15} /> {sending ? "Sending..." : "Send"}
+          </button>
+        </form>
       </div>
     </div>
   )

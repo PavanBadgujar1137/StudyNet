@@ -3,7 +3,7 @@ const PractitionerProfile = require("../models/PractitionerProfile")
 
 exports.createOffer = async (req, res) => {
   try {
-    const userId = req.user.id
+    const userId = req.user?.id || req.user?._id
     const { type, kind, title, description, price, durationMinutes, maxSeats, weekCount, program, tags } = req.body
 
     if (!title || price === undefined || price === null || price === "") {
@@ -32,7 +32,7 @@ exports.createOffer = async (req, res) => {
     })
 
     // Auto-update PractitionerProfile sessionRate & formats
-    const userOffers = await Offer.find({ practitioner: userId, status: "published" })
+    const userOffers = await Offer.find({ practitioner: userId })
     if (userOffers.length > 0) {
       const minRate = Math.min(...userOffers.map((o) => o.price || 0))
       const formats = [...new Set(userOffers.map((o) => (o.type === "circle" ? "circle" : "1:1")))]

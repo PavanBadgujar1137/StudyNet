@@ -300,7 +300,7 @@ export function PractitionerDashboard() {
             <MyClients setActiveSection={setActiveSection} telemetryData={telemetryData} onUpdate={loadData} />
           )}
           {activeSection === 'circles' && (
-            <Circles telemetryData={telemetryData} onUpdate={loadData} />
+            <Circles telemetryData={telemetryData} onUpdate={loadData} setActiveSection={setActiveSection} />
           )}
           {activeSection === 'room' && (
             <SessionRoom practitionerName={practitionerName} telemetryData={telemetryData} onUpdate={loadData} setActiveSection={setActiveSection} />

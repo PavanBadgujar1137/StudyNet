@@ -46,7 +46,9 @@ export function GrowthTools({ telemetryData }) {
             </div>
             <div className="card stat" style={{ boxShadow: 'none', padding: '16px' }}>
               <div className="lbl">Verified Rating</div>
-              <div className="val" style={{ fontSize: '20px' }}>{practitioner.rating || '5.0 ★'}</div>
+              <div className="val" style={{ fontSize: '20px' }}>
+                {practitioner.rating ? `${practitioner.rating} ★` : 'N/A'}
+              </div>
               <div className="dl up">Client Reviews</div>
             </div>
           </div>

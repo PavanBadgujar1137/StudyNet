@@ -1,4 +1,5 @@
 const ReflectionPrompt = require("../models/ReflectionPrompt")
+const ClientConnection = require("../models/ClientConnection")
 
 exports.getClientPrompts = async (req, res) => {
   try {
@@ -6,17 +7,24 @@ exports.getClientPrompts = async (req, res) => {
     let prompts = await ReflectionPrompt.find({ client: userId }).sort({ createdAt: -1 })
 
     if (prompts.length === 0) {
-      // Seed default reflection prompt if client has none yet
+      // Look up the client's real connected practitioner
+      const connection = await ClientConnection.findOne({
+        client: userId,
+        status: { $in: ["approved", "active"] },
+      }).sort({ createdAt: -1 })
+
+      const practitionerId = connection?.practitioner || userId // fallback to self if no practitioner
+
       prompts = [
         await ReflectionPrompt.create({
           client: userId,
-          practitioner: "600000000000000000000000", // system placeholder
+          practitioner: practitionerId,
           promptText: "What felt heavy this week that you carried without asking for support?",
           status: "pending",
         }),
         await ReflectionPrompt.create({
           client: userId,
-          practitioner: "600000000000000000000000",
+          practitioner: practitionerId,
           promptText: "Notice one moment in the last 3 days where you reacted differently than you would have 6 months ago.",
           status: "pending",
         }),

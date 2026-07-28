@@ -80,9 +80,14 @@ exports.isAdmin = async (req, res, next) => {
 
 exports.isInstructor = async (req, res, next) => {
 	try {
-		const userDetails = await User.findOne({ email: req.user.email });
+		const userAccountType = req.user?.accountType;
+		if (userAccountType === "Instructor" || userAccountType === "Practitioner") {
+			return next();
+		}
 
-		if (userDetails.accountType !== "Instructor" && userDetails.accountType !== "Practitioner") {
+		const userDetails = await User.findById(req.user.id) || await User.findOne({ email: req.user.email });
+
+		if (!userDetails || (userDetails.accountType !== "Instructor" && userDetails.accountType !== "Practitioner")) {
 			return res.status(401).json({
 				success: false,
 				message: "This is a Protected Route for Practitioners/Instructors",

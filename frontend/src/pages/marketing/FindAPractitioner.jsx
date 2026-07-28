@@ -344,13 +344,13 @@ export function FindAPractitioner() {
                       </div>
 
                       {/* Published Offers Section */}
-                      {p.offers && p.offers.length > 0 && (
+                      {((p.offers && p.offers.length > 0) || (p.userOffers && p.userOffers.length > 0)) && (
                         <div style={{ marginBottom: '12px', background: '#F8FAFC', padding: '10px 12px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
                           <span style={{ fontSize: '11px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '6px' }}>
-                            Published Offers ({p.offers.length})
+                            Published Offers ({(p.offers || p.userOffers).length})
                           </span>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                            {p.offers.map((o, oIdx) => (
+                            {(p.offers || p.userOffers).map((o, oIdx) => (
                               <div
                                 key={o._id || oIdx}
                                 style={{

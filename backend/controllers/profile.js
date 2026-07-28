@@ -290,25 +290,36 @@ exports.getPractitionerDashboardData = async (req, res) => {
     // Payouts & Invoices
     const payouts = await Payout.find({ practitioner: userId }).sort({ createdAt: -1 })
     const invoices = await Invoice.find({ practitioner: userId }).sort({ createdAt: -1 })
+    const bookingsList = await Booking.find({ practitioner: userId }).populate("client", "firstName lastName email image createdAt").lean()
 
-    // Compute earnings
-    const totalEarnings = payouts.reduce((sum, p) => sum + (p.amount || 0), 0)
-    const monthlyEarnings = payouts
+    // Compute earnings dynamically
+    const bookingEarnings = bookingsList.reduce((sum, b) => sum + (b.netPayout || b.amount * 0.92 || 0), 0)
+    const payoutEarnings = payouts.reduce((sum, p) => sum + (p.amount || 0), 0)
+    const totalEarnings = Math.max(bookingEarnings, payoutEarnings)
+
+    const monthlyBookingsEarnings = bookingsList
+      .filter((b) => new Date(b.createdAt).getMonth() === new Date().getMonth())
+      .reduce((sum, b) => sum + (b.netPayout || b.amount * 0.92 || 0), 0)
+    const monthlyPayoutEarnings = payouts
       .filter((p) => new Date(p.createdAt).getMonth() === new Date().getMonth())
       .reduce((sum, p) => sum + (p.amount || 0), 0)
+    const monthlyEarnings = Math.max(monthlyBookingsEarnings, monthlyPayoutEarnings)
 
     const clearingThisWeek = payouts
       .filter((p) => p.status === "pending" || p.status === "processing")
       .reduce((sum, p) => sum + (p.amount || 0), 0)
 
-    // Dynamic Enrolled & Connected Clients
-    const connections = await ClientConnection.find({ practitioner: userId, status: "active" })
+    // Dynamic Enrolled & Connected Clients — include both approved and active
+    const connections = await ClientConnection.find({ practitioner: userId, status: { $in: ["approved", "active"] } })
       .populate("client", "firstName lastName email image createdAt")
       .lean()
 
     const connectedClients = connections.map((c) => c.client).filter(Boolean)
-    const bookingsList = await Booking.find({ practitioner: userId }).populate("client", "firstName lastName email image createdAt").lean()
     const bookedClients = bookingsList.map((b) => b.client).filter(Boolean)
+
+    const clientMap = new Map()
+    connectedClients.forEach((cl) => clientMap.set(cl._id.toString(), cl))
+    bookedClients.forEach((cl) => clientMap.set(cl._id.toString(), cl))
 
     const dynamicClients = Array.from(clientMap.values())
 
@@ -359,6 +370,7 @@ exports.getPractitionerDashboardData = async (req, res) => {
           email: user?.email || "",
           image: user?.image || "",
           credentials: profile?.credentials || "Licensed Practitioner",
+          rating: profile?.rating || null,
         },
         stats: {
           monthlyEarnings: monthlyEarnings,
@@ -386,6 +398,55 @@ exports.getPractitionerDashboardData = async (req, res) => {
 
   } catch (error) {
     console.error("getPractitionerDashboardData error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// Update Practitioner Bio, Credentials, and Specialty Tags
+exports.updatePractitionerProfileDetails = async (req, res) => {
+  try {
+    const userId = req.user.id
+    const { bio, credentials, specialties, languages } = req.body
+
+    let profile = await PractitionerProfile.findOne({ user: userId })
+    const parsedSpecialties = Array.isArray(specialties)
+      ? specialties
+      : (specialties ? String(specialties).split(",").map((s) => s.trim()).filter(Boolean) : [])
+
+    const parsedLanguages = Array.isArray(languages)
+      ? languages
+      : (languages ? String(languages).split(",").map((l) => l.trim()).filter(Boolean) : ["English"])
+
+    if (!profile) {
+      profile = await PractitionerProfile.create({
+        user: userId,
+        bio: bio || "",
+        credentials: credentials || "",
+        specialties: parsedSpecialties,
+        languages: parsedLanguages,
+      })
+    } else {
+      if (bio !== undefined) profile.bio = bio
+      if (credentials !== undefined) profile.credentials = credentials
+      if (specialties !== undefined) profile.specialties = parsedSpecialties
+      if (languages !== undefined) profile.languages = parsedLanguages
+      await profile.save()
+    }
+
+    // Also update User document credentials, bio, and specialties
+    await User.findByIdAndUpdate(userId, {
+      credentials: credentials || "",
+      bio: bio || "",
+      specialties: parsedSpecialties,
+    })
+
+    return res.status(200).json({
+      success: true,
+      message: "Practitioner profile & specialties updated successfully!",
+      profile,
+    })
+  } catch (error) {
+    console.error("updatePractitionerProfileDetails error:", error)
     return res.status(500).json({ success: false, message: error.message })
   }
 }

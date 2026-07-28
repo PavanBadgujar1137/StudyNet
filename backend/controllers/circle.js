@@ -27,8 +27,8 @@ exports.getAllCircles = async (req, res) => {
 // Create new circle (Practitioners only)
 exports.createCircle = async (req, res) => {
   try {
-    const { name, topic, seats = 10, scheduleText, startDate, endDate } = req.body
-    const userId = req.user.id
+    const { name, topic, seats = 10, startDate, endDate } = req.body
+    const userId = req.user?.id || req.user?._id
 
     if (!name) {
       return res.status(400).json({ success: false, message: "Circle name is required" })
@@ -38,7 +38,6 @@ exports.createCircle = async (req, res) => {
       practitioner: userId,
       name,
       topic: topic || "",
-      scheduleText: scheduleText || "Weekly sessions",
       startDate: startDate ? new Date(startDate) : new Date(),
       endDate: endDate ? new Date(endDate) : new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
       seats: Number(seats) || 10,
@@ -49,7 +48,7 @@ exports.createCircle = async (req, res) => {
       feedPosts: [
         {
           author: userId,
-          content: `Circle "${name}" created. Welcome members! Schedule: ${scheduleText || "Weekly sessions"}.`,
+          content: `Circle "${name}" created. Welcome members!`,
           isAnnouncement: true,
         },
       ],
@@ -74,6 +73,58 @@ exports.createCircle = async (req, res) => {
   }
 }
 
+// Update circle details (Practitioners only)
+exports.updateCircle = async (req, res) => {
+  try {
+    const { cohortId } = req.params
+    const userId = req.user?.id || req.user?._id
+    const { name, topic, seats } = req.body
+
+    const circle = await CircleCohort.findOne({ _id: cohortId, practitioner: userId })
+    if (!circle) {
+      return res.status(404).json({ success: false, message: "Circle not found or unauthorized" })
+    }
+
+    if (name) circle.name = name
+    if (topic !== undefined) circle.topic = topic
+    if (seats) circle.seats = Number(seats)
+
+    await circle.save()
+
+    return res.status(200).json({
+      success: true,
+      message: "Circle updated successfully!",
+      circle,
+    })
+  } catch (error) {
+    console.error("updateCircle error:", error)
+    return res.status(500).json({ success: false, message: "Failed to update circle", error: error.message })
+  }
+}
+
+// Delete circle (Practitioners only)
+exports.deleteCircle = async (req, res) => {
+  try {
+    const { cohortId } = req.params
+    const userId = req.user?.id || req.user?._id
+
+    const circle = await CircleCohort.findOneAndDelete({ _id: cohortId, practitioner: userId })
+    if (!circle) {
+      return res.status(404).json({ success: false, message: "Circle not found or unauthorized" })
+    }
+
+    await CircleMembership.deleteMany({ cohort: cohortId })
+
+    return res.status(200).json({
+      success: true,
+      message: "Circle deleted successfully!",
+    })
+  } catch (error) {
+    console.error("deleteCircle error:", error)
+    return res.status(500).json({ success: false, message: "Failed to delete circle", error: error.message })
+  }
+}
+
 // Join circle (Clients)
 exports.joinCircle = async (req, res) => {
   try {
@@ -95,12 +146,12 @@ exports.joinCircle = async (req, res) => {
       await circle.save()
 
       // Also create CircleMembership record
-      let membership = await CircleMembership.findOne({ cohort: cohortId, user: userId })
+      let membership = await CircleMembership.findOne({ cohort: cohortId, client: userId })
       if (!membership) {
         await CircleMembership.create({
           cohort: cohortId,
-          user: userId,
-          status: "active",
+          client: userId,
+          role: "member",
         })
       }
     }

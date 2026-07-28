@@ -213,7 +213,7 @@ export function MyCircle({ setActiveTab, clientName = 'Student', practitionerNam
                       <span style={{ fontSize: '12px', fontWeight: 800, color: '#0F172A' }}>{pName}</span>
                       <FiShield size={12} className="text-amber-500" title="Verified Practitioner" />
                     </div>
-                    <span style={{ fontSize: '11px', color: '#64748B' }}>{c.scheduleText || 'Weekly Sessions'}</span>
+                    <span style={{ fontSize: '11px', color: '#64748B' }}>Practitioner Facilitator</span>
                   </div>
                 </div>
 

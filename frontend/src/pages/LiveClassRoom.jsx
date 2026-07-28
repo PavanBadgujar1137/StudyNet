@@ -257,7 +257,7 @@ export default function LiveClassRoom() {
                   <FiShield size={14} className="text-emerald-400" />
                   Encrypted Zoom Meeting
                 </span>
-                <span>StudyNet Video Integration</span>
+                <span>OpenHand Video Integration</span>
               </div>
             </div>
           </div>

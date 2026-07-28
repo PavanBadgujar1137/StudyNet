@@ -21,21 +21,50 @@ exports.generateDraftNotes = async (req, res) => {
       })
     }
 
-    // Mock/AURA integration draft note generation
-    const mockDraftNotes = `Practitioner Summary:\nClient explored themes of high-functioning anxiety surrounding recent workplace transitions. Expressed reluctance to request assistance until burnout symptoms manifested.\n\nTechnique Used: Cognitive Reframing & Grounding\nKey Insight: Breakthrough moment regarding boundaries around availability.`
+    // Build draft notes from rawTranscript (practitioner-submitted session notes)
+    // AURA processes whatever the practitioner provides — no fake pre-written content
+    let draftNotes
+    let suggestedPrompts
 
-    const mockPrompts = [
-      "What felt heavy this week that you carried without asking for support?",
-      "Notice one boundary you set today that protected your energy.",
-    ]
+    if (rawTranscript && rawTranscript.trim().length > 20) {
+      // Process the submitted transcript into structured session notes
+      const lines = rawTranscript.trim().split(/[\n.]+/).filter(Boolean)
+      const keyThemes = lines.slice(0, 3).join(". ")
+
+      draftNotes = `Practitioner Summary:\n${keyThemes}\n\nNote: This draft was generated from your session transcript. Review and edit before saving to client record.`
+
+      // Extract potential reflection themes from transcript keywords
+      const lowerTranscript = rawTranscript.toLowerCase()
+      const themes = []
+      if (lowerTranscript.includes("anxi") || lowerTranscript.includes("stress") || lowerTranscript.includes("worry")) {
+        themes.push("What would it feel like to let one worry go without resolving it first?")
+      }
+      if (lowerTranscript.includes("boundar") || lowerTranscript.includes("limit")) {
+        themes.push("Notice one boundary you protected this week, however small.")
+      }
+      if (lowerTranscript.includes("relationship") || lowerTranscript.includes("connect") || lowerTranscript.includes("family")) {
+        themes.push("What do you need from your relationships right now that you haven't asked for?")
+      }
+      if (themes.length === 0) {
+        themes.push("What felt heavy this week that you carried without asking for support?")
+      }
+      suggestedPrompts = themes.slice(0, 2)
+    } else {
+      // No transcript provided — create an empty structured skeleton
+      draftNotes = `Practitioner Summary:\n[Add your session summary here]\n\nTechnique Used: [Add technique]\nKey Insight: [Add key insight or breakthrough]\n\nNote: No transcript was submitted. Please fill in session notes manually.`
+      suggestedPrompts = [
+        "What felt heavy this week that you carried without asking for support?",
+        "Notice one moment in the last 3 days where you reacted differently than you would have 6 months ago.",
+      ]
+    }
 
     const draft = await SessionNoteDraft.create({
       booking: bookingId,
       practitioner: practitionerId,
       client: clientId,
       rawTranscript: rawTranscript || "",
-      draftNotes: mockDraftNotes,
-      suggestedReflectionPrompts: mockPrompts,
+      draftNotes,
+      suggestedReflectionPrompts: suggestedPrompts,
       status: "draft",
     })
 

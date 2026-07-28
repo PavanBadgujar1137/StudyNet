@@ -7,88 +7,109 @@ const Invoice = require("../models/Invoice")
 exports.getPractitioners = async (req, res) => {
   try {
     const { need, fmt, lang, q, page = 1, limit = 50, sort = "featured" } = req.query
-
-    // Clean out legacy sample dummy practitioners
-    const dummyUsers = await User.find({ email: { $regex: /@openhand\.example$/i } }).select("_id")
-    const dummyUserIds = dummyUsers.map((u) => u._id)
-
-    if (dummyUserIds.length > 0) {
-      await PractitionerProfile.deleteMany({ user: { $in: dummyUserIds } })
-      await User.deleteMany({ _id: { $in: dummyUserIds } })
-    }
-
-    // Clean out legacy sample dummy profiles with default auto-generated bio
-    await PractitionerProfile.deleteMany({ bio: { $regex: /Certified practitioner specializing in holistic guidance/i } })
-
-    // Build query filters
-    const queryFilter = {}
-    if (need && need !== "all") {
-      queryFilter.specialties = { $in: [new RegExp(need, "i")] }
-    }
-    if (fmt && fmt !== "all") {
-      queryFilter.formats = { $in: [new RegExp(fmt, "i")] }
-    }
-    if (lang && lang !== "all") {
-      queryFilter.languages = { $in: [new RegExp(lang, "i")] }
-    }
-
-    let allProfiles = await PractitionerProfile.find(queryFilter).populate({
-      path: "user",
-      select: "firstName lastName email image accountType",
-    }).lean()
-
-    // Filter out profiles without valid user or non-practitioners
-    allProfiles = allProfiles.filter(
-      (p) => p.user && ["Practitioner", "Instructor"].includes(p.user.accountType)
-    )
-
-    // Attach real practitioner offers from MongoDB
     const Offer = require("../models/Offer")
-    for (let p of allProfiles) {
-      if (p.user?._id) {
-        const userOffers = await Offer.find({
-          practitioner: p.user._id,
-        }).lean()
 
-        p.offers = userOffers || []
-        if (userOffers.length > 0) {
-          const minPrice = Math.min(...userOffers.map((o) => o.price || 0))
-          if (minPrice > 0) p.sessionRate = minPrice
-          const offerFormats = [...new Set(userOffers.map((o) => (o.type === "circle" ? "Group Circles" : "1:1 Sessions")))]
-          if (offerFormats.length > 0) {
-            p.formats = offerFormats
-          }
+    // Find all registered practitioners/instructors in database
+    const practitionerUsers = await User.find({
+      accountType: { $in: ["Practitioner", "Instructor"] },
+    }).select("firstName lastName email image accountType credentials bio specialties languages").lean()
+
+    const results = []
+
+    for (let u of practitionerUsers) {
+      // Find or create PractitionerProfile
+      let profile = await PractitionerProfile.findOne({ user: u._id }).lean()
+
+      if (!profile) {
+        profile = await PractitionerProfile.create({
+          user: u._id,
+          credentials: u.credentials || "",
+          bio: u.bio || "",
+          specialties: u.specialties || [],
+          languages: u.languages || ["English"],
+          sessionRate: 0,
+          formats: [],
+          verified: true,
+          rating: null,
+          reviewCount: 0,
+        })
+        profile = profile.toObject()
+      }
+
+      // Populate user field
+      profile.user = {
+        _id: u._id,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        email: u.email,
+        image: u.image,
+        accountType: u.accountType,
+      }
+
+      // Attach all offers created by this practitioner from MongoDB
+      const userOffers = await Offer.find({ practitioner: u._id }).lean()
+      profile.offers = userOffers || []
+      profile.userOffers = userOffers || []
+
+      if (userOffers.length > 0) {
+        const minPrice = Math.min(...userOffers.map((o) => o.price || 0))
+        if (minPrice > 0) profile.sessionRate = minPrice
+        const offerFormats = [...new Set(userOffers.map((o) => (o.type === "circle" ? "Group Circles" : "1:1 Sessions")))]
+        if (offerFormats.length > 0) {
+          profile.formats = offerFormats
         }
       }
+
+      // Apply category/need filter
+      if (need && need !== "all") {
+        const needRegex = new RegExp(need, "i")
+        const matchesSpecialties = (profile.specialties || []).some((s) => needRegex.test(s))
+        const matchesOffers = (profile.offers || []).some((o) => needRegex.test(o.title) || needRegex.test(o.type))
+        if (!matchesSpecialties && !matchesOffers) continue
+      }
+
+      // Apply format filter
+      if (fmt && fmt !== "all") {
+        const fmtRegex = new RegExp(fmt, "i")
+        const matchesFormats = (profile.formats || []).some((f) => fmtRegex.test(f))
+        if (!matchesFormats) continue
+      }
+
+      // Apply language filter
+      if (lang && lang !== "all") {
+        const langRegex = new RegExp(lang, "i")
+        const matchesLang = (profile.languages || []).some((l) => langRegex.test(l))
+        if (!matchesLang) continue
+      }
+
+      // Apply search query filter
+      if (q && q.trim()) {
+        const qLower = q.toLowerCase().trim()
+        const offerTitles = (profile.offers || []).map((o) => o.title).join(" ")
+        const fullText = `${u.firstName || ""} ${u.lastName || ""} ${profile.credentials || ""} ${profile.bio || ""} ${(profile.specialties || []).join(" ")} ${offerTitles}`.toLowerCase()
+        if (!fullText.includes(qLower)) continue
+      }
+
+      results.push(profile)
     }
 
-    // Search query filtering
-    if (q) {
-      const qLower = q.toLowerCase().trim()
-      allProfiles = allProfiles.filter((p) => {
-        const offerTitles = (p.offers || []).map((o) => o.title).join(" ")
-        const fullText = `${p.user?.firstName} ${p.user?.lastName} ${p.credentials} ${p.bio} ${p.specialties?.join(" ")} ${offerTitles}`.toLowerCase()
-        return fullText.includes(qLower)
-      })
-    }
-
-    // Sort profiles
+    // Sort results
     if (sort === "rating") {
-      allProfiles.sort((a, b) => (b.rating || 5) - (a.rating || 5))
+      results.sort((a, b) => (b.rating || 5) - (a.rating || 5))
     } else if (sort === "rate_low") {
-      allProfiles.sort((a, b) => (a.sessionRate || 0) - (b.sessionRate || 0))
+      results.sort((a, b) => (a.sessionRate || 0) - (b.sessionRate || 0))
     } else if (sort === "rate_high") {
-      allProfiles.sort((a, b) => (b.sessionRate || 0) - (a.sessionRate || 0))
+      results.sort((a, b) => (b.sessionRate || 0) - (a.sessionRate || 0))
     }
 
     // Calculate pagination
     const pageNum = Math.max(1, parseInt(page, 10) || 1)
     const limitNum = Math.max(1, parseInt(limit, 10) || 50)
-    const totalPractitioners = allProfiles.length
+    const totalPractitioners = results.length
     const totalPages = Math.ceil(totalPractitioners / limitNum) || 1
 
     const startIndex = (pageNum - 1) * limitNum
-    const paginatedProfiles = allProfiles.slice(startIndex, startIndex + limitNum)
+    const paginatedProfiles = results.slice(startIndex, startIndex + limitNum)
 
     return res.status(200).json({
       success: true,
@@ -107,7 +128,7 @@ exports.getPractitioners = async (req, res) => {
     console.error("Get Practitioners Error:", error)
     return res.status(500).json({
       success: false,
-      message: "Failed to fetch practitioners directory",
+      message: "Failed to fetch practitioners",
       error: error.message,
     })
   }
@@ -128,9 +149,15 @@ exports.getPractitionerByHandle = async (req, res) => {
       })
     }
 
+    const Offer = require("../models/Offer")
+    const userOffers = await Offer.find({ practitioner: profile.user._id }).lean()
+    const profileObj = profile.toObject()
+    profileObj.offers = userOffers || []
+    profileObj.userOffers = userOffers || []
+
     return res.status(200).json({
       success: true,
-      data: profile,
+      data: profileObj,
     })
   } catch (error) {
     return res.status(500).json({
@@ -145,6 +172,8 @@ exports.getPractitionerDashboard = async (req, res) => {
   try {
     const userId = req.user.id
     const CircleCohort = require("../models/CircleCohort")
+    const CheckIn = require("../models/CheckIn")
+    const ClientConnection = require("../models/ClientConnection")
     const profile = await PractitionerProfile.findOne({ user: userId })
     const bookings = await Booking.find({ practitioner: userId }).populate("client", "firstName lastName email")
     const payouts = await Payout.find({ practitioner: userId }).sort({ createdAt: -1 })
@@ -153,13 +182,26 @@ exports.getPractitionerDashboard = async (req, res) => {
     const totalEarnings = bookings.reduce((sum, b) => sum + (b.netPayout || b.amount * 0.92), 0)
     const activeClientsCount = new Set(bookings.map((b) => b.client?._id?.toString())).size
 
+    // Compute real circle fill rate from actual enrollment data
+    const totalSeats = circles.reduce((s, c) => s + (c.maxCapacity || 0), 0)
+    const filledSeats = circles.reduce((s, c) => s + (c.enrolledCount || 0), 0)
+    const circleFillRate = totalSeats > 0 ? `${Math.round((filledSeats / totalSeats) * 100)}%` : "0%"
+
+    // Compute real avg wellbeing from connected client check-ins
+    const connections = await ClientConnection.find({ practitioner: userId, status: { $in: ["approved", "active"] } })
+    const clientIds = connections.map((c) => c.client)
+    const checkIns = await CheckIn.find({ client: { $in: clientIds } })
+    const wellbeingScore = checkIns.length > 0
+      ? Math.round(checkIns.reduce((s, c) => s + (c.score || c.wellbeing || 0), 0) / checkIns.length)
+      : 0
+
     return res.status(200).json({
       success: true,
       telemetry: {
         totalEarnings,
         activeClientsCount,
-        circleFillRate: "85%",
-        wellbeingScore: 92,
+        circleFillRate,
+        wellbeingScore,
         plan: profile?.plan || "starter",
         commissionPercentage: profile?.planCommission || 8,
         circles,
@@ -203,10 +245,14 @@ const ClientConnection = require("../models/ClientConnection")
 exports.connectClientWithPractitioner = async (req, res) => {
   try {
     const clientId = req.user.id
-    const { practitionerId, amountPaid = 2500, paymentId, orderId } = req.body
+    const { practitionerId, amountPaid, paymentId, orderId } = req.body
 
     if (!practitionerId) {
       return res.status(400).json({ success: false, message: "Practitioner ID is required" })
+    }
+
+    if (!amountPaid || isNaN(Number(amountPaid)) || Number(amountPaid) <= 0) {
+      return res.status(400).json({ success: false, message: "Valid Razorpay payment amount is required" })
     }
 
     let practUser = await User.findById(practitionerId)
@@ -219,16 +265,18 @@ exports.connectClientWithPractitioner = async (req, res) => {
       return res.status(404).json({ success: false, message: "Practitioner not found" })
     }
 
-    const generatedPaymentId = paymentId || `pay_rzp_${Date.now()}`
-    const generatedOrderId = orderId || `order_rzp_${Date.now()}`
+    const numericAmount = Number(amountPaid)
+    const transactionPaymentId = paymentId || `pay_rzp_${Date.now()}`
+    const transactionOrderId = orderId || `order_rzp_${Date.now()}`
 
+    // Create/Update ClientConnection record — this is the primary record for direct connections
     const connection = await ClientConnection.findOneAndUpdate(
       { client: clientId, practitioner: practUser._id },
       {
         status: "pending_approval",
-        amountPaid: Number(amountPaid),
-        paymentId: generatedPaymentId,
-        orderId: generatedOrderId,
+        amountPaid: numericAmount,
+        paymentId: transactionPaymentId,
+        orderId: transactionOrderId,
         paymentStatus: "paid",
       },
       { upsert: true, new: true }
@@ -236,7 +284,7 @@ exports.connectClientWithPractitioner = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: `Payment of ₹${amountPaid} received! Connection request sent to ${practUser.firstName} for approval.`,
+      message: `Payment of ₹${numericAmount} received! Connection request sent to ${practUser.firstName} for approval.`,
       connection,
       status: "pending_approval",
     })

@@ -3,6 +3,8 @@ const router = express.Router()
 const {
   getAllCircles,
   createCircle,
+  updateCircle,
+  deleteCircle,
   joinCircle,
   getCohortDetail,
   updateKanbanStage,
@@ -12,6 +14,8 @@ const { auth, isPractitioner } = require("../middleware/auth")
 
 router.get("/all", getAllCircles)
 router.post("/create", auth, isPractitioner, createCircle)
+router.put("/:cohortId", auth, isPractitioner, updateCircle)
+router.delete("/:cohortId", auth, isPractitioner, deleteCircle)
 router.post("/:cohortId/join", auth, joinCircle)
 
 router.get("/:cohortId", auth, getCohortDetail)
