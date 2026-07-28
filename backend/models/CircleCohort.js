@@ -5,7 +5,7 @@ const circleCohortSchema = new mongoose.Schema(
     offer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Offer",
-      required: true,
+      required: false,
     },
     practitioner: {
       type: mongoose.Schema.Types.ObjectId,
@@ -13,15 +13,17 @@ const circleCohortSchema = new mongoose.Schema(
       required: true,
     },
     name: { type: String, required: true },
-    startDate: { type: Date, required: true },
-    endDate: { type: Date, required: true },
+    topic: { type: String, default: "" },
+    scheduleText: { type: String, default: "Weekly Sessions" },
+    startDate: { type: Date, required: false },
+    endDate: { type: Date, required: false },
     status: {
       type: String,
       enum: ["forming", "active", "completed"],
       default: "forming",
     },
-    seats: { type: Number, required: true },
-    seatsFilledCount: { type: Number, default: 0 },
+    seats: { type: Number, default: 10 },
+    seatsFilledCount: { type: Number, default: 1 },
     members: [{ type: mongoose.Schema.Types.ObjectId, ref: "user" }],
     kanbanStage: {
       type: String,

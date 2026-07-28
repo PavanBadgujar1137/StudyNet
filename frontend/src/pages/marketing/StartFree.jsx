@@ -147,9 +147,10 @@ export function StartFree() {
                   <tr><th>Plan</th><th>Monthly</th><th>We take</th><th>Best when</th></tr>
                 </thead>
                 <tbody>
-                  <tr><td>Starter</td><td><span className="pill-free">Free</span></td><td>8% of what you earn</td><td>You're testing whether this works at all</td></tr>
-                  <tr><td>Growth</td><td>₹1,499</td><td>5% of what you earn</td><td>You're past ₹40,000/month and want the fee to stop stinging</td></tr>
-                  <tr><td>Practice</td><td>₹4,999</td><td>0% — you keep everything</td><td>You're running cohorts and want your own branded app</td></tr>
+                  <tr><td>Starter</td><td>₹999/mo</td><td>8% of what you earn</td><td>You're testing whether this works at all</td></tr>
+                  <tr><td>Growth</td><td>₹2,999/mo</td><td>5% of what you earn</td><td>You're past ₹40,000/month and want the fee to stop stinging</td></tr>
+                  <tr><td>Master</td><td>₹5,999/mo</td><td>0% — you keep everything</td><td>You're running cohorts and want your own branded app</td></tr>
+
                 </tbody>
               </table>
             </div>

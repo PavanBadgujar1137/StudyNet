@@ -5,6 +5,10 @@ const {
   getPractitionerByHandle,
   getPractitionerDashboard,
   getPayoutsAndInvoices,
+  connectClientWithPractitioner,
+  approveClientConnection,
+  getClientConnections,
+  getConnectedClients,
 } = require("../controllers/practitioner")
 const { auth, isPractitioner } = require("../middleware/auth")
 
@@ -12,8 +16,14 @@ const { auth, isPractitioner } = require("../middleware/auth")
 router.get("/", getPractitioners)
 router.get("/handle/:handle", getPractitionerByHandle)
 
-// Authenticated practitioner routes
+// Client connection (Payment & approval flow)
+router.post("/connect", auth, connectClientWithPractitioner)
+router.get("/my-connections", auth, getClientConnections)
+
+// Practitioner approval routes
+router.post("/approve-connection", auth, isPractitioner, approveClientConnection)
 router.get("/dashboard", auth, isPractitioner, getPractitionerDashboard)
 router.get("/payouts", auth, isPractitioner, getPayoutsAndInvoices)
+router.get("/connected-clients", auth, isPractitioner, getConnectedClients)
 
 module.exports = router

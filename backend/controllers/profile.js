@@ -1,8 +1,22 @@
 const Profile = require("../models/Profile")
 const User = require("../models/User")
+const Booking = require("../models/Booking")
+const LiveClass = require("../models/LiveClass")
+const PractitionerProfile = require("../models/PractitionerProfile")
+const Offer = require("../models/Offer")
+const CircleCohort = require("../models/CircleCohort")
+const Payout = require("../models/Payout")
+const Invoice = require("../models/Invoice")
+const SessionNoteDraft = require("../models/SessionNoteDraft")
+const CheckIn = require("../models/CheckIn")
+const ReflectionPrompt = require("../models/ReflectionPrompt")
+const RatingAndReview = require("../models/RatingandReview")
+const CircleMembership = require("../models/CircleMembership")
+const ClientConnection = require("../models/ClientConnection")
 const { uploadImageToCloudinary } = require("../utils/imageUploader")
 const mongoose = require("mongoose")
 const { convertSecondsToDuration } = require("../utils/secToDuration")
+
 // Method for updating a profile
 exports.updateProfile = async (req, res) => {
   try {
@@ -171,16 +185,6 @@ exports.instructorDashboard = async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 // Real-time Dynamic Dashboard Aggregators
 // ─────────────────────────────────────────────────────────────────────────────
-const CheckIn = require("../models/CheckIn")
-const ReflectionPrompt = require("../models/ReflectionPrompt")
-const LiveClass = require("../models/LiveClass")
-const CircleMembership = require("../models/CircleMembership")
-const CircleCohort = require("../models/CircleCohort")
-const PractitionerProfile = require("../models/PractitionerProfile")
-const Payout = require("../models/Payout")
-const Invoice = require("../models/Invoice")
-const Offer = require("../models/Offer")
-const SessionNoteDraft = require("../models/SessionNoteDraft")
 
 exports.getClientDashboardData = async (req, res) => {
   try {
@@ -216,8 +220,14 @@ exports.getClientDashboardData = async (req, res) => {
     // Circles
     const memberships = await CircleMembership.find({ user: userId }).populate("cohort")
 
-    // Practitioner info placeholder/linked
-    const defaultPractitioner = await User.findOne({ accountType: { $in: ["Practitioner", "Instructor"] } }).select("firstName lastName email image")
+    const conn = await ClientConnection.findOne({ client: userId, status: { $in: ["approved", "active"] } })
+      .populate("practitioner", "firstName lastName email image")
+      .lean()
+
+    let activePractitioner = conn?.practitioner
+    if (!activePractitioner && user.practitionerProfile) {
+      activePractitioner = await User.findById(user.practitionerProfile).select("firstName lastName email image").lean()
+    }
 
     // Dynamic milestones computed from real user activity
     const milestones = [
@@ -238,15 +248,15 @@ exports.getClientDashboardData = async (req, res) => {
           image: user.image,
           daysActive,
         },
-        practitioner: defaultPractitioner ? {
-          name: `Dr. ${defaultPractitioner.firstName} ${defaultPractitioner.lastName}`,
-          firstName: defaultPractitioner.firstName,
-          avatar: defaultPractitioner.image,
-        } : {
-          name: "Practitioner Portal",
-          firstName: "Practitioner",
-          avatar: "",
-        },
+        practitioner: activePractitioner ? {
+          id: activePractitioner._id,
+          name: `${activePractitioner.firstName} ${activePractitioner.lastName || ""}`.trim(),
+          firstName: activePractitioner.firstName,
+          lastName: activePractitioner.lastName,
+          avatar: activePractitioner.image,
+          email: activePractitioner.email,
+        } : null,
+
         checkInCount,
         streak,
         checkIns,
@@ -291,13 +301,52 @@ exports.getPractitionerDashboardData = async (req, res) => {
       .filter((p) => p.status === "pending" || p.status === "processing")
       .reduce((sum, p) => sum + (p.amount || 0), 0)
 
-    // Enrolled Clients / Students
-    const allStudents = await User.find({ accountType: { $in: ["Student", "Client"] } })
-      .select("firstName lastName email image createdAt")
-      .sort({ createdAt: -1 })
+    // Dynamic Enrolled & Connected Clients
+    const connections = await ClientConnection.find({ practitioner: userId, status: "active" })
+      .populate("client", "firstName lastName email image createdAt")
+      .lean()
+
+    const connectedClients = connections.map((c) => c.client).filter(Boolean)
+    const bookingsList = await Booking.find({ practitioner: userId }).populate("client", "firstName lastName email image createdAt").lean()
+    const bookedClients = bookingsList.map((b) => b.client).filter(Boolean)
+
+    const dynamicClients = Array.from(clientMap.values())
+
+    // Compute 12 months earnings history dynamically (Jan - Dec)
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    const currentYear = new Date().getFullYear()
+    const monthlyHistory = []
+
+    for (let mIdx = 0; mIdx < 12; mIdx++) {
+      const mPayouts = payouts.filter((p) => {
+        const pDate = new Date(p.createdAt)
+        return pDate.getMonth() === mIdx && pDate.getFullYear() === currentYear
+      })
+      const mBookings = bookingsList.filter((b) => {
+        const bDate = new Date(b.createdAt)
+        return bDate.getMonth() === mIdx && bDate.getFullYear() === currentYear
+      })
+
+      const amount = mPayouts.reduce((s, p) => s + (p.amount || 0), 0) +
+        mBookings.reduce((s, b) => s + (b.amount || 0), 0)
+
+      monthlyHistory.push({
+        month: monthNames[mIdx],
+        amount,
+      })
+    }
+
+    // Compute real wellbeing check-in score
+    const clientIds = dynamicClients.map((c) => c._id)
+    const clientCheckIns = await CheckIn.find({ client: { $in: clientIds } }).sort({ createdAt: 1 })
+    const checkInClientCount = new Set(clientCheckIns.map((c) => c.client?.toString())).size
+    const avgWellbeing = clientCheckIns.length > 0
+      ? Math.round(clientCheckIns.reduce((s, c) => s + (c.score || c.wellbeing || 0), 0) / clientCheckIns.length)
+      : 0
 
     // AURA session notes awaiting approval
     const pendingNotes = await SessionNoteDraft.find({ practitioner: userId, status: "draft" })
+    const reviews = await RatingAndReview.find().populate("user", "firstName lastName").sort({ _id: -1 }).limit(5).lean()
 
     return res.status(200).json({
       success: true,
@@ -314,20 +363,27 @@ exports.getPractitionerDashboardData = async (req, res) => {
         stats: {
           monthlyEarnings: monthlyEarnings,
           totalEarnings: totalEarnings,
-          activeClientsCount: allStudents.length,
+          activeClientsCount: dynamicClients.length,
+          checkInClientCount: checkInClientCount,
           clearingThisWeek: clearingThisWeek,
           circleSeatsFilled: circles.reduce((sum, c) => sum + (c.enrolledCount || 0), 0),
           totalCircleCapacity: circles.reduce((sum, c) => sum + (c.maxCapacity || 0), 0),
+          avgWellbeing: avgWellbeing,
         },
+        monthlyHistory,
         upcomingClasses,
         offers,
         circles,
         payouts,
         invoices,
-        clients: allStudents,
+        clients: dynamicClients,
         pendingNotes,
+        reviews,
       },
     })
+
+
+
   } catch (error) {
     console.error("getPractitionerDashboardData error:", error)
     return res.status(500).json({ success: false, message: error.message })

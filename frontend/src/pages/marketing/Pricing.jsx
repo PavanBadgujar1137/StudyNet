@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
+import { toast } from 'react-hot-toast'
 import {
   OHFooter,
   OHButton,
@@ -11,6 +12,7 @@ import { apiConnector } from '../../services/apiConnector'
 
 export function Pricing() {
   const [openFaq, setOpenFaq] = useState(null)
+  const [payingPlan, setPayingPlan] = useState(null)
 
   useEffect(() => {
     async function fetchPlans() {
@@ -26,11 +28,94 @@ export function Pricing() {
     fetchPlans()
   }, [])
 
+  // Helper to load Razorpay Checkout SDK dynamically
+  const loadRazorpaySDK = () => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) {
+        resolve(true)
+        return
+      }
+      const script = document.createElement('script')
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+      script.onload = () => resolve(true)
+      script.onerror = () => resolve(false)
+      document.body.appendChild(script)
+    })
+  }
+
+  // Handle Pay Now for any plan via backend Razorpay order API
+  const handlePayNow = async (planKey) => {
+    try {
+      setPayingPlan(planKey)
+      const isLoaded = await loadRazorpaySDK()
+      if (!isLoaded) {
+        toast.error('Razorpay SDK failed to load. Please check your network.')
+        setPayingPlan(null)
+        return
+      }
+
+      // 1. Create order in backend
+      const res = await apiConnector('POST', '/api/v1/plans/create-order', { planKey })
+      if (!res?.data?.success) {
+        toast.error(res?.data?.message || 'Could not initiate plan order')
+        setPayingPlan(null)
+        return
+      }
+
+      const { order, key, amount, planName } = res.data
+
+      // 2. Open Razorpay Checkout modal
+      const options = {
+        key: key || 'rzp_test_TDhFSRuAl18Gcb',
+        amount: order.amount,
+        currency: order.currency || 'INR',
+        name: 'OpenHand Practice Platform',
+        description: `Subscription: ${planName}`,
+        order_id: order.id,
+        handler: async function (response) {
+          try {
+            // 3. Verify payment signature in backend
+            const verifyRes = await apiConnector('POST', '/api/v1/plans/verify-payment', {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              planKey,
+            })
+
+            if (verifyRes?.data?.success) {
+              toast.success(`🎉 Payment Verified! Welcome to ${planName}.`)
+            } else {
+              toast.error(verifyRes?.data?.message || 'Payment verification failed.')
+            }
+          } catch (err) {
+            console.error('Verification error:', err)
+            toast.error('Payment verification failed.')
+          }
+        },
+        prefill: {
+          name: '',
+          email: '',
+        },
+        theme: {
+          color: '#4F46E5',
+        },
+      }
+
+      const rzpModal = new window.Razorpay(options)
+      rzpModal.open()
+    } catch (err) {
+      console.error('PayNow error:', err)
+      toast.error('Payment launch failed. Try again.')
+    } finally {
+      setPayingPlan(null)
+    }
+  }
+
   // Breakeven chart functions
   const breakevenPlans = [
-    { name: 'Starter (8%)', color: '#2563EB', fn: (gross) => gross * 0.08 },
-    { name: 'Growth (₹1,499 + 5%)', color: '#7C3AED', fn: (gross) => 1499 + gross * 0.05 },
-    { name: 'Practice (₹4,999 flat)', color: '#0D1B3D', fn: () => 4999 },
+    { name: 'Starter (₹999 + 8%)', color: '#2563EB', fn: (gross) => 999 + gross * 0.08 },
+    { name: 'Growth (₹2,999 + 5%)', color: '#7C3AED', fn: (gross) => 2999 + gross * 0.05 },
+    { name: 'Master (₹5,999 flat)', color: '#0D1B3D', fn: () => 5999 },
   ]
 
   // Calculator compute logic
@@ -42,14 +127,14 @@ export function Pricing() {
     const members = val.mIn || 0
 
     const gross = clients * price + seats * seatPrice + members * 799
-    const starter = gross * 0.08
-    const growth = 1499 + gross * 0.05
-    const practice = 4999
+    const starter = 999 + gross * 0.08
+    const growth = 2999 + gross * 0.05
+    const master = 5999
 
     let bestPlan = 'Starter'
     let cost = starter
     if (growth < cost) { bestPlan = 'Growth'; cost = growth }
-    if (practice < cost) { bestPlan = 'Practice'; cost = practice }
+    if (master < cost) { bestPlan = 'Master'; cost = master }
 
     return {
       gross,
@@ -70,8 +155,8 @@ export function Pricing() {
   const faqs = [
     {
       cat: 'Billing & Fees',
-      q: 'Is the free plan a trial?',
-      a: "No. There's no time limit and no card needed. Practitioners run real, paid practices on Starter indefinitely. We only make money when you do.",
+      q: 'Is there a trial available?',
+      a: "Yes. There's no time limit to explore. Practitioners can start on Starter or upgrade anytime to Growth or Master to unlock advanced tools and lower fees.",
     },
     {
       cat: 'Payouts',
@@ -96,7 +181,7 @@ export function Pricing() {
     {
       cat: 'Automatic Switch Alerts',
       q: 'Will you alert me when I should switch plans?',
-      a: "Yes. We automatically email you the exact month your commission math crosses ₹1,499 and recommend upgrading to Growth so you save money.",
+      a: "Yes. We automatically email you the exact month your commission math crosses ₹2,999 and recommend upgrading to Growth so you save money.",
     },
   ]
 
@@ -111,7 +196,7 @@ export function Pricing() {
             Pay us <span className="oh-grad-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">only when you get paid.</span>
           </h1>
           <p className="sub text-slate-600 text-base sm:text-lg max-w-2xl mx-auto font-medium leading-relaxed">
-            No setup fee. No lock-in. Start free and stay free until the commission costs you more than the subscription would — then we'll tell you to switch.
+            No setup fee. No hidden lock-in. Choose the plan that fits your stage, pay seamlessly via Razorpay, and switch anytime.
           </p>
         </div>
       </header>
@@ -129,10 +214,10 @@ export function Pricing() {
                   For practitioners testing whether an online practice works at all.
                 </p>
                 <div className="price-tag text-4xl font-extrabold text-slate-900 mb-3 tracking-tight">
-                  ₹0<small className="text-slate-500 font-medium text-base"> /month</small>
+                  ₹999<small className="text-slate-500 font-medium text-base"> /month</small>
                 </div>
                 <div className="cut-badge bg-blue-50 text-blue-700 font-bold text-xs uppercase tracking-wider py-2 px-3.5 rounded-xl mb-6 inline-flex items-center gap-2 border border-blue-100">
-                  We take 8% of what you earn
+                  Flat ₹999/mo + 8% fee
                 </div>
                 <ul className="plan-features text-slate-700 text-sm space-y-3 mb-8">
                   <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Unlimited 1:1 sessions</li>
@@ -143,7 +228,16 @@ export function Pricing() {
                   <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Listed in the practitioner directory</li>
                 </ul>
               </div>
-              <OHButton href="/start-free" variant="ghost" fullWidth>Start free</OHButton>
+              <div className="flex flex-col gap-2.5">
+                <OHButton
+                  onClick={() => handlePayNow('starter')}
+                  disabled={payingPlan === 'starter'}
+                  fullWidth
+                  size="lg"
+                >
+                  {payingPlan === 'starter' ? 'Opening Razorpay...' : 'Pay ₹999 Now'}
+                </OHButton>
+              </div>
             </div>
 
             {/* Growth (Featured) */}
@@ -157,10 +251,10 @@ export function Pricing() {
                   For practitioners past ₹40,000/month who want the fee to stop stinging.
                 </p>
                 <div className="price-tag text-4xl font-extrabold text-white mb-3 tracking-tight">
-                  ₹1,499<small className="text-slate-300 font-medium text-base"> /month</small>
+                  ₹2,999<small className="text-slate-300 font-medium text-base"> /month</small>
                 </div>
                 <div className="cut-badge bg-indigo-900/60 text-sky-300 font-bold text-xs uppercase tracking-wider py-2 px-3.5 rounded-xl mb-6 inline-flex items-center gap-2 border border-indigo-500/30">
-                  We take 5% of what you earn
+                  Flat ₹2,999/mo + 5% fee
                 </div>
                 <ul className="plan-features text-slate-200 text-sm space-y-3 mb-8">
                   <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> Everything in Starter</li>
@@ -172,18 +266,27 @@ export function Pricing() {
                   <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> Priority placement in directory</li>
                 </ul>
               </div>
-              <OHButton href="/start-free" fullWidth>Start free, upgrade later</OHButton>
+              <div className="flex flex-col gap-2.5">
+                <OHButton
+                  onClick={() => handlePayNow('growth')}
+                  disabled={payingPlan === 'growth'}
+                  fullWidth
+                  size="lg"
+                >
+                  {payingPlan === 'growth' ? 'Opening Razorpay...' : 'Pay ₹2,999 Now'}
+                </OHButton>
+              </div>
             </div>
 
-            {/* Practice */}
+            {/* Master */}
             <div className="plan-card bg-white border border-slate-200 rounded-3xl p-8 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
               <div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-2">Practice</h3>
+                <h3 className="text-2xl font-bold text-slate-900 mb-2">Master</h3>
                 <p className="who text-slate-600 text-sm mb-6 min-h-[42px] font-medium leading-relaxed">
                   For established practices running multiple cohorts under their own brand.
                 </p>
                 <div className="price-tag text-4xl font-extrabold text-slate-900 mb-3 tracking-tight">
-                  ₹4,999<small className="text-slate-500 font-medium text-base"> /month</small>
+                  ₹5,999<small className="text-slate-500 font-medium text-base"> /month</small>
                 </div>
                 <div className="cut-badge bg-emerald-50 text-emerald-700 font-bold text-xs uppercase tracking-wider py-2 px-3.5 rounded-xl mb-6 inline-flex items-center gap-2 border border-emerald-100">
                   0% — you keep 100% of earnings
@@ -197,12 +300,22 @@ export function Pricing() {
                   <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Named support contact</li>
                 </ul>
               </div>
-              <OHButton href="/talk-to-human" variant="ghost" fullWidth>Talk to a human</OHButton>
+              <div className="flex flex-col gap-2.5">
+                <OHButton
+                  onClick={() => handlePayNow('master')}
+                  disabled={payingPlan === 'master'}
+                  fullWidth
+                  size="lg"
+                >
+                  {payingPlan === 'master' ? 'Opening Razorpay...' : 'Pay ₹5,999 Now'}
+                </OHButton>
+              </div>
             </div>
 
           </div>
         </div>
       </section>
+
 
       {/* Breakeven Chart */}
       <section className="oh-sec py-12" id="breakeven">
@@ -210,7 +323,7 @@ export function Pricing() {
           <div className="sec-head text-center max-w-3xl mx-auto mb-8">
             <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 mb-3">Where each plan stops making sense</h2>
             <p className="text-slate-600 text-base font-medium leading-relaxed">
-              The lines cross twice. Below ₹30,000/month the free plan wins. Above ₹1,00,000 you should be on Practice. Here's the arithmetic, drawn.
+              The lines cross twice. Below ₹30,000/month Starter wins. Above ₹1,00,000 you should be on Master. Here's the arithmetic, drawn.
             </p>
           </div>
           <OHCard surface="white" pad="lg" className="chart-card bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
@@ -261,11 +374,11 @@ export function Pricing() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-800">
-                <tr><td className="p-4 font-semibold text-slate-900">Free tier commission</td><td className="us-col p-4 font-bold text-blue-700 bg-blue-50/70">8%</td><td className="p-4 text-slate-600">10%</td><td className="p-4 text-slate-600">No subscription fee</td><td className="p-4 text-slate-600">Varies by plan</td></tr>
-                <tr><td className="p-4 font-semibold text-slate-900">Zero-commission plan</td><td className="us-col p-4 font-bold text-blue-700 bg-blue-50/70">₹4,999/mo</td><td className="p-4 text-slate-600">Higher tiers + setup fee</td><td className="p-4 text-slate-400">—</td><td className="p-4 text-slate-600">Custom</td></tr>
+                <tr><td className="p-4 font-semibold text-slate-900">Starter tier price</td><td className="us-col p-4 font-bold text-blue-700 bg-blue-50/70">₹999/mo + 8%</td><td className="p-4 text-slate-600">10%</td><td className="p-4 text-slate-600">No subscription fee</td><td className="p-4 text-slate-600">Varies by plan</td></tr>
+                <tr><td className="p-4 font-semibold text-slate-900">Zero-commission plan</td><td className="us-col p-4 font-bold text-blue-700 bg-blue-50/70">₹5,999/mo (Master)</td><td className="p-4 text-slate-600">Higher tiers + setup fee</td><td className="p-4 text-slate-400">—</td><td className="p-4 text-slate-600">Custom</td></tr>
                 <tr><td className="p-4 font-semibold text-slate-900">UPI / Indian payments</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Yes</td><td className="yes p-4 font-semibold text-slate-700">✓ Yes</td><td className="yes p-4 font-semibold text-slate-700">✓ Yes</td><td className="yes p-4 font-semibold text-slate-700">✓ Yes</td></tr>
                 <tr><td className="p-4 font-semibold text-slate-900">Courses &amp; cohorts</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Yes</td><td className="yes p-4 font-semibold text-slate-700">✓ Yes</td><td className="yes p-4 font-semibold text-slate-700">✓ Yes</td><td className="yes p-4 font-semibold text-slate-700">✓ Yes</td></tr>
-                <tr><td className="p-4 font-semibold text-slate-900">Branded mobile app</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ On Practice</td><td className="yes p-4 text-slate-600">On enterprise</td><td className="no p-4 text-slate-400">✕ No</td><td className="yes p-4 text-slate-600">Core offering</td></tr>
+                <tr><td className="p-4 font-semibold text-slate-900">Branded mobile app</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ On Master</td><td className="yes p-4 text-slate-600">On enterprise</td><td className="no p-4 text-slate-400">✕ No</td><td className="yes p-4 text-slate-600">Core offering</td></tr>
                 <tr><td className="p-4 font-semibold text-slate-900">Client check-ins &amp; mood tracking</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Yes</td><td className="no p-4 text-slate-400">✕ No</td><td className="no p-4 text-slate-400">✕ No</td><td className="no p-4 text-slate-400">✕ No</td></tr>
                 <tr><td className="p-4 font-semibold text-slate-900">Consent-gated session recording</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Yes</td><td className="no p-4 text-slate-400">✕ No</td><td className="no p-4 text-slate-400">✕ No</td><td className="no p-4 text-slate-400">✕ No</td></tr>
                 <tr><td className="p-4 font-semibold text-slate-900">Live in-session AI AURA</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Yes</td><td className="no p-4 text-slate-400">✕ No</td><td className="no p-4 text-slate-400">✕ No</td><td className="no p-4 text-slate-400">✕ No</td></tr>
@@ -322,13 +435,13 @@ export function Pricing() {
       <section className="oh-sec py-16 bg-gradient-to-b from-slate-50 to-white text-center border-t border-slate-200">
         <div className="oh-wrap max-w-4xl mx-auto px-4">
           <h2 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight mb-4">
-            Start on free. Switch when the maths says so.
+            Start on Starter. Switch when the maths says so.
           </h2>
           <p className="text-slate-600 text-base sm:text-lg font-medium max-w-2xl mx-auto mb-8 leading-relaxed">
-            We'll email you the month your commission passes ₹1,499 and tell you to upgrade. Yes, really.
+            We'll email you the month your commission passes ₹2,999 and tell you to upgrade. Yes, really.
           </p>
           <div className="cta-row flex flex-wrap items-center justify-center gap-4">
-            <OHButton href="/start-free" size="lg">Start your free practice space</OHButton>
+            <OHButton href="/start-free" size="lg">Start your practice space</OHButton>
             <OHButton href="/talk-to-human" variant="ghost" size="lg">Talk to a real human →</OHButton>
           </div>
         </div>

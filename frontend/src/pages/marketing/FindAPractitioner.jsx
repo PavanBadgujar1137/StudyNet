@@ -7,6 +7,7 @@ import {
   OHEmptyState,
 } from '../../components/openhand'
 import { apiConnector } from '../../services/apiConnector'
+import { toast } from 'react-hot-toast'
 
 const SPECIALTIES = [
   { value: 'all', label: 'All Guides' },
@@ -50,7 +51,26 @@ export function FindAPractitioner() {
   const [fmtFilter, setFmtFilter] = useState('all')
   const [langFilter, setLangFilter] = useState('all')
   const [sortBy, setSortBy] = useState('featured')
-  
+  const [connectingId, setConnectingId] = useState(null)
+
+  const handleConnectPractitioner = async (practitioner) => {
+    try {
+      const pId = practitioner._id || practitioner.id || practitioner.user
+      setConnectingId(pId)
+      const res = await apiConnector('POST', '/api/v1/practitioners/connect', { practitionerId: pId })
+      if (res?.data?.success) {
+        toast.success(`🎉 Connected with ${practitioner.firstName} ${practitioner.lastName}!`)
+      } else {
+        toast.error(res?.data?.message || 'Could not connect with practitioner.')
+      }
+    } catch (err) {
+      console.error('Connect error:', err)
+      toast.error('Please log in as a Client to connect free with practitioners.')
+    } finally {
+      setConnectingId(null)
+    }
+  }
+
   // Dynamic API Pagination state
   const [page, setPage] = useState(1)
   const [pagination, setPagination] = useState({
@@ -61,6 +81,7 @@ export function FindAPractitioner() {
     hasPrev: false,
     hasNext: false,
   })
+
 
   // Reset to page 1 whenever search filters or sort change
   const handleFilterChange = (setter, value) => {
@@ -322,10 +343,35 @@ export function FindAPractitioner() {
                         ))}
                       </div>
 
-                      {/* Published Offers Badge Line */}
+                      {/* Published Offers Section */}
                       {p.offers && p.offers.length > 0 && (
-                        <div style={{ marginBottom: '10px', fontSize: '11.5px', color: '#2563EB', fontWeight: 600, background: '#EFF6FF', padding: '4px 10px', borderRadius: '8px', border: '1px solid #DBEAFE' }}>
-                          🏷️ {p.offers.length} Offer{p.offers.length > 1 ? 's' : ''}: {p.offers.map((o) => `${o.title} (₹${o.price})`).slice(0, 2).join(' · ')}
+                        <div style={{ marginBottom: '12px', background: '#F8FAFC', padding: '10px 12px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+                          <span style={{ fontSize: '11px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '6px' }}>
+                            Published Offers ({p.offers.length})
+                          </span>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            {p.offers.map((o, oIdx) => (
+                              <div
+                                key={o._id || oIdx}
+                                style={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  fontSize: '12px',
+                                  background: '#FFFFFF',
+                                  padding: '6px 10px',
+                                  borderRadius: '8px',
+                                  border: '1px solid #CBD5E1',
+                                }}
+                              >
+                                <div>
+                                  <span style={{ fontWeight: 700, color: '#0F172A', display: 'block' }}>{o.title}</span>
+                                  <span style={{ fontSize: '10.5px', color: '#64748B' }}>{o.type === 'circle' ? 'Group Circle' : '1:1 Session'} • {o.durationMinutes || 50}m</span>
+                                </div>
+                                <span style={{ fontWeight: 800, color: '#2563EB' }}>₹{o.price}</span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
 
@@ -346,10 +392,20 @@ export function FindAPractitioner() {
                         </div>
                       </div>
 
-                      {/* CTA Button */}
-                      <OHButton href={`/practice/handle/${p.handle || ''}`} fullWidth className="p-book-btn">
-                        View Profile &amp; Book →
-                      </OHButton>
+                      {/* CTA Buttons: Free Connect & View Profile */}
+                      <div className="flex gap-2 w-full mt-3">
+                        <button
+                          type="button"
+                          onClick={() => handleConnectPractitioner(p)}
+                          disabled={connectingId === (p._id || p.id)}
+                          className="flex-1 py-2.5 px-3 rounded-xl border border-indigo-200 text-indigo-700 bg-indigo-50/70 hover:bg-indigo-100 font-bold text-xs transition-all flex items-center justify-center gap-1"
+                        >
+                          {connectingId === (p._id || p.id) ? 'Connecting...' : '🤝 Connect Free'}
+                        </button>
+                        <OHButton href={`/practice/handle/${p.handle || ''}`} className="flex-1 p-book-btn">
+                          View Profile →
+                        </OHButton>
+                      </div>
                     </article>
                   )
                 })}

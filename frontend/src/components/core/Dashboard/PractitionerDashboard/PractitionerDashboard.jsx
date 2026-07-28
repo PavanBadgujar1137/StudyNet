@@ -23,10 +23,17 @@ import PayoutsInvoices from './PayoutsInvoices'
 import GrowthTools from './GrowthTools'
 import Settings from '../Settings'
 import CommunityChatHub from '../CommunityChatHub'
+import { useSearchParams } from 'react-router-dom'
 import { fetchPractitionerDashboardData } from '../../../../services/operations/dashboardAPI'
 
 export function PractitionerDashboard() {
-  const [activeSection, setActiveSection] = useState('dash')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const activeSection = searchParams.get('tab') || 'dash'
+
+  const setActiveSection = useCallback((section) => {
+    setSearchParams({ tab: section })
+  }, [setSearchParams])
+
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   const [telemetryData, setTelemetryData] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -290,7 +297,7 @@ export function PractitionerDashboard() {
             <MyOffers telemetryData={telemetryData} onUpdate={loadData} />
           )}
           {activeSection === 'clients' && (
-            <MyClients setActiveSection={setActiveSection} telemetryData={telemetryData} />
+            <MyClients setActiveSection={setActiveSection} telemetryData={telemetryData} onUpdate={loadData} />
           )}
           {activeSection === 'circles' && (
             <Circles telemetryData={telemetryData} onUpdate={loadData} />

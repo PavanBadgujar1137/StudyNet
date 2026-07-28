@@ -1,8 +1,8 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FiVideo } from 'react-icons/fi'
+import { FiVideo, FiTrendingUp, FiCheckCircle } from 'react-icons/fi'
 
-export function Overview({ practitionerName = 'Dr. Meera Iyer', setActiveSection, telemetryData, loading }) {
+export function Overview({ practitionerName = 'Practitioner', setActiveSection, telemetryData, loading }) {
   const navigate = useNavigate()
   const firstName = practitionerName.replace('Dr. ', '').split(' ')[0]
 
@@ -13,10 +13,31 @@ export function Overview({ practitionerName = 'Dr. Meera Iyer', setActiveSection
     clearingThisWeek: 0,
     circleSeatsFilled: 0,
     totalCircleCapacity: 0,
+    avgWellbeing: 0,
   }
+
+  const monthlyHistory = telemetryData?.monthlyHistory || [
+    { month: 'Jan', amount: 0 },
+    { month: 'Feb', amount: 0 },
+    { month: 'Mar', amount: 0 },
+    { month: 'Apr', amount: 0 },
+    { month: 'May', amount: 0 },
+    { month: 'Jun', amount: 0 },
+    { month: 'Jul', amount: 0 },
+    { month: 'Aug', amount: 0 },
+    { month: 'Sep', amount: 0 },
+    { month: 'Oct', amount: 0 },
+    { month: 'Nov', amount: 0 },
+    { month: 'Dec', amount: 0 },
+  ]
 
   const upcomingClasses = telemetryData?.upcomingClasses || []
   const clients = telemetryData?.clients || []
+  const pendingNotes = telemetryData?.pendingNotes || []
+
+  // Max earnings for scaling bar chart heights
+  const maxEarnings = Math.max(...monthlyHistory.map((m) => m.amount), 1)
+  const hasEarnings = monthlyHistory.some((m) => m.amount > 0)
 
   return (
     <section className="view on" id="dash">
@@ -24,7 +45,7 @@ export function Overview({ practitionerName = 'Dr. Meera Iyer', setActiveSection
         <div>
           <div className="crumb">Dashboard</div>
           <h1>Good day, {firstName}.</h1>
-          <p>{upcomingClasses.length} class(es) scheduled. Your telemetry is connected in real-time to MongoDB.</p>
+          <p>{upcomingClasses.length} class(es) scheduled for today.</p>
         </div>
         <button className="btn" onClick={() => setActiveSection('room')}>Start next Zoom session</button>
       </div>
@@ -55,7 +76,7 @@ export function Overview({ practitionerName = 'Dr. Meera Iyer', setActiveSection
       <div className="g2">
         <div className="card">
           <div className="sechd">
-            <h3>Earnings & Payout Overview</h3>
+            <h3>Earnings &amp; Payout Overview</h3>
             <button
               type="button"
               className="link-btn"
@@ -65,28 +86,33 @@ export function Overview({ practitionerName = 'Dr. Meera Iyer', setActiveSection
               Full report →
             </button>
           </div>
-          <svg className="spark" viewBox="0 0 620 150" preserveAspectRatio="none" role="img" aria-label="Bar chart of monthly earnings">
-            <defs>
-              <linearGradient id="bg1" x1="0" y1="150" x2="0" y2="0">
-                <stop offset="0" stopColor="#1F5FE0"/>
-                <stop offset="1" stopColor="#8A2BE0"/>
-              </linearGradient>
-            </defs>
-            <line x1="0" y1="120" x2="620" y2="120" stroke="rgba(14,18,53,.10)"/>
-            <rect x="24" y="82" width="58" height="38" rx="6" fill="url(#bg1)" opacity=".35"/>
-            <rect x="126" y="70" width="58" height="50" rx="6" fill="url(#bg1)" opacity=".45"/>
-            <rect x="228" y="58" width="58" height="62" rx="6" fill="url(#bg1)" opacity=".58"/>
-            <rect x="330" y="46" width="58" height="74" rx="6" fill="url(#bg1)" opacity=".72"/>
-            <rect x="432" y="34" width="58" height="86" rx="6" fill="url(#bg1)" opacity=".86"/>
-            <rect x="534" y="14" width="58" height="106" rx="6" fill="url(#bg1)"/>
-            <text x="53" y="140" textAnchor="middle">Feb</text>
-            <text x="155" y="140" textAnchor="middle">Mar</text>
-            <text x="257" y="140" textAnchor="middle">Apr</text>
-            <text x="359" y="140" textAnchor="middle">May</text>
-            <text x="461" y="140" textAnchor="middle">Jun</text>
-            <text x="563" y="140" textAnchor="middle">Jul</text>
-          </svg>
-          <p className="note">Total lifetime earnings recorded: ₹{stats.totalEarnings.toLocaleString('en-IN')}</p>
+
+          <div style={{ padding: '16px 0', minHeight: '140px', display: 'flex', flexDirection: 'column', justifyBetween: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '12px', height: '110px', paddingBottom: '8px', borderBottom: '1px solid #E2E8F0' }}>
+              {monthlyHistory.map((item, idx) => {
+                const heightPct = hasEarnings ? Math.max((item.amount / maxEarnings) * 100, 6) : 6
+                return (
+                  <div key={idx} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
+                    <div
+                      title={`₹${item.amount.toLocaleString('en-IN')}`}
+                      style={{
+                        width: '100%',
+                        maxWidth: '42px',
+                        height: `${heightPct}%`,
+                        background: hasEarnings && item.amount > 0 ? 'linear-gradient(180deg, #8A2BE0 0%, #1F5FE0 100%)' : '#E2E8F0',
+                        borderRadius: '6px',
+                        transition: 'height 0.4s ease'
+                      }}
+                    />
+                    <span style={{ fontSize: '11px', color: '#64748B', fontWeight: 600, marginTop: '6px' }}>{item.month}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+          <p className="note" style={{ marginTop: '8px' }}>
+            Total lifetime earnings recorded: ₹{stats.totalEarnings.toLocaleString('en-IN')}
+          </p>
         </div>
 
         <div className="card">
@@ -136,7 +162,7 @@ export function Overview({ practitionerName = 'Dr. Meera Iyer', setActiveSection
           <div className="row">
             <div className="av g">!</div>
             <div className="who">
-              <b>Session notes & AURA drafts</b>
+              <b>Session notes &amp; AURA drafts ({pendingNotes.length})</b>
               <span>Review AI drafted notes from recent sessions</span>
             </div>
             <div className="rt">
@@ -147,7 +173,7 @@ export function Overview({ practitionerName = 'Dr. Meera Iyer', setActiveSection
             <div className="av g">!</div>
             <div className="who">
               <b>Active Client Check-in Trends</b>
-              <span>{clients.length} client(s) currently active in platform</span>
+              <span>{clients.length} client(s) currently connected in platform</span>
             </div>
             <div className="rt">
               <button className="mini" onClick={() => setActiveSection('clients')}>View Clients</button>
@@ -157,20 +183,36 @@ export function Overview({ practitionerName = 'Dr. Meera Iyer', setActiveSection
 
         <div className="card">
           <div className="sechd"><h3>Client wellbeing trend</h3></div>
-          <svg className="spark" viewBox="0 0 300 150" role="img" aria-label="Line showing average client check-in scores">
-            <defs>
-              <linearGradient id="lgr" x1="0" y1="0" x2="300" y2="0">
-                <stop offset="0" stopColor="#1F5FE0"/>
-                <stop offset="1" stopColor="#8A2BE0"/>
-              </linearGradient>
-            </defs>
-            <line x1="20" y1="120" x2="290" y2="120" stroke="rgba(14,18,53,.10)"/>
-            <path d="M20 96 L74 88 L128 92 L182 70 L236 62 L290 48" fill="none" stroke="url(#lgr)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-            <circle cx="290" cy="48" r="4.5" fill="#8A2BE0"/>
-            <text x="20" y="140">Wk 1</text>
-            <text x="270" y="140">Wk 6</text>
-          </svg>
-          <p className="note">Average across {stats.activeClientsCount} clients who check in. Individual data stays private.</p>
+          {stats.avgWellbeing > 0 ? (
+            <div style={{ padding: '12px 0' }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                <span style={{ fontSize: '32px', fontWeight: 900, color: '#0F172A' }}>{stats.avgWellbeing}%</span>
+                <span style={{ fontSize: '13px', color: '#166534', fontWeight: 700, background: '#F0FDF4', padding: '2px 8px', borderRadius: '6px', border: '1px solid #BBF7D0' }}>
+                  Positive Engagement
+                </span>
+              </div>
+              <svg className="spark" viewBox="0 0 300 100" style={{ height: '80px', marginTop: '8px' }} role="img" aria-label="Line showing average client check-in scores">
+                <defs>
+                  <linearGradient id="lgr" x1="0" y1="0" x2="300" y2="0">
+                    <stop offset="0" stopColor="#1F5FE0"/>
+                    <stop offset="1" stopColor="#8A2BE0"/>
+                  </linearGradient>
+                </defs>
+                <line x1="20" y1="80" x2="290" y2="80" stroke="rgba(14,18,53,.10)"/>
+                <path d="M20 70 L74 65 L128 68 L182 45 L236 40 L290 25" fill="none" stroke="url(#lgr)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <circle cx="290" cy="25" r="4.5" fill="#8A2BE0"/>
+              </svg>
+            </div>
+          ) : (
+            <div style={{ padding: '20px 0', textAlign: 'center', color: '#64748B', fontSize: '13px' }}>
+              No client check-ins logged yet. Connect with clients to start tracking wellbeing trends.
+            </div>
+          )}
+          <p className="note" style={{ marginTop: '12px' }}>
+            {stats.avgWellbeing > 0
+              ? `Average across ${stats.checkInClientCount || 0} client(s) who logged check-ins. Data stays private.`
+              : `0 check-ins logged so far. Connected client data stays 100% private.`}
+          </p>
         </div>
       </div>
     </section>

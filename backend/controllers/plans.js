@@ -5,9 +5,10 @@ const DEFAULT_PLANS = [
     planKey: "starter",
     name: "Starter",
     tagline: "For practitioners testing whether an online practice works at all.",
-    monthlyFee: 0,
+    monthlyFee: 999,
     commissionPercentage: 8,
     defaultMembershipPrice: 799,
+    razorpayButtonId: "pl_TIp5rKJwNIOFhi",
     features: [
       "Unlimited 1:1 sessions",
       "One private circle",
@@ -21,9 +22,10 @@ const DEFAULT_PLANS = [
     planKey: "growth",
     name: "Growth",
     tagline: "For practitioners past ₹40,000/month who want the fee to stop stinging.",
-    monthlyFee: 1499,
+    monthlyFee: 2999,
     commissionPercentage: 5,
     defaultMembershipPrice: 799,
+    razorpayButtonId: "pl_TIpGvgepbsigNC",
     features: [
       "Everything in Starter",
       "Unlimited circles & cohorts",
@@ -35,12 +37,13 @@ const DEFAULT_PLANS = [
     ],
   },
   {
-    planKey: "practice",
-    name: "Practice",
+    planKey: "master",
+    name: "Master",
     tagline: "For established practices running multiple cohorts under their own brand.",
-    monthlyFee: 4999,
+    monthlyFee: 5999,
     commissionPercentage: 0,
     defaultMembershipPrice: 799,
+    razorpayButtonId: "pl_TIpJ8iM19tFFtf",
     features: [
       "Everything in Growth",
       "Your own branded app (iOS + Android)",
@@ -51,6 +54,7 @@ const DEFAULT_PLANS = [
     ],
   },
 ]
+
 
 exports.getPlans = async (req, res) => {
   try {
@@ -71,3 +75,103 @@ exports.getPlans = async (req, res) => {
     })
   }
 }
+
+const { getRazorpayInstance, getRazorpayKeys } = require("../config/razorpay")
+const crypto = require("crypto")
+const User = require("../models/User")
+
+const PLAN_DETAILS = {
+  starter: { price: 999, name: "Starter Plan", buttonId: "pl_TIp5rKJwNIOFhi" },
+  growth: { price: 2999, name: "Growth Plan", buttonId: "pl_TIpGvgepbsigNC" },
+  master: { price: 5999, name: "Master Plan", buttonId: "pl_TIpJ8iM19tFFtf" },
+}
+
+exports.createPlanOrder = async (req, res) => {
+  try {
+    const { planKey = "starter" } = req.body
+    const keyLower = planKey.toLowerCase()
+    const planInfo = PLAN_DETAILS[keyLower] || PLAN_DETAILS.starter
+    const amountInPaise = planInfo.price * 100
+
+    const { key_id } = getRazorpayKeys()
+    const instance = getRazorpayInstance()
+
+    const options = {
+      amount: amountInPaise,
+      currency: "INR",
+      receipt: `plan_rcpt_${keyLower}_${Date.now()}`,
+      notes: {
+        planKey: keyLower,
+        planName: planInfo.name,
+      },
+    }
+
+    const order = await instance.orders.create(options)
+
+    return res.status(200).json({
+      success: true,
+      order,
+      key: key_id,
+      amount: planInfo.price,
+      planKey: keyLower,
+      planName: planInfo.name,
+      buttonId: planInfo.buttonId,
+    })
+  } catch (error) {
+    console.error("createPlanOrder error:", error)
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to create Razorpay plan order",
+    })
+  }
+}
+
+exports.verifyPlanPayment = async (req, res) => {
+  try {
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      planKey = "starter",
+    } = req.body
+
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing Razorpay payment verification parameters",
+      })
+    }
+
+    const { key_secret } = getRazorpayKeys()
+    const generated_signature = crypto
+      .createHmac("sha256", key_secret)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest("hex")
+
+    if (generated_signature === razorpay_signature) {
+      if (req.user?.id) {
+        await User.findByIdAndUpdate(req.user.id, {
+          activePlan: planKey.toLowerCase(),
+        })
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: `Payment successful! Welcome to the ${planKey} plan.`,
+        planKey,
+      })
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: "Razorpay signature verification failed",
+      })
+    }
+  } catch (error) {
+    console.error("verifyPlanPayment error:", error)
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Payment verification failed",
+    })
+  }
+}
+

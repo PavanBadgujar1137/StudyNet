@@ -13,7 +13,7 @@ export function MyJourney({ clientName = 'Student', practitionerName = 'your ins
     <div id="journey">
       <div className="hd">
         <div className="k">My journey</div>
-        <h1>You're {daysActive} day{daysActive > 1 ? 's' : ''} in, {clientName}.</h1>
+        <h1>Hello, {clientName} 👋</h1>
         <p>This is your personal learning path — kept private to you and your instructor. There's no score, no comparison with anyone else, and no wrong pace.</p>
       </div>
 
