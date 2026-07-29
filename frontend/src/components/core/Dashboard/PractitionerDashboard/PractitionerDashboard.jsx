@@ -12,7 +12,8 @@ import {
   FiX, 
   FiZap,
   FiUser,
-  FiMessageSquare
+  FiMessageSquare,
+  FiBookOpen
 } from 'react-icons/fi'
 import Overview from './Overview'
 import MyOffers from './MyOffers'
@@ -21,6 +22,7 @@ import Circles from './Circles'
 import SessionRoom from './SessionRoom'
 import PayoutsInvoices from './PayoutsInvoices'
 import GrowthTools from './GrowthTools'
+import MyCourses from './MyCourses'
 import Settings from '../Settings'
 import CommunityChatHub from '../CommunityChatHub'
 import { useSearchParams } from 'react-router-dom'
@@ -60,6 +62,7 @@ export function PractitionerDashboard() {
     { id: 'dash', label: 'Dashboard', icon: <FiGrid /> },
     { id: 'community', label: 'Community Hub', icon: <FiMessageSquare /> },
     { id: 'offers', label: 'My offers', icon: <FiTag /> },
+    { id: 'courses', label: 'My Courses', icon: <FiBookOpen /> },
     { id: 'clients', label: 'My clients', icon: <FiUsers /> },
     { id: 'circles', label: 'Circles', icon: <FiCircle /> },
   ]
@@ -259,6 +262,7 @@ export function PractitionerDashboard() {
                 {activeSection === 'dash' && `Welcome back, ${practitionerName} 👋`}
                 {activeSection === 'community' && 'Community & Chat Hub'}
                 {activeSection === 'offers' && 'My Practice Offers'}
+                {activeSection === 'courses' && 'My Courses'}
                 {activeSection === 'clients' && 'Client Management Hub'}
                 {activeSection === 'circles' && 'Active Circles'}
                 {activeSection === 'room' && 'Live Session Room'}
@@ -295,6 +299,9 @@ export function PractitionerDashboard() {
           )}
           {activeSection === 'offers' && (
             <MyOffers telemetryData={telemetryData} onUpdate={loadData} />
+          )}
+          {activeSection === 'courses' && (
+            <MyCourses />
           )}
           {activeSection === 'clients' && (
             <MyClients setActiveSection={setActiveSection} telemetryData={telemetryData} onUpdate={loadData} />

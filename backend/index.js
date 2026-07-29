@@ -64,6 +64,8 @@ const auraRoutes = require("./routes/aura")
 const copilotRoutes = require("./routes/copilot")
 const plansRoutes = require("./routes/plans")
 const orgRoutes = require("./routes/org")
+const adminRoutes = require("./routes/admin")
+const courseRoutes = require("./routes/course")
 
 const chatRoutes = require("./routes/chat")
 
@@ -88,6 +90,8 @@ app.use("/api/v1/aura", auraRoutes)
 app.use("/api/v1/copilot", copilotRoutes)
 app.use("/api/v1/plans", plansRoutes)
 app.use("/api/v1/org", orgRoutes)
+app.use("/api/v1/admin", adminRoutes)
+app.use("/api/v1/courses", courseRoutes)
 
 // Testing the server
 app.get("/", (req, res) => {

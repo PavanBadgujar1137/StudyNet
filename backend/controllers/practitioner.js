@@ -382,6 +382,30 @@ exports.connectClientWithPractitioner = async (req, res) => {
       status: "paid",
     })
 
+    // 4b. Log to Admin Payment Ledger
+    try {
+      const clientUserObj = await User.findById(clientId).select("firstName lastName")
+      const clientNameStr = clientUserObj ? `${clientUserObj.firstName} ${clientUserObj.lastName}` : "Client"
+      const AdminPaymentLog = require("../models/AdminPaymentLog")
+      await AdminPaymentLog.create({
+        paymentType: "offer_booking",
+        client: clientId,
+        clientName: clientNameStr,
+        practitioner: practUser._id,
+        practitionerName: `${practUser.firstName} ${practUser.lastName}`,
+        description: `Practitioner Connection & Offer Booking`,
+        amount: grossAmount,
+        amountOwedToPractitioner: netPayout,
+        paymentGateway: "razorpay",
+        razorpayOrderId: rzpOrderId,
+        razorpayPaymentId: rzpPaymentId,
+        bookingId: booking._id,
+        status: "received",
+      })
+    } catch (logErr) {
+      console.warn("AdminPaymentLog creation warning:", logErr.message)
+    }
+
     // 5. Update Practitioner monthly & total earnings telemetry
     if (profile) {
       profile.monthlyEarnings = (profile.monthlyEarnings || 0) + netPayout

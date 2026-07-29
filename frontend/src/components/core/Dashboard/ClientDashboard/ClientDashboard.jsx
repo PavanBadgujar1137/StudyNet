@@ -13,7 +13,8 @@ import {
   FiZap,
   FiHeart,
   FiUserCheck,
-  FiUser
+  FiUser,
+  FiVideo
 } from 'react-icons/fi'
 import MyJourney from './MyJourney'
 import CheckIn from './CheckIn'
@@ -21,6 +22,7 @@ import Practitioners from './Practitioners'
 import MyCircle from './MyCircle'
 import SessionsResources from './SessionsResources'
 import Reflections from './Reflections'
+import Courses from './Courses'
 import Settings from '../Settings'
 import CommunityChatHub from '../CommunityChatHub'
 import { useSearchParams } from 'react-router-dom'
@@ -83,6 +85,12 @@ export function ClientDashboard() {
       label: 'Practitioners',
       icon: <FiUserCheck />,
       badge: 'All Guides',
+    },
+    {
+      id: 'courses',
+      label: 'Courses',
+      icon: <FiVideo />,
+      badge: null,
     },
     {
       id: 'circle',
@@ -227,6 +235,7 @@ export function ClientDashboard() {
                 {activeTab === 'journey' && `Welcome back, ${clientName} 👋`}
                 {activeTab === 'checkin' && 'Daily Check-in Rhythm'}
                 {activeTab === 'practitioners' && 'All Registered Practitioners'}
+                {activeTab === 'courses' && 'Courses Library'}
                 {activeTab === 'circle' && 'Peer Support & Growth Circles'}
                 {activeTab === 'community' && 'Community & Chat Hub'}
                 {activeTab === 'sessions' && 'Sessions & Learning Resources'}
@@ -270,6 +279,9 @@ export function ClientDashboard() {
               dashboardData={dashboardData}
               onUpdate={loadData}
             />
+          )}
+          {activeTab === 'courses' && (
+            <Courses />
           )}
           {activeTab === 'circle' && (
             <MyCircle 

@@ -149,10 +149,61 @@ exports.verifyPlanPayment = async (req, res) => {
       .digest("hex")
 
     if (generated_signature === razorpay_signature) {
+      const planPrices = { starter: 999, growth: 2999, practice: 5999, master: 9999 }
+      const planNames = { starter: "Starter Plan", growth: "Growth Plan", practice: "Practice Plan", master: "Master Plan" }
+      const keyLower = planKey.toLowerCase()
+      const amount = planPrices[keyLower] || 999
+
       if (req.user?.id) {
         await User.findByIdAndUpdate(req.user.id, {
-          activePlan: planKey.toLowerCase(),
+          activePlan: keyLower,
         })
+
+        try {
+          const Subscription = require("../models/Subscription")
+          const AdminPaymentLog = require("../models/AdminPaymentLog")
+
+          await Subscription.updateMany({ client: req.user.id, status: "active" }, { status: "expired" })
+
+          const startDate = new Date()
+          const endDate = new Date()
+          endDate.setMonth(endDate.getMonth() + 1)
+
+          const sub = await Subscription.create({
+            client: req.user.id,
+            planKey: keyLower,
+            planName: planNames[keyLower] || keyLower,
+            amount,
+            status: "active",
+            startDate,
+            endDate,
+            paymentGateway: "razorpay",
+            razorpayOrderId: razorpay_order_id,
+            razorpayPaymentId: razorpay_payment_id,
+          })
+
+          const clientUser = await User.findById(req.user.id).select("firstName lastName")
+          const adminLog = await AdminPaymentLog.create({
+            paymentType: "subscription",
+            client: req.user.id,
+            clientName: clientUser ? `${clientUser.firstName} ${clientUser.lastName}` : "Client",
+            description: `${planNames[keyLower] || keyLower} Subscription`,
+            planKey: keyLower,
+            amount,
+            currency: "INR",
+            amountOwedToPractitioner: 0,
+            paymentGateway: "razorpay",
+            razorpayOrderId: razorpay_order_id,
+            razorpayPaymentId: razorpay_payment_id,
+            subscriptionId: sub._id,
+            status: "received",
+          })
+
+          sub.adminPaymentLog = adminLog._id
+          await sub.save()
+        } catch (subErr) {
+          console.warn("Subscription/AdminLog creation warning in plans controller:", subErr.message)
+        }
       }
 
       return res.status(200).json({

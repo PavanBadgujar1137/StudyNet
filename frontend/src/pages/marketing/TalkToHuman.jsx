@@ -143,6 +143,25 @@ export function TalkToHuman() {
         meetingType: 'Requested Call',
       })
 
+      // Also log to Admin Panel OrgConversation if this is an org inquiry
+      const isOrgInquiry =
+        formData.workType === 'Organisational / employee wellbeing' ||
+        (selectedTopicObj?.id === 'org')
+
+      if (isOrgInquiry) {
+        try {
+          await apiConnector('POST', '/api/v1/org/book-conversation', {
+            organizationName: formData.workType || 'Organisation',
+            contactName: formData.name,
+            contactEmail: formData.email,
+            message: fullMessage,
+            interestedIn: selectedTopicObj ? [selectedTopicObj.title] : ['Employee Wellbeing'],
+          })
+        } catch (orgErr) {
+          console.warn('OrgConversation log failed (non-critical):', orgErr.message)
+        }
+      }
+
       if (res?.data?.success) {
         setSubmitted(true)
         toast.success('Conversation request sent successfully!')

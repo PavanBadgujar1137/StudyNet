@@ -38,7 +38,11 @@ import OrgAdmin from "./pages/org/OrgAdmin"
 import ClientRoute from "./components/core/Auth/ClientRoute"
 import PractitionerRoute from "./components/core/Auth/PractitionerRoute"
 import OrgAdminRoute from "./components/core/Auth/OrgAdminRoute"
+import AdminRoute from "./components/core/Auth/AdminRoute"
 import { getUserDetails } from "./services/operations/profileAPI"
+
+// Admin Panel
+import AdminApp from "./pages/admin/AdminApp"
 
 function App() {
   const dispatch = useDispatch()
@@ -92,6 +96,16 @@ function App() {
             <PractitionerRoute>
               <PractitionerApp />
             </PractitionerRoute>
+          }
+        />
+
+        {/* Admin Panel */}
+        <Route
+          path="/admin/*"
+          element={
+            <AdminRoute>
+              <AdminApp />
+            </AdminRoute>
           }
         />
 

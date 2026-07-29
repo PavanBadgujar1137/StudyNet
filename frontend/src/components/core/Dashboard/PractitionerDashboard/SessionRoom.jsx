@@ -1,18 +1,37 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
-import { FiVideo, FiExternalLink, FiPlus, FiCopy, FiCheckCircle, FiX, FiCalendar } from 'react-icons/fi'
+import { FiVideo, FiExternalLink, FiPlus, FiCopy, FiCheckCircle, FiX, FiCalendar, FiUser, FiClock, FiRefreshCw, FiBell } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import { scheduleLiveClass, cancelClass } from '../../../../services/operations/liveClassAPI'
+import { apiConnector } from '../../../../services/apiConnector'
 
 export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData, onUpdate }) {
   const navigate = useNavigate()
   const { token } = useSelector((state) => state.auth)
+  const [bookings, setBookings] = useState([])
+  const [bookingsLoading, setBookingsLoading] = useState(true)
 
   const [coPilotOn, setCoPilotOn] = useState(true)
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [copiedId, setCopiedId] = useState(null)
   const [submitting, setSubmitting] = useState(false)
+
+  // Load practitioner's bookings — who will connect with me
+  const loadBookings = useCallback(async () => {
+    if (!token) return
+    setBookingsLoading(true)
+    try {
+      const res = await apiConnector('GET', '/api/v1/payment/practitioner-bookings', null, { Authorization: `Bearer ${token}` })
+      if (res?.data?.success) setBookings(res.data.bookings || [])
+    } catch (e) {
+      console.warn('Could not load practitioner bookings:', e.message)
+    }
+    setBookingsLoading(false)
+  }, [token])
+
+  useEffect(() => { loadBookings() }, [loadBookings])
+
 
   // Form State
   const [title, setTitle] = useState('')
@@ -71,6 +90,111 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
 
   return (
     <section className="view on" id="room">
+      {/* ── Booked Clients Section ─────────────────────────────────────── */}
+      <div style={{ marginBottom: 28, background: '#fff', borderRadius: 16, border: '1px solid #E2E8F0', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+        <div style={{ padding: '18px 24px', borderBottom: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #8B5CF620, #EC489920)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <FiBell size={18} color="#8B5CF6" />
+            </div>
+            <div>
+              <div style={{ fontWeight: 700, color: '#1E293B', fontSize: 15 }}>Clients Booked With You</div>
+              <div style={{ color: '#64748B', fontSize: 12 }}>Clients who have paid and are scheduled to connect with you</div>
+            </div>
+          </div>
+          <button onClick={loadBookings} style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: '6px 12px', color: '#64748B', cursor: 'pointer', fontSize: 12 }}>
+            <FiRefreshCw size={12} /> Refresh
+          </button>
+        </div>
+
+        {bookingsLoading ? (
+          <div style={{ padding: '24px', textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>
+            <FiRefreshCw style={{ animation: 'spin 1s linear infinite', marginRight: 6 }} />
+            Loading your bookings...
+          </div>
+        ) : bookings.length === 0 ? (
+          <div style={{ padding: '28px 24px', textAlign: 'center', color: '#94A3B8' }}>
+            <FiUser size={28} style={{ marginBottom: 8, opacity: 0.4 }} />
+            <div style={{ fontSize: 14 }}>No confirmed bookings yet</div>
+            <div style={{ fontSize: 12, marginTop: 4 }}>When clients book your offers, they'll appear here</div>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {bookings.map((booking, idx) => {
+              const client = booking.client
+              const offer = booking.offer
+              const scheduledAt = booking.scheduledAt ? new Date(booking.scheduledAt) : null
+              const isUpcoming = scheduledAt && scheduledAt > new Date()
+              return (
+                <div key={booking._id} style={{
+                  display: 'flex', alignItems: 'center', gap: 16, padding: '14px 24px',
+                  borderBottom: idx < bookings.length - 1 ? '1px solid #F8FAFC' : 'none',
+                  background: isUpcoming ? '#F0FDF4' : '#fff',
+                  transition: 'background 0.15s',
+                }}>
+                  {/* Client Avatar */}
+                  <div style={{ width: 42, height: 42, borderRadius: '50%', background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 15, flexShrink: 0 }}>
+                    {client?.firstName?.[0]}{client?.lastName?.[0]}
+                  </div>
+
+                  {/* Client Info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, color: '#1E293B', fontSize: 14 }}>
+                      {client?.firstName} {client?.lastName}
+                    </div>
+                    <div style={{ color: '#64748B', fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {client?.email}
+                    </div>
+                  </div>
+
+                  {/* Offer */}
+                  <div style={{ flexShrink: 0, textAlign: 'center' }}>
+                    <div style={{ fontWeight: 600, color: '#334155', fontSize: 13, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {offer?.title || 'Session Booking'}
+                    </div>
+                    <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, background: '#F1F5F9', color: '#64748B', textTransform: 'capitalize', fontWeight: 500 }}>
+                      {booking.offerType}
+                    </span>
+                  </div>
+
+                  {/* Scheduled Time */}
+                  <div style={{ flexShrink: 0, textAlign: 'right' }}>
+                    {scheduledAt ? (
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: isUpcoming ? '#10B981' : '#94A3B8', fontSize: 12, fontWeight: 600, justifyContent: 'flex-end' }}>
+                          <FiClock size={11} />
+                          {scheduledAt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </div>
+                        <div style={{ color: '#94A3B8', fontSize: 11 }}>
+                          {scheduledAt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                      </div>
+                    ) : (
+                      <span style={{ color: '#94A3B8', fontSize: 12 }}>Time TBD</span>
+                    )}
+                  </div>
+
+                  {/* Amount + Status */}
+                  <div style={{ flexShrink: 0, textAlign: 'right' }}>
+                    <div style={{ color: '#10B981', fontWeight: 700, fontSize: 14 }}>
+                      ₹{booking.amount?.toLocaleString('en-IN')}
+                    </div>
+                    <span style={{
+                      fontSize: 11, padding: '2px 8px', borderRadius: 20, fontWeight: 600,
+                      background: booking.status === 'confirmed' ? '#DCFCE7' : booking.status === 'completed' ? '#EFF6FF' : '#FEF3C7',
+                      color: booking.status === 'confirmed' ? '#166534' : booking.status === 'completed' ? '#1D4ED8' : '#92400E',
+                    }}>
+                      {booking.status}
+                    </span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+
       <div className="htop" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
         <div>
           <div className="crumb">Live session room</div>

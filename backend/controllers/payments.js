@@ -5,167 +5,206 @@ const Offer = require("../models/Offer")
 const Booking = require("../models/Booking")
 const Payout = require("../models/Payout")
 const Invoice = require("../models/Invoice")
+const Subscription = require("../models/Subscription")
+const AdminPaymentLog = require("../models/AdminPaymentLog")
 const PractitionerProfile = require("../models/PractitionerProfile")
 const mailSender = require("../utils/mailSender")
 const mongoose = require("mongoose")
-const { courseEnrollmentEmail } = require("../mail/templates/courseEnrollmentEmail")
 const { paymentSuccessEmail } = require("../mail/templates/paymentSuccessEmail")
 
-// Original Course Checkout (re-labelled as Program)
-exports.capturePayment = async (req, res) => {
-  const { courses } = req.body
-  const userId = req.user.id
-  if (!courses || courses.length === 0) {
-    return res.json({ success: false, message: "Please Provide Course/Program ID" })
-  }
+// ─── CORRECT PAYMENT FLOW ─────────────────────────────────────────────────────
+// ALL payments from clients go to the PLATFORM ADMIN.
+// Admin then pays practitioners their monthly salary manually.
+// This file handles:
+// 1. Subscription plan payments (from Pricing page)
+// 2. Practitioner offer bookings (ALL offer types: session, circle, program)
+// ─────────────────────────────────────────────────────────────────────────────
 
-  let total_amount = 0
-
-  for (const course_id of courses) {
-    try {
-      const course = await Course.findById(course_id)
-      if (!course) {
-        return res.status(200).json({ success: false, message: "Could not find the Program" })
-      }
-      const uid = new mongoose.Types.ObjectId(userId)
-      if (course.studentsEnroled.includes(uid)) {
-        return res.status(200).json({ success: false, message: "Client is already Enrolled" })
-      }
-      total_amount += course.price
-    } catch (error) {
-      console.log(error)
-      return res.status(500).json({ success: false, message: error.message })
-    }
-  }
-
-  const options = {
-    amount: Math.round(Number(total_amount) * 100),
-    currency: "INR",
-    receipt: `receipt_${Date.now()}`,
-  }
-
+// ─── 1. CREATE SUBSCRIPTION PAYMENT ORDER ─────────────────────────────────────
+exports.createSubscriptionOrder = async (req, res) => {
   try {
-    const { key_id } = getRazorpayKeys()
-    const paymentResponse = await getRazorpayInstance().orders.create(options)
-    return res.json({
-      success: true,
-      data: paymentResponse,
-      key: key_id,
-    })
-  } catch (error) {
-    console.log("CAPTURE PAYMENT ERROR:", error)
-    return res.status(500).json({
-      success: false,
-      message: error.message || "Could not initiate order.",
-    })
-  }
-}
-
-// ─── Create Razorpay Order for Practitioner Session / Connection ───
-exports.createPractitionerOrder = async (req, res) => {
-  try {
-    const { practitionerId, amount } = req.body
+    const { planKey } = req.body
     const userId = req.user.id
 
-    if (!practitionerId) {
-      return res.status(400).json({ success: false, message: "Practitioner ID is required" })
+    const planPrices = {
+      starter: 999,
+      growth: 2999,
+      practice: 5999,
+      master: 9999,
+    }
+    const planNames = {
+      starter: "Starter Plan",
+      growth: "Growth Plan",
+      practice: "Practice Plan",
+      master: "Master Plan",
     }
 
-    let practUser = await User.findById(practitionerId)
-    if (!practUser) {
-      const pProfile = await PractitionerProfile.findById(practitionerId)
-      if (pProfile) practUser = await User.findById(pProfile.user)
+    if (!planKey || !planPrices[planKey]) {
+      return res.status(400).json({ success: false, message: "Invalid plan key" })
     }
 
-    if (!practUser) {
-      return res.status(404).json({ success: false, message: "Practitioner user record not found" })
-    }
-
-    const profile = await PractitionerProfile.findOne({ user: practUser._id })
-    const sessionRate = amount || profile?.sessionRate || 0
-    const numericAmount = Number(sessionRate)
-
-    if (!numericAmount || numericAmount <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Practitioner has not published any active offer prices yet.",
-      })
-    }
-
-    // Commission structure: Starter 8%, Growth 5%, Practice/Master 0%
-    const commissionRate = profile
-      ? profile.plan === "master" || profile.plan === "practice"
-        ? 0
-        : profile.plan === "growth"
-        ? 5
-        : 8
-      : 8
-
-    const commission = Math.round((numericAmount * commissionRate) / 100)
-    const netPayout = numericAmount - commission
+    const amount = planPrices[planKey]
+    const { key_id } = getRazorpayKeys()
 
     const options = {
-      amount: Math.round(numericAmount * 100), // in paise
+      amount: Math.round(amount * 100), // paise
       currency: "INR",
-      receipt: `oh_prac_${Date.now()}`,
+      receipt: `sub_${planKey}_${Date.now()}`,
       notes: {
-        practitionerId: practUser._id.toString(),
-        clientId: userId,
-        practitionerName: `${practUser.firstName} ${practUser.lastName}`,
+        userId: userId.toString(),
+        planKey,
+        planName: planNames[planKey],
       },
     }
 
-    const { key_id } = getRazorpayKeys()
-    const instance = getRazorpayInstance()
-    const order = await instance.orders.create(options)
+    const order = await getRazorpayInstance().orders.create(options)
 
     return res.status(200).json({
       success: true,
       order,
       key: key_id,
-      amount: numericAmount,
-      commission,
-      netPayout,
-      practitionerName: `${practUser.firstName} ${practUser.lastName}`,
+      amount,
+      planKey,
+      planName: planNames[planKey],
     })
   } catch (error) {
-    console.error("createPractitionerOrder error:", error)
-    return res.status(500).json({
-      success: false,
-      message: error.message || "Failed to create Razorpay order for practitioner payment",
-    })
+    console.error("createSubscriptionOrder error:", error)
+    return res.status(500).json({ success: false, message: error.message })
   }
 }
 
-// ─── OpenHand Offer Booking Checkout (Session / Circle / Program via Razorpay & Stripe)
-exports.bookOffer = async (req, res) => {
+// ─── 2. VERIFY SUBSCRIPTION PAYMENT ──────────────────────────────────────────
+exports.verifySubscriptionPayment = async (req, res) => {
   try {
-    const { offerId, gateway = "razorpay" } = req.body
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, planKey } = req.body
     const userId = req.user.id
 
-    const offer = await Offer.findById(offerId).populate("practitioner")
+    // Signature verification
+    const { key_secret } = getRazorpayKeys()
+    const body = razorpay_order_id + "|" + razorpay_payment_id
+    const expectedSignature = crypto.createHmac("sha256", key_secret).update(body).digest("hex")
+
+    if (expectedSignature !== razorpay_signature) {
+      return res.status(400).json({ success: false, message: "Payment verification failed" })
+    }
+
+    const planPrices = { starter: 999, growth: 2999, practice: 5999, master: 9999 }
+    const planNames = { starter: "Starter Plan", growth: "Growth Plan", practice: "Practice Plan", master: "Master Plan" }
+    const amount = planPrices[planKey] || 0
+
+    // Deactivate any existing active subscription for this client
+    await Subscription.updateMany({ client: userId, status: "active" }, { status: "expired" })
+
+    // Create new subscription record
+    const startDate = new Date()
+    const endDate = new Date()
+    endDate.setMonth(endDate.getMonth() + 1)
+
+    const subscription = await Subscription.create({
+      client: userId,
+      planKey,
+      planName: planNames[planKey],
+      amount,
+      status: "active",
+      startDate,
+      endDate,
+      paymentGateway: "razorpay",
+      razorpayOrderId: razorpay_order_id,
+      razorpayPaymentId: razorpay_payment_id,
+    })
+
+    // Log to admin payment ledger
+    const clientUser = await User.findById(userId).select("firstName lastName email")
+    const adminLog = await AdminPaymentLog.create({
+      paymentType: "subscription",
+      client: userId,
+      clientName: `${clientUser.firstName} ${clientUser.lastName}`,
+      description: `${planNames[planKey]} Subscription`,
+      planKey,
+      amount,
+      currency: "INR",
+      amountOwedToPractitioner: 0, // Subscription fees are pure platform revenue
+      paymentGateway: "razorpay",
+      razorpayOrderId: razorpay_order_id,
+      razorpayPaymentId: razorpay_payment_id,
+      subscriptionId: subscription._id,
+      status: "received",
+    })
+
+    // Update subscription with admin log ref
+    subscription.adminPaymentLog = adminLog._id
+    await subscription.save()
+
+    // Send payment success email
+    try {
+      await mailSender(
+        clientUser.email,
+        `Welcome to OpenHand ${planNames[planKey]}!`,
+        paymentSuccessEmail(
+          `${clientUser.firstName} ${clientUser.lastName}`,
+          amount,
+          razorpay_order_id,
+          razorpay_payment_id
+        )
+      )
+    } catch (emailErr) {
+      console.warn("Subscription email failed:", emailErr.message)
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `${planNames[planKey]} activated successfully!`,
+      subscription,
+    })
+  } catch (error) {
+    console.error("verifySubscriptionPayment error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// ─── 3. GET CLIENT SUBSCRIPTION STATUS ───────────────────────────────────────
+exports.getMySubscription = async (req, res) => {
+  try {
+    const userId = req.user.id
+    const subscription = await Subscription.findOne({
+      client: userId,
+      status: "active",
+    })
+      .sort({ createdAt: -1 })
+      .lean()
+
+    return res.status(200).json({ success: true, subscription })
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// ─── 4. BOOK PRACTITIONER OFFER (ALL types: session / circle / program) ────────
+// This replaces the old bookOffer. ALL payment goes to admin.
+exports.bookOffer = async (req, res) => {
+  try {
+    const { offerId, scheduledAt, gateway = "razorpay" } = req.body
+    const userId = req.user.id
+
+    const offer = await Offer.findById(offerId).populate("practitioner", "firstName lastName email")
     if (!offer) {
       return res.status(404).json({ success: false, message: "Offer not found" })
     }
+    if (offer.status !== "published") {
+      return res.status(400).json({ success: false, message: "This offer is not currently available" })
+    }
 
     const practitionerId = offer.practitioner._id
-    const practitionerProfile = await PractitionerProfile.findOne({ user: practitionerId })
-
-    // Commission rates: Starter 8%, Growth 5%, Practice 0%
-    const commissionRate = practitionerProfile
-      ? practitionerProfile.plan === "practice"
-        ? 0
-        : practitionerProfile.plan === "growth"
-        ? 5
-        : 8
-      : 8
-
+    const practitionerUser = offer.practitioner
     const grossAmount = offer.price
-    const commission = Math.round((grossAmount * commissionRate) / 100)
-    const netPayout = grossAmount - commission
+
+    // Track what admin owes the practitioner as salary for this booking
+    // Default: 80% to practitioner (admin keeps 20% platform fee) — this is just a tracking number
+    // Admin still pays manually; this is just for admin visibility
+    const practitionerPortion = Math.round(grossAmount * 0.8)
 
     if (gateway === "stripe") {
-      // Stripe Intent Flow
+      // Stripe mock flow
       const mockStripeIntentId = `pi_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
       const booking = await Booking.create({
         client: userId,
@@ -173,42 +212,47 @@ exports.bookOffer = async (req, res) => {
         offer: offer._id,
         offerType: offer.type,
         amount: grossAmount,
-        commission,
-        netPayout,
+        commission: 0, // Admin handles commission manually
+        netPayout: practitionerPortion,
         paymentGateway: "stripe",
         stripePaymentIntentId: mockStripeIntentId,
         status: "confirmed",
         settlementStatus: "pending_t2",
-        scheduledAt: new Date(Date.now() + 86400000), // +1 day default
+        scheduledAt: scheduledAt ? new Date(scheduledAt) : new Date(Date.now() + 86400000),
       })
 
-      // Generate Invoice
-      const invoiceNum = `OH-${Date.now().toString().slice(-6)}`
-      await Invoice.create({
-        booking: booking._id,
-        client: userId,
-        practitioner: practitionerId,
-        invoiceNumber: invoiceNum,
-        subtotal: grossAmount,
-        gstRatePercentage: 18,
-        gstAmount: Math.round(grossAmount * 0.18),
-        totalAmount: grossAmount,
-        status: "paid",
+      await _createInvoiceAndAdminLog({
+        booking,
+        clientId: userId,
+        practitionerId,
+        practitionerUser,
+        offer,
+        grossAmount,
+        practitionerPortion,
+        gateway: "stripe",
+        paymentId: mockStripeIntentId,
+        orderId: null,
       })
 
       return res.status(200).json({
         success: true,
-        message: "Stripe payment intent initiated & confirmed",
+        message: "Offer booked successfully",
         booking,
         stripeClientSecret: `${mockStripeIntentId}_secret_openhand`,
       })
     }
 
-    // Razorpay Flow
+    // Razorpay flow — create order first, confirm on verify
     const options = {
       amount: Math.round(grossAmount * 100),
       currency: "INR",
-      receipt: `oh_rec_${Date.now()}`,
+      receipt: `oh_offer_${Date.now()}`,
+      notes: {
+        offerId: offerId.toString(),
+        clientId: userId.toString(),
+        practitionerId: practitionerId.toString(),
+        offerType: offer.type,
+      },
     }
 
     const { key_id } = getRazorpayKeys()
@@ -220,13 +264,13 @@ exports.bookOffer = async (req, res) => {
       offer: offer._id,
       offerType: offer.type,
       amount: grossAmount,
-      commission,
-      netPayout,
+      commission: 0,
+      netPayout: practitionerPortion,
       paymentGateway: "razorpay",
       razorpayOrderId: rzpOrder.id,
       status: "pending",
       settlementStatus: "unsettled",
-      scheduledAt: new Date(Date.now() + 86400000),
+      scheduledAt: scheduledAt ? new Date(scheduledAt) : new Date(Date.now() + 86400000),
     })
 
     return res.status(200).json({
@@ -234,25 +278,35 @@ exports.bookOffer = async (req, res) => {
       bookingId: booking._id,
       razorpayOrder: rzpOrder,
       key: key_id,
+      offerTitle: offer.title,
+      offerType: offer.type,
+      amount: grossAmount,
+      practitionerName: `${practitionerUser.firstName} ${practitionerUser.lastName}`,
     })
   } catch (error) {
-    console.error("Book Offer Error:", error)
-    return res.status(500).json({
-      success: false,
-      message: "Failed to process offer booking",
-      error: error.message,
-    })
+    console.error("bookOffer error:", error)
+    return res.status(500).json({ success: false, message: error.message })
   }
 }
 
-// ─── Verify Offer Booking & T+2 Settlement Calculation
+// ─── 5. VERIFY OFFER BOOKING PAYMENT ─────────────────────────────────────────
 exports.verifyOfferBooking = async (req, res) => {
   try {
-    const { bookingId, razorpay_payment_id, razorpay_signature } = req.body
+    const { bookingId, razorpay_payment_id, razorpay_order_id, razorpay_signature } = req.body
 
     const booking = await Booking.findById(bookingId)
+      .populate("offer", "title type price")
     if (!booking) {
-      return res.status(404).json({ success: false, message: "Booking record not found" })
+      return res.status(404).json({ success: false, message: "Booking not found" })
+    }
+
+    // Verify Razorpay signature
+    const { key_secret } = getRazorpayKeys()
+    const body = razorpay_order_id + "|" + razorpay_payment_id
+    const expectedSig = crypto.createHmac("sha256", key_secret).update(body).digest("hex")
+
+    if (expectedSig !== razorpay_signature) {
+      return res.status(400).json({ success: false, message: "Payment verification failed" })
     }
 
     booking.razorpayPaymentId = razorpay_payment_id
@@ -260,81 +314,90 @@ exports.verifyOfferBooking = async (req, res) => {
     booking.settlementStatus = "pending_t2"
     await booking.save()
 
-    // Generate Invoice
-    const invoiceNum = `OH-${Date.now().toString().slice(-6)}`
-    await Invoice.create({
-      booking: booking._id,
-      client: booking.client,
-      practitioner: booking.practitioner,
-      invoiceNumber: invoiceNum,
-      subtotal: booking.amount,
-      gstRatePercentage: 18,
-      gstAmount: Math.round(booking.amount * 0.18),
-      totalAmount: booking.amount,
-      status: "paid",
+    const [clientUser, practitionerUser] = await Promise.all([
+      User.findById(booking.client).select("firstName lastName email"),
+      User.findById(booking.practitioner).select("firstName lastName email"),
+    ])
+
+    await _createInvoiceAndAdminLog({
+      booking,
+      clientId: booking.client,
+      practitionerId: booking.practitioner,
+      practitionerUser,
+      offer: booking.offer,
+      grossAmount: booking.amount,
+      practitionerPortion: booking.netPayout,
+      gateway: "razorpay",
+      paymentId: razorpay_payment_id,
+      orderId: razorpay_order_id,
     })
 
-    // Update Practitioner monthly earnings & check nudge threshold
-    const profile = await PractitionerProfile.findOne({ user: booking.practitioner })
-    if (profile) {
-      profile.monthlyEarnings = (profile.monthlyEarnings || 0) + booking.netPayout
-      await profile.save()
-
-      // Nudge email trigger when Starter > ₹40,000 monthly earnings
-      if (profile.plan === "starter" && profile.monthlyEarnings > 40000) {
-        try {
-          const practitionerUser = await User.findById(booking.practitioner)
-          if (practitionerUser?.email) {
-            await mailSender(
-              practitionerUser.email,
-              "OpenHand — Growth Plan Upgrade Recommendation",
-              `Hi ${practitionerUser.firstName},\n\nYour monthly earnings passed ₹40,000 this month! On the Starter 8% plan, your commission cost has exceeded ₹1,499. Upgrading to the Growth plan will save you money. Switch anytime from your dashboard.`
-            )
-          }
-        } catch (e) {
-          console.warn("Upgrade nudge email failed:", e.message)
-        }
-      }
+    // Email client
+    try {
+      await mailSender(
+        clientUser.email,
+        `Booking Confirmed — ${booking.offer?.title || "Session"}`,
+        paymentSuccessEmail(
+          `${clientUser.firstName} ${clientUser.lastName}`,
+          booking.amount,
+          razorpay_order_id,
+          razorpay_payment_id
+        )
+      )
+    } catch (emailErr) {
+      console.warn("Booking email failed:", emailErr.message)
     }
 
     return res.status(200).json({
       success: true,
-      message: "Booking payment verified. T+2 settlement scheduled.",
+      message: "Booking confirmed! Your session is scheduled.",
       booking,
     })
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Failed to verify booking payment",
-      error: error.message,
+    console.error("verifyOfferBooking error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// ─── 6. GET CLIENT BOOKINGS ───────────────────────────────────────────────────
+exports.getMyBookings = async (req, res) => {
+  try {
+    const userId = req.user.id
+    const bookings = await Booking.find({
+      client: userId,
+      status: { $in: ["pending", "confirmed", "completed"] },
     })
+      .populate("practitioner", "firstName lastName image email")
+      .populate("offer", "title type price durationMinutes")
+      .sort({ scheduledAt: 1 })
+      .lean()
+
+    return res.status(200).json({ success: true, bookings })
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message })
   }
 }
 
-// Original course payment verification (backward compat)
-exports.verifyPayment = async (req, res) => {
-  const razorpay_order_id = req.body?.razorpay_order_id
-  const razorpay_payment_id = req.body?.razorpay_payment_id
-  const razorpay_signature = req.body?.razorpay_signature
-  const courses = req.body?.courses
-  const userId = req.user.id
+// ─── 7. GET PRACTITIONER'S UPCOMING BOOKINGS (who is connecting with me) ───────
+exports.getPractitionerBookings = async (req, res) => {
+  try {
+    const practitionerId = req.user.id
+    const bookings = await Booking.find({
+      practitioner: practitionerId,
+      status: { $in: ["confirmed", "completed"] },
+    })
+      .populate("client", "firstName lastName image email")
+      .populate("offer", "title type price durationMinutes")
+      .sort({ scheduledAt: 1 })
+      .lean()
 
-  if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !courses || !userId) {
-    return res.status(200).json({ success: false, message: "Payment Failed" })
+    return res.status(200).json({ success: true, bookings })
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message })
   }
-
-  let body = razorpay_order_id + "|" + razorpay_payment_id
-  const { key_secret } = getRazorpayKeys()
-  const expectedSignature = crypto.createHmac("sha256", key_secret).update(body.toString()).digest("hex")
-
-  if (expectedSignature === razorpay_signature) {
-    await enrollStudents(courses, userId, res)
-    return res.status(200).json({ success: true, message: "Payment Verified" })
-  }
-
-  return res.status(200).json({ success: false, message: "Payment Failed" })
 }
 
+// ─── 8. SEND PAYMENT SUCCESS EMAIL ───────────────────────────────────────────
 exports.sendPaymentSuccessEmail = async (req, res) => {
   const { orderId, paymentId, amount } = req.body
   const userId = req.user.id
@@ -344,16 +407,11 @@ exports.sendPaymentSuccessEmail = async (req, res) => {
   }
 
   try {
-    const enrolledStudent = await User.findById(userId)
+    const user = await User.findById(userId)
     await mailSender(
-      enrolledStudent.email,
-      `Payment Received`,
-      paymentSuccessEmail(
-        `${enrolledStudent.firstName} ${enrolledStudent.lastName}`,
-        amount / 100,
-        orderId,
-        paymentId
-      )
+      user.email,
+      "Payment Received — OpenHand",
+      paymentSuccessEmail(`${user.firstName} ${user.lastName}`, amount / 100, orderId, paymentId)
     )
     return res.status(200).json({ success: true, message: "Payment email sent" })
   } catch (error) {
@@ -361,24 +419,57 @@ exports.sendPaymentSuccessEmail = async (req, res) => {
   }
 }
 
-const enrollStudents = async (courses, userId, res) => {
-  for (const courseId of courses) {
-    const enrolledCourse = await Course.findOneAndUpdate(
-      { _id: courseId },
-      { $push: { studentsEnroled: userId } },
-      { new: true }
-    )
+// ─── HELPER: Create Invoice + Admin Payment Log ───────────────────────────────
+async function _createInvoiceAndAdminLog({
+  booking,
+  clientId,
+  practitionerId,
+  practitionerUser,
+  offer,
+  grossAmount,
+  practitionerPortion,
+  gateway,
+  paymentId,
+  orderId,
+}) {
+  try {
+    const clientUser = await User.findById(clientId).select("firstName lastName")
+    const invoiceNum = `OH-${Date.now().toString().slice(-8)}`
 
-    const courseProgress = await CourseProgress.create({
-      courseID: courseId,
-      userId: userId,
-      completedVideos: [],
+    // Create Invoice
+    await Invoice.create({
+      booking: booking._id,
+      client: clientId,
+      practitioner: practitionerId,
+      invoiceNumber: invoiceNum,
+      subtotal: grossAmount,
+      gstRatePercentage: 18,
+      gstAmount: Math.round(grossAmount * 0.18),
+      totalAmount: grossAmount,
+      status: "paid",
     })
 
-    await User.findByIdAndUpdate(
-      userId,
-      { $push: { courses: courseId, courseProgress: courseProgress._id } },
-      { new: true }
-    )
+    // Log to admin payment ledger (THE core record)
+    await AdminPaymentLog.create({
+      paymentType: "offer_booking",
+      client: clientId,
+      clientName: clientUser ? `${clientUser.firstName} ${clientUser.lastName}` : "Unknown",
+      practitioner: practitionerId,
+      practitionerName: practitionerUser ? `${practitionerUser.firstName} ${practitionerUser.lastName}` : "Unknown",
+      description: offer?.title
+        ? `${offer.title} (${offer.type})`
+        : `Practitioner Offer Booking`,
+      offerTitle: offer?.title || "",
+      offerType: offer?.type || "",
+      amount: grossAmount,
+      amountOwedToPractitioner: practitionerPortion,
+      paymentGateway: gateway,
+      razorpayOrderId: orderId,
+      razorpayPaymentId: paymentId,
+      bookingId: booking._id,
+      status: "received",
+    })
+  } catch (err) {
+    console.error("_createInvoiceAndAdminLog error:", err)
   }
 }
