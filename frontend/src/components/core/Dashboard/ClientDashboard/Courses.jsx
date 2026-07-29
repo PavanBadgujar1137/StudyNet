@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import {
   FiBookOpen, FiPlay, FiLock, FiCheck, FiClock, FiVideo,
-  FiSearch, FiFilter, FiStar, FiX, FiChevronLeft, FiUsers,
+  FiSearch, FiX, FiChevronLeft,
   FiRefreshCw, FiArrowRight, FiShield
 } from 'react-icons/fi'
 import toast from 'react-hot-toast'

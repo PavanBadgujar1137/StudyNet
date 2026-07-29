@@ -72,7 +72,7 @@ export function PractitionerDashboard() {
   ]
 
   const businessItems = [
-    { id: 'payouts', label: 'Payouts & invoices', icon: <FiDollarSign /> },
+    { id: 'payouts', label: 'Salary & Payouts', icon: <FiDollarSign /> },
     { id: 'growth', label: 'Growth tools', icon: <FiTrendingUp /> },
   ]
 
@@ -266,7 +266,7 @@ export function PractitionerDashboard() {
                 {activeSection === 'clients' && 'Client Management Hub'}
                 {activeSection === 'circles' && 'Active Circles'}
                 {activeSection === 'room' && 'Live Session Room'}
-                {activeSection === 'payouts' && 'Payouts & Billing Invoices'}
+                {activeSection === 'payouts' && 'Salary & Payout Ledger'}
                 {activeSection === 'growth' && 'Growth & Practice Tools'}
                 {activeSection === 'profile' && 'Edit Profile & Account Settings'}
               </h1>

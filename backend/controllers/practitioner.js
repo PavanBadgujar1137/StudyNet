@@ -542,3 +542,55 @@ exports.getConnectedClients = async (req, res) => {
     return res.status(500).json({ success: false, message: error.message })
   }
 }
+
+// ── Get Practitioner Bank Payout Details ──
+exports.getBankDetails = async (req, res) => {
+  try {
+    const userId = req.user.id
+    const profile = await PractitionerProfile.findOne({ user: userId }).select(
+      "bankAccountName bankAccountNumber bankIfscCode bankName upiId"
+    )
+
+    return res.status(200).json({
+      success: true,
+      bankDetails: profile || {},
+    })
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// ── Update Practitioner Bank Payout Details ──
+exports.updateBankDetails = async (req, res) => {
+  try {
+    const userId = req.user.id
+    const { bankAccountName, bankAccountNumber, bankIfscCode, bankName, upiId } = req.body
+
+    let profile = await PractitionerProfile.findOne({ user: userId })
+    if (!profile) {
+      profile = await PractitionerProfile.create({ user: userId })
+    }
+
+    if (bankAccountName !== undefined) profile.bankAccountName = bankAccountName
+    if (bankAccountNumber !== undefined) profile.bankAccountNumber = bankAccountNumber
+    if (bankIfscCode !== undefined) profile.bankIfscCode = bankIfscCode
+    if (bankName !== undefined) profile.bankName = bankName
+    if (upiId !== undefined) profile.upiId = upiId
+
+    await profile.save()
+
+    return res.status(200).json({
+      success: true,
+      message: "Bank & payout details updated successfully",
+      bankDetails: {
+        bankAccountName: profile.bankAccountName,
+        bankAccountNumber: profile.bankAccountNumber,
+        bankIfscCode: profile.bankIfscCode,
+        bankName: profile.bankName,
+        upiId: profile.upiId,
+      },
+    })
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}

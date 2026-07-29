@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import {
-  FiBookOpen, FiPlus, FiVideo, FiUpload, FiTrash2, FiEdit2,
-  FiEye, FiUsers, FiClock, FiSave, FiX, FiCheck, FiPlay,
+  FiBookOpen, FiPlus, FiVideo, FiUpload, FiTrash2,
+  FiUsers, FiClock, FiX, FiPlay,
   FiChevronDown, FiChevronUp, FiGlobe, FiLock, FiRefreshCw
 } from 'react-icons/fi'
 import toast from 'react-hot-toast'

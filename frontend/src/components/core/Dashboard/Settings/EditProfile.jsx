@@ -1,8 +1,10 @@
+import React, { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { useDispatch, useSelector } from "react-redux"
-import { FiUser, FiCalendar, FiPhone, FiInfo, FiCheck } from "react-icons/fi"
-
+import { FiUser, FiCalendar, FiPhone, FiInfo, FiCheck, FiCreditCard } from "react-icons/fi"
 import { updateProfile } from "../../../../services/operations/SettingsAPI"
+import { apiConnector } from "../../../../services/apiConnector"
+import toast from "react-hot-toast"
 
 const genders = ["Male", "Female", "Non-Binary", "Prefer not to say", "Other"]
 
@@ -192,6 +194,11 @@ export default function EditProfile() {
         </div>
       </div>
 
+      {/* Practitioner Bank & Payout Details Section */}
+      {(user?.accountType === "Practitioner" || user?.accountType === "Instructor") && (
+        <BankDetailsCard token={token} />
+      )}
+
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
         <button
           type="submit"
@@ -211,10 +218,173 @@ export default function EditProfile() {
             transition: 'all 0.15s ease'
           }}
         >
-          <FiCheck style={{ fontSize: '16px' }} /> Save Details
+          <FiCheck style={{ fontSize: '16px' }} /> Save Personal Details
         </button>
       </div>
     </form>
   )
 }
+
+function BankDetailsCard({ token }) {
+  const [bankForm, setBankForm] = useState({
+    bankName: "",
+    bankAccountName: "",
+    bankAccountNumber: "",
+    bankIfscCode: "",
+    upiId: "",
+  })
+  const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    async function loadBankDetails() {
+      if (!token) return
+      setLoading(true)
+      try {
+        const res = await apiConnector("GET", "/api/v1/practitioners/bank-details", null, {
+          Authorization: `Bearer ${token}`,
+        })
+        if (res?.data?.success && res.data.bankDetails) {
+          const d = res.data.bankDetails
+          setBankForm({
+            bankName: d.bankName || "",
+            bankAccountName: d.bankAccountName || "",
+            bankAccountNumber: d.bankAccountNumber || "",
+            bankIfscCode: d.bankIfscCode || "",
+            upiId: d.upiId || "",
+          })
+        }
+      } catch (e) {
+        console.warn("Could not fetch bank details:", e)
+      }
+      setLoading(false)
+    }
+    loadBankDetails()
+  }, [token])
+
+  const handleSaveBankDetails = async (e) => {
+    e.preventDefault()
+    setSaving(true)
+    try {
+      const res = await apiConnector("PUT", "/api/v1/practitioners/bank-details", bankForm, {
+        Authorization: `Bearer ${token}`,
+      })
+      if (res?.data?.success) {
+        toast.success("Bank & payout details saved successfully!")
+      } else {
+        toast.error(res?.data?.message || "Failed to save bank details")
+      }
+    } catch (e) {
+      toast.error("Failed to save bank details")
+    }
+    setSaving(false)
+  }
+
+  const inputClass = "w-full rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 focus:outline-none transition-all"
+  const labelClass = "text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5"
+
+  return (
+    <div className="rounded-3xl border border-indigo-100 bg-gradient-to-br from-white to-indigo-50/30 p-6 md:p-8 shadow-sm flex flex-col gap-6 text-left">
+      <div className="flex items-center justify-between border-b border-indigo-100 pb-4">
+        <div>
+          <h2 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
+            <FiCreditCard className="text-indigo-600" /> Bank & Payout Details
+          </h2>
+          <p className="text-xs text-slate-500 mt-0.5">Admin uses these details to disburse your monthly salary transfers</p>
+        </div>
+        <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          Admin Salary Recipient
+        </span>
+      </div>
+
+      {loading ? (
+        <div className="text-xs text-slate-400 py-4">Loading bank details...</div>
+      ) : (
+        <div className="flex flex-col gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="flex flex-col gap-2">
+              <label className={labelClass}>Bank Name</label>
+              <input
+                type="text"
+                placeholder="e.g. HDFC Bank / ICICI Bank"
+                className={inputClass}
+                value={bankForm.bankName}
+                onChange={(e) => setBankForm((f) => ({ ...f, bankName: e.target.value }))}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className={labelClass}>Account Holder Name</label>
+              <input
+                type="text"
+                placeholder="Name as in Bank Account"
+                className={inputClass}
+                value={bankForm.bankAccountName}
+                onChange={(e) => setBankForm((f) => ({ ...f, bankAccountName: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="flex flex-col gap-2">
+              <label className={labelClass}>Account Number</label>
+              <input
+                type="text"
+                placeholder="Enter Account Number"
+                className={inputClass}
+                value={bankForm.bankAccountNumber}
+                onChange={(e) => setBankForm((f) => ({ ...f, bankAccountNumber: e.target.value }))}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className={labelClass}>IFSC Code</label>
+              <input
+                type="text"
+                placeholder="e.g. HDFC0001234"
+                className={inputClass}
+                style={{ textTransform: "uppercase" }}
+                value={bankForm.bankIfscCode}
+                onChange={(e) => setBankForm((f) => ({ ...f, bankIfscCode: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className={labelClass}>UPI ID (for direct UPI payouts)</label>
+            <input
+              type="text"
+              placeholder="e.g. yourname@upi or phone@paytm"
+              className={inputClass}
+              value={bankForm.upiId}
+              onChange={(e) => setBankForm((f) => ({ ...f, upiId: e.target.value }))}
+            />
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <button
+              type="button"
+              onClick={handleSaveBankDetails}
+              disabled={saving}
+              style={{
+                background: "linear-gradient(135deg, #10B981 0%, #059669 100%)",
+                color: "#FFFFFF",
+                padding: "10px 22px",
+                borderRadius: "10px",
+                fontWeight: 700,
+                fontSize: "13px",
+                border: "none",
+                cursor: saving ? "not-allowed" : "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <FiCheck /> {saving ? "Saving Payout Details..." : "Save Bank & Payout Details"}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 

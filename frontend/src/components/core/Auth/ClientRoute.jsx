@@ -18,10 +18,10 @@ function ClientRoute({ children }) {
   }
 
   if (
-    user?.accountType === ACCOUNT_TYPE.PRACTITIONER ||
-    user?.accountType === ACCOUNT_TYPE.INSTRUCTOR
+    user?.accountType === ACCOUNT_TYPE.ADMIN ||
+    user?.accountType === "Admin"
   ) {
-    return <Navigate to="/practice/dashboard" />
+    return <Navigate to="/admin" />
   }
 
   return <Navigate to="/" />

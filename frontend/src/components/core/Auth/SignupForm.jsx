@@ -143,6 +143,78 @@ function SignupForm() {
           </div>
         </div>
 
+        {/* Practitioner Bank / Payout details for Admin Salary Transfers (Optional) */}
+        {accountType === ACCOUNT_TYPE.PRACTITIONER && (
+          <div style={{ background: "#F8FAFC", border: "1.5px dashed #CBD5E1", borderRadius: "12px", padding: "14px", marginTop: "4px" }}>
+            <div style={{ fontSize: "12px", fontWeight: 700, color: "#1E293B", marginBottom: "2px" }}>
+              💳 Payout & Bank Details (for Admin Salary Transfers)
+            </div>
+            <div style={{ fontSize: "11px", color: "#64748B", marginBottom: "10px" }}>
+              Admin uses these details to send your monthly salary payouts (can also be updated later in Settings).
+            </div>
+            <div className="auth-name-row" style={{ marginBottom: "8px" }}>
+              <div className="auth-field">
+                <label className="auth-label">Bank Name</label>
+                <input
+                  type="text"
+                  name="bankName"
+                  value={formData.bankName || ""}
+                  onChange={handleOnChange}
+                  placeholder="e.g. HDFC Bank"
+                  className="auth-input"
+                />
+              </div>
+              <div className="auth-field">
+                <label className="auth-label">Account Holder Name</label>
+                <input
+                  type="text"
+                  name="bankAccountName"
+                  value={formData.bankAccountName || ""}
+                  onChange={handleOnChange}
+                  placeholder="Name as per Bank"
+                  className="auth-input"
+                />
+              </div>
+            </div>
+            <div className="auth-name-row" style={{ marginBottom: "8px" }}>
+              <div className="auth-field">
+                <label className="auth-label">Account Number</label>
+                <input
+                  type="text"
+                  name="bankAccountNumber"
+                  value={formData.bankAccountNumber || ""}
+                  onChange={handleOnChange}
+                  placeholder="A/C Number"
+                  className="auth-input"
+                />
+              </div>
+              <div className="auth-field">
+                <label className="auth-label">IFSC Code</label>
+                <input
+                  type="text"
+                  name="bankIfscCode"
+                  value={formData.bankIfscCode || ""}
+                  onChange={handleOnChange}
+                  placeholder="e.g. HDFC0001234"
+                  className="auth-input"
+                  style={{ textTransform: "uppercase" }}
+                />
+              </div>
+            </div>
+            <div className="auth-field">
+              <label className="auth-label">UPI ID (Optional)</label>
+              <input
+                type="text"
+                name="upiId"
+                value={formData.upiId || ""}
+                onChange={handleOnChange}
+                placeholder="e.g. name@upi"
+                className="auth-input"
+              />
+            </div>
+          </div>
+        )}
+
         <button type="submit" className="auth-submit-btn">
           Create Free Account →
         </button>

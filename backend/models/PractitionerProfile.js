@@ -29,6 +29,13 @@ const practitionerProfileSchema = new mongoose.Schema(
     experienceYears: { type: Number, default: 0 },
     sessionRate: { type: Number, default: 0 },
     availabilityText: { type: String, default: "Next slot available soon" },
+
+    // Payout & Bank Details for Admin Salary Transfer
+    bankAccountName: { type: String, trim: true },
+    bankAccountNumber: { type: String, trim: true },
+    bankIfscCode: { type: String, trim: true, uppercase: true },
+    bankName: { type: String, trim: true },
+    upiId: { type: String, trim: true },
   },
   { timestamps: true }
 )

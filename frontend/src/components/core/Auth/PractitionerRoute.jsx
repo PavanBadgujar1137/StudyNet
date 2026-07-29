@@ -18,10 +18,10 @@ function PractitionerRoute({ children }) {
   }
 
   if (
-    user?.accountType === ACCOUNT_TYPE.CLIENT ||
-    user?.accountType === ACCOUNT_TYPE.STUDENT
+    user?.accountType === ACCOUNT_TYPE.ADMIN ||
+    user?.accountType === "Admin"
   ) {
-    return <Navigate to="/app/journey" />
+    return <Navigate to="/admin" />
   }
 
   return <Navigate to="/" />

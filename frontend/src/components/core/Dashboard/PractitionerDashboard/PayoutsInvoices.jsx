@@ -13,42 +13,42 @@ export function PayoutsInvoices({ telemetryData }) {
       <div className="htop">
         <div>
           <div className="crumb">Payouts &amp; invoices</div>
-          <h1>Where your money is</h1>
-          <p>Real-time payout records and billing invoices synced from database.</p>
+          <h1>Monthly Salary &amp; Payout Ledger</h1>
+          <p>All client payments are collected centrally by Admin. Admin disburses your monthly practitioner salary.</p>
         </div>
       </div>
 
       <div className="g4">
         <div className="card stat">
-          <div className="lbl">Cleared this month</div>
+          <div className="lbl">Earned this month</div>
           <div className="val">₹{monthlyEarnings.toLocaleString('en-IN')}</div>
-          <div className="dl flat">Settled payments</div>
+          <div className="dl flat">Sessions &amp; course bookings</div>
         </div>
         <div className="card stat">
-          <div className="lbl">Total earnings</div>
+          <div className="lbl">Total Earnings</div>
           <div className="val">₹{totalEarnings.toLocaleString('en-IN')}</div>
           <div className="dl flat">Lifetime earnings</div>
         </div>
         <div className="card stat">
-          <div className="lbl">Clearing Thursday</div>
+          <div className="lbl">Pending Admin Salary</div>
           <div className="val">₹{(stats.clearingThisWeek || 0).toLocaleString('en-IN')}</div>
-          <div className="dl flat">Settlement queue</div>
+          <div className="dl flat">Owed by Admin</div>
         </div>
         <div className="card stat">
-          <div className="lbl">Payout Records</div>
+          <div className="lbl">Salary Payout Logs</div>
           <div className="val">{payouts.length}</div>
-          <div className="dl flat">Logged payouts</div>
+          <div className="dl flat">Admin settlements</div>
         </div>
       </div>
 
       <div className="g2">
         <div className="card">
-          <div className="sechd"><h3>Settlement timeline</h3></div>
+          <div className="sechd"><h3>Admin Payout Timeline</h3></div>
           <div className="tl">
-            <div className="tli done"><b>Client pays — instantly</b><span>UPI, card, or net banking at booking</span></div>
-            <div className="tli done"><b>Held until the session happens</b><span>Protects both sides</span></div>
-            <div className="tli done"><b>Session completed</b><span>Marked when session room closes</span></div>
-            <div className="tli"><b>Settled to your bank — T+2</b><span>Direct bank settlement</span></div>
+            <div className="tli done"><b>1. Client Books &amp; Pays</b><span>Payments (sessions, courses) go directly to Platform Admin</span></div>
+            <div className="tli done"><b>2. Session Delivered / Video Watched</b><span>Tracked automatically in Practitioner Dashboard</span></div>
+            <div className="tli done"><b>3. Admin Calculates Monthly Salary</b><span>Admin logs net earnings in Platform Control Center</span></div>
+            <div className="tli"><b>4. Monthly Bank Transfer</b><span>Admin transfers monthly salary directly to your bank</span></div>
           </div>
         </div>
 

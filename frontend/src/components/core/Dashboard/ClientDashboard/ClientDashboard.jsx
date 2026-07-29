@@ -1,17 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useSelector } from 'react-redux'
-import { 
-  FiMapPin, 
-  FiCheckSquare, 
-  FiUsers, 
-  FiBookOpen, 
-  FiFeather, 
-  FiMenu, 
-  FiX, 
-  FiMessageSquare, 
-  FiCalendar, 
+import {
+  FiMapPin,
+  FiCheckSquare,
+  FiUsers,
+  FiBookOpen,
+  FiFeather,
+  FiMenu,
+  FiX,
+  FiMessageSquare,
   FiZap,
-  FiHeart,
   FiUserCheck,
   FiUser,
   FiVideo
@@ -45,9 +43,6 @@ export function ClientDashboard() {
 
   const clientName = user?.firstName || 'Student'
   const practitionerObj = dashboardData?.practitioner
-  const practitionerName = practitionerObj?.firstName 
-    ? `Dr. ${practitionerObj.firstName} ${practitionerObj.lastName || ''}`.trim() 
-    : 'Your Instructor'
   const practitionerFirstName = practitionerObj?.firstName || 'Instructor'
 
   const loadData = useCallback(async () => {
@@ -130,7 +125,7 @@ export function ClientDashboard() {
     <div className="client-app-shell oh-dashboard-layout">
       {/* Mobile Drawer Overlay */}
       {isMobileSidebarOpen && (
-        <div 
+        <div
           style={{
             position: 'fixed',
             inset: 0,
@@ -155,7 +150,7 @@ export function ClientDashboard() {
               <div className="oh-sidebar-brand-sub">Personalized Space</div>
             </div>
           </div>
-          <button 
+          <button
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B' }}
             className="lg:hidden"
             onClick={() => setIsMobileSidebarOpen(false)}
@@ -196,9 +191,9 @@ export function ClientDashboard() {
         </div>
 
         {/* User Profile Card directly under navigation */}
-        <div 
-          className="oh-sidebar-user" 
-          onClick={() => setActiveTab('profile')} 
+        <div
+          className="oh-sidebar-user"
+          onClick={() => setActiveTab('profile')}
           style={{ cursor: 'pointer', borderTop: '1px solid #E2E8F0', marginTop: '4px' }}
           title="Click to edit profile & account details"
         >
@@ -217,7 +212,7 @@ export function ClientDashboard() {
         {/* Sticky Top Bar */}
         <div className="oh-viewport-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <button 
+            <button
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#334155', padding: '4px' }}
               className="lg:hidden"
               onClick={() => setIsMobileSidebarOpen(true)}
@@ -246,7 +241,7 @@ export function ClientDashboard() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <button 
+            <button
               onClick={() => setActiveTab('checkin')}
               className="oh-action-btn"
             >
@@ -258,23 +253,23 @@ export function ClientDashboard() {
         {/* View Content */}
         <div className="oh-view-body">
           {activeTab === 'journey' && (
-            <MyJourney 
-              clientName={clientName} 
-              practitionerName={practitionerFirstName} 
+            <MyJourney
+              clientName={clientName}
+              practitionerName={practitionerFirstName}
               dashboardData={dashboardData}
               loading={loading}
             />
           )}
           {activeTab === 'checkin' && (
-            <CheckIn 
-              clientName={clientName} 
-              practitionerName={practitionerFirstName} 
+            <CheckIn
+              clientName={clientName}
+              practitionerName={practitionerFirstName}
               dashboardData={dashboardData}
-              onCheckInSuccess={handleCheckInSuccess} 
+              onCheckInSuccess={handleCheckInSuccess}
             />
           )}
           {activeTab === 'practitioners' && (
-            <Practitioners 
+            <Practitioners
               setActiveTab={setActiveTab}
               dashboardData={dashboardData}
               onUpdate={loadData}
@@ -284,10 +279,10 @@ export function ClientDashboard() {
             <Courses />
           )}
           {activeTab === 'circle' && (
-            <MyCircle 
+            <MyCircle
               setActiveTab={setActiveTab}
-              clientName={clientName} 
-              practitionerName={practitionerFirstName} 
+              clientName={clientName}
+              practitionerName={practitionerFirstName}
               dashboardData={dashboardData}
             />
           )}
@@ -295,14 +290,14 @@ export function ClientDashboard() {
             <CommunityChatHub defaultPractitionerId={practitionerObj?._id} />
           )}
           {activeTab === 'sessions' && (
-            <SessionsResources 
-              practitionerName={practitionerFirstName} 
+            <SessionsResources
+              practitionerName={practitionerFirstName}
               dashboardData={dashboardData}
             />
           )}
           {activeTab === 'reflections' && (
-            <Reflections 
-              practitionerName={practitionerFirstName} 
+            <Reflections
+              practitionerName={practitionerFirstName}
               dashboardData={dashboardData}
               onReflectionUpdate={loadData}
             />
