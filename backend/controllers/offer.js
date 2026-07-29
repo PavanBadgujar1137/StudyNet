@@ -79,9 +79,27 @@ exports.updateOffer = async (req, res) => {
   try {
     const { offerId } = req.params
     const userId = req.user.id
+    const { type, kind, title, description, price, durationMinutes, maxSeats, weekCount, status, tags } = req.body
+
+    const updateData = {}
+    if (title !== undefined) updateData.title = title
+    if (description !== undefined) updateData.description = description
+    if (price !== undefined) updateData.price = Number(price)
+    if (durationMinutes !== undefined) updateData.durationMinutes = Number(durationMinutes)
+    if (maxSeats !== undefined) updateData.maxSeats = Number(maxSeats)
+    if (weekCount !== undefined) updateData.weekCount = Number(weekCount)
+    if (status !== undefined) updateData.status = status
+    if (tags !== undefined) updateData.tags = Array.isArray(tags) ? tags : String(tags).split(',').map((t) => t.trim()).filter(Boolean)
+
+    if (type || kind) {
+      const rawType = (type || kind).toLowerCase()
+      const validTypes = ["session", "circle", "program"]
+      if (validTypes.includes(rawType)) updateData.type = rawType
+    }
+
     const offer = await Offer.findOneAndUpdate(
       { _id: offerId, practitioner: userId },
-      req.body,
+      updateData,
       { new: true }
     )
 
@@ -90,6 +108,17 @@ exports.updateOffer = async (req, res) => {
         success: false,
         message: "Offer not found or unauthorized",
       })
+    }
+
+    // Auto-update PractitionerProfile sessionRate & formats
+    const userOffers = await Offer.find({ practitioner: userId, status: "published" })
+    if (userOffers.length > 0) {
+      const minRate = Math.min(...userOffers.map((o) => o.price || 0))
+      const formats = [...new Set(userOffers.map((o) => (o.type === "circle" ? "circle" : "1:1")))]
+      await PractitionerProfile.findOneAndUpdate(
+        { user: userId },
+        { sessionRate: minRate, formats }
+      )
     }
 
     return res.status(200).json({

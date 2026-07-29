@@ -98,15 +98,31 @@ export function Practitioners({ onUpdate, setActiveTab }) {
     const offers = p.offers || p.userOffers || []
     const selectedIds = selectedOffersMap[pId] || []
 
-    if (offers.length === 0) return p.sessionRate || 2500
+    if (offers.length === 0) return p.sessionRate || 0
 
     const selectedOffers = offers.filter((o) => selectedIds.includes(o._id))
-    if (selectedOffers.length === 0) return p.sessionRate || 2500
+    if (selectedOffers.length === 0) return p.sessionRate || (offers[0]?.price || 0)
 
     return selectedOffers.reduce((sum, o) => sum + (o.price || 0), 0)
   }
 
   // Handle client selecting practitioner, paying fee, and submitting connection request for approval
+  // Helper to load Razorpay SDK dynamically
+  const loadRazorpaySDK = () => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) {
+        resolve(true)
+        return
+      }
+      const script = document.createElement('script')
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+      script.onload = () => resolve(true)
+      script.onerror = () => resolve(false)
+      document.body.appendChild(script)
+    })
+  }
+
+  // Handle client selecting practitioner, paying fee via Razorpay, and submitting connection request
   const handlePayAndConnect = async (practitioner) => {
     if (!token) {
       toast.error('Please login to select and connect with a practitioner')
@@ -119,82 +135,95 @@ export function Practitioners({ onUpdate, setActiveTab }) {
 
     setPayingId(pId)
 
-    // Razorpay Integration / Checkout trigger
-    const options = {
-      key: process.env.REACT_APP_RAZORPAY_KEY || 'rzp_test_TDhFSRuAl18Gcb',
-      amount: amount * 100,
-      currency: 'INR',
-      name: 'OpenHand Wellbeing',
-      description: `Practitioner Counseling Session Fee - ${pName}`,
-      handler: async function (response) {
-        try {
-          const res = await apiConnector(
-            'POST',
-            '/api/v1/practitioners/connect',
-            {
-              practitionerId: pId,
-              amountPaid: amount,
-              paymentId: response.razorpay_payment_id || `pay_${Date.now()}`,
-              orderId: response.razorpay_order_id || `order_${Date.now()}`,
-            },
-            { Authorization: `Bearer ${token}` }
-          )
-
-          if (res?.data?.success) {
-            toast.success(`Payment of ₹${amount} successful! Connection request sent to ${pName} for approval.`)
-            loadData()
-            if (onUpdate) onUpdate()
-          } else {
-            toast.error(res?.data?.message || 'Could not process connection request.')
-          }
-        } catch (err) {
-          console.error('Payment submit error:', err)
-          toast.error('Connection request failed after payment.')
-        } finally {
-          setPayingId(null)
-        }
-      },
-      prefill: {
-        name: 'Client User',
-      },
-      theme: {
-        color: '#1F5FE0',
-      },
-    }
-
-    if (window.Razorpay) {
-      const rzp = new window.Razorpay(options)
-      rzp.open()
-    } else {
-      // Fallback simulated payment flow if Razorpay script is loading
-      try {
-        const res = await apiConnector(
-          'POST',
-          '/api/v1/practitioners/connect',
-          {
-            practitionerId: pId,
-            amountPaid: amount,
-            paymentId: `pay_sim_${Date.now()}`,
-            orderId: `order_sim_${Date.now()}`,
-          },
-          { Authorization: `Bearer ${token}` }
-        )
-
-        if (res?.data?.success) {
-          toast.success(`Payment of ₹${amount} processed! Connection request sent to ${pName} for approval.`)
-          loadData()
-          if (onUpdate) onUpdate()
-        }
-      } catch (err) {
-        toast.error('Could not send connection request.')
-      } finally {
+    try {
+      const isLoaded = await loadRazorpaySDK()
+      if (!isLoaded) {
+        toast.error('Razorpay SDK failed to load. Please check your internet connection.')
         setPayingId(null)
+        return
       }
+
+      // 1. Create Razorpay order in backend
+      const orderRes = await apiConnector(
+        'POST',
+        '/api/v1/payment/create-practitioner-order',
+        { practitionerId: pId, amount },
+        { Authorization: `Bearer ${token}` }
+      )
+
+      if (!orderRes?.data?.success) {
+        toast.error(orderRes?.data?.message || 'Could not create Razorpay order for practitioner payment.')
+        setPayingId(null)
+        return
+      }
+
+      const { order, key, amount: finalAmount } = orderRes.data
+
+      // 2. Open Razorpay Checkout modal with authentic order
+      const options = {
+        key: key || process.env.REACT_APP_RAZORPAY_KEY || 'rzp_test_TDhFSRuAl18Gcb',
+        amount: order.amount,
+        currency: order.currency || 'INR',
+        name: 'OpenHand Practice Platform',
+        description: `Counseling Fee for ${pName}`,
+        order_id: order.id,
+        handler: async function (response) {
+          try {
+            // 3. Verify signature and confirm connection in backend
+            const res = await apiConnector(
+              'POST',
+              '/api/v1/practitioners/connect',
+              {
+                practitionerId: pId,
+                amountPaid: finalAmount || amount,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              },
+              { Authorization: `Bearer ${token}` }
+            )
+
+            if (res?.data?.success) {
+              toast.success(`🎉 Payment of ₹${finalAmount || amount} successful! Net payout credited to ${pName}.`)
+              loadData()
+              if (onUpdate) onUpdate()
+            } else {
+              toast.error(res?.data?.message || 'Could not verify payment.')
+            }
+          } catch (err) {
+            console.error('Payment verification error:', err)
+            toast.error('Connection request failed after payment verification.')
+          } finally {
+            setPayingId(null)
+          }
+        },
+        prefill: {
+          name: '',
+          email: '',
+        },
+        theme: {
+          color: '#1F5FE0',
+        },
+      }
+
+      const rzp = new window.Razorpay(options)
+      rzp.on('payment.failed', function (resp) {
+        toast.error(`Payment Failed: ${resp.error.description || 'Transaction cancelled'}`)
+        setPayingId(null)
+      })
+      rzp.open()
+    } catch (err) {
+      console.error('Razorpay Checkout initiation error:', err)
+      toast.error('Failed to initiate Razorpay checkout.')
+      setPayingId(null)
     }
   }
 
-  // Filtered practitioners list
+  // Filtered practitioners list (ONLY display practitioners who have published at least 1 active offer!)
   const filteredPractitioners = practitioners.filter((p) => {
+    const offers = p.offers || p.userOffers || []
+    if (offers.length === 0) return false // Hide practitioner card if practitioner has 0 active published offers
+
     const fullName = `${p.user?.firstName || p.firstName || ''} ${p.user?.lastName || p.lastName || ''}`.toLowerCase()
     const email = (p.user?.email || p.email || '').toLowerCase()
     const credentials = (p.credentials || '').toLowerCase()
@@ -380,7 +409,7 @@ export function Practitioners({ onUpdate, setActiveTab }) {
                 )}
 
                 {/* Interactive Published Offers Section with Checkboxes */}
-                {offers.length > 0 && (
+                {offers.length > 0 ? (
                   <div style={{ background: '#F8FAFC', borderRadius: '12px', padding: '12px', border: '1px solid #E2E8F0' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                       <span style={{ fontSize: '11px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
@@ -432,28 +461,36 @@ export function Practitioners({ onUpdate, setActiveTab }) {
                       })}
                     </div>
                   </div>
+                ) : (
+                  <div style={{ background: '#F8FAFC', borderRadius: '12px', padding: '12px 16px', border: '1px dashed #CBD5E1', textAlign: 'center' }}>
+                    <span style={{ fontSize: '12.5px', color: '#64748B', fontWeight: 600 }}>
+                      No active offers published yet
+                    </span>
+                  </div>
                 )}
 
-                {/* Selected Fee Info */}
-                <div
-                  style={{
-                    paddingTop: '10px',
-                    borderTop: '1px solid #F1F5F9',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    fontSize: '13px',
-                  }}
-                >
-                  <span style={{ fontWeight: 800, color: '#0F172A' }}>
-                    Selected Fee:{' '}
-                    <span style={{ color: '#2563EB', fontWeight: 900, fontSize: '15px' }}>₹{selectedFee}</span>
-                  </span>
+                {/* Selected Fee Info (Only when offers exist) */}
+                {offers.length > 0 && (
+                  <div
+                    style={{
+                      paddingTop: '10px',
+                      borderTop: '1px solid #F1F5F9',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      fontSize: '13px',
+                    }}
+                  >
+                    <span style={{ fontWeight: 800, color: '#0F172A' }}>
+                      Selected Fee:{' '}
+                      <span style={{ color: '#2563EB', fontWeight: 900, fontSize: '15px' }}>₹{selectedFee}</span>
+                    </span>
 
-                  <span style={{ fontSize: '11px', color: '#64748B' }}>
-                    Razorpay Secured Checkout
-                  </span>
-                </div>
+                    <span style={{ fontSize: '11px', color: '#64748B' }}>
+                      Razorpay Secured Checkout
+                    </span>
+                  </div>
+                )}
 
                 {/* Action Buttons based on Payment & Approval Status */}
                 <div style={{ display: 'flex', gap: '8px', paddingTop: '4px' }}>
@@ -521,10 +558,10 @@ export function Practitioners({ onUpdate, setActiveTab }) {
                     >
                       <FiClock size={15} /> Awaiting Practitioner Approval
                     </button>
-                  ) : (
+                  ) : offers.length > 0 ? (
                     <button
                       onClick={() => handlePayAndConnect(p)}
-                      disabled={payingId === pId}
+                      disabled={payingId === pId || selectedFee <= 0}
                       style={{
                         width: '100%',
                         padding: '11px',
@@ -544,8 +581,28 @@ export function Practitioners({ onUpdate, setActiveTab }) {
                     >
                       <FiCreditCard size={15} />
                       <span>
-                        {payingId === pId ? 'Processing Order...' : `Select & Pay ₹${selectedFee}`}
+                        {payingId === pId ? 'Processing Order...' : `Pay ₹${selectedFee} & Request Connection`}
                       </span>
+                    </button>
+                  ) : (
+                    <button
+                      disabled
+                      style={{
+                        width: '100%',
+                        padding: '11px',
+                        borderRadius: '10px',
+                        background: '#F1F5F9',
+                        color: '#94A3B8',
+                        border: '1px solid #E2E8F0',
+                        fontWeight: 700,
+                        fontSize: '12.5px',
+                        cursor: 'not-allowed',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      No Active Offers Published
                     </button>
                   )}
                 </div>

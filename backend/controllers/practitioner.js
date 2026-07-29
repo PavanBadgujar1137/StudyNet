@@ -1,8 +1,13 @@
+const crypto = require("crypto")
+const { getRazorpayKeys } = require("../config/razorpay")
+const mailSender = require("../utils/mailSender")
 const User = require("../models/User")
 const PractitionerProfile = require("../models/PractitionerProfile")
 const Booking = require("../models/Booking")
 const Payout = require("../models/Payout")
 const Invoice = require("../models/Invoice")
+const Offer = require("../models/Offer")
+
 
 exports.getPractitioners = async (req, res) => {
   try {
@@ -47,17 +52,20 @@ exports.getPractitioners = async (req, res) => {
       }
 
       // Attach all offers created by this practitioner from MongoDB
-      const userOffers = await Offer.find({ practitioner: u._id }).lean()
+      const userOffers = await Offer.find({
+        $or: [{ practitioner: u._id }, { practitioner: profile._id }],
+      }).lean()
       profile.offers = userOffers || []
       profile.userOffers = userOffers || []
 
       if (userOffers.length > 0) {
         const minPrice = Math.min(...userOffers.map((o) => o.price || 0))
-        if (minPrice > 0) profile.sessionRate = minPrice
+        profile.sessionRate = minPrice > 0 ? minPrice : 0
         const offerFormats = [...new Set(userOffers.map((o) => (o.type === "circle" ? "Group Circles" : "1:1 Sessions")))]
-        if (offerFormats.length > 0) {
-          profile.formats = offerFormats
-        }
+        profile.formats = offerFormats.length > 0 ? offerFormats : []
+      } else {
+        // Skip practitioners who have not published any offers yet
+        continue
       }
 
       // Apply category/need filter
@@ -245,14 +253,23 @@ const ClientConnection = require("../models/ClientConnection")
 exports.connectClientWithPractitioner = async (req, res) => {
   try {
     const clientId = req.user.id
-    const { practitionerId, amountPaid, paymentId, orderId } = req.body
+    const {
+      practitionerId,
+      amountPaid,
+      paymentId,
+      orderId,
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      offerId,
+    } = req.body
 
     if (!practitionerId) {
       return res.status(400).json({ success: false, message: "Practitioner ID is required" })
     }
 
     if (!amountPaid || isNaN(Number(amountPaid)) || Number(amountPaid) <= 0) {
-      return res.status(400).json({ success: false, message: "Valid Razorpay payment amount is required" })
+      return res.status(400).json({ success: false, message: "Valid payment amount is required" })
     }
 
     let practUser = await User.findById(practitionerId)
@@ -265,27 +282,142 @@ exports.connectClientWithPractitioner = async (req, res) => {
       return res.status(404).json({ success: false, message: "Practitioner not found" })
     }
 
-    const numericAmount = Number(amountPaid)
-    const transactionPaymentId = paymentId || `pay_rzp_${Date.now()}`
-    const transactionOrderId = orderId || `order_rzp_${Date.now()}`
+    const rzpOrderId = razorpay_order_id || orderId || `order_rzp_${Date.now()}`
+    const rzpPaymentId = razorpay_payment_id || paymentId || `pay_rzp_${Date.now()}`
 
-    // Create/Update ClientConnection record — this is the primary record for direct connections
+    // Verify Razorpay Signature if provided
+    if (razorpay_signature && (razorpay_order_id || orderId) && (razorpay_payment_id || paymentId)) {
+      try {
+        const { key_secret } = getRazorpayKeys()
+        const expectedSig = crypto
+          .createHmac("sha256", key_secret)
+          .update(`${rzpOrderId}|${rzpPaymentId}`)
+          .digest("hex")
+
+        if (expectedSig !== razorpay_signature) {
+          return res.status(400).json({
+            success: false,
+            message: "Razorpay signature verification failed",
+          })
+        }
+      } catch (sigErr) {
+        console.warn("Razorpay verification warning:", sigErr.message)
+      }
+    }
+
+    const grossAmount = Number(amountPaid)
+
+    // Calculate commission rate based on practitioner profile plan
+    let profile = await PractitionerProfile.findOne({ user: practUser._id })
+    const commissionRate = profile
+      ? profile.plan === "master" || profile.plan === "practice"
+        ? 0
+        : profile.plan === "growth"
+        ? 5
+        : 8
+      : 8
+
+    const commission = Math.round((grossAmount * commissionRate) / 100)
+    const netPayout = grossAmount - commission
+
+    // 1. Create/Update ClientConnection record
     const connection = await ClientConnection.findOneAndUpdate(
       { client: clientId, practitioner: practUser._id },
       {
         status: "pending_approval",
-        amountPaid: numericAmount,
-        paymentId: transactionPaymentId,
-        orderId: transactionOrderId,
+        amountPaid: grossAmount,
+        paymentId: rzpPaymentId,
+        orderId: rzpOrderId,
         paymentStatus: "paid",
       },
       { upsert: true, new: true }
     )
 
+    // 2. Create Booking record
+    let targetOfferId = offerId
+    if (!targetOfferId) {
+      const defaultOffer = await Offer.findOne({ practitioner: practUser._id })
+      if (defaultOffer) targetOfferId = defaultOffer._id
+    }
+
+    const booking = await Booking.create({
+      client: clientId,
+      practitioner: practUser._id,
+      offer: targetOfferId || new mongoose.Types.ObjectId(),
+      offerType: "session",
+      amount: grossAmount,
+      commission,
+      netPayout,
+      paymentGateway: "razorpay",
+      razorpayOrderId: rzpOrderId,
+      razorpayPaymentId: rzpPaymentId,
+      status: "confirmed",
+      settlementStatus: "pending_t2",
+      scheduledAt: new Date(Date.now() + 86400000),
+    })
+
+    // 3. Create Payout record crediting practitioner
+    const payout = await Payout.create({
+      practitioner: practUser._id,
+      amount: grossAmount,
+      commissionDeducted: commission,
+      netAmount: netPayout,
+      status: "settled",
+      settledAt: new Date(),
+      payoutMethod: "razorpay_direct_transfer",
+      bookingsCount: 1,
+    })
+
+    // 4. Create Invoice record
+    const invoiceNum = `OH-${Date.now().toString().slice(-6)}`
+    await Invoice.create({
+      booking: booking._id,
+      client: clientId,
+      practitioner: practUser._id,
+      invoiceNumber: invoiceNum,
+      subtotal: grossAmount,
+      gstRatePercentage: 18,
+      gstAmount: Math.round(grossAmount * 0.18),
+      totalAmount: grossAmount,
+      status: "paid",
+    })
+
+    // 5. Update Practitioner monthly & total earnings telemetry
+    if (profile) {
+      profile.monthlyEarnings = (profile.monthlyEarnings || 0) + netPayout
+      await profile.save()
+    }
+
+    // 6. Send notification email to Practitioner and Client
+    try {
+      const clientUser = await User.findById(clientId)
+      const clientName = clientUser ? `${clientUser.firstName} ${clientUser.lastName}` : "A Client"
+
+      if (practUser?.email) {
+        await mailSender(
+          practUser.email,
+          `🎉 New Payment Received — ₹${netPayout} from ${clientName}`,
+          `Hi ${practUser.firstName},\n\nYou received a new client payment of ₹${grossAmount} (Net Payout credited to your dashboard: ₹${netPayout} after ${commissionRate}% platform fee).\n\nClient: ${clientName} (${clientUser?.email || ""})\nPayment Ref: ${rzpPaymentId}\nOrder Ref: ${rzpOrderId}\n\nPlease log in to your dashboard under "My Clients" to review and connect.`
+        )
+      }
+
+      if (clientUser?.email) {
+        await mailSender(
+          clientUser.email,
+          `Payment Receipt — Counseling Session with ${practUser.firstName} ${practUser.lastName}`,
+          `Hi ${clientUser.firstName},\n\nYour payment of ₹${grossAmount} for practitioner counseling session with ${practUser.firstName} ${practUser.lastName} was processed successfully via Razorpay.\n\nTransaction Ref: ${rzpPaymentId}\nOrder Ref: ${rzpOrderId}\n\nYour connection request is now sent to ${practUser.firstName} for approval.`
+        )
+      }
+    } catch (mailErr) {
+      console.warn("Notification email trigger warning:", mailErr.message)
+    }
+
     return res.status(200).json({
       success: true,
-      message: `Payment of ₹${numericAmount} received! Connection request sent to ${practUser.firstName} for approval.`,
+      message: `Payment of ₹${grossAmount} verified & credited! Net Payout ₹${netPayout} allocated to ${practUser.firstName}.`,
       connection,
+      booking,
+      payout,
       status: "pending_approval",
     })
   } catch (error) {

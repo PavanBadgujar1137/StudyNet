@@ -53,20 +53,87 @@ export function FindAPractitioner() {
   const [sortBy, setSortBy] = useState('featured')
   const [connectingId, setConnectingId] = useState(null)
 
+  const loadRazorpaySDK = () => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) {
+        resolve(true)
+        return
+      }
+      const script = document.createElement('script')
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+      script.onload = () => resolve(true)
+      script.onerror = () => resolve(false)
+      document.body.appendChild(script)
+    })
+  }
+
   const handleConnectPractitioner = async (practitioner) => {
     try {
       const pId = practitioner._id || practitioner.id || practitioner.user
+      const pName = `${practitioner.firstName || 'Practitioner'} ${practitioner.lastName || ''}`
+      const amount = practitioner.sessionRate || 2500
       setConnectingId(pId)
-      const res = await apiConnector('POST', '/api/v1/practitioners/connect', { practitionerId: pId })
-      if (res?.data?.success) {
-        toast.success(`🎉 Connected with ${practitioner.firstName} ${practitioner.lastName}!`)
-      } else {
-        toast.error(res?.data?.message || 'Could not connect with practitioner.')
+
+      const isLoaded = await loadRazorpaySDK()
+      if (!isLoaded) {
+        toast.error('Razorpay SDK failed to load.')
+        setConnectingId(null)
+        return
       }
+
+      // Create order via backend API
+      const orderRes = await apiConnector('POST', '/api/v1/payment/create-practitioner-order', {
+        practitionerId: pId,
+        amount,
+      })
+
+      if (!orderRes?.data?.success) {
+        toast.error(orderRes?.data?.message || 'Please log in as a Client to connect with practitioners.')
+        setConnectingId(null)
+        return
+      }
+
+      const { order, key, amount: finalAmount } = orderRes.data
+
+      const options = {
+        key: key || process.env.REACT_APP_RAZORPAY_KEY || 'rzp_test_TDhFSRuAl18Gcb',
+        amount: order.amount,
+        currency: order.currency || 'INR',
+        name: 'OpenHand Practice Platform',
+        description: `Counseling Fee for ${pName}`,
+        order_id: order.id,
+        handler: async function (response) {
+          try {
+            const res = await apiConnector('POST', '/api/v1/practitioners/connect', {
+              practitionerId: pId,
+              amountPaid: finalAmount || amount,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            })
+            if (res?.data?.success) {
+              toast.success(`🎉 Connection request & payment of ₹${finalAmount || amount} sent to ${pName}!`)
+            } else {
+              toast.error(res?.data?.message || 'Could not process connection request.')
+            }
+          } catch (err) {
+            toast.error('Connection request failed after payment.')
+          } finally {
+            setConnectingId(null)
+          }
+        },
+        theme: { color: '#1F5FE0' },
+      }
+
+      const rzp = new window.Razorpay(options)
+      rzp.on('payment.failed', function () {
+        toast.error('Payment cancelled or failed.')
+        setConnectingId(null)
+      })
+      rzp.open()
     } catch (err) {
       console.error('Connect error:', err)
-      toast.error('Please log in as a Client to connect free with practitioners.')
-    } finally {
+      toast.error('Please log in as a Client to connect with practitioners.')
       setConnectingId(null)
     }
   }
@@ -303,10 +370,10 @@ export function FindAPractitioner() {
           ) : (
             <>
               <div className="dir-grid">
-                {practitioners.map((p) => {
+                {practitioners
+                  .filter((p) => (p.offers && p.offers.length > 0) || (p.userOffers && p.userOffers.length > 0))
+                  .map((p) => {
                   const name = `${p.user?.firstName || ''} ${p.user?.lastName || ''}`.trim() || 'Practitioner'
-                  const rating = p.rating || 4.9
-                  const reviewCount = p.reviewCount || 35
                   const isVerified = p.verificationStatus === 'verified' || true
 
                   return (
@@ -327,8 +394,16 @@ export function FindAPractitioner() {
                           </div>
                           <div className="p-credentials">{p.credentials}</div>
                           <div className="p-rating-row">
-                            <span className="p-rating-star">★ {rating}</span>
-                            <span className="p-rating-count">({reviewCount} reviews)</span>
+                            {p.reviewCount ? (
+                              <>
+                                <span className="p-rating-star">★ {p.rating || 5.0}</span>
+                                <span className="p-rating-count">({p.reviewCount} reviews)</span>
+                              </>
+                            ) : (
+                              <span className="p-rating-count" style={{ color: '#059669', fontWeight: 700 }}>
+                                ✨ New Verified Guide
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -377,15 +452,23 @@ export function FindAPractitioner() {
 
                       {/* Languages & Formats info line */}
                       <div className="p-info-meta">
-                        <span className="info-item">🌐 {p.languages ? p.languages.slice(0, 2).join(', ') : 'English'}</span>
-                        <span className="info-item">👥 {p.formats ? p.formats.join(' & ') : '1:1 & Circles'}</span>
+                        <span className="info-item">🌐 {p.languages && p.languages.length > 0 ? p.languages.slice(0, 2).join(', ') : 'English'}</span>
+                        <span className="info-item">👥 {p.formats && p.formats.length > 0 ? p.formats.join(' & ') : '1:1 Guidance'}</span>
                       </div>
 
                       {/* Footer: Price & Availability */}
                       <div className="p-card-foot">
                         <div className="p-rate-box">
-                          <span className="p-rate-amount">₹{p.sessionRate?.toLocaleString('en-IN') || '2,500'}</span>
-                          <span className="p-rate-unit"> /session</span>
+                          {p.sessionRate && p.sessionRate > 0 ? (
+                            <>
+                              <span className="p-rate-amount">₹{p.sessionRate.toLocaleString('en-IN')}</span>
+                              <span className="p-rate-unit"> /session</span>
+                            </>
+                          ) : (
+                            <span className="p-rate-amount" style={{ fontSize: '13px', color: '#64748B' }}>
+                              No published offers yet
+                            </span>
+                          )}
                         </div>
                         <div className="p-avail-badge">
                           🟢 {p.availabilityText || 'Available this week'}

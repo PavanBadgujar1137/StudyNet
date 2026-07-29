@@ -61,6 +61,82 @@ exports.capturePayment = async (req, res) => {
   }
 }
 
+// ─── Create Razorpay Order for Practitioner Session / Connection ───
+exports.createPractitionerOrder = async (req, res) => {
+  try {
+    const { practitionerId, amount } = req.body
+    const userId = req.user.id
+
+    if (!practitionerId) {
+      return res.status(400).json({ success: false, message: "Practitioner ID is required" })
+    }
+
+    let practUser = await User.findById(practitionerId)
+    if (!practUser) {
+      const pProfile = await PractitionerProfile.findById(practitionerId)
+      if (pProfile) practUser = await User.findById(pProfile.user)
+    }
+
+    if (!practUser) {
+      return res.status(404).json({ success: false, message: "Practitioner user record not found" })
+    }
+
+    const profile = await PractitionerProfile.findOne({ user: practUser._id })
+    const sessionRate = amount || profile?.sessionRate || 0
+    const numericAmount = Number(sessionRate)
+
+    if (!numericAmount || numericAmount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Practitioner has not published any active offer prices yet.",
+      })
+    }
+
+    // Commission structure: Starter 8%, Growth 5%, Practice/Master 0%
+    const commissionRate = profile
+      ? profile.plan === "master" || profile.plan === "practice"
+        ? 0
+        : profile.plan === "growth"
+        ? 5
+        : 8
+      : 8
+
+    const commission = Math.round((numericAmount * commissionRate) / 100)
+    const netPayout = numericAmount - commission
+
+    const options = {
+      amount: Math.round(numericAmount * 100), // in paise
+      currency: "INR",
+      receipt: `oh_prac_${Date.now()}`,
+      notes: {
+        practitionerId: practUser._id.toString(),
+        clientId: userId,
+        practitionerName: `${practUser.firstName} ${practUser.lastName}`,
+      },
+    }
+
+    const { key_id } = getRazorpayKeys()
+    const instance = getRazorpayInstance()
+    const order = await instance.orders.create(options)
+
+    return res.status(200).json({
+      success: true,
+      order,
+      key: key_id,
+      amount: numericAmount,
+      commission,
+      netPayout,
+      practitionerName: `${practUser.firstName} ${practUser.lastName}`,
+    })
+  } catch (error) {
+    console.error("createPractitionerOrder error:", error)
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to create Razorpay order for practitioner payment",
+    })
+  }
+}
+
 // ─── OpenHand Offer Booking Checkout (Session / Circle / Program via Razorpay & Stripe)
 exports.bookOffer = async (req, res) => {
   try {
