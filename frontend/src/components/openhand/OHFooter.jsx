@@ -37,19 +37,19 @@ const LINKS = [
   { 
     group: 'RESOURCES', 
     items: [
-      { label: 'Platform Status',   to: '/start-free' },
-      { label: 'Documentation',     to: '/aura' },
-      { label: 'Community',         to: '/find-a-practitioner' },
-      { label: 'Help & Support',    to: '/talk-to-human' },
+      { label: 'Platform Status',   to: '/platform-status' },
+      { label: 'Documentation',     to: '/documentation' },
+      { label: 'Community',         to: '/community' },
+      { label: 'Help & Support',    to: '/help-support' },
     ]
   },
   { 
     group: 'LEGAL',        
     items: [
-      { label: 'Privacy policy',    to: '/pricing' },
-      { label: 'Terms of service',  to: '/pricing' },
-      { label: 'Data & consent',    to: '/pricing' },
-      { label: 'Security',          to: '/pricing' },
+      { label: 'Privacy policy',    to: '/privacy-policy' },
+      { label: 'Terms of service',  to: '/terms-of-service' },
+      { label: 'Data & consent',    to: '/data-consent' },
+      { label: 'Security',          to: '/security' },
     ]
   },
 ]
@@ -105,7 +105,12 @@ export function OHFooter() {
           
           {/* Brand Column (5 cols) */}
           <div className="lg:col-span-5 flex flex-col gap-4">
-            <Link to="/" className="inline-flex items-center group w-fit" aria-label="OpenHand home">
+            <Link 
+              to="/" 
+              onClick={() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' })}
+              className="inline-flex items-center group w-fit" 
+              aria-label="OpenHand home"
+            >
               <OHLogo variant="full-color" size={38} />
             </Link>
 
@@ -166,6 +171,7 @@ export function OHFooter() {
                     <li key={item.label}>
                       <Link 
                         to={item.to} 
+                        onClick={() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' })}
                         className="inline-flex items-center gap-2 text-sm font-semibold hover:translate-x-1 transition-all duration-200"
                         style={{ color: '#FFFFFF' }}
                       >

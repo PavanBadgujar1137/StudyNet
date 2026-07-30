@@ -21,21 +21,22 @@ const Footer = () => {
     Platform: [
       { label: "Home", to: "/" },
       { label: "For Organizations", to: "/for-organizations" },
-      { label: "Find a Practitioner", to: "/find-practitioner" },
+      { label: "Find a Practitioner", to: "/find-a-practitioner" },
       { label: "Pricing", to: "/pricing" },
       { label: "AURA AI", to: "/aura" },
     ],
     Resources: [
-      { label: "Course Catalog", to: "/courses" },
-      { label: "Start Free", to: "/signup" },
-      { label: "Talk to a Human", to: "/contact" },
-      { label: "Help Center", to: "/" },
-      { label: "Certificates", to: "/" },
+      { label: "Platform Status", to: "/platform-status" },
+      { label: "Documentation", to: "/documentation" },
+      { label: "Community", to: "/community" },
+      { label: "Help & Support", to: "/help-support" },
+      { label: "Start Free", to: "/start-free" },
     ],
     Legal: [
       { label: "Privacy Policy", to: "/privacy-policy" },
-      { label: "Cookie Policy", to: "/cookie-policy" },
-      { label: "Terms of Service", to: "/terms" },
+      { label: "Terms of Service", to: "/terms-of-service" },
+      { label: "Data & Consent", to: "/data-consent" },
+      { label: "Security", to: "/security" },
     ],
   };
 

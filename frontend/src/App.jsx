@@ -3,7 +3,7 @@ import { useEffect } from "react"
 // Redux
 import { useDispatch } from "react-redux"
 // React Router
-import { Route, Routes, useNavigate } from "react-router-dom"
+import { Route, Routes, useNavigate, useLocation } from "react-router-dom"
 
 // Components
 import Navbar from "./components/Common/Navbar"
@@ -29,6 +29,16 @@ import StartFree from "./pages/marketing/StartFree"
 import TalkToHuman from "./pages/marketing/TalkToHuman"
 import PractitionerOnboarding from "./pages/PractitionerOnboarding"
 
+// OpenHand Footer Pages
+import PlatformStatus from "./pages/footer/PlatformStatus"
+import Documentation from "./pages/footer/Documentation"
+import Community from "./pages/footer/Community"
+import HelpSupport from "./pages/footer/HelpSupport"
+import PrivacyPolicy from "./pages/footer/PrivacyPolicy"
+import TermsOfService from "./pages/footer/TermsOfService"
+import DataConsent from "./pages/footer/DataConsent"
+import Security from "./pages/footer/Security"
+
 // OpenHand Authenticated Apps (B & C)
 import ClientApp from "./pages/app/ClientApp"
 import PractitionerApp from "./pages/practice/PractitionerApp"
@@ -43,6 +53,16 @@ import { getUserDetails } from "./services/operations/profileAPI"
 
 // Admin Panel
 import AdminApp from "./pages/admin/AdminApp"
+
+function ScrollToTop() {
+  const { pathname } = useLocation()
+
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
+
+  return null
+}
 
 function App() {
   const dispatch = useDispatch()
@@ -66,6 +86,7 @@ function App() {
 
   return (
     <div className="flex min-h-screen w-full flex-col overflow-x-hidden bg-richblack-900 font-inter">
+      <ScrollToTop />
       <Navbar />
       <Routes>
         {/* OpenHand Marketing Sitemap (A1-A8) */}
@@ -78,6 +99,17 @@ function App() {
         <Route path="/client-journey" element={<ClientJourney />} />
         <Route path="/start-free" element={<StartFree />} />
         <Route path="/talk-to-human" element={<TalkToHuman />} />
+
+        {/* Footer Pages */}
+        <Route path="/platform-status" element={<PlatformStatus />} />
+        <Route path="/documentation" element={<Documentation />} />
+        <Route path="/community" element={<Community />} />
+        <Route path="/help-support" element={<HelpSupport />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/data-consent" element={<DataConsent />} />
+        <Route path="/security" element={<Security />} />
 
         {/* Client App (5 Tabs) */}
         <Route
