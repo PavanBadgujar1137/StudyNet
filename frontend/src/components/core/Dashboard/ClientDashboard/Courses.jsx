@@ -230,6 +230,7 @@ export default function Courses() {
   const { token } = useSelector(s => s.auth)
   const [courses, setCourses] = useState([])
   const [subscription, setSubscription] = useState(null)
+  const [subInfo, setSubInfo] = useState(null)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [selectedCourse, setSelectedCourse] = useState(null)
@@ -246,13 +247,21 @@ export default function Courses() {
       const courseList = coursesRes?.data?.success ? coursesRes.data.courses : []
       setCourses(courseList)
 
-      const sub = subRes?.data?.subscription || null
+      const sData = subRes?.data || {}
+      const sub = sData.subscription || null
       setSubscription(sub)
+      setSubInfo(sData)
 
       const PLAN_RANKS = { starter: 1, growth: 2, practice: 3, master: 3 }
 
-      // Build access map according to exact purchased plan tier
-      const userPlan = (sub && sub.status === 'active') ? sub.planKey : null
+      // Compute effective user plan (paid subscription or active 7-day trial)
+      let userPlan = null
+      if (sData.hasActiveSubscription && sub) {
+        userPlan = sub.planKey
+      } else if (sData.isTrialActive) {
+        userPlan = 'growth' // trial gives full Starter/Growth tier access during the 7 days!
+      }
+
       const map = {}
       courseList.forEach(c => {
         if (!c.requiredPlan) {
@@ -301,28 +310,56 @@ export default function Courses() {
           <h2 style={{ margin: '0 0 4px', color: '#1E293B', fontSize: 22, fontWeight: 800 }}>Courses Library</h2>
           <p style={{ margin: 0, color: '#64748B', fontSize: 14 }}>Video courses from your practitioners — subscribe to unlock full access</p>
         </div>
-        {subscription?.status === 'active' && (
+        {subInfo?.hasActiveSubscription ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: '#DCFCE7', borderRadius: 20, border: '1px solid #BBF7D0' }}>
             <FiCheck size={14} color="#166534" />
             <span style={{ color: '#166534', fontWeight: 600, fontSize: 13 }}>
-              {subscription.planName || subscription.planKey} — Active
+              {subscription?.planName || subscription?.planKey} — Active
+            </span>
+          </div>
+        ) : subInfo?.isTrialActive ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: '#F3E8FF', borderRadius: 20, border: '1px solid #E9D5FF' }}>
+            <span style={{ color: '#7E22CE', fontWeight: 700, fontSize: 13 }}>
+              ⚡ 7-Day Free Trial Active ({subInfo.trialDaysRemaining} days remaining)
+            </span>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: '#FEE2E2', borderRadius: 20, border: '1px solid #FCA5A5' }}>
+            <span style={{ color: '#DC2626', fontWeight: 700, fontSize: 13 }}>
+              ⚠️ Trial Expired — Subscribe to Unlock Courses
             </span>
           </div>
         )}
       </div>
 
-      {/* Subscription nudge */}
-      {!subscription && (
-        <div style={{ background: 'linear-gradient(135deg, #EFF6FF, #F5F3FF)', border: '1px solid #BFDBFE', borderRadius: 14, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+      {/* Subscription / Trial Banner */}
+      {!subInfo?.hasActiveSubscription && (
+        <div style={{
+          background: subInfo?.isTrialActive ? 'linear-gradient(135deg, #F3E8FF, #EFF6FF)' : 'linear-gradient(135deg, #FEF2F2, #FFF7ED)',
+          border: `1px solid ${subInfo?.isTrialActive ? '#C084FC' : '#FCA5A5'}`,
+          borderRadius: 14, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12
+        }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <FiShield size={20} color="#3B82F6" />
+            <FiShield size={22} color={subInfo?.isTrialActive ? '#8B5CF6' : '#EF4444'} />
             <div>
-              <div style={{ color: '#1E293B', fontWeight: 700, fontSize: 14 }}>Unlock all courses with a subscription</div>
-              <div style={{ color: '#64748B', fontSize: 12 }}>Starting at ₹999/month — cancel anytime</div>
+              <div style={{ color: '#1E293B', fontWeight: 700, fontSize: 14 }}>
+                {subInfo?.isTrialActive
+                  ? `Your 7-Day Free Trial is Active (${subInfo.trialDaysRemaining} days remaining)`
+                  : 'Your 7-Day Free Trial has Expired!'}
+              </div>
+              <div style={{ color: '#64748B', fontSize: 12 }}>
+                {subInfo?.isTrialActive
+                  ? 'Enjoy full practitioner courses during your trial. Subscribe anytime to keep uninterrupted access.'
+                  : 'Subscribe to one of our 3 plans (Starter ₹999, Growth ₹2,999, Master ₹5,999) to unlock all courses & benefits.'}
+              </div>
             </div>
           </div>
-          <a href="/pricing" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 18px', background: 'linear-gradient(135deg, #3B82F6, #1D4ED8)', borderRadius: 8, color: '#fff', textDecoration: 'none', fontWeight: 700, fontSize: 13 }}>
-            View Plans <FiArrowRight size={13} />
+          <a href="/pricing" style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 18px',
+            background: subInfo?.isTrialActive ? 'linear-gradient(135deg, #8B5CF6, #6D28D9)' : 'linear-gradient(135deg, #EF4444, #DC2626)',
+            borderRadius: 8, color: '#fff', textDecoration: 'none', fontWeight: 700, fontSize: 13
+          }}>
+            {subInfo?.isTrialActive ? 'Upgrade Plan' : 'Subscribe Now'} <FiArrowRight size={13} />
           </a>
         </div>
       )}

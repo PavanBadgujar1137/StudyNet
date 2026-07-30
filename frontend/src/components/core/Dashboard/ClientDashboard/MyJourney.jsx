@@ -1,7 +1,6 @@
 import React from 'react'
 
 export function MyJourney({ clientName = 'Student', practitionerName = 'your instructor', dashboardData, loading }) {
-  const daysActive = dashboardData?.user?.daysActive || 1
   const checkInCount = dashboardData?.checkInCount || 0
   const streak = dashboardData?.streak || 0
   const milestones = dashboardData?.milestones || []
@@ -55,7 +54,7 @@ export function MyJourney({ clientName = 'Student', practitionerName = 'your ins
         <div className="step done">
           <div className="mark"><div className="ring">✓</div><div className="when">Step 1</div></div>
           <div className="bub">
-            <h3>You created your StudyNet account</h3>
+            <h3>You created your OpenHand account</h3>
             <p>Your personalized space was initialized, connected with your practitioner and course resources.</p>
             <span className="tagline">Where it started</span>
           </div>

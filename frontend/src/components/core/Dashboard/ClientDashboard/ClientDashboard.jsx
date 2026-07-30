@@ -241,6 +241,19 @@ export function ClientDashboard() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {dashboardData?.subscriptionStatus?.hasActiveSubscription ? (
+              <span style={{ padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, background: '#DCFCE7', color: '#166534', border: '1px solid #BBF7D0' }}>
+                ✨ {dashboardData.subscriptionStatus.subscription?.planName || 'Active Plan'}
+              </span>
+            ) : dashboardData?.subscriptionStatus?.isTrialActive ? (
+              <a href="/pricing" style={{ textDecoration: 'none', padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, background: '#F3E8FF', color: '#7E22CE', border: '1px solid #E9D5FF' }}>
+                ⚡ 7-Day Trial ({dashboardData.subscriptionStatus.trialDaysRemaining}d left) →
+              </a>
+            ) : (
+              <a href="/pricing" style={{ textDecoration: 'none', padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, background: '#FEE2E2', color: '#DC2626', border: '1px solid #FCA5A5' }}>
+                ⚠️ Trial Expired — Select Plan →
+              </a>
+            )}
             <button
               onClick={() => setActiveTab('checkin')}
               className="oh-action-btn"

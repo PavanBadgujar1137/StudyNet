@@ -86,6 +86,9 @@ exports.signup = async (req, res) => {
       about: null,
       contactNumber: null,
     })
+    const now = new Date()
+    const trialExpiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+
     const user = await User.create({
       firstName,
       lastName,
@@ -96,6 +99,9 @@ exports.signup = async (req, res) => {
       approved: approved,
       additionalDetails: profileDetails._id,
       image: "",
+      trialStartedAt: now,
+      trialExpiresAt: trialExpiresAt,
+      activePlan: accountType === "Client" || accountType === "Student" ? "trial" : "none",
     })
 
     // If Practitioner / Instructor, auto-create PractitionerProfile with bank payout details
@@ -170,6 +176,14 @@ exports.login = async (req, res) => {
         success: false,
         message: `User is not Registered with Us Please SignUp to Continue`,
       })
+    }
+
+    // Auto-heal missing trial dates for Client/Student users
+    if ((user.accountType === "Client" || user.accountType === "Student") && !user.trialExpiresAt) {
+      user.trialStartedAt = user.createdAt || new Date()
+      user.trialExpiresAt = new Date(new Date(user.trialStartedAt).getTime() + 7 * 24 * 60 * 60 * 1000)
+      if (!user.activePlan) user.activePlan = "trial"
+      await user.save()
     }
 
     // Generate JWT token and Compare Password

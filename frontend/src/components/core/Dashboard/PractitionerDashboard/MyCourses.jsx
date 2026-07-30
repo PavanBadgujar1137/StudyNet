@@ -8,12 +8,7 @@ import {
 import toast from 'react-hot-toast'
 import { apiConnector } from '../../../../services/apiConnector'
 
-const PLAN_OPTIONS = [
-  { value: '', label: 'Free (no subscription needed)' },
-  { value: 'starter', label: 'Starter Plan & above' },
-  { value: 'growth', label: 'Growth Plan & above' },
-  { value: 'practice', label: 'Practice Plan only' },
-]
+
 
 function formatDuration(secs) {
   if (!secs) return '0:00'
@@ -324,15 +319,11 @@ function CreateCourseModal({ onClose, onSuccess }) {
               rows={3} placeholder="What will clients learn?"
               style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #E2E8F0', borderRadius: 10, fontSize: 14, color: '#1E293B', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }} />
           </div>
-          <div>
-            <label style={{ display: 'block', fontSize: 12, color: '#64748B', marginBottom: 4, fontWeight: 600 }}>Access Requirement</label>
-            <select value={form.requiredPlan} onChange={e => setForm(f => ({ ...f, requiredPlan: e.target.value }))}
-              style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #E2E8F0', borderRadius: 10, fontSize: 14, color: '#1E293B', outline: 'none', background: '#fff', cursor: 'pointer' }}>
-              {PLAN_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-            <p style={{ margin: '4px 0 0', color: '#94A3B8', fontSize: 11 }}>
-              Choose which subscription plan clients need to access this course
-            </p>
+          <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10, padding: '12px 14px' }}>
+            <div style={{ color: '#1F5FE0', fontWeight: 700, fontSize: 12, marginBottom: 2 }}>ℹ️ Plan Assignment Notice</div>
+            <div style={{ color: '#64748B', fontSize: 12, lineHeight: 1.5 }}>
+              Course subscription plan access (Starter, Growth, Master, Free) is decided and assigned exclusively by the Platform Admin.
+            </div>
           </div>
           <div>
             <label style={{ display: 'block', fontSize: 12, color: '#64748B', marginBottom: 4, fontWeight: 600 }}>Tags (comma separated)</label>

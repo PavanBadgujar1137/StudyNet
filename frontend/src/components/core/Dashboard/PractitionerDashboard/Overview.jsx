@@ -1,6 +1,6 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FiVideo, FiTrendingUp, FiCheckCircle } from 'react-icons/fi'
+import { FiVideo } from 'react-icons/fi'
 
 export function Overview({ practitionerName = 'Practitioner', setActiveSection, telemetryData, loading }) {
   const navigate = useNavigate()
@@ -52,14 +52,14 @@ export function Overview({ practitionerName = 'Practitioner', setActiveSection, 
 
       <div className="g4">
         <div className="card stat">
-          <div className="lbl">This month</div>
+          <div className="lbl">Earned This Month</div>
           <div className="val">₹{stats.monthlyEarnings.toLocaleString('en-IN')}</div>
-          <div className="dl up">▲ Live from database</div>
+          <div className="dl up">▲ Admin salary ledger</div>
         </div>
         <div className="card stat">
-          <div className="lbl">Clearing Thursday</div>
+          <div className="lbl">Pending Admin Salary</div>
           <div className="val">₹{stats.clearingThisWeek.toLocaleString('en-IN')}</div>
-          <div className="dl flat">Weekly payout queue</div>
+          <div className="dl flat">Scheduled payout</div>
         </div>
         <div className="card stat">
           <div className="lbl">Active clients</div>

@@ -4,7 +4,7 @@ export function GrowthTools({ telemetryData }) {
   const [copied, setCopied] = useState(false)
   const practitioner = telemetryData?.practitioner || {}
   const handle = practitioner.firstName ? `${practitioner.firstName.toLowerCase()}-${practitioner.lastName?.toLowerCase() || ''}` : 'practitioner'
-  const bookingLink = `studynet.live/practitioner/${handle}`
+  const bookingLink = `openhand.live/practitioner/${handle}`
   const reviews = telemetryData?.reviews || []
   const activeClients = telemetryData?.stats?.activeClientsCount || 0
 

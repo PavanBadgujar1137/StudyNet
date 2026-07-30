@@ -553,28 +553,30 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
         </div>
       )}
 
-      {/* AURA Copilot Section */}
-      <div className="cop" style={{ width: '100%', marginTop: '20px' }}>
-        <div className="h" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <b>Practitioner AURA Assistant</b>
+      {/* Claude AI Copilot Section */}
+      <div className="cop" style={{ width: '100%', marginTop: '20px', background: '#F8FAFC', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '20px' }}>
+        <div className="h" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+          <b style={{ fontSize: '15px', fontWeight: 800, color: '#0F172A' }}>Claude.ai Session Co-Pilot &amp; Notes</b>
           <div className="tog" onClick={() => setCoPilotOn(!coPilotOn)} style={{ cursor: 'pointer' }}>
-            <i style={{ right: coPilotOn ? '3px' : 'auto', left: coPilotOn ? 'auto' : '3px' }}></i>
+            <span style={{ fontSize: '12px', fontWeight: 700, padding: '4px 10px', borderRadius: '12px', background: coPilotOn ? '#DCFCE7' : '#F1F5F9', color: coPilotOn ? '#15803D' : '#64748B' }}>
+              {coPilotOn ? 'Claude.ai Active' : 'Claude.ai Paused'}
+            </span>
           </div>
         </div>
         {coPilotOn ? (
-          <div className="b">
+          <div className="b" style={{ background: '#FFFFFF', padding: '16px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
             <div className="sug">
-              <div className="k">Session Preparation Prompt</div>
-              <p>
+              <div className="k" style={{ fontSize: '13px', fontWeight: 700, color: '#2563EB', marginBottom: '4px' }}>Claude.ai Preparation &amp; Post-Session Notes Prompt</div>
+              <p style={{ fontSize: '13px', color: '#334155', margin: 0 }}>
                 {upcomingClasses.length > 0
-                  ? `You have ${upcomingClasses.length} Zoom session(s) scheduled. Review client check-in rhythm and previous reflection notes before the next session: "${upcomingClasses[0].title}".`
-                  : `No sessions scheduled yet. When you add a Zoom class, AURA will generate client-specific preparation prompts here.`}
+                  ? `Upcoming Zoom session: "${upcomingClasses[0].title}". Claude.ai will synthesize client check-in notes and summarize post-session takeaways automatically.`
+                  : `No live session active. Claude.ai will analyze your Zoom recordings & client reflections to produce post-session summary notes.`}
               </p>
             </div>
           </div>
         ) : (
-          <div className="b" style={{ padding: '24px', textAlign: 'center', color: '#8B90B8', fontSize: '13px' }}>
-            AURA paused
+          <div className="b" style={{ padding: '16px', textAlign: 'center', color: '#64748B', fontSize: '13px' }}>
+            Claude.ai Session Assistant is paused. Click toggle to enable instant Claude AI notes.
           </div>
         )}
       </div>

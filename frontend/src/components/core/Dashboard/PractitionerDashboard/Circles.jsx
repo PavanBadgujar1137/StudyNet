@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useSelector } from 'react-redux'
-import { FiPlus, FiX, FiUsers, FiMessageSquare, FiEdit2, FiTrash2, FiCheckCircle, FiAlertTriangle } from 'react-icons/fi'
+import { FiPlus, FiX, FiUsers, FiMessageSquare, FiEdit2, FiTrash2, FiAlertTriangle } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import { apiConnector } from '../../../../services/apiConnector'
 
@@ -145,7 +145,6 @@ export function Circles({ telemetryData, onUpdate, setActiveSection }) {
   }
 
   const activeCircles = circlesList.filter((c) => c.status !== 'completed' && c.kanbanStage !== 'completed')
-  const completedCircles = circlesList.filter((c) => c.status === 'completed' || c.kanbanStage === 'completed')
 
   return (
     <section className="view on" id="circles" style={{ padding: '4px 0 24px 0' }}>
@@ -168,7 +167,7 @@ export function Circles({ telemetryData, onUpdate, setActiveSection }) {
             Circles &amp; Group Cohorts Manager
           </h1>
           <p style={{ color: '#64748B', fontSize: '14px', margin: '4px 0 0 0' }}>
-            {circlesList.length} circle cohort(s) active in your database.
+            {circlesList.length} circle cohort(s) active.
           </p>
         </div>
 

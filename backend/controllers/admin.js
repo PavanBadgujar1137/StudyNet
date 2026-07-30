@@ -47,6 +47,43 @@ exports.getAdminDashboardStats = async (req, res) => {
       { $group: { _id: "$paymentType", total: { $sum: "$amount" }, count: { $sum: 1 } } },
     ])
 
+    // Compute Month-Over-Month (MoM) Growth Trends dynamically
+    const startOfCurrentMonth = new Date()
+    startOfCurrentMonth.setDate(1)
+    startOfCurrentMonth.setHours(0, 0, 0, 0)
+
+    const startOfLastMonth = new Date(startOfCurrentMonth)
+    startOfLastMonth.setMonth(startOfLastMonth.getMonth() - 1)
+
+    const [currentRevAgg, lastRevAgg, currentMonthClients, lastMonthClients] = await Promise.all([
+      AdminPaymentLog.aggregate([
+        { $match: { status: "received", createdAt: { $gte: startOfCurrentMonth } } },
+        { $group: { _id: null, total: { $sum: "$amount" } } },
+      ]),
+      AdminPaymentLog.aggregate([
+        { $match: { status: "received", createdAt: { $gte: startOfLastMonth, $lt: startOfCurrentMonth } } },
+        { $group: { _id: null, total: { $sum: "$amount" } } },
+      ]),
+      User.countDocuments({ accountType: { $in: ["Client", "Student"] }, createdAt: { $gte: startOfCurrentMonth } }),
+      User.countDocuments({ accountType: { $in: ["Client", "Student"] }, createdAt: { $gte: startOfLastMonth, $lt: startOfCurrentMonth } }),
+    ])
+
+    const curRev = currentRevAgg[0]?.total || 0
+    const prevRev = lastRevAgg[0]?.total || 0
+    let revenueTrend = undefined
+    if (prevRev > 0) {
+      revenueTrend = Math.round(((curRev - prevRev) / prevRev) * 100)
+    } else if (curRev > 0) {
+      revenueTrend = 100
+    }
+
+    let clientsTrend = undefined
+    if (lastMonthClients > 0) {
+      clientsTrend = Math.round(((currentMonthClients - lastMonthClients) / lastMonthClients) * 100)
+    } else if (currentMonthClients > 0) {
+      clientsTrend = 100
+    }
+
     // Monthly revenue (last 6 months)
     const sixMonthsAgo = new Date()
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
@@ -72,6 +109,8 @@ exports.getAdminDashboardStats = async (req, res) => {
         totalBookings,
         activeSubscriptions,
         newOrgConversations,
+        revenueTrend,
+        clientsTrend,
       },
       revenueByType,
       monthlyRevenue,
@@ -102,7 +141,7 @@ exports.getAllClients = async (req, res) => {
 
     const [clients, total] = await Promise.all([
       User.find(query)
-        .select("firstName lastName email image createdAt accountType active")
+        .select("firstName lastName email image createdAt accountType active trialStartedAt trialExpiresAt activePlan")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(Number(limit))
@@ -110,7 +149,9 @@ exports.getAllClients = async (req, res) => {
       User.countDocuments(query),
     ])
 
-    // Enrich with subscription + booking data
+    const now = new Date()
+
+    // Enrich with subscription + trial + booking data
     const enriched = await Promise.all(
       clients.map(async (client) => {
         const [subscription, bookingsCount, totalPaid] = await Promise.all([
@@ -126,9 +167,32 @@ exports.getAllClients = async (req, res) => {
             { $group: { _id: null, total: { $sum: "$amount" } } },
           ]),
         ])
+
+        const hasActiveSub = !!subscription && new Date(subscription.endDate) > now
+        const trialStartedAt = client.trialStartedAt || client.createdAt || now
+        const trialExpiresAt = client.trialExpiresAt || new Date(new Date(trialStartedAt).getTime() + 7 * 24 * 60 * 60 * 1000)
+
+        const isTrialActive = !hasActiveSub && now < new Date(trialExpiresAt)
+        const trialDaysRemaining = isTrialActive
+          ? Math.max(0, Math.ceil((new Date(trialExpiresAt) - now) / (1000 * 60 * 60 * 24)))
+          : 0
+
+        let planDisplayStatus = "Trial Expired"
+        if (hasActiveSub) {
+          planDisplayStatus = `Subscribed (${subscription.planName || subscription.planKey})`
+        } else if (isTrialActive) {
+          planDisplayStatus = `7-Day Trial (${trialDaysRemaining} days left)`
+        }
+
         return {
           ...client,
           subscription: subscription ? { planKey: subscription.planKey, planName: subscription.planName, status: subscription.status, endDate: subscription.endDate } : null,
+          hasActiveSub,
+          isTrialActive,
+          trialDaysRemaining,
+          trialStartedAt,
+          trialExpiresAt,
+          planDisplayStatus,
           sessionsBooked: bookingsCount,
           totalPaid: totalPaid[0]?.total || 0,
         }
@@ -433,6 +497,93 @@ exports.seedAdminAccount = async (req, res) => {
     })
   } catch (error) {
     console.error("seedAdminAccount error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// ─── Admin: Update Client Plan / Extend Trial ────────────────────────────────
+exports.updateClientPlan = async (req, res) => {
+  try {
+    const { id } = req.params
+    const { planKey, extendTrialDays } = req.body
+
+    const user = await User.findById(id)
+    if (!user) return res.status(404).json({ success: false, message: "Client not found" })
+
+    if (extendTrialDays && !isNaN(extendTrialDays)) {
+      const currentExpiry = user.trialExpiresAt && new Date(user.trialExpiresAt) > new Date()
+        ? new Date(user.trialExpiresAt)
+        : new Date()
+      user.trialExpiresAt = new Date(currentExpiry.getTime() + Number(extendTrialDays) * 24 * 60 * 60 * 1000)
+    }
+
+    if (planKey !== undefined) {
+      user.activePlan = planKey
+
+      if (["starter", "growth", "practice", "master"].includes(planKey)) {
+        // Create manual subscription record for client
+        await Subscription.updateMany({ client: id, status: "active" }, { status: "expired" })
+        const startDate = new Date()
+        const endDate = new Date()
+        endDate.setMonth(endDate.getMonth() + 1)
+
+        await Subscription.create({
+          client: id,
+          planKey,
+          planName: `${planKey.toUpperCase()} Plan (Admin Override)`,
+          amount: 0,
+          status: "active",
+          startDate,
+          endDate,
+          paymentGateway: "manual",
+        })
+      }
+    }
+
+    await user.save()
+    return res.status(200).json({ success: true, message: "Client plan updated successfully", user })
+  } catch (error) {
+    console.error("updateClientPlan error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// ─── Admin: Get All Courses for Plan Assignment ──────────────────────────────
+exports.getAllCoursesAdmin = async (req, res) => {
+  try {
+    const courses = await Course.find()
+      .populate("practitioner", "firstName lastName email image")
+      .populate("videos", "title durationSeconds")
+      .sort({ createdAt: -1 })
+      .lean()
+
+    return res.status(200).json({ success: true, courses })
+  } catch (error) {
+    console.error("getAllCoursesAdmin error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// ─── Admin: Update Course Required Plan & Status ──────────────────────────────
+exports.updateCourseAdmin = async (req, res) => {
+  try {
+    const { id } = req.params
+    const { requiredPlan, status } = req.body
+
+    const course = await Course.findById(id)
+    if (!course) return res.status(404).json({ success: false, message: "Course not found" })
+
+    if (requiredPlan !== undefined) {
+      course.requiredPlan = requiredPlan || null
+    }
+    if (status) {
+      course.status = status
+    }
+
+    await course.save()
+    return res.status(200).json({ success: true, message: "Course updated by Admin", course })
+  } catch (error) {
+    console.error("updateCourseAdmin error:", error)
     return res.status(500).json({ success: false, message: error.message })
   }
 }

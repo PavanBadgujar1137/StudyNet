@@ -55,8 +55,8 @@ const LINKS = [
 ]
 
 const SOCIAL_LINKS = [
-  { icon: FaInstagram, href: 'https://instagram.com', label: 'Instagram' },
-  { icon: FaLinkedin, href: 'https://linkedin.com', label: 'LinkedIn' },
+  { icon: FaInstagram, href: 'https://www.instagram.com/openhand.live?igsh=MWNqMDhxeHFiMXZmdA%3D%3D&utm_source=qr', label: 'Instagram' },
+  { icon: FaLinkedin, href: 'https://www.linkedin.com/showcase/openhandai/', label: 'LinkedIn' },
   { icon: FaYoutube, href: 'https://youtube.com', label: 'YouTube' },
 ]
 

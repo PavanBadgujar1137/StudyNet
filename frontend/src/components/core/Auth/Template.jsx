@@ -25,28 +25,28 @@ function Template({ title, description1, description2, formType }) {
             <div className="auth-brand-inner">
               {/* Logo + wordmark */}
               <Link to="/" className="auth-logo-link">
-                <img src={logoIcon} alt="StudyNet Logo" className="auth-logo-img" />
+                <img src={logoIcon} alt="OpenHand Logo" className="auth-logo-img" />
                 <span className="auth-wordmark">
-                  Study<span className="auth-wordmark-accent">Net</span>
+                  Open<span className="auth-wordmark-accent">Hand</span>
                 </span>
               </Link>
 
               <p className="auth-brand-tagline">
-                Next-Gen Educational &amp; Practice Space Platform
+                Modern Platform for Integrative Care &amp; Practice Space
               </p>
 
               {/* Feature pills */}
               <div className="auth-pills">
-                <span className="auth-pill">📹 HD Zoom Live Classes</span>
-                <span className="auth-pill">📚 Smart Course Hub</span>
+                <span className="auth-pill">📹 HD Live Sessions</span>
+                <span className="auth-pill">🌿 Integrative Care Hub</span>
                 <span className="auth-pill">📊 Telemetry &amp; Check-ins</span>
                 <span className="auth-pill">👥 Peer Growth Circles</span>
               </div>
 
               {/* Platform Overview block */}
               <div className="auth-quote">
-                <p>"Empowering instructors to build spaces and students to learn with live video streaming, daily check-ins, and automated certificates."</p>
-                <span>StudyNet Platform Ecosystem</span>
+                <p>"Empowering practitioners to build thriving practice spaces and clients to transform through live sessions, daily check-ins, and AURA guidance."</p>
+                <span>OpenHand Platform Ecosystem</span>
               </div>
 
               {/* Trust row */}

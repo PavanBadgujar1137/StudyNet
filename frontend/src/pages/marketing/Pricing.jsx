@@ -1,11 +1,10 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState } from 'react'
+import { useSelector } from 'react-redux'
 import { toast } from 'react-hot-toast'
 import {
   OHFooter,
   OHButton,
   OHEyebrow,
-  OHCard,
-  OHBreakevenChart,
   OHRangeCalculator,
 } from '../../components/openhand'
 import { apiConnector } from '../../services/apiConnector'
@@ -13,6 +12,9 @@ import { apiConnector } from '../../services/apiConnector'
 export function Pricing() {
   const [openFaq, setOpenFaq] = useState(null)
   const [payingPlan, setPayingPlan] = useState(null)
+  const [subStatus, setSubStatus] = useState(null)
+
+  const { token } = useSelector(s => s.auth)
 
   useEffect(() => {
     async function fetchPlans() {
@@ -25,8 +27,20 @@ export function Pricing() {
         console.warn('Using default fallback plan math:', e)
       }
     }
+    async function fetchSubscriptionStatus() {
+      if (!token) return
+      try {
+        const res = await apiConnector('GET', '/api/v1/payment/subscription/mine', null, { Authorization: `Bearer ${token}` })
+        if (res?.data?.success) {
+          setSubStatus(res.data)
+        }
+      } catch (e) {
+        console.warn('Sub status fetch error:', e)
+      }
+    }
     fetchPlans()
-  }, [])
+    fetchSubscriptionStatus()
+  }, [token])
 
   // Helper to load Razorpay Checkout SDK dynamically
   const loadRazorpaySDK = () => {
@@ -62,7 +76,7 @@ export function Pricing() {
         return
       }
 
-      const { order, key, amount, planName } = res.data
+      const { order, key, planName } = res.data
 
       // 2. Open Razorpay Checkout modal
       const options = {
@@ -111,77 +125,78 @@ export function Pricing() {
     }
   }
 
-  // Breakeven chart functions
-  const breakevenPlans = [
-    { name: 'Starter (₹999 + 8%)', color: '#2563EB', fn: (gross) => 999 + gross * 0.08 },
-    { name: 'Growth (₹2,999 + 5%)', color: '#7C3AED', fn: (gross) => 2999 + gross * 0.05 },
-    { name: 'Master (₹5,999 flat)', color: '#0D1B3D', fn: () => 5999 },
-  ]
-
-  // Calculator compute logic
+  // Client savings calculator compute logic
   const calcCompute = (val) => {
-    const clients = val.cIn || 0
-    const price = val.pIn || 0
-    const seats = val.sIn || 0
-    const seatPrice = val.qIn || 0
-    const members = val.mIn || 0
+    const sessions = val.sessionsPerMonth || 0
+    const rate = val.sessionRate || 0
+    const courses = val.coursesEnrolled || 0
 
-    const gross = clients * price + seats * seatPrice + members * 799
-    const starter = 999 + gross * 0.08
-    const growth = 2999 + gross * 0.05
-    const master = 5999
+    // Pay-as-you-go cost (without membership):
+    const standalone = sessions * rate + courses * 1500
 
-    let bestPlan = 'Starter'
-    let cost = starter
-    if (growth < cost) { bestPlan = 'Growth'; cost = growth }
-    if (master < cost) { bestPlan = 'Master'; cost = master }
+    // Starter Plan (₹999/mo + full session fee, core courses free):
+    const starterCost = 999 + sessions * rate
+
+    // Growth Plan (₹2,999/mo + 15% off sessions, all courses free):
+    const growthCost = 2999 + sessions * (rate * 0.85)
+
+    // Master Plan (₹5,999/mo + 1 free session + 25% off extra sessions, all courses free):
+    const extraSessions = Math.max(0, sessions - 1)
+    const masterCost = 5999 + extraSessions * (rate * 0.75)
+
+    let bestPlan = 'Pay-As-You-Go'
+    let bestCost = standalone
+
+    if (starterCost < bestCost) { bestPlan = 'Starter Plan'; bestCost = starterCost }
+    if (growthCost < bestCost) { bestPlan = 'Growth Plan'; bestCost = growthCost }
+    if (masterCost < bestCost) { bestPlan = 'Master VIP Plan'; bestCost = masterCost }
+
+    const savings = Math.max(0, standalone - bestCost)
 
     return {
-      gross,
-      fee: cost,
-      net: gross - cost,
+      gross: standalone,
+      fee: bestCost,
+      net: savings,
       bestPlan,
     }
   }
 
   const calcSliders = [
-    { id: 'cIn', label: '1:1 clients per month', min: 0, max: 60, value: 12 },
-    { id: 'pIn', label: 'Average session price', min: 500, max: 15000, step: 250, value: 2500, format: (v) => `₹${v.toLocaleString('en-IN')}` },
-    { id: 'sIn', label: 'Circle seats sold per month', min: 0, max: 40, value: 0 },
-    { id: 'qIn', label: 'Circle seat price', min: 2000, max: 60000, step: 1000, value: 15000, format: (v) => `₹${v.toLocaleString('en-IN')}` },
-    { id: 'mIn', label: 'Monthly members', min: 0, max: 300, value: 0 },
+    { id: 'sessionsPerMonth', label: '1:1 sessions per month', min: 0, max: 10, value: 2 },
+    { id: 'sessionRate', label: 'Average practitioner session fee', min: 1000, max: 10000, step: 250, value: 2500, format: (v) => `₹${v.toLocaleString('en-IN')}` },
+    { id: 'coursesEnrolled', label: 'Practitioner courses / cohorts per month', min: 0, max: 5, value: 1 },
   ]
 
   const faqs = [
     {
-      cat: 'Billing & Fees',
-      q: 'Is there a trial available?',
-      a: "Yes. There's no time limit to explore. Practitioners can start on Starter or upgrade anytime to Growth or Master to unlock advanced tools and lower fees.",
+      cat: 'Membership & Access',
+      q: 'How does the client membership work?',
+      a: 'Your client membership grants you instant access to practitioner-led courses, live group circles, daily reflection tools, AURA AI insights, and exclusive member discounts on 1:1 sessions.',
     },
     {
-      cat: 'Payouts',
-      q: 'When does money reach my bank?',
-      a: 'Two working days after the session or purchase, straight to your bank account — not to a platform wallet you have to withdraw from.',
+      cat: 'Session Perks',
+      q: 'How do 1:1 session discounts work?',
+      a: 'As a Growth (15% OFF) or Master subscriber (25% OFF + 1 Free session/month), your discounts are automatically calculated and applied at checkout when booking sessions with any verified practitioner.',
     },
     {
-      cat: 'Tax & Compliance',
-      q: 'What about GST?',
-      a: 'Invoices are generated GST-ready automatically. Whether you charge GST depends on your registration and turnover — that is a conversation for your accountant, not us.',
+      cat: 'Flexibility & Cancellation',
+      q: 'Can I change or cancel my plan anytime?',
+      a: 'Yes, you can upgrade, downgrade, or cancel your membership at any time. There are no lock-in periods, hidden charges, or cancellation penalties.',
     },
     {
-      cat: 'Flexibility',
-      q: 'Can I downgrade or switch plans anytime?',
-      a: 'Any time, effective the next billing cycle. Nothing is deleted, no data is lost, and your clients do not notice any interruption.',
+      cat: 'Family Access',
+      q: 'Can I share my plan with family members?',
+      a: 'Yes! The Master Plan includes family sharing for up to 3 sub-accounts, allowing your family members to access courses, group circles, and wellness tools under one subscription.',
     },
     {
-      cat: 'Data Ownership',
-      q: 'What happens to my client data if I leave?',
-      a: 'You export everything — client records, notes, session history — and we delete our copy permanently on request. Your practice is 100% yours.',
+      cat: 'Privacy & Security',
+      q: 'Is my personal reflection and session data confidential?',
+      a: '100% confidential. Your check-ins, journal prompts, and AURA AI notes are end-to-end encrypted and completely private to you.',
     },
     {
-      cat: 'Automatic Switch Alerts',
-      q: 'Will you alert me when I should switch plans?',
-      a: "Yes. We automatically email you the exact month your commission math crosses ₹2,999 and recommend upgrading to Growth so you save money.",
+      cat: 'Payments',
+      q: 'What payment methods do you accept?',
+      a: 'We accept all major Indian and global payment options through Razorpay — including UPI (GPay, PhonePe, Paytm), Credit/Debit Cards, Net Banking, and Wallets.',
     },
   ]
 
@@ -191,13 +206,37 @@ export function Pricing() {
       {/* Hero */}
       <header className="oh-pricing-hero pt-14 pb-8 text-center bg-gradient-to-b from-white to-slate-50 border-b border-slate-100">
         <div className="oh-wrap max-w-5xl mx-auto px-4">
-          <OHEyebrow>Transparent &amp; Fair Pricing</OHEyebrow>
+          <OHEyebrow>Transparent &amp; Fair Client Pricing</OHEyebrow>
           <h1 className="whitespace-nowrap text-center w-full mx-auto text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight my-4">
-            Pay us <span className="oh-grad-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">only when you get paid.</span>
+            Invest in your wellness. <span className="oh-grad-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">Care built around you.</span>
           </h1>
-          <p className="sub text-slate-600 text-base sm:text-lg max-w-2xl mx-auto font-medium leading-relaxed">
-            No setup fee. No hidden lock-in. Choose the plan that fits your stage, pay seamlessly via Razorpay, and switch anytime.
+          <p className="sub text-slate-600 text-base sm:text-lg max-w-2xl mx-auto font-medium leading-relaxed mb-6">
+            Choose the client membership plan that fits your personal care journey. Unlock practitioner courses, live group circles, daily check-ins, and AURA AI guidance.
           </p>
+
+          {/* User Trial & Subscription Status Banner */}
+          {token && subStatus && (
+            <div className="max-w-xl mx-auto mt-4 p-4 rounded-2xl border text-sm font-semibold flex items-center justify-between gap-4 shadow-sm"
+              style={{
+                background: subStatus.hasActiveSubscription ? '#F0FDF4' : subStatus.isTrialActive ? '#F3E8FF' : '#FEF2F2',
+                borderColor: subStatus.hasActiveSubscription ? '#BBF7D0' : subStatus.isTrialActive ? '#E9D5FF' : '#FCA5A5',
+                color: subStatus.hasActiveSubscription ? '#166534' : subStatus.isTrialActive ? '#7E22CE' : '#DC2626',
+              }}
+            >
+              <div>
+                {subStatus.hasActiveSubscription ? (
+                  <span>✨ Active Subscription: <strong>{subStatus.subscription?.planName || 'Paid Plan'}</strong></span>
+                ) : subStatus.isTrialActive ? (
+                  <span>⚡ 7-Day Free Trial Active: <strong>{subStatus.trialDaysRemaining} days remaining</strong></span>
+                ) : (
+                  <span>⚠️ 7-Day Free Trial Expired — Subscribe below to unlock all features</span>
+                )}
+              </div>
+              <a href="#plans" className="px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 transition-all text-nowrap">
+                {subStatus.hasActiveSubscription ? 'Switch Plan' : 'Select Plan'}
+              </a>
+            </div>
+          )}
         </div>
       </header>
 
@@ -206,26 +245,26 @@ export function Pricing() {
         <div className="oh-wrap max-w-[1360px] mx-auto px-4">
           <div className="plans-grid grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch pt-4">
             
-            {/* Starter */}
+            {/* Starter Plan */}
             <div className="plan-card bg-white border border-slate-200 rounded-3xl p-8 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
               <div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-2">Starter</h3>
+                <h3 className="text-2xl font-bold text-slate-900 mb-2">Starter Plan</h3>
                 <p className="who text-slate-600 text-sm mb-6 min-h-[42px] font-medium leading-relaxed">
-                  For practitioners testing whether an online practice works at all.
+                  For individuals starting their personal wellness &amp; mental health journey.
                 </p>
                 <div className="price-tag text-4xl font-extrabold text-slate-900 mb-3 tracking-tight">
                   ₹999<small className="text-slate-500 font-medium text-base"> /month</small>
                 </div>
                 <div className="cut-badge bg-blue-50 text-blue-700 font-bold text-xs uppercase tracking-wider py-2 px-3.5 rounded-xl mb-6 inline-flex items-center gap-2 border border-blue-100">
-                  Flat ₹999/mo + 8% fee
+                  Essential Client Membership
                 </div>
                 <ul className="plan-features text-slate-700 text-sm space-y-3 mb-8">
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Unlimited 1:1 sessions</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> One private circle</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> UPI, cards, net banking, Stripe</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Client check-ins &amp; reflection prompts</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Post-session AURA notes</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Listed in the practitioner directory</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Access to core practitioner courses &amp; library</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> 1 Monthly group circle pass included</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Daily mood check-ins &amp; guided prompts</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Personal AI health &amp; reflection assistant (AURA)</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Standard 1:1 session booking access</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Secure digital health record vault</li>
                 </ul>
               </div>
               <div className="flex flex-col gap-2.5">
@@ -235,35 +274,35 @@ export function Pricing() {
                   fullWidth
                   size="lg"
                 >
-                  {payingPlan === 'starter' ? 'Opening Razorpay...' : 'Pay ₹999 Now'}
+                  {payingPlan === 'starter' ? 'Opening Razorpay...' : 'Subscribe to Starter — ₹999'}
                 </OHButton>
               </div>
             </div>
 
-            {/* Growth (Featured) */}
+            {/* Growth Plan (Featured) */}
             <div className="plan-card feat-card relative bg-slate-900 text-white border-2 border-indigo-500 rounded-3xl p-8 shadow-2xl transition-all flex flex-col justify-between transform -translate-y-2">
               <span className="featured-badge absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white text-[11px] font-extrabold tracking-wider uppercase py-1.5 px-5 rounded-full shadow-lg whitespace-nowrap">
-                Most Popular Practitioner Choice
+                Most Popular Client Choice
               </span>
               <div>
-                <h3 className="text-2xl font-bold text-white mb-2 mt-2">Growth</h3>
+                <h3 className="text-2xl font-bold text-white mb-2 mt-2">Growth Plan</h3>
                 <p className="who text-slate-300 text-sm mb-6 min-h-[42px] font-normal leading-relaxed">
-                  For practitioners past ₹40,000/month who want the fee to stop stinging.
+                  For active wellness seekers wanting full access to courses, circles, and session discounts.
                 </p>
                 <div className="price-tag text-4xl font-extrabold text-white mb-3 tracking-tight">
                   ₹2,999<small className="text-slate-300 font-medium text-base"> /month</small>
                 </div>
                 <div className="cut-badge bg-indigo-900/60 text-sky-300 font-bold text-xs uppercase tracking-wider py-2 px-3.5 rounded-xl mb-6 inline-flex items-center gap-2 border border-indigo-500/30">
-                  Flat ₹2,999/mo + 5% fee
+                  Full Access + 15% OFF Sessions
                 </div>
                 <ul className="plan-features text-slate-200 text-sm space-y-3 mb-8">
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> Everything in Starter</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> Unlimited circles &amp; cohorts</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> Recurring memberships</li>
-                  <li className="flex items-center gap-2.5 font-semibold text-white"><span className="text-sky-400 font-bold text-base">✓</span> <b>Live in-session AURA</b></li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> WhatsApp reminders &amp; broadcasts</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> GST-ready invoices</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> Priority placement in directory</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> Everything in Starter Plan</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> Unlimited access to ALL practitioner courses</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> Unlimited access to live group circles</li>
+                  <li className="flex items-center gap-2.5 font-semibold text-white"><span className="text-sky-400 font-bold text-base">✓</span> <b>15% discount on all 1:1 sessions</b></li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> Live in-session AURA companion &amp; insights</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> Priority session scheduling &amp; waitlist bypass</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> Monthly companion pass for a friend</li>
                 </ul>
               </div>
               <div className="flex flex-col gap-2.5">
@@ -273,31 +312,32 @@ export function Pricing() {
                   fullWidth
                   size="lg"
                 >
-                  {payingPlan === 'growth' ? 'Opening Razorpay...' : 'Pay ₹2,999 Now'}
+                  {payingPlan === 'growth' ? 'Opening Razorpay...' : 'Subscribe to Growth — ₹2,999'}
                 </OHButton>
               </div>
             </div>
 
-            {/* Master */}
+            {/* Master VIP Plan */}
             <div className="plan-card bg-white border border-slate-200 rounded-3xl p-8 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
               <div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-2">Master</h3>
+                <h3 className="text-2xl font-bold text-slate-900 mb-2">Master VIP Plan</h3>
                 <p className="who text-slate-600 text-sm mb-6 min-h-[42px] font-medium leading-relaxed">
-                  For established practices running multiple cohorts under their own brand.
+                  For complete wellbeing coverage with dedicated care, free monthly session, and VIP perks.
                 </p>
                 <div className="price-tag text-4xl font-extrabold text-slate-900 mb-3 tracking-tight">
                   ₹5,999<small className="text-slate-500 font-medium text-base"> /month</small>
                 </div>
                 <div className="cut-badge bg-emerald-50 text-emerald-700 font-bold text-xs uppercase tracking-wider py-2 px-3.5 rounded-xl mb-6 inline-flex items-center gap-2 border border-emerald-100">
-                  0% — you keep 100% of earnings
+                  1 Free 1:1 Session + 25% OFF Extra
                 </div>
                 <ul className="plan-features text-slate-700 text-sm space-y-3 mb-8">
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Everything in Growth</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Your own branded app (iOS + Android)</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Custom domain</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Team seats for associate practitioners</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Advanced client analytics</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Named support contact</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Everything in Growth Plan</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> <b>1 Free 1:1 private session included / mo</b></li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> <b>25% discount on additional 1:1 sessions</b></li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Dedicated care manager &amp; concierge support</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Family sharing (up to 3 family sub-accounts)</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Custom wellness path &amp; biometric analytics</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> 24/7 Priority health helpline</li>
                 </ul>
               </div>
               <div className="flex flex-col gap-2.5">
@@ -307,7 +347,7 @@ export function Pricing() {
                   fullWidth
                   size="lg"
                 >
-                  {payingPlan === 'master' ? 'Opening Razorpay...' : 'Pay ₹5,999 Now'}
+                  {payingPlan === 'master' ? 'Opening Razorpay...' : 'Subscribe to Master — ₹5,999'}
                 </OHButton>
               </div>
             </div>
@@ -316,38 +356,19 @@ export function Pricing() {
         </div>
       </section>
 
-
-      {/* Breakeven Chart */}
-      <section className="oh-sec py-12" id="breakeven">
-        <div className="oh-wrap max-w-[1240px] mx-auto px-4">
-          <div className="sec-head text-center max-w-3xl mx-auto mb-8">
-            <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 mb-3">Where each plan stops making sense</h2>
-            <p className="text-slate-600 text-base font-medium leading-relaxed">
-              The lines cross twice. Below ₹30,000/month Starter wins. Above ₹1,00,000 you should be on Master. Here's the arithmetic, drawn.
-            </p>
-          </div>
-          <OHCard surface="white" pad="lg" className="chart-card bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
-            <h3 className="text-xl font-bold text-slate-900 mb-1">What you pay OpenHand, by monthly earnings</h3>
-            <p className="hint-text text-slate-500 text-sm mb-6">Lower is better. Where two lines cross is where you should switch plans.</p>
-            <OHBreakevenChart plans={breakevenPlans} maxGross={200000} />
-            <p className="disclaim-text text-xs text-slate-500 mt-6 max-w-2xl">Illustrative model. Payment gateway charges and GST are separate and depend on your registration status.</p>
-          </OHCard>
-        </div>
-      </section>
-
-      {/* Calculator */}
+      {/* Client Savings Calculator */}
       <section className="oh-sec py-12" id="calculator">
         <div className="oh-wrap max-w-[1240px] mx-auto px-4">
           <div className="sec-head text-center max-w-3xl mx-auto mb-8">
-            <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 mb-3">Calculate your exact earnings</h2>
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 mb-3">Calculate your monthly client savings</h2>
             <p className="text-slate-600 text-base font-medium leading-relaxed">
-              Drag the sliders below to see your net income after OpenHand fees and find your recommended plan automatically.
+              Drag the sliders below to estimate your savings on 1:1 sessions, courses, and group circles with OpenHand client memberships.
             </p>
           </div>
           <OHRangeCalculator
             sliders={calcSliders}
             compute={calcCompute}
-            note="Illustrative only — this is arithmetic, not a projection. Assumes ₹799/month membership pricing. Payment gateway charges and GST are additional; check with your accountant."
+            note="Estimates based on standard standalone session & course prices vs OpenHand client membership benefits. Payment gateway charges and taxes are processed at checkout."
           />
         </div>
       </section>
@@ -356,9 +377,9 @@ export function Pricing() {
       <section className="oh-sec py-12" id="compare">
         <div className="oh-wrap max-w-[1240px] mx-auto px-4">
           <div className="sec-head text-center max-w-3xl mx-auto mb-10">
-            <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 mb-3">How we compare</h2>
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 mb-3">Why clients choose OpenHand membership</h2>
             <p className="text-slate-600 text-base font-medium leading-relaxed">
-              Honest version: on fees alone, we're mid-market. We're not trying to be the cheapest — we're the only one built for people whose clients disclose things that matter.
+              Compare OpenHand client subscriptions against traditional pay-as-you-go platforms and standalone sessions.
             </p>
           </div>
           
@@ -366,30 +387,24 @@ export function Pricing() {
             <table className="cmp-table w-full border-collapse text-sm min-w-[760px]">
               <thead>
                 <tr className="border-b border-slate-200">
-                  <th className="p-4 text-left font-bold text-slate-700 bg-slate-50">Feature / Capability</th>
-                  <th className="us-col p-4 text-left font-extrabold text-white bg-gradient-to-r from-blue-600 to-indigo-600">OpenHand</th>
-                  <th className="p-4 text-left font-bold text-slate-700 bg-slate-50">TagMango</th>
-                  <th className="p-4 text-left font-bold text-slate-700 bg-slate-50">Topmate</th>
-                  <th className="p-4 text-left font-bold text-slate-700 bg-slate-50">AppX</th>
+                  <th className="p-4 text-left font-bold text-slate-700 bg-slate-50">Feature / Benefit</th>
+                  <th className="us-col p-4 text-left font-extrabold text-white bg-gradient-to-r from-blue-600 to-indigo-600">OpenHand Membership</th>
+                  <th className="p-4 text-left font-bold text-slate-700 bg-slate-50">Standalone Pay-As-You-Go</th>
+                  <th className="p-4 text-left font-bold text-slate-700 bg-slate-50">Standard Apps</th>
+                  <th className="p-4 text-left font-bold text-slate-700 bg-slate-50">Traditional Offline Care</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-800">
-                <tr><td className="p-4 font-semibold text-slate-900">Starter tier price</td><td className="us-col p-4 font-bold text-blue-700 bg-blue-50/70">₹999/mo + 8%</td><td className="p-4 text-slate-600">10%</td><td className="p-4 text-slate-600">No subscription fee</td><td className="p-4 text-slate-600">Varies by plan</td></tr>
-                <tr><td className="p-4 font-semibold text-slate-900">Zero-commission plan</td><td className="us-col p-4 font-bold text-blue-700 bg-blue-50/70">₹5,999/mo (Master)</td><td className="p-4 text-slate-600">Higher tiers + setup fee</td><td className="p-4 text-slate-400">—</td><td className="p-4 text-slate-600">Custom</td></tr>
-                <tr><td className="p-4 font-semibold text-slate-900">UPI / Indian payments</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Yes</td><td className="yes p-4 font-semibold text-slate-700">✓ Yes</td><td className="yes p-4 font-semibold text-slate-700">✓ Yes</td><td className="yes p-4 font-semibold text-slate-700">✓ Yes</td></tr>
-                <tr><td className="p-4 font-semibold text-slate-900">Courses &amp; cohorts</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Yes</td><td className="yes p-4 font-semibold text-slate-700">✓ Yes</td><td className="yes p-4 font-semibold text-slate-700">✓ Yes</td><td className="yes p-4 font-semibold text-slate-700">✓ Yes</td></tr>
-                <tr><td className="p-4 font-semibold text-slate-900">Branded mobile app</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ On Master</td><td className="yes p-4 text-slate-600">On enterprise</td><td className="no p-4 text-slate-400">✕ No</td><td className="yes p-4 text-slate-600">Core offering</td></tr>
-                <tr><td className="p-4 font-semibold text-slate-900">Client check-ins &amp; mood tracking</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Yes</td><td className="no p-4 text-slate-400">✕ No</td><td className="no p-4 text-slate-400">✕ No</td><td className="no p-4 text-slate-400">✕ No</td></tr>
-                <tr><td className="p-4 font-semibold text-slate-900">Consent-gated session recording</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Yes</td><td className="no p-4 text-slate-400">✕ No</td><td className="no p-4 text-slate-400">✕ No</td><td className="no p-4 text-slate-400">✕ No</td></tr>
-                <tr><td className="p-4 font-semibold text-slate-900">Live in-session AI AURA</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Yes</td><td className="no p-4 text-slate-400">✕ No</td><td className="no p-4 text-slate-400">✕ No</td><td className="no p-4 text-slate-400">✕ No</td></tr>
-                <tr><td className="p-4 font-semibold text-slate-900">Clinician-founded</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Two doctors</td><td className="no p-4 text-slate-400">✕ No</td><td className="no p-4 text-slate-400">✕ No</td><td className="no p-4 text-slate-400">✕ No</td></tr>
-                <tr><td className="p-4 font-semibold text-slate-900">B2B employee wellbeing</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Yes</td><td className="no p-4 text-slate-400">✕ No</td><td className="no p-4 text-slate-400">✕ No</td><td className="no p-4 text-slate-400">✕ No</td></tr>
+                <tr><td className="p-4 font-semibold text-slate-900">Monthly Subscription Starting Price</td><td className="us-col p-4 font-bold text-blue-700 bg-blue-50/70">₹999/mo</td><td className="p-4 text-slate-600">No subscription</td><td className="p-4 text-slate-600">Varies per platform</td><td className="p-4 text-slate-600">No subscription option</td></tr>
+                <tr><td className="p-4 font-semibold text-slate-900">Practitioner Courses Library</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Included in Growth &amp; Master</td><td className="p-4 text-slate-600">₹1,500+ / course</td><td className="p-4 text-slate-600">Pay per course</td><td className="no p-4 text-slate-400">✕ N/A</td></tr>
+                <tr><td className="p-4 font-semibold text-slate-900">Live Group Circles &amp; Cohorts</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Unlimited in Growth &amp; Master</td><td className="p-4 text-slate-600">₹800+ / circle</td><td className="no p-4 text-slate-400">✕ Extra charge</td><td className="no p-4 text-slate-400">✕ N/A</td></tr>
+                <tr><td className="p-4 font-semibold text-slate-900">1:1 Session Discounts</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ 15%–25% OFF + 1 Free/mo on Master</td><td className="no p-4 text-slate-400">✕ 0% discount</td><td className="no p-4 text-slate-400">✕ 0% discount</td><td className="no p-4 text-slate-400">✕ Full fee always</td></tr>
+                <tr><td className="p-4 font-semibold text-slate-900">Personal AI Companion (AURA)</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Included in all plans</td><td className="no p-4 text-slate-400">✕ N/A</td><td className="no p-4 text-slate-400">✕ N/A</td><td className="no p-4 text-slate-400">✕ N/A</td></tr>
+                <tr><td className="p-4 font-semibold text-slate-900">Daily Reflection &amp; Mood Check-ins</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Included in all plans</td><td className="no p-4 text-slate-400">✕ N/A</td><td className="no p-4 text-slate-400">✕ N/A</td><td className="no p-4 text-slate-400">✕ N/A</td></tr>
+                <tr><td className="p-4 font-semibold text-slate-900">Family Account Sharing</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Up to 3 sub-accounts on Master</td><td className="no p-4 text-slate-400">✕ N/A</td><td className="no p-4 text-slate-400">✕ N/A</td><td className="no p-4 text-slate-400">✕ N/A</td></tr>
               </tbody>
             </table>
           </div>
-          <p className="disclaim-text text-xs text-slate-500 mt-4 leading-relaxed max-w-4xl">
-            Comparison compiled from publicly available information in July 2026. Competitor pricing and features change frequently — check each provider's own site before making a decision. We'd rather you verify than take our word for it.
-          </p>
         </div>
       </section>
 
@@ -397,8 +412,8 @@ export function Pricing() {
       <section className="oh-sec py-12" id="faq">
         <div className="oh-wrap max-w-[1240px] mx-auto px-4">
           <div className="sec-head text-center max-w-3xl mx-auto mb-10">
-            <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 mb-3">Questions people actually ask</h2>
-            <p className="text-slate-600 text-base font-medium">Clear answers about billing, payouts, taxes, data control, and plan upgrades.</p>
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 mb-3">Frequently asked client questions</h2>
+            <p className="text-slate-600 text-base font-medium">Clear answers about client membership access, session perks, family sharing, and privacy.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -435,14 +450,14 @@ export function Pricing() {
       <section className="oh-sec py-16 bg-gradient-to-b from-slate-50 to-white text-center border-t border-slate-200">
         <div className="oh-wrap max-w-4xl mx-auto px-4">
           <h2 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight mb-4">
-            Start on Starter. Switch when the maths says so.
+            Start your personal care journey today.
           </h2>
           <p className="text-slate-600 text-base sm:text-lg font-medium max-w-2xl mx-auto mb-8 leading-relaxed">
-            We'll email you the month your commission passes ₹2,999 and tell you to upgrade. Yes, really.
+            Subscribe to an OpenHand client plan or find a practitioner to get started. Switch or cancel anytime.
           </p>
           <div className="cta-row flex flex-wrap items-center justify-center gap-4">
-            <OHButton href="/start-free" size="lg">Start your practice space</OHButton>
-            <OHButton href="/talk-to-human" variant="ghost" size="lg">Talk to a real human →</OHButton>
+            <OHButton href="#plans" size="lg">Choose a Client Plan</OHButton>
+            <OHButton href="/find-a-practitioner" variant="ghost" size="lg">Find a Practitioner →</OHButton>
           </div>
         </div>
       </section>

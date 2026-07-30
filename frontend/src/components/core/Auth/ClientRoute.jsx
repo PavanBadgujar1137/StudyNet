@@ -4,10 +4,18 @@ import { ACCOUNT_TYPE } from "../../../utils/constants"
 
 function ClientRoute({ children }) {
   const { token } = useSelector((state) => state.auth)
-  const { user } = useSelector((state) => state.profile)
+  const { user, loading } = useSelector((state) => state.profile)
 
   if (token === null) {
     return <Navigate to="/login" />
+  }
+
+  if (loading || !user) {
+    return (
+      <div className="grid min-h-[calc(100vh-3.5rem)] place-items-center">
+        <div className="spinner"></div>
+      </div>
+    )
   }
 
   if (

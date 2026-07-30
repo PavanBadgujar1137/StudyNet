@@ -42,8 +42,8 @@ const Footer = () => {
   const socials = [
     { Icon: FaFacebook, href: "https://facebook.com", label: "Facebook" },
     { Icon: FaTwitter, href: "https://twitter.com", label: "Twitter" },
-    { Icon: FaInstagram, href: "https://instagram.com", label: "Instagram" },
-    { Icon: FaLinkedin, href: "https://linkedin.com", label: "LinkedIn" },
+    { Icon: FaInstagram, href: "https://www.instagram.com/openhand.live?igsh=MWNqMDhxeHFiMXZmdA%3D%3D&utm_source=qr", label: "Instagram" },
+    { Icon: FaLinkedin, href: "https://www.linkedin.com/showcase/openhandai/", label: "LinkedIn" },
     { Icon: FaYoutube, href: "https://youtube.com", label: "YouTube" },
   ];
 

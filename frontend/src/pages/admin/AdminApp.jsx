@@ -119,8 +119,8 @@ function DashboardTab({ stats, recentPayments, loading }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
-        <KpiCard icon={<FiDollarSign />} label="Total Revenue" value={fmt(stats?.totalRevenue)} color="#10B981" trend={12} />
-        <KpiCard icon={<FiUsers />} label="Total Clients" value={stats?.totalClients || 0} color="#3B82F6" trend={8} />
+        <KpiCard icon={<FiDollarSign />} label="Total Revenue" value={fmt(stats?.totalRevenue)} color="#10B981" trend={stats?.revenueTrend} />
+        <KpiCard icon={<FiUsers />} label="Total Clients" value={stats?.totalClients || 0} color="#3B82F6" trend={stats?.clientsTrend} />
         <KpiCard icon={<FiUser />} label="Practitioners" value={stats?.totalPractitioners || 0} color="#8B5CF6" />
         <KpiCard icon={<FiCreditCard />} label="Pending Payouts" value={fmt(stats?.pendingPayouts)} subLabel="Admin owes practitioners" color="#F59E0B" />
         <KpiCard icon={<FiCalendar />} label="Active Subscriptions" value={stats?.activeSubscriptions || 0} color="#06B6D4" />
@@ -157,12 +157,17 @@ function DashboardTab({ stats, recentPayments, loading }) {
 }
 
 // ─── Clients Tab ──────────────────────────────────────────────────────────────
+// ─── Clients Tab ──────────────────────────────────────────────────────────────
 function ClientsTab() {
   const { token } = useSelector(s => s.auth)
   const [clients, setClients] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [total, setTotal] = useState(0)
+  const [planModal, setPlanModal] = useState(null)
+  const [selectedPlan, setSelectedPlan] = useState('growth')
+  const [extendDays, setExtendDays] = useState('7')
+  const [updating, setUpdating] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -175,8 +180,66 @@ function ClientsTab() {
 
   useEffect(() => { load() }, [load])
 
+  const handleUpdatePlan = async () => {
+    setUpdating(true)
+    try {
+      const res = await apiConnector('PATCH', `/api/v1/admin/clients/${planModal._id}/plan`, {
+        planKey: selectedPlan,
+        extendTrialDays: Number(extendDays) || 0,
+      }, { Authorization: `Bearer ${token}` })
+      if (res?.data?.success) {
+        toast.success('Client plan updated successfully')
+        setPlanModal(null)
+        load()
+      }
+    } catch (e) { toast.error('Failed to update plan') }
+    setUpdating(false)
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* Plan Override Modal */}
+      {planModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 20, padding: 32, width: 460, maxWidth: '90vw', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
+            <h3 style={{ margin: '0 0 4px', color: '#0F172A', fontSize: 18, fontWeight: 800 }}>Manage Plan &amp; Trial — {planModal.firstName} {planModal.lastName}</h3>
+            <p style={{ margin: '0 0 16px', color: '#64748B', fontSize: 13 }}>Current status: <strong style={{ color: '#1F5FE0' }}>{planModal.planDisplayStatus}</strong></p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 20 }}>
+              <div>
+                <label style={{ display: 'block', color: '#475569', fontSize: 12, marginBottom: 6, fontWeight: 600 }}>Assign Subscription Plan</label>
+                <select value={selectedPlan} onChange={e => setSelectedPlan(e.target.value)}
+                  style={{ width: '100%', background: '#FFFFFF', border: '1.5px solid #CBD5E1', borderRadius: 10, padding: '10px 14px', color: '#0F172A', fontSize: 14, outline: 'none' }}>
+                  <option value="trial">Keep 7-Day Free Trial</option>
+                  <option value="starter">Starter Plan (₹999/mo)</option>
+                  <option value="growth">Growth Plan (₹2,999/mo)</option>
+                  <option value="master">Master VIP Plan (₹5,999/mo)</option>
+                  <option value="none">No Active Plan (Trial Expired)</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', color: '#475569', fontSize: 12, marginBottom: 6, fontWeight: 600 }}>Extend Trial (Days)</label>
+                <input type="number" value={extendDays} onChange={e => setExtendDays(e.target.value)}
+                  placeholder="e.g. 7"
+                  style={{ width: '100%', background: '#FFFFFF', border: '1.5px solid #CBD5E1', borderRadius: 10, padding: '10px 14px', color: '#0F172A', fontSize: 14, outline: 'none' }} />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setPlanModal(null)}
+                style={{ flex: 1, padding: '12px', background: '#F1F5F9', border: 'none', borderRadius: 10, color: '#64748B', cursor: 'pointer', fontWeight: 600 }}>
+                Cancel
+              </button>
+              <button onClick={handleUpdatePlan} disabled={updating}
+                style={{ flex: 1, padding: '12px', background: 'linear-gradient(135deg, #3B82F6, #1D4ED8)', border: 'none', borderRadius: 10, color: '#fff', cursor: 'pointer', fontWeight: 700 }}>
+                {updating ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#FFFFFF', border: '1.5px solid #E2E8F0', borderRadius: 12, padding: '8px 14px', flex: 1 }}>
           <FiSearch color="#94A3B8" />
@@ -203,15 +266,174 @@ function ClientsTab() {
                 </div>
               </div>
             )},
-            { key: 'subscription', label: 'Subscription', render: r => r.subscription
-              ? <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: '#DCFCE7', color: '#166534', textTransform: 'capitalize' }}>{r.subscription.planKey}</span>
-              : <span style={{ color: '#94A3B8', fontSize: 12 }}>No subscription</span> },
+            { key: 'planDisplayStatus', label: 'Subscription / Trial Status', render: r => (
+              <span style={{
+                padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700,
+                background: r.hasActiveSub ? '#DCFCE7' : r.isTrialActive ? '#F3E8FF' : '#FEE2E2',
+                color: r.hasActiveSub ? '#166534' : r.isTrialActive ? '#7E22CE' : '#DC2626',
+                border: `1px solid ${r.hasActiveSub ? '#BBF7D0' : r.isTrialActive ? '#E9D5FF' : '#FCA5A5'}`
+              }}>
+                {r.planDisplayStatus}
+              </span>
+            )},
             { key: 'sessionsBooked', label: 'Sessions Booked', render: r => <span style={{ color: '#334155' }}>{r.sessionsBooked || 0}</span> },
-            { key: 'totalPaid', label: 'Total Paid to Platform', render: r => <span style={{ color: '#10B981', fontWeight: 700 }}>{fmt(r.totalPaid)}</span> },
+            { key: 'totalPaid', label: 'Total Paid', render: r => <span style={{ color: '#10B981', fontWeight: 700 }}>{fmt(r.totalPaid)}</span> },
             { key: 'createdAt', label: 'Joined', render: r => fmtDate(r.createdAt) },
-            { key: 'active', label: 'Status', render: r => <StatusBadge status={r.active ? 'active' : 'inactive'} /> },
+            { key: 'action', label: 'Action', render: r => (
+              <button onClick={() => { setPlanModal(r); setSelectedPlan(r.subscription?.planKey || 'growth') }}
+                style={{ padding: '6px 12px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, color: '#1D4ED8', cursor: 'pointer', fontWeight: 600, fontSize: 12 }}>
+                Manage Plan
+              </button>
+            )},
           ]}
           data={clients}
+        />
+      </div>
+    </div>
+  )
+}
+
+// ─── Admin Courses & Plan Assignment Tab ──────────────────────────────────────
+function CoursesTab() {
+  const { token } = useSelector(s => s.auth)
+  const [courses, setCourses] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [assignModal, setAssignModal] = useState(null)
+  const [selectedPlan, setSelectedPlan] = useState('')
+  const [selectedStatus, setSelectedStatus] = useState('published')
+  const [saving, setSaving] = useState(false)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await apiConnector('GET', '/api/v1/admin/courses', null, { Authorization: `Bearer ${token}` })
+      if (res?.data?.success) setCourses(res.data.courses || [])
+    } catch (e) { toast.error('Failed to load courses') }
+    setLoading(false)
+  }, [token])
+
+  useEffect(() => { load() }, [load])
+
+  const handleSavePlan = async () => {
+    setSaving(true)
+    try {
+      const res = await apiConnector('PATCH', `/api/v1/admin/courses/${assignModal._id}`, {
+        requiredPlan: selectedPlan,
+        status: selectedStatus,
+      }, { Authorization: `Bearer ${token}` })
+      if (res?.data?.success) {
+        toast.success('Course plan tier assigned successfully!')
+        setAssignModal(null)
+        load()
+      }
+    } catch (e) { toast.error('Failed to update course plan') }
+    setSaving(false)
+  }
+
+  const filtered = courses.filter(c =>
+    !search ||
+    c.title?.toLowerCase().includes(search.toLowerCase()) ||
+    `${c.practitioner?.firstName} ${c.practitioner?.lastName}`.toLowerCase().includes(search.toLowerCase())
+  )
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* Assign Plan Modal */}
+      {assignModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 20, padding: 32, width: 480, maxWidth: '90vw', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
+            <h3 style={{ margin: '0 0 4px', color: '#0F172A', fontSize: 18, fontWeight: 800 }}>Assign Subscription Plan Tier</h3>
+            <p style={{ margin: '0 0 16px', color: '#64748B', fontSize: 13 }}>Course: <strong>{assignModal.title}</strong> by Dr. {assignModal.practitioner?.firstName} {assignModal.practitioner?.lastName}</p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 24 }}>
+              <div>
+                <label style={{ display: 'block', color: '#475569', fontSize: 12, marginBottom: 6, fontWeight: 600 }}>Required Subscription Plan</label>
+                <select value={selectedPlan} onChange={e => setSelectedPlan(e.target.value)}
+                  style={{ width: '100%', background: '#FFFFFF', border: '1.5px solid #CBD5E1', borderRadius: 10, padding: '10px 14px', color: '#0F172A', fontSize: 14, outline: 'none' }}>
+                  <option value="">Free Access (No subscription needed)</option>
+                  <option value="starter">Starter Plan &amp; above (₹999/mo)</option>
+                  <option value="growth">Growth Plan &amp; above (₹2,999/mo)</option>
+                  <option value="master">Master VIP Plan (₹5,999/mo)</option>
+                </select>
+                <p style={{ margin: '4px 0 0', color: '#94A3B8', fontSize: 11 }}>
+                  Clients must have an active subscription or trial matching this tier to access videos.
+                </p>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', color: '#475569', fontSize: 12, marginBottom: 6, fontWeight: 600 }}>Publication Status</label>
+                <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)}
+                  style={{ width: '100%', background: '#FFFFFF', border: '1.5px solid #CBD5E1', borderRadius: 10, padding: '10px 14px', color: '#0F172A', fontSize: 14, outline: 'none' }}>
+                  <option value="published">Published (Visible to Clients)</option>
+                  <option value="draft">Draft (Hidden)</option>
+                </select>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setAssignModal(null)}
+                style={{ flex: 1, padding: '12px', background: '#F1F5F9', border: 'none', borderRadius: 10, color: '#64748B', cursor: 'pointer', fontWeight: 600 }}>
+                Cancel
+              </button>
+              <button onClick={handleSavePlan} disabled={saving}
+                style={{ flex: 1, padding: '12px', background: 'linear-gradient(135deg, #10B981, #059669)', border: 'none', borderRadius: 10, color: '#fff', cursor: 'pointer', fontWeight: 700 }}>
+                {saving ? 'Saving...' : 'Assign Plan Tier ✓'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#FFFFFF', border: '1.5px solid #E2E8F0', borderRadius: 12, padding: '8px 14px', flex: 1 }}>
+          <FiSearch color="#94A3B8" />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search courses or practitioners..."
+            style={{ background: 'none', border: 'none', outline: 'none', color: '#0F172A', fontSize: 14, width: '100%' }} />
+        </div>
+        <button onClick={load} style={{ background: '#FFFFFF', border: '1.5px solid #E2E8F0', borderRadius: 12, padding: '10px 16px', color: '#64748B', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600, fontSize: 13 }}>
+          <FiRefreshCw /> Refresh
+        </button>
+      </div>
+
+      <div style={{ color: '#64748B', fontSize: 13 }}>{filtered.length} total courses uploaded by practitioners</div>
+
+      <div style={{ background: '#FFFFFF', borderRadius: 16, border: '1px solid #E2E8F0', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.03)' }}>
+        <DataTable
+          loading={loading}
+          emptyMessage="No courses uploaded by practitioners yet"
+          columns={[
+            { key: 'course', label: 'Course Title', render: r => (
+              <div>
+                <div style={{ color: '#0F172A', fontWeight: 700 }}>{r.title}</div>
+                <div style={{ color: '#64748B', fontSize: 11 }}>{r.videos?.length || 0} videos</div>
+              </div>
+            )},
+            { key: 'practitioner', label: 'Practitioner (Creator)', render: r => (
+              <div>
+                <div style={{ color: '#0F172A', fontWeight: 600 }}>Dr. {r.practitioner?.firstName} {r.practitioner?.lastName}</div>
+                <div style={{ color: '#64748B', fontSize: 11 }}>{r.practitioner?.email}</div>
+              </div>
+            )},
+            { key: 'requiredPlan', label: 'Assigned Subscription Plan', render: r => r.requiredPlan ? (
+              <span style={{ padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: '#F3E8FF', color: '#7E22CE', border: '1px solid #E9D5FF', textTransform: 'capitalize' }}>
+                {r.requiredPlan} Plan
+              </span>
+            ) : (
+              <span style={{ padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: '#DCFCE7', color: '#166534', border: '1px solid #BBF7D0' }}>
+                Free Access
+              </span>
+            )},
+            { key: 'status', label: 'Status', render: r => <StatusBadge status={r.status} /> },
+            { key: 'createdAt', label: 'Uploaded', render: r => fmtDate(r.createdAt) },
+            { key: 'action', label: 'Admin Action', render: r => (
+              <button onClick={() => { setAssignModal(r); setSelectedPlan(r.requiredPlan || ''); setSelectedStatus(r.status || 'published') }}
+                style={{ padding: '6px 14px', background: 'linear-gradient(135deg, #3B82F6, #1D4ED8)', border: 'none', borderRadius: 8, color: '#fff', cursor: 'pointer', fontWeight: 600, fontSize: 12 }}>
+                Assign Plan Tier
+              </button>
+            )},
+          ]}
+          data={filtered}
         />
       </div>
     </div>
@@ -328,7 +550,7 @@ function PractitionersTab() {
                 </div>
               </div>
             )},
-            { key: 'plan', label: 'Plan', render: r => <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: '#F5F3FF', color: '#8B5CF6', textTransform: 'capitalize' }}>{r.profile?.plan || 'starter'}</span> },
+            { key: 'specialization', label: 'Specialization', render: r => <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: '#EFF6FF', color: '#1D4ED8' }}>{r.profile?.specialties?.[0] || 'Integrative Health'}</span> },
             { key: 'verification', label: 'Verification', render: r => <StatusBadge status={r.profile?.verificationStatus || 'pending'} /> },
             { key: 'sessions', label: 'Sessions', render: r => r.sessionsDelivered || 0 },
             { key: 'courses', label: 'Courses', render: r => r.coursesCount || 0 },
@@ -680,6 +902,7 @@ function OrgConversationsTab() {
 const TABS = [
   { id: 'dashboard', label: 'Dashboard', icon: <FiGrid /> },
   { id: 'clients', label: 'Clients', icon: <FiUsers /> },
+  { id: 'courses', label: 'Courses & Plans', icon: <FiBookOpen /> },
   { id: 'practitioners', label: 'Practitioners', icon: <FiUser /> },
   { id: 'payments', label: 'All Payments', icon: <FiDollarSign /> },
   { id: 'subscriptions', label: 'Subscriptions', icon: <FiCreditCard /> },
@@ -804,6 +1027,7 @@ export default function AdminApp() {
         <div style={{ flex: 1, padding: '28px 32px', overflowY: 'auto' }}>
           {activeTab === 'dashboard' && <DashboardTab stats={stats} recentPayments={recentPayments} loading={statsLoading} />}
           {activeTab === 'clients' && <ClientsTab />}
+          {activeTab === 'courses' && <CoursesTab />}
           {activeTab === 'practitioners' && <PractitionersTab />}
           {activeTab === 'payments' && <PaymentsTab />}
           {activeTab === 'subscriptions' && <SubscriptionsTab />}

@@ -63,7 +63,7 @@ const createZoomMeeting = async ({ topic, agenda = "", startTime, durationMinute
         },
         body: JSON.stringify({
           topic: topic || "Live Class Session",
-          agenda: agenda || "StudyNet Live Class",
+          agenda: agenda || "OpenHand Live Session",
           type: 2, // Scheduled meeting
           start_time: new Date(startTime).toISOString(),
           duration: Math.max(15, Number(durationMinutes) || 60),

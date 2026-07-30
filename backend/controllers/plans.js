@@ -3,54 +3,55 @@ const PlanConfig = require("../models/PlanConfig")
 const DEFAULT_PLANS = [
   {
     planKey: "starter",
-    name: "Starter",
-    tagline: "For practitioners testing whether an online practice works at all.",
+    name: "Starter Plan",
+    tagline: "For individuals starting their personal wellness & mental health journey.",
     monthlyFee: 999,
-    commissionPercentage: 8,
+    commissionPercentage: 0,
     defaultMembershipPrice: 799,
     razorpayButtonId: "pl_TIp5rKJwNIOFhi",
     features: [
-      "Unlimited 1:1 sessions",
-      "One private circle",
-      "UPI, cards, net banking, Stripe",
-      "Client check-ins & reflection prompts",
-      "Post-session AURA notes",
-      "Listed in the practitioner directory",
+      "Access to core practitioner courses & library",
+      "1 Monthly group circle pass included",
+      "Daily mood check-ins & guided reflection prompts",
+      "Personal AI health & reflection assistant (AURA)",
+      "Standard 1:1 session booking access",
+      "Secure digital health record vault",
     ],
   },
   {
     planKey: "growth",
-    name: "Growth",
-    tagline: "For practitioners past ₹40,000/month who want the fee to stop stinging.",
+    name: "Growth Plan",
+    tagline: "For active wellness seekers wanting full access to courses, circles, and session discounts.",
     monthlyFee: 2999,
-    commissionPercentage: 5,
+    commissionPercentage: 0,
     defaultMembershipPrice: 799,
     razorpayButtonId: "pl_TIpGvgepbsigNC",
     features: [
       "Everything in Starter",
-      "Unlimited circles & cohorts",
-      "Recurring memberships",
-      "Live in-session AURA",
-      "WhatsApp reminders & broadcasts",
-      "GST-ready invoices",
-      "Priority placement in directory",
+      "Unlimited access to ALL practitioner courses & cohorts",
+      "Unlimited access to live group circles",
+      "15% discount on all 1:1 sessions with verified practitioners",
+      "Live in-session AURA companion & real-time insights",
+      "Priority session scheduling & waitlist bypass",
+      "Monthly companion pass (gift 1 session/circle pass)",
     ],
   },
   {
     planKey: "master",
-    name: "Master",
-    tagline: "For established practices running multiple cohorts under their own brand.",
+    name: "Master VIP Plan",
+    tagline: "For complete wellbeing coverage with dedicated care, free monthly session, and VIP perks.",
     monthlyFee: 5999,
     commissionPercentage: 0,
     defaultMembershipPrice: 799,
     razorpayButtonId: "pl_TIpJ8iM19tFFtf",
     features: [
       "Everything in Growth",
-      "Your own branded app (iOS + Android)",
-      "Custom domain",
-      "Team seats for associate practitioners",
-      "Advanced client analytics",
-      "Named support contact",
+      "1 Free 1:1 private session included per month",
+      "25% discount on all additional 1:1 practitioner sessions",
+      "Dedicated personal care manager & concierge support",
+      "Family sharing (up to 3 family sub-accounts included)",
+      "Custom wellness path & advanced biometric analytics",
+      "24/7 Priority health helpline & instant AURA access",
     ],
   },
 ]
@@ -61,6 +62,21 @@ exports.getPlans = async (req, res) => {
     let plans = await PlanConfig.find()
     if (plans.length === 0) {
       plans = await PlanConfig.insertMany(DEFAULT_PLANS)
+    } else {
+      // Sync client-focused details into DB documents
+      for (const def of DEFAULT_PLANS) {
+        await PlanConfig.findOneAndUpdate(
+          { planKey: def.planKey },
+          {
+            name: def.name,
+            tagline: def.tagline,
+            monthlyFee: def.monthlyFee,
+            features: def.features,
+          },
+          { upsert: true }
+        )
+      }
+      plans = await PlanConfig.find()
     }
 
     return res.status(200).json({

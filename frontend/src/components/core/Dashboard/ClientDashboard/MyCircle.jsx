@@ -1,13 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useSelector } from 'react-redux'
 import {
-  FiUsers,
-  FiUserCheck,
-  FiCalendar,
   FiCheckCircle,
   FiMessageSquare,
   FiShield,
-  FiArrowRight,
   FiPlusCircle,
 } from 'react-icons/fi'
 import { apiConnector } from '../../../../services/apiConnector'
@@ -90,7 +86,7 @@ export function MyCircle({ setActiveTab, clientName = 'Student', practitionerNam
           Peer Support &amp; Practitioner Growth Circles
         </h1>
         <p style={{ color: '#64748B', fontSize: '14px' }}>
-          Join small group cohorts led by verified StudyNet practitioners. Connected circle chats automatically sync to your Community Hub.
+          Join small group cohorts led by verified OpenHand practitioners. Connected circle chats automatically sync to your Community Hub.
         </p>
       </div>
 

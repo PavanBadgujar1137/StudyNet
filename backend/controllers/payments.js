@@ -162,18 +162,58 @@ exports.verifySubscriptionPayment = async (req, res) => {
   }
 }
 
-// ─── 3. GET CLIENT SUBSCRIPTION STATUS ───────────────────────────────────────
+// ─── 3. GET CLIENT SUBSCRIPTION & TRIAL STATUS ────────────────────────────────
 exports.getMySubscription = async (req, res) => {
   try {
     const userId = req.user.id
-    const subscription = await Subscription.findOne({
-      client: userId,
-      status: "active",
-    })
-      .sort({ createdAt: -1 })
-      .lean()
 
-    return res.status(200).json({ success: true, subscription })
+    const [subscription, user] = await Promise.all([
+      Subscription.findOne({
+        client: userId,
+        status: "active",
+      })
+        .sort({ createdAt: -1 })
+        .lean(),
+      User.findById(userId).select("trialStartedAt trialExpiresAt activePlan createdAt accountType").lean(),
+    ])
+
+    const now = new Date()
+    const hasActiveSubscription = !!subscription && new Date(subscription.endDate) > now
+
+    // Trial calculations
+    let trialStartedAt = user?.trialStartedAt || user?.createdAt || now
+    let trialExpiresAt = user?.trialExpiresAt || new Date(new Date(trialStartedAt).getTime() + 7 * 24 * 60 * 60 * 1000)
+
+    const isTrialActive = !hasActiveSubscription && now < new Date(trialExpiresAt)
+    const trialDaysRemaining = isTrialActive
+      ? Math.max(0, Math.ceil((new Date(trialExpiresAt) - now) / (1000 * 60 * 60 * 24)))
+      : 0
+
+    let effectivePlan = "none"
+    let status = "trial_expired"
+
+    if (hasActiveSubscription) {
+      effectivePlan = subscription.planKey
+      status = "subscribed"
+    } else if (isTrialActive) {
+      effectivePlan = "trial"
+      status = "trial_active"
+    } else {
+      effectivePlan = "none"
+      status = "trial_expired"
+    }
+
+    return res.status(200).json({
+      success: true,
+      subscription,
+      hasActiveSubscription,
+      isTrialActive,
+      trialDaysRemaining,
+      trialStartedAt,
+      trialExpiresAt,
+      effectivePlan,
+      status,
+    })
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message })
   }
@@ -196,15 +236,82 @@ exports.bookOffer = async (req, res) => {
 
     const practitionerId = offer.practitioner._id
     const practitionerUser = offer.practitioner
-    const grossAmount = offer.price
 
-    // Track what admin owes the practitioner as salary for this booking
-    // Default: 80% to practitioner (admin keeps 20% platform fee) — this is just a tracking number
-    // Admin still pays manually; this is just for admin visibility
+    // ── Calculate dynamic amount based on Client Subscription Plan Perks ──
+    const activeSub = await Subscription.findOne({ client: userId, status: "active" }).sort({ createdAt: -1 })
+    const now = new Date()
+
+    let grossAmount = offer.price
+    let discountPercentage = 0
+    let isFreeSession = false
+
+    if (activeSub && new Date(activeSub.endDate) > now && (offer.type === "session" || !offer.type)) {
+      if (activeSub.planKey === "growth") {
+        discountPercentage = 15
+        grossAmount = Math.round(offer.price * 0.85)
+      } else if (activeSub.planKey === "master") {
+        const startOfMonth = new Date()
+        startOfMonth.setDate(1)
+        startOfMonth.setHours(0, 0, 0, 0)
+
+        const freeSessionsUsed = await Booking.countDocuments({
+          client: userId,
+          offerType: "session",
+          status: { $in: ["confirmed", "completed"] },
+          createdAt: { $gte: startOfMonth },
+          amount: 0,
+        })
+
+        if (freeSessionsUsed === 0) {
+          grossAmount = 0
+          isFreeSession = true
+        } else {
+          discountPercentage = 25
+          grossAmount = Math.round(offer.price * 0.75)
+        }
+      }
+    }
+
     const practitionerPortion = Math.round(grossAmount * 0.8)
 
+    // Master VIP Plan 1 Free Session Instant Booking Flow
+    if (grossAmount === 0 && isFreeSession) {
+      const booking = await Booking.create({
+        client: userId,
+        practitioner: practitionerId,
+        offer: offer._id,
+        offerType: offer.type,
+        amount: 0,
+        commission: 0,
+        netPayout: 0,
+        paymentGateway: "manual",
+        status: "confirmed",
+        settlementStatus: "settled",
+        scheduledAt: scheduledAt ? new Date(scheduledAt) : new Date(Date.now() + 86400000),
+      })
+
+      await _createInvoiceAndAdminLog({
+        booking,
+        clientId: userId,
+        practitionerId,
+        practitionerUser,
+        offer,
+        grossAmount: 0,
+        practitionerPortion: 0,
+        gateway: "manual",
+        paymentId: `free_master_${Date.now()}`,
+        orderId: null,
+      })
+
+      return res.status(200).json({
+        success: true,
+        message: "🎉 1 Free 1:1 Private Session booked! (Included with your Master VIP Plan)",
+        booking,
+        isFreeSession: true,
+      })
+    }
+
     if (gateway === "stripe") {
-      // Stripe mock flow
       const mockStripeIntentId = `pi_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
       const booking = await Booking.create({
         client: userId,
@@ -212,7 +319,7 @@ exports.bookOffer = async (req, res) => {
         offer: offer._id,
         offerType: offer.type,
         amount: grossAmount,
-        commission: 0, // Admin handles commission manually
+        commission: 0,
         netPayout: practitionerPortion,
         paymentGateway: "stripe",
         stripePaymentIntentId: mockStripeIntentId,
@@ -242,7 +349,7 @@ exports.bookOffer = async (req, res) => {
       })
     }
 
-    // Razorpay flow — create order first, confirm on verify
+    // Razorpay flow — create order with discounted amount
     const options = {
       amount: Math.round(grossAmount * 100),
       currency: "INR",
@@ -252,6 +359,7 @@ exports.bookOffer = async (req, res) => {
         clientId: userId.toString(),
         practitionerId: practitionerId.toString(),
         offerType: offer.type,
+        discountPercentage: discountPercentage.toString(),
       },
     }
 

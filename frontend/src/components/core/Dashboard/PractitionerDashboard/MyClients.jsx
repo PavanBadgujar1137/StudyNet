@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useSelector } from 'react-redux'
-import { FiSearch, FiUserPlus, FiMessageSquare, FiVideo, FiX, FiCheckCircle, FiClock, FiShieldAlert } from 'react-icons/fi'
+import { FiSearch, FiUserPlus, FiMessageSquare, FiVideo, FiX, FiCheckCircle, FiClock } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import { apiConnector } from '../../../../services/apiConnector'
 
@@ -109,7 +109,7 @@ export function MyClients({ setActiveSection, telemetryData, onUpdate }) {
         <div>
           <div className="crumb">My clients &amp; Connection Requests</div>
           <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#0F172A' }}>{clients.length} Active Client(s) &amp; Students</h1>
-          <p style={{ color: '#64748B', fontSize: '14px' }}>Review payment verifications, approve new clients, and manage 1-on-1 sessions.</p>
+          <p style={{ color: '#64748B', fontSize: '14px' }}>Manage connected clients, track session progress, and launch 1-on-1 Zoom sessions.</p>
         </div>
         <button
           className="btn"
@@ -133,12 +133,12 @@ export function MyClients({ setActiveSection, telemetryData, onUpdate }) {
 
       {/* PENDING PAYMENT APPROVALS SECTION */}
       {pendingApprovals.length > 0 && (
-        <div style={{ background: '#FFFBEB', border: '1px solid #FCD34D', borderRadius: '16px', padding: '20px', marginBottom: '24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#B45309', fontWeight: 800, fontSize: '16px', marginBottom: '12px' }}>
-            <FiClock size={20} /> Pending Payment Verifications &amp; Client Approvals ({pendingApprovals.length})
+        <div style={{ background: '#EFF6FF', border: '1px solid #93C5FD', borderRadius: '16px', padding: '20px', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1E40AF', fontWeight: 800, fontSize: '16px', marginBottom: '12px' }}>
+            <FiClock size={20} /> Pending Client Connections ({pendingApprovals.length})
           </div>
-          <p style={{ color: '#92400E', fontSize: '13px', marginBottom: '16px' }}>
-            The following clients selected you on the Practitioners directory and paid their session fee via Razorpay. Review and approve to connect.
+          <p style={{ color: '#1E3A8A', fontSize: '13px', marginBottom: '16px' }}>
+            The following clients have booked your session or offer via the directory. Confirm connection to start managing sessions.
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>

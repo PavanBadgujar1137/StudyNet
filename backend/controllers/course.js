@@ -8,7 +8,7 @@ const cloudinary = require("cloudinary").v2
 exports.createCourse = async (req, res) => {
   try {
     const practitionerId = req.user.id
-    const { title, description, tags, requiredPlan } = req.body
+    const { title, description, tags } = req.body
 
     if (!title) {
       return res.status(400).json({ success: false, message: "Course title is required" })
@@ -23,13 +23,14 @@ exports.createCourse = async (req, res) => {
       thumbnailUrl = uploaded.secure_url
     }
 
+    // requiredPlan is set exclusively by Admin, default null (free) until Admin assigns a plan tier
     const course = await Course.create({
       title,
       description: description || "",
       thumbnail: thumbnailUrl,
       practitioner: practitionerId,
       tags: tags ? JSON.parse(tags) : [],
-      requiredPlan: requiredPlan || null,
+      requiredPlan: null,
       status: "draft",
     })
 
@@ -45,7 +46,7 @@ exports.updateCourse = async (req, res) => {
   try {
     const practitionerId = req.user.id
     const { id } = req.params
-    const { title, description, tags, requiredPlan, status } = req.body
+    const { title, description, tags, status } = req.body
 
     const course = await Course.findOne({ _id: id, practitioner: practitionerId })
     if (!course) {
@@ -55,7 +56,6 @@ exports.updateCourse = async (req, res) => {
     if (title) course.title = title
     if (description !== undefined) course.description = description
     if (tags) course.tags = typeof tags === "string" ? JSON.parse(tags) : tags
-    if (requiredPlan !== undefined) course.requiredPlan = requiredPlan
     if (status) course.status = status
 
     if (req.files?.thumbnail) {
@@ -216,10 +216,32 @@ exports.getAllCourses = async (req, res) => {
 
 const PLAN_RANKS = { starter: 1, growth: 2, practice: 3, master: 3 }
 
-function hasTierAccess(userPlanKey, requiredPlanKey) {
-  if (!requiredPlanKey) return true // free course
-  if (!userPlanKey) return false
-  const userRank = PLAN_RANKS[String(userPlanKey).toLowerCase()] || 0
+async function getUserAccessContext(userId) {
+  if (!userId) return { planKey: null, isTrialActive: false, isExpired: true }
+
+  const now = new Date()
+  const sub = await Subscription.findOne({ client: userId, status: "active" }).sort({ createdAt: -1 }).lean()
+
+  if (sub && new Date(sub.endDate) > now) {
+    return { planKey: sub.planKey, isTrialActive: false, isExpired: false }
+  }
+
+  const userObj = await User.findById(userId).select("trialStartedAt trialExpiresAt createdAt activePlan").lean()
+  const trialExpiresAt = userObj?.trialExpiresAt || (userObj?.createdAt ? new Date(new Date(userObj.createdAt).getTime() + 7 * 24 * 60 * 60 * 1000) : null)
+
+  const isTrialActive = trialExpiresAt && now < new Date(trialExpiresAt)
+  if (isTrialActive) {
+    return { planKey: "growth", isTrialActive: true, isExpired: false }
+  }
+
+  return { planKey: "none", isTrialActive: false, isExpired: true }
+}
+
+function checkAccess(accessCtx, requiredPlanKey) {
+  if (!requiredPlanKey) return true // Free course open to all
+  if (accessCtx.isExpired && accessCtx.planKey === "none") return false // Trial expired & no subscription
+
+  const userRank = PLAN_RANKS[String(accessCtx.planKey).toLowerCase()] || 0
   const reqRank = PLAN_RANKS[String(requiredPlanKey).toLowerCase()] || 0
   return userRank >= reqRank
 }
@@ -237,23 +259,23 @@ exports.getCourseDetail = async (req, res) => {
 
     if (!course) return res.status(404).json({ success: false, message: "Course not found" })
 
-    // Check if user has access according to plan tier
     let hasAccess = false
+    let accessNotice = null
+
     if (userId) {
       const isEnrolled = course.enrolledClients.map(String).includes(String(userId))
-      if (isEnrolled) {
+      if (isEnrolled || !course.requiredPlan) {
         hasAccess = true
-      } else if (!course.requiredPlan) {
-        hasAccess = true // Free course
       } else {
-        const sub = await Subscription.findOne({ client: userId, status: "active" })
-        const userObj = await User.findById(userId).select("activePlan")
-        const userPlan = sub?.planKey || userObj?.activePlan || null
-        hasAccess = hasTierAccess(userPlan, course.requiredPlan)
+        const accessCtx = await getUserAccessContext(userId)
+        hasAccess = checkAccess(accessCtx, course.requiredPlan)
+        if (!hasAccess && accessCtx.isExpired) {
+          accessNotice = "Your 7-day free trial has expired. Subscribe to a plan to unlock this course."
+        }
       }
     }
 
-    return res.status(200).json({ success: true, course, hasAccess })
+    return res.status(200).json({ success: true, course, hasAccess, accessNotice })
   } catch (error) {
     console.error("getCourseDetail error:", error)
     return res.status(500).json({ success: false, message: error.message })
@@ -269,18 +291,23 @@ exports.getCourseVideos = async (req, res) => {
     const course = await Course.findById(courseId).lean()
     if (!course) return res.status(404).json({ success: false, message: "Course not found" })
 
-    // Access check: direct enrollment or plan tier requirement
     const isEnrolled = course.enrolledClients.map(String).includes(String(userId))
-    const sub = await Subscription.findOne({ client: userId, status: "active" })
-    const userObj = await User.findById(userId).select("activePlan")
-    const userPlan = sub?.planKey || userObj?.activePlan || null
-
-    const hasAccess = isEnrolled || hasTierAccess(userPlan, course.requiredPlan)
+    let hasAccess = isEnrolled || !course.requiredPlan
+    let accessCtx = { isExpired: false }
 
     if (!hasAccess) {
+      accessCtx = await getUserAccessContext(userId)
+      hasAccess = checkAccess(accessCtx, course.requiredPlan)
+    }
+
+    if (!hasAccess) {
+      const errorMsg = accessCtx.isExpired
+        ? "Your 7-day free trial has expired. Please subscribe to a plan on the Pricing page to access this course."
+        : `This course requires a ${course.requiredPlan} plan or higher.`
+
       return res.status(403).json({
         success: false,
-        message: `This course requires a ${course.requiredPlan} plan or higher.`
+        message: errorMsg,
       })
     }
 

@@ -32,7 +32,7 @@ exports.uploadNote = async (req, res) => {
 
     // Upload to Cloudinary (use custom folder)
     const file = req.files.file
-    const uploadRes = await uploadImageToCloudinary(file, process.env.FOLDER_NAME || "StudyNet")
+    const uploadRes = await uploadImageToCloudinary(file, process.env.FOLDER_NAME || "OpenHand")
 
     const note = await Note.create({
       title,

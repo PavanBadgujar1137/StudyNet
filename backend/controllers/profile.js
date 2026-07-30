@@ -13,6 +13,7 @@ const ReflectionPrompt = require("../models/ReflectionPrompt")
 const RatingAndReview = require("../models/RatingandReview")
 const CircleMembership = require("../models/CircleMembership")
 const ClientConnection = require("../models/ClientConnection")
+const Subscription = require("../models/Subscription")
 const { uploadImageToCloudinary } = require("../utils/imageUploader")
 const mongoose = require("mongoose")
 const { convertSecondsToDuration } = require("../utils/secToDuration")
@@ -264,6 +265,13 @@ exports.getClientDashboardData = async (req, res) => {
         upcomingClasses,
         memberships,
         milestones,
+        subscriptionStatus: {
+          subscription: await Subscription.findOne({ client: userId, status: "active" }).sort({ createdAt: -1 }).lean(),
+          hasActiveSubscription: !!(await Subscription.findOne({ client: userId, status: "active" }).sort({ createdAt: -1 }).lean()),
+          isTrialActive: !(await Subscription.findOne({ client: userId, status: "active" }).sort({ createdAt: -1 }).lean()) && new Date() < new Date(user.trialExpiresAt || new Date(new Date(user.trialStartedAt || user.createdAt || Date.now()).getTime() + 7 * 24 * 60 * 60 * 1000)),
+          trialDaysRemaining: Math.max(0, Math.ceil((new Date(user.trialExpiresAt || new Date(new Date(user.trialStartedAt || user.createdAt || Date.now()).getTime() + 7 * 24 * 60 * 60 * 1000)) - new Date()) / (1000 * 60 * 60 * 24))),
+          trialExpiresAt: user.trialExpiresAt || new Date(new Date(user.trialStartedAt || user.createdAt || Date.now()).getTime() + 7 * 24 * 60 * 60 * 1000),
+        },
       },
     })
   } catch (error) {

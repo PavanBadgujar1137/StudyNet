@@ -33,6 +33,11 @@ const authSlice = createSlice({
     },
     setToken(state, value) {
       state.token = value.payload;
+      if (value.payload) {
+        localStorage.setItem("token", JSON.stringify(value.payload));
+      } else {
+        localStorage.removeItem("token");
+      }
     },
   },
 });

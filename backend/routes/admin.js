@@ -12,6 +12,9 @@ const {
   updateOrgConversation,
   processMonthlyPayout,
   seedAdminAccount,
+  updateClientPlan,
+  getAllCoursesAdmin,
+  updateCourseAdmin,
 } = require("../controllers/admin")
 
 // ─── Admin Account Setup (one-time, no auth required) ────────────────────────
@@ -24,6 +27,11 @@ router.get("/stats", auth, isAdmin, getAdminDashboardStats)
 
 // Client management
 router.get("/clients", auth, isAdmin, getAllClients)
+router.patch("/clients/:id/plan", auth, isAdmin, updateClientPlan)
+
+// Course Management & Plan Tier Assignment (Admin exclusive)
+router.get("/courses", auth, isAdmin, getAllCoursesAdmin)
+router.patch("/courses/:id", auth, isAdmin, updateCourseAdmin)
 
 // Practitioner management
 router.get("/practitioners", auth, isAdmin, getAllPractitioners)
