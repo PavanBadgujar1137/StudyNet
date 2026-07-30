@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { OHFooter } from '../../components/openhand'
+import { OHFooter, BubbleField } from '../../components/openhand'
 import {
   FiClock,
   FiCheckCircle,
@@ -16,6 +16,9 @@ import {
 export function Home() {
   // Box Time UI state
   const [activeBoxIndex, setActiveBoxIndex] = useState(0)
+  
+  // ... rest of boxTimeSlots remains ...
+
 
   const boxTimeSlots = [
     {
@@ -103,10 +106,16 @@ export function Home() {
   const activeBox = boxTimeSlots[activeBoxIndex]
 
   return (
-    <div className="oh-home-page">
+    <div className="oh-home-page relative min-h-screen">
+      {/* Ambient Bubble Field (Page Level - Low Tier) */}
+      <BubbleField density="low" zone="fullscreen" />
+
       {/* Hero */}
-      <header className="oh-home-hero">
-        <div className="oh-wrap">
+      <header className="oh-home-hero relative overflow-hidden">
+        {/* Medium Density Ambient Bubble Field for Hero Section */}
+        <BubbleField density="medium" zone="section" />
+
+        <div className="oh-wrap relative z-10">
           <div className="oh-hero-badge">
             <span className="oh-pulse-dot"></span>
             <span>The Modern Practice Platform Built for Guides, Not Course Sellers</span>

@@ -5,6 +5,7 @@ import {
   OHEyebrow,
   OHCardSkeleton,
   OHEmptyState,
+  BubbleField,
 } from '../../components/openhand'
 import { apiConnector } from '../../services/apiConnector'
 import { toast } from 'react-hot-toast'
@@ -219,7 +220,8 @@ export function FindAPractitioner() {
   }
 
   return (
-    <div className="oh-dir-page">
+    <div className="oh-dir-page relative min-h-screen">
+      <BubbleField density="low" zone="fullscreen" />
 
       {/* Hero Header */}
       <header className="oh-dir-hero">

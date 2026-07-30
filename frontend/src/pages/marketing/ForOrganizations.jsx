@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { OHFooter } from '../../components/openhand'
+import { OHFooter, BubbleField } from '../../components/openhand'
 import { apiConnector } from '../../services/apiConnector'
 import toast from 'react-hot-toast'
 import { FiSend, FiCheckCircle } from 'react-icons/fi'
@@ -23,9 +23,9 @@ export function ForOrganizations() {
   const toggleInterest = (item) => {
     setConvForm(f => ({
       ...f,
-      interestedIn: f.interestedIn.includes(item)
+      interestedIn: (f.interestedIn || []).includes(item)
         ? f.interestedIn.filter(i => i !== item)
-        : [...f.interestedIn, item]
+        : [...(f.interestedIn || []), item]
     }))
   }
 
@@ -37,21 +37,23 @@ export function ForOrganizations() {
     }
     setSubmitting(true)
     try {
-      const res = await apiConnector('POST', '/api/v1/org/book-conversation', convForm)
+      const res = await apiConnector('POST', '/api/v1/auth/organization-lead', convForm)
       if (res?.data?.success) {
         setSubmitted(true)
-        toast.success("Thanks! We'll be in touch within 24 hours.")
+        toast.success("Thank you! We'll be in touch within 24 hours.")
       } else {
         toast.error(res?.data?.message || 'Failed to submit. Please try again.')
       }
     } catch (err) {
+      console.error('Org lead error:', err)
       toast.error('Failed to submit. Please try again.')
     }
     setSubmitting(false)
   }
 
   return (
-    <div className="org-page">
+    <div className="org-page relative min-h-screen">
+      <BubbleField density="low" zone="fullscreen" />
       {/* Hero */}
       <header className="org-hero">
         <div className="oh-wrap">

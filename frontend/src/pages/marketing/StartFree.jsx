@@ -5,9 +5,11 @@ import {
   OHEyebrow,
   OHCard,
   OHRangeCalculator,
+  BubbleField,
 } from '../../components/openhand'
 
 export function StartFree() {
+  // ... calcCompute and calcSliders remain ...
   const calcCompute = (val) => {
     const clients = val.cIn || 0
     const price = val.pIn || 0
@@ -28,7 +30,8 @@ export function StartFree() {
   ]
 
   return (
-    <div className="oh-startfree-page">
+    <div className="oh-startfree-page relative min-h-screen">
+      <BubbleField density="low" zone="fullscreen" />
 
       {/* Hero */}
       <header className="oh-startfree-hero">

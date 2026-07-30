@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { OHFooter } from '../../components/openhand'
+import { OHFooter, BubbleField } from '../../components/openhand'
 import { 
   FiChevronDown, 
   FiHelpCircle 
@@ -42,7 +42,8 @@ export function CoPilot() {
   }
 
   return (
-    <div className="copilot-page">
+    <div className="copilot-page relative min-h-screen">
+      <BubbleField density="low" zone="fullscreen" />
       {/* Hero */}
       <header className="copilot-hero">
         <div className="oh-wrap">

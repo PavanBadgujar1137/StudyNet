@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { OHFooter } from '../../components/openhand'
+import { OHFooter, BubbleField } from '../../components/openhand'
 import { apiConnector } from '../../services/apiConnector'
 import toast from 'react-hot-toast'
 import {
@@ -177,7 +177,8 @@ export function TalkToHuman() {
   }
 
   return (
-    <div className="talk-page">
+    <div className="talk-page relative min-h-screen">
+      <BubbleField density="low" zone="fullscreen" />
       {/* Hero */}
       <header className="talk-hero">
         <div className="oh-wrap">

@@ -6,6 +6,7 @@ import {
   OHButton,
   OHEyebrow,
   OHRangeCalculator,
+  BubbleField,
 } from '../../components/openhand'
 import { apiConnector } from '../../services/apiConnector'
 
@@ -201,7 +202,8 @@ export function Pricing() {
   ]
 
   return (
-    <div className="oh-pricing-page font-sans bg-slate-50 min-h-screen text-slate-900">
+    <div className="oh-pricing-page font-sans bg-slate-50 min-h-screen text-slate-900 relative">
+      <BubbleField density="low" zone="fullscreen" />
 
       {/* Hero */}
       <header className="oh-pricing-hero pt-14 pb-8 text-center bg-gradient-to-b from-white to-slate-50 border-b border-slate-100">

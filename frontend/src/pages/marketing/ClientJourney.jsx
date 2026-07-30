@@ -3,6 +3,7 @@ import {
   OHFooter,
   OHButton,
   OHEyebrow,
+  BubbleField,
 } from '../../components/openhand'
 import { 
   FiShield, 
@@ -162,7 +163,8 @@ export function ClientJourney() {
   }, [])
 
   return (
-    <div className="oh-journey-page">
+    <div className="oh-journey-page relative min-h-screen">
+      <BubbleField density="low" zone="fullscreen" />
 
       {/* Hero Section */}
       <header className="oh-journey-hero">
