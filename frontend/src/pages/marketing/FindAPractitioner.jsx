@@ -258,7 +258,7 @@ export function FindAPractitioner() {
           <div className="dir-modern-panel">
 
             {/* 1. Horizontal Category Tabs Row */}
-            <div className="dir-category-nav">
+            <div className="dir-category-nav flex flex-wrap gap-2">
               {SPECIALTIES.map((spec) => (
                 <button
                   key={spec.value}
@@ -271,7 +271,7 @@ export function FindAPractitioner() {
             </div>
 
             {/* 2. Unified Search & Dropdown Control Bar */}
-            <div className="dir-action-bar">
+            <div className="dir-action-bar flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
               {/* Search Field */}
               <div className="dir-search-box">
                 <span className="search-icon-symbol">🔍</span>
@@ -288,7 +288,7 @@ export function FindAPractitioner() {
               </div>
 
               {/* Select Dropdowns Group */}
-              <div className="dir-selects-group">
+              <div className="dir-selects-group flex flex-wrap gap-2">
                 {/* Format Dropdown */}
                 <div className="select-pill-wrap">
                   <select
@@ -352,7 +352,7 @@ export function FindAPractitioner() {
 
           {/* Cards Grid */}
           {loading ? (
-            <div className="dir-grid">
+            <div className="dir-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               <OHCardSkeleton />
               <OHCardSkeleton />
               <OHCardSkeleton />
@@ -370,7 +370,7 @@ export function FindAPractitioner() {
             </div>
           ) : (
             <>
-              <div className="dir-grid">
+              <div className="dir-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {practitioners
                   .filter((p) => (p.offers && p.offers.length > 0) || (p.userOffers && p.userOffers.length > 0))
                   .map((p) => {

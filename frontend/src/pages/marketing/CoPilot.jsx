@@ -47,7 +47,7 @@ export function CoPilot() {
       {/* Hero */}
       <header className="copilot-hero">
         <div className="oh-wrap">
-          <div className="copilot-hgrid">
+          <div className="copilot-hgrid grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
             <div>
               <span className="copilot-eyebrow">Powered by AURA</span>
               <h1>
@@ -56,7 +56,7 @@ export function CoPilot() {
               <p>
                 So don't. AURA listens alongside you — with your learner's explicit consent — and hands you the next question, the technique that fits, and the thread you'd otherwise have missed. Your learner never sees a word of it.
               </p>
-              <div className="copilot-cta-row">
+              <div className="copilot-cta-row flex flex-col sm:flex-row gap-3">
                 <Link to="/signup" className="copilot-btn">Try it in a session</Link>
                 <a href="#how" className="copilot-btn-ghost">See how it works →</a>
               </div>
@@ -239,7 +239,7 @@ export function CoPilot() {
           <div className="copilot-sec-head">
             <h2>Four things it does, and what they look like</h2>
           </div>
-          <div className="copilot-grid2">
+          <div className="copilot-grid2 grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div className="copilot-card">
               <div className="n">01</div>
               <h3>Hands you the next question</h3>
@@ -274,7 +274,7 @@ export function CoPilot() {
           <div className="copilot-rails">
             <h2>What it will never do</h2>
             <p>Most AI-in-therapy products fail on the boundary, not the capability. So we wrote ours down and built the product around it rather than the other way round.</p>
-            <div className="copilot-railgrid">
+            <div className="copilot-railgrid grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="copilot-rail does">
                 <h3>It always</h3>
                 <ul>

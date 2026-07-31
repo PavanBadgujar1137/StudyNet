@@ -7,6 +7,8 @@ import { Link, useNavigate } from "react-router-dom"
 import useOnClickOutside from "../../../hooks/useOnClickOutside"
 import { logout } from "../../../services/operations/authAPI"
 
+import { getInitialsAvatar } from "../../../utils/getInitialsAvatar"
+
 export default function ProfileDropdown() {
   const { user } = useSelector((state) => state.profile)
   const dispatch = useDispatch()
@@ -18,13 +20,19 @@ export default function ProfileDropdown() {
 
   if (!user) return null
 
+  const avatarSrc = user?.image || getInitialsAvatar(user?.firstName, user?.lastName)
+
   return (
     <button className="relative" onClick={() => setOpen(true)}>
       <div className="flex items-center gap-x-1">
         <img
-          src={user?.image}
+          src={avatarSrc}
           alt={`profile-${user?.firstName}`}
           className="aspect-square w-[30px] rounded-full object-cover"
+          onError={(e) => {
+            e.currentTarget.onerror = null
+            e.currentTarget.src = getInitialsAvatar(user?.firstName, user?.lastName)
+          }}
         />
         <AiOutlineCaretDown className="text-sm text-richblack-100" />
       </div>

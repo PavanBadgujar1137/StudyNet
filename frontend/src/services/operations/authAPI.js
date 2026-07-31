@@ -4,6 +4,7 @@ import { setLoading, setToken } from "../../slices/authSlice"
 import { setUser } from "../../slices/profileSlice"
 import { apiConnector } from "../apiConnector"
 import { endpoints } from "../apis"
+import { getInitialsAvatar } from "../../utils/getInitialsAvatar"
 
 const {
   SENDOTP_API,
@@ -117,9 +118,9 @@ export function login(email, password, navigate) {
 
       toast.success("Login Successful")
       dispatch(setToken(response.data.token))
-      const userImage = response.data?.user?.image
+      const userImage = (response.data?.user?.image && !response.data.user.image.includes("dicebear"))
         ? response.data.user.image
-        : `https://api.dicebear.com/5.x/initials/svg?seed=${response.data.user.firstName} ${response.data.user.lastName}`
+        : getInitialsAvatar(response.data?.user?.firstName, response.data?.user?.lastName)
       dispatch(setUser({ ...response.data.user, image: userImage }))
       if (response.data?.user?.accountType === "Admin") {
         navigate("/admin")

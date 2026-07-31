@@ -139,6 +139,14 @@ module.exports = {
       },
     },
     extend: {
+      screens: {
+        xs: "320px",
+        sm: "481px",
+        md: "768px",
+        lg: "1025px",
+        xl: "1441px",
+        "2xl": "1920px",
+      },
       maxWidth: {
         maxContent: "1260px",
         maxContentTab: "650px"

@@ -58,13 +58,13 @@ export function ForOrganizations() {
       <header className="org-hero">
         <div className="oh-wrap">
           <span className="org-eyebrow">For organizations</span>
-          <h1 className="whitespace-nowrap text-center w-full mx-auto">
+          <h1 className="text-center w-full mx-auto text-[clamp(22px,6vw,58px)] leading-tight">
             Your EAP exists. <span className="org-grad-text">Nobody's using it.</span>
           </h1>
           <p>
             Employee mental health benefits are widely reported to sit largely unused. Not because people don't need them — because a phone number to a stranger isn't how anyone actually opens up. We sell circles instead.
           </p>
-          <div className="org-cta-row">
+          <div className="org-cta-row flex flex-col sm:flex-row gap-3 justify-center items-center">
             <Link to="/contact-us" className="org-btn">Request a pilot for one team</Link>
             <a href="#how" className="org-btn-ghost">See how a rollout works →</a>
           </div>
@@ -74,7 +74,7 @@ export function ForOrganizations() {
       {/* Section 1: Traditional EAP vs OpenHand Circles */}
       <section className="org-sec">
         <div className="oh-wrap">
-          <div className="org-split">
+          <div className="org-split grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="org-pane">
               <div className="tag">The traditional EAP</div>
               <h3>A helpline most people never call</h3>
@@ -302,7 +302,7 @@ export function ForOrganizations() {
           <div className="org-sec-head">
             <h2>What your organization gets</h2>
           </div>
-          <div className="org-grid3">
+          <div className="org-grid3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             <div className="org-card">
               <div className="ic">
                 <svg viewBox="0 0 24 24">
@@ -373,7 +373,7 @@ export function ForOrganizations() {
             <h2>Pilot pricing</h2>
             <p>Per participating seat. Nothing for the employees who don't take part.</p>
           </div>
-          <div className="org-tiers">
+          <div className="org-tiers grid grid-cols-1 md:grid-cols-3 gap-5">
             <div className="org-tier">
               <h3>Single circle</h3>
               <div className="size">One team, 8 seats, 6 weeks</div>
@@ -512,7 +512,7 @@ export function ForOrganizations() {
             <h2>What HR sees, and what HR never sees</h2>
             <p>This distinction is the entire reason people participate. We put it in the contract.</p>
           </div>
-          <div className="org-conf">
+          <div className="org-conf grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div className="box see">
               <h3>You do see</h3>
               <ul>

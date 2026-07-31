@@ -113,45 +113,46 @@ export function Home() {
         <div className="oh-wrap relative z-10">
           <div className="oh-hero-badge">
             <span className="oh-pulse-dot"></span>
-            <span>The Modern Practice Platform Built for Guides, Not Course Sellers</span>
+            <span className="hidden sm:inline">The Modern Practice Platform Built for Guides, Not Course Sellers</span>
+            <span className="sm:hidden">Built for Guides, Not Course Sellers</span>
           </div>
 
-          <h1>
+          <h1 className="text-[clamp(22px,6vw,58px)] leading-tight">
             You already know how to hold space.<br />
             <span className="oh-grad-text">We'll help you hold it online — and get paid for it.</span>
           </h1>
 
-          <p className="sub">
+          <p className="sub text-[clamp(14px,2.5vw,18px)] px-2 sm:px-0">
             OpenHand is the practice platform built for people who guide, not just teach.
             Learner check-ins, private cohorts, and real community — without the corporate LMS feel.
           </p>
 
-          <div className="cta-row">
-            <Link to="/signup" className="oh-btn-primary">
+          <div className="cta-row flex-col sm:flex-row w-full sm:w-auto items-stretch sm:items-center">
+            <Link to="/signup" className="oh-btn-primary w-full sm:w-auto text-center justify-center">
               Start your free practice space <FiArrowRight style={{ marginLeft: '8px' }} />
             </Link>
-            <Link to="/learner-journey" className="oh-btn-ghost">
+            <Link to="/learner-journey" className="oh-btn-ghost w-full sm:w-auto text-center justify-center">
               See sample learner journey →
             </Link>
           </div>
 
           {/* Key Assurance Stats Bar */}
-          <div className="oh-hero-stats">
+          <div className="oh-hero-stats grid grid-cols-2 sm:flex sm:flex-row rounded-2xl sm:rounded-full px-4 sm:px-10 py-4">
             <div className="stat-item">
               <span className="stat-num">100%</span>
               <span className="stat-lbl">Human-Led Growth</span>
             </div>
-            <div className="stat-divider"></div>
+            <div className="stat-divider hidden sm:block"></div>
             <div className="stat-item">
               <span className="stat-num">6-Week</span>
               <span className="stat-lbl">Time-Boxed Containers</span>
             </div>
-            <div className="stat-divider"></div>
+            <div className="stat-divider hidden sm:block"></div>
             <div className="stat-item">
               <span className="stat-num">Encrypted</span>
               <span className="stat-lbl">Confidential by Design</span>
             </div>
-            <div className="stat-divider"></div>
+            <div className="stat-divider hidden sm:block"></div>
             <div className="stat-item">
               <span className="stat-num">0%</span>
               <span className="stat-lbl">Corporate LMS Clutter</span>
@@ -178,13 +179,13 @@ export function Home() {
         <div className="oh-wrap">
           <div className="sec-head-center">
             <span className="oh-sec-tag">Interactive Time-Boxed Architecture</span>
-            <h2>The Box Time Practice System</h2>
-            <p>
+            <h2 className="text-[clamp(20px,4vw,38px)]">The Box Time Practice System</h2>
+            <p className="text-[clamp(14px,2vw,17px)]">
               Experience how OpenHand structures learner care into four seamless time-boxed containers — from pre-session intention to long-term community continuity.
             </p>
           </div>
 
-          <div className="boxtime-layout">
+          <div className="boxtime-layout grid grid-cols-1 lg:grid-cols-[1fr_1.1fr] gap-6">
             {/* Left 4 Time Box Selector Tabs */}
             <div className="boxtime-nav">
               {boxTimeSlots.map((slot, idx) => {
@@ -322,7 +323,7 @@ export function Home() {
             <p>Designed for transformation and holding space — not generic video courses.</p>
           </div>
 
-          <div className="oh-grid-3">
+          <div className="oh-grid-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="oh-bento-card">
               <div className="bento-icon">
                 <FiActivity />
@@ -349,7 +350,7 @@ export function Home() {
               </div>
             </div>
 
-            <div className="oh-bento-card">
+            <div className="oh-bento-card sm:col-span-2 lg:col-span-1">
               <div className="bento-icon">
                 <FiUsers />
               </div>
@@ -374,7 +375,7 @@ export function Home() {
             <p>Growth happens when people hold each other accountable in guided group containers.</p>
           </div>
 
-          <div className="oh-grid-3">
+          <div className="oh-grid-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             <div className="circle-card">
               <div className="circle-card-head">
                 <div className="circle-avatar-group">

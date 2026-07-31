@@ -332,10 +332,10 @@ export default function OHPricingSection({ defaultRole = "learner", title, subti
 
           {/* Role Switcher Tabs */}
           {!hideRoleSwitcher && (
-            <div className="inline-flex items-center p-1.5 bg-slate-200/80 rounded-2xl mt-8 shadow-inner border border-slate-300/60">
+            <div className="inline-flex flex-col sm:flex-row items-center p-1.5 bg-slate-200/80 rounded-2xl mt-8 shadow-inner border border-slate-300/60 max-w-full gap-1">
               <button
                 onClick={() => setActiveTab("learner")}
-                className={`px-6 py-2.5 rounded-xl font-extrabold text-sm transition-all duration-200 ${
+                className={`w-full sm:w-auto px-5 sm:px-6 py-2.5 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-200 min-h-[44px] flex items-center justify-center ${
                   activeTab === "learner"
                     ? "bg-white text-blue-700 shadow-md transform scale-[1.02]"
                     : "text-slate-600 hover:text-slate-900"
@@ -345,7 +345,7 @@ export default function OHPricingSection({ defaultRole = "learner", title, subti
               </button>
               <button
                 onClick={() => setActiveTab("practitioner")}
-                className={`px-6 py-2.5 rounded-xl font-extrabold text-sm transition-all duration-200 ${
+                className={`w-full sm:w-auto px-5 sm:px-6 py-2.5 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-200 min-h-[44px] flex items-center justify-center ${
                   activeTab === "practitioner"
                     ? "bg-slate-900 text-white shadow-md transform scale-[1.02]"
                     : "text-slate-600 hover:text-slate-900"
@@ -358,7 +358,7 @@ export default function OHPricingSection({ defaultRole = "learner", title, subti
         </div>
 
         {/* Pricing Cards Grid */}
-        <div className="plans-grid grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch pt-4">
+        <div className="plans-grid grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch pt-4">
           {currentPlans.map((plan) => {
             const isCurrentActive = subStatus?.subscription?.planKey === plan.key
 

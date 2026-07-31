@@ -4,6 +4,7 @@ import { setLoading, setUser } from "../../slices/profileSlice"
 import { apiConnector } from "../apiConnector"
 import { profileEndpoints } from "../apis"
 import { logout } from "./authAPI"
+import { getInitialsAvatar } from "../../utils/getInitialsAvatar"
 
 const {
   GET_USER_DETAILS_API,
@@ -21,9 +22,9 @@ export function getUserDetails(token, navigate) {
       if (!response.data.success) {
         throw new Error(response.data.message)
       }
-      const userImage = response.data.data.image
+      const userImage = (response.data.data.image && !response.data.data.image.includes("dicebear"))
         ? response.data.data.image
-        : `https://api.dicebear.com/5.x/initials/svg?seed=${response.data.data.firstName} ${response.data.data.lastName}`
+        : getInitialsAvatar(response.data.data.firstName, response.data.data.lastName)
       dispatch(setUser({ ...response.data.data, image: userImage }))
     } catch (error) {
       console.log("GET_USER_DETAILS API ERROR............", error)

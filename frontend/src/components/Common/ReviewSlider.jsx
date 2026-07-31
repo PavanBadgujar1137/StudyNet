@@ -16,6 +16,8 @@ import { Autoplay, FreeMode, Pagination } from "swiper"
 import { apiConnector } from "../../services/apiConnector"
 import { ratingsEndpoints } from "../../services/apis"
 
+import { getInitialsAvatar } from "../../utils/getInitialsAvatar"
+
 function ReviewSlider() {
   const [reviews, setReviews] = useState([])
   const truncateWords = 15
@@ -31,8 +33,6 @@ function ReviewSlider() {
       }
     })()
   }, [])
-
-  // console.log(reviews)
 
   return (
     <div className="text-richblack-25">
@@ -50,18 +50,22 @@ function ReviewSlider() {
           className="w-full"
         >
           {reviews.map((review, i) => {
+            const userImg = (review?.user?.image && !review.user.image.includes("dicebear"))
+              ? review.user.image
+              : getInitialsAvatar(review?.user?.firstName, review?.user?.lastName)
+
             return (
               <SwiperSlide key={i}>
                 <div className="flex flex-col gap-3 bg-richblack-800 p-3 text-[14px] text-richblack-25">
                   <div className="flex items-center gap-4">
                     <img
-                      src={
-                        review?.user?.image
-                          ? review?.user?.image
-                          : `https://api.dicebear.com/5.x/initials/svg?seed=${review?.user?.firstName} ${review?.user?.lastName}`
-                      }
+                      src={userImg}
                       alt=""
                       className="h-9 w-9 rounded-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null
+                        e.currentTarget.src = getInitialsAvatar(review?.user?.firstName, review?.user?.lastName)
+                      }}
                     />
                     <div className="flex flex-col">
                       <h1 className="font-semibold text-richblack-5">{`${review?.user?.firstName} ${review?.user?.lastName}`}</h1>

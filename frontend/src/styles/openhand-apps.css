@@ -2041,13 +2041,86 @@
     height: calc(100vh - 64px);
     transform: translateX(-100%);
     box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    z-index: 50;
   }
   .oh-sidebar.open {
     transform: translateX(0);
   }
+  .oh-viewport-header {
+    padding: 14px 16px;
+    flex-wrap: wrap;
+  }
   .oh-view-body {
-    padding: 20px 16px 40px;
+    padding: 16px 12px 40px;
   }
 }
+
+@media (max-width: 640px) {
+  .oh-viewport-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .oh-viewport-header > div {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .oh-viewport-title {
+    font-size: 17px;
+  }
+  .client-app-shell .ms {
+    grid-template-columns: 1fr;
+  }
+  .client-app-shell .ci {
+    padding: 20px 16px;
+  }
+  .client-app-shell .ci h2 {
+    font-size: 20px;
+  }
+  .client-app-shell .moods {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .client-app-shell .crc {
+    padding: 20px 16px;
+  }
+  .client-app-shell .crc h2 {
+    font-size: 20px;
+  }
+  .client-app-shell .srow, .practitioner-app-layout .srow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .client-app-shell .srow .go {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
+/* Touch-friendly target sizing & horizontal scroll wrappers */
+.table-responsive-wrapper, .oh-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 1rem;
+}
+
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Modal Responsive Container Standard */
+.oh-modal-content {
+  max-height: 90vh;
+  overflow-y: auto;
+  width: 95%;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
 
 

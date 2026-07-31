@@ -1446,7 +1446,7 @@ details > summary::-webkit-details-marker { display: none; }
 }
 .copilot-hgrid {
   display: grid;
-  grid-template-columns: 1fr 400px;
+  grid-template-columns: 1fr min(400px, 42vw);
   gap: 50px;
   align-items: center;
   position: relative;
@@ -2005,6 +2005,67 @@ details > summary::-webkit-details-marker { display: none; }
   }
   .copilot-rails {
     padding: 32px 22px;
+  }
+  /* Journey timeline stacks vertically on mobile */
+  .oh-journey__stage {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+  .oh-journey__spacer { display: none; }
+  .oh-journey__pin { margin: 0 auto; }
+  .oh-journey-path-svg { display: none; }
+  /* Directory grid stacks */
+  .dir-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .dir-action-bar {
+    flex-direction: column !important;
+    align-items: stretch;
+  }
+  .dir-selects-group {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+  /* Contact form */
+  .talk-formgrid {
+    grid-template-columns: 1fr !important;
+    gap: 28px;
+  }
+  .talk-founders {
+    grid-template-columns: 1fr !important;
+  }
+  .talk-ways {
+    grid-template-columns: 1fr !important;
+  }
+  .form-row2 {
+    grid-template-columns: 1fr !important;
+  }
+  /* Boxtime layout */
+  .boxtime-layout {
+    grid-template-columns: 1fr !important;
+  }
+  /* Hero stats */
+  .oh-hero-stats, .talk-hero-stats {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
+    padding: 18px !important;
+    border-radius: 18px !important;
+  }
+  .stat-divider { display: none !important; }
+  /* For organizations */
+  .org-split, .org-grid3, .org-tiers, .org-conf {
+    grid-template-columns: 1fr;
+  }
+  .org-tier.feat {
+    transform: none;
+  }
+  .org-loop {
+    padding: 32px 22px;
+  }
+  .org-cta-row {
+    flex-direction: column !important;
+    align-items: center;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -4617,45 +4678,74 @@ details > summary::-webkit-details-marker { display: none; }
   color: #2563EB;
 }
 
-/* Mobile responsive orbit view */
-@media (max-width: 768px) {
+/* Mobile & Tablet responsive orbit view */
+@media (max-width: 920px) {
   .robot-orbit-container {
-    height: auto;
-    flex-direction: column;
-    gap: 32px;
+    height: auto !important;
+    flex-direction: column !important;
+    gap: 24px !important;
+    margin: 20px auto 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
   }
 
   .orbit-rings-bg {
-    display: none;
+    display: none !important;
   }
 
   .orbit-rotating-ring {
-    position: relative;
-    width: 100%;
-    height: auto;
-    border-radius: 0;
-    animation: none;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    align-items: center;
+    position: relative !important;
+    inset: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    animation: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 
-  .orbit-node {
-    position: relative;
+  .orbit-node,
+  .node-1,
+  .node-2,
+  .node-3 {
+    position: relative !important;
     top: auto !important;
     left: auto !important;
     right: auto !important;
     bottom: auto !important;
     transform: none !important;
+    animation: none !important;
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
   }
 
   .node-card-inner {
-    animation: none;
-    border-radius: 20px;
-    white-space: normal;
-    width: 100%;
-    max-width: 320px;
+    animation: none !important;
+    transform: none !important;
+    border-radius: 20px !important;
+    white-space: normal !important;
+    width: 100% !important;
+    max-width: 340px !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+    padding: 10px 16px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .robot-svg {
+    width: 170px !important;
+    height: 200px !important;
+  }
+  .node-card-inner {
+    max-width: 290px !important;
+    padding: 8px 14px !important;
+  }
+  .node-text h3 {
+    font-size: 13.5px !important;
   }
 }
 
@@ -4880,7 +4970,7 @@ details > summary::-webkit-details-marker { display: none; }
 }
 
 /* Mobile Responsiveness */
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .ai-robot-showcase {
     grid-template-columns: 1fr;
     gap: 40px;
@@ -4898,7 +4988,347 @@ details > summary::-webkit-details-marker { display: none; }
     grid-template-columns: 1fr;
     gap: 48px;
   }
+
+  .oh-home-hero {
+    padding: 40px 0 30px;
+  }
+  .oh-home-hero h1 {
+    font-size: clamp(26px, 5vw, 42px) !important;
+    max-width: 100% !important;
+    padding: 0 12px;
+  }
+  .oh-home-hero .sub {
+    font-size: 15px !important;
+    max-width: 100% !important;
+    padding: 0 12px;
+  }
+  .boxtime-layout {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+  .boxtime-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .boxtime-tab {
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .oh-grid-3, .b2b-plans-grid, .plans-grid, .pilot-flow-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 16px !important;
+  }
+  .oh-hero-stats {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 16px !important;
+    margin-top: 24px !important;
+    padding: 16px !important;
+    background: rgba(255, 255, 255, 0.6) !important;
+    border-radius: 16px !important;
+  }
+  .stat-divider {
+    display: none !important;
+  }
 }
+
+@media (max-width: 640px) {
+  .oh-home-hero {
+    padding: 24px 0 20px;
+  }
+  .oh-home-hero h1 {
+    font-size: 24px !important;
+    line-height: 1.25 !important;
+  }
+  .oh-hero-badge {
+    font-size: 10.5px !important;
+    padding: 4px 10px !important;
+    max-width: 95% !important;
+    margin: 0 auto 12px !important;
+  }
+  .cta-row {
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 10px !important;
+  }
+  .cta-row a, .cta-row button {
+    width: 100% !important;
+    text-align: center !important;
+    justify-content: center !important;
+    min-height: 44px !important;
+  }
+  .oh-hero-stats {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  .oh-grid-3, .oh-grid-2, .b2b-plans-grid, .plans-grid, .pilot-flow-grid, .ladder-steps, .privacy-rails-grid, .rails-two-col {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+  .boxtime-preview-card {
+    padding: 16px !important;
+  }
+  .bt-live-widget {
+    padding: 12px !important;
+  }
+  .w-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 2px !important;
+  }
+  .held-line-wrap {
+    display: none !important;
+  }
+  .oh-sec {
+    padding: 32px 0 !important;
+  }
+  .sec-head-center h2, .oh-sec-title {
+    font-size: 22px !important;
+  }
+  .sec-head-center p {
+    font-size: 13.5px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   COMPREHENSIVE MARKETING PAGES RESPONSIVE BREAKPOINTS
+   Covers: Home, Learner Journey, Practitioner Journey, For Organizations,
+           Find a Practitioner, AURA/CoPilot, Contact Us
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Tablet / Large Mobile: ≤ 1024px ─────────────────────────── */
+@media (max-width: 1024px) {
+
+  /* --- GLOBAL: oh-wrap padding --- */
+  .oh-wrap { padding: 0 clamp(16px, 4vw, 32px); }
+
+  /* --- HOME: Box Time Section --- */
+  .boxtime-layout {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+  }
+  .boxtime-nav { gap: 12px !important; }
+  .boxtime-tab { padding: 16px 20px !important; }
+  .boxtime-preview-card { padding: 24px !important; }
+
+  /* --- HOME: Bento Grid --- */
+  .oh-grid-3 { grid-template-columns: repeat(2, 1fr) !important; gap: 18px !important; }
+
+  /* --- HOME: Hero stats --- */
+  .oh-hero-stats {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 16px !important;
+    padding: 20px !important;
+    border-radius: 20px !important;
+  }
+  .stat-divider { display: none !important; }
+
+  /* --- HOME: Ladder steps --- */
+  .ladder-steps { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* --- FOR ORGANIZATIONS --- */
+  .org-split { grid-template-columns: 1fr !important; gap: 16px !important; }
+  .org-grid3 { grid-template-columns: repeat(2, 1fr) !important; }
+  .org-tiers { grid-template-columns: 1fr !important; gap: 18px !important; }
+  .org-tier.feat { transform: none !important; }
+  .org-conf { grid-template-columns: 1fr !important; gap: 16px !important; }
+  .org-loopsvg { min-width: 100% !important; }
+  .org-cta-row { flex-direction: column !important; align-items: center !important; gap: 12px !important; }
+  .org-cta-row .org-btn,
+  .org-cta-row .org-btn-ghost { width: 100% !important; max-width: 360px !important; text-align: center !important; }
+
+  /* --- CONTACT US --- */
+  .talk-formgrid { grid-template-columns: 1fr !important; gap: 32px !important; }
+  .talk-founders { grid-template-columns: 1fr !important; gap: 16px !important; }
+  .talk-ways { grid-template-columns: 1fr !important; gap: 16px !important; }
+  .talk-formsec { padding: 40px 28px !important; }
+
+  /* --- FIND A PRACTITIONER --- */
+  .dir-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .dir-modern-panel { position: static !important; }
+  .dir-action-bar { flex-direction: column !important; align-items: stretch !important; gap: 12px !important; }
+  .dir-search-box { min-width: 100% !important; }
+  .dir-selects-group { flex-wrap: wrap !important; }
+
+  /* --- LEARNER JOURNEY / PRACTITIONER JOURNEY --- */
+  .oh-journey__stage {
+    grid-template-columns: 1fr 60px 1fr !important;
+  }
+  .oh-journey__bubble { padding: var(--oh-space-4) var(--oh-space-5) !important; }
+  .oh-journey__ring { width: 48px !important; height: 48px !important; }
+
+  /* --- AURA / COPILOT --- */
+  .copilot-hgrid { grid-template-columns: 1fr !important; gap: 24px !important; }
+  .oh-copilot__grid { grid-template-columns: 1fr !important; gap: 24px !important; }
+  .copilot-grid2 { grid-template-columns: 1fr !important; gap: 16px !important; }
+  .copilot-railgrid { grid-template-columns: 1fr !important; }
+  .rails-two-col { grid-template-columns: 1fr !important; }
+  .oh-grid-2 { grid-template-columns: 1fr !important; gap: 16px !important; }
+
+  /* --- FOOTER --- */
+  .oh-footer__main-grid { grid-template-columns: 1fr !important; gap: var(--oh-space-8) !important; }
+  .oh-footer__nav-grid { grid-template-columns: repeat(2, 1fr) !important; gap: var(--oh-space-6) !important; }
+
+  /* --- OHCalc --- */
+  .oh-calc { grid-template-columns: 1fr !important; gap: var(--oh-space-6) !important; padding: var(--oh-space-8) var(--oh-space-6) !important; }
+
+  /* --- B2B / Pricing grids --- */
+  .b2b-plans-grid { grid-template-columns: 1fr !important; gap: 18px !important; }
+  .plans-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .feat-card { transform: none !important; }
+  .pilot-flow-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .privacy-rails-grid { grid-template-columns: 1fr !important; }
+}
+
+/* ── Large Mobile: ≤ 767px ───────────────────────────────────── */
+@media (max-width: 767px) {
+
+  /* --- GLOBAL typography --- */
+  h1 { font-size: clamp(26px, 7vw, 38px) !important; }
+  h2 { font-size: clamp(22px, 5.5vw, 32px) !important; }
+
+  /* --- HOME Hero --- */
+  .oh-home-hero { padding: 32px 0 24px !important; }
+  .oh-home-hero h1 { font-size: clamp(24px, 7vw, 36px) !important; padding: 0 8px !important; }
+  .oh-home-hero .sub { font-size: 15px !important; padding: 0 8px !important; }
+  .oh-hero-badge { font-size: 10.5px !important; padding: 4px 12px !important; }
+  .cta-row { flex-direction: column !important; align-items: stretch !important; gap: 10px !important; }
+  .cta-row > * { width: 100% !important; justify-content: center !important; text-align: center !important; min-height: 48px !important; }
+  .oh-hero-stats { grid-template-columns: 1fr 1fr !important; gap: 12px !important; padding: 16px !important; border-radius: 16px !important; }
+
+  /* --- HOME Bento --- */
+  .oh-grid-3 { grid-template-columns: 1fr !important; }
+  .oh-bento-card { padding: 24px !important; }
+
+  /* --- HOME Box Time --- */
+  .boxtime-tab { padding: 14px 16px !important; gap: 12px !important; }
+  .bt-tab-content h4 { font-size: 15px !important; }
+  .bt-num { font-size: 15px !important; padding: 6px 10px !important; }
+  .boxtime-preview-card { padding: 20px !important; }
+  .boxtime-preview-card h3 { font-size: 20px !important; }
+  .bt-live-widget { padding: 16px !important; }
+  .w-row { flex-direction: column !important; align-items: flex-start !important; gap: 2px !important; }
+
+  /* --- HOME Section heads --- */
+  .sec-head-center { margin-bottom: 28px !important; }
+  .sec-head-center h2 { font-size: clamp(20px, 5vw, 28px) !important; }
+  .sec-head-center p { font-size: 15px !important; }
+  .oh-sec { padding: 48px 0 !important; }
+  .ladder-steps { grid-template-columns: 1fr !important; }
+
+  /* --- FOR ORGANIZATIONS hero --- */
+  .org-hero { padding: 40px 0 24px !important; }
+  .org-hero h1 { font-size: clamp(26px, 7vw, 40px) !important; white-space: normal !important; }
+  .org-hero p { font-size: 15px !important; }
+  .org-grid3 { grid-template-columns: 1fr !important; }
+  .org-sec { padding: 40px 0 !important; }
+  .org-close { padding: 48px 0 !important; }
+  .org-loop { padding: 36px 20px !important; }
+  .org-loopsvg { min-width: 600px !important; overflow-x: auto !important; }
+  .org-pane { padding: 24px 20px !important; }
+  .org-flow { padding: 28px 20px !important; }
+  .org-flowsvg { min-width: 600px !important; }
+
+  /* --- CONTACT US --- */
+  .talk-formsec { padding: 32px 20px !important; border-radius: 20px !important; }
+  .talk-formgrid { gap: 24px !important; }
+  .form-row2 { grid-template-columns: 1fr !important; }
+  .founder-tabs { grid-template-columns: 1fr !important; }
+  .talk-ways { gap: 12px !important; }
+  .talk-way { padding: 22px 18px !important; }
+  .talk-fcard { padding: 24px !important; }
+  .talk-faq { gap: 12px !important; }
+
+  /* --- FIND A PRACTITIONER --- */
+  .dir-grid { grid-template-columns: 1fr !important; }
+  .dir-hero { padding: var(--oh-space-10) 0 var(--oh-space-4) !important; }
+  .dir-title { font-size: clamp(26px, 6vw, 36px) !important; }
+
+  /* --- LEARNER / PRACTITIONER JOURNEY --- */
+  .oh-journey-hero { padding: var(--oh-space-10) 0 var(--oh-space-6) !important; }
+  .oh-journey-hero__title { font-size: clamp(26px, 6vw, 40px) !important; }
+  .oh-journey-hero__sub { font-size: 15px !important; }
+  .oh-journey__stage { grid-template-columns: 1fr !important; }
+  .oh-journey__pin { display: none !important; }
+  .oh-journey__spacer { display: none !important; }
+  .oh-journey__bubble { margin-left: 0 !important; margin-right: 0 !important; padding: var(--oh-space-4) !important; }
+  .oh-journey__stage--left .oh-journey__bubble,
+  .oh-journey__stage--right .oh-journey__bubble { margin: 0 !important; }
+  .oh-journey-path-svg { display: none !important; }
+  .oh-copilot-section { padding: 36px 0 !important; }
+  .oh-journey-close { padding: var(--oh-space-12) 0 !important; }
+  .oh-journey-close__cta-row { flex-direction: column !important; align-items: stretch !important; gap: 10px !important; }
+  .oh-journey-close__cta-row > * { width: 100% !important; text-align: center !important; justify-content: center !important; }
+
+  /* --- AURA / COPILOT --- */
+  .oh-copilot-hero { padding: var(--oh-space-10) 0 var(--oh-space-6) !important; }
+  .oh-copilot-hero h1 { font-size: clamp(26px, 7vw, 38px) !important; }
+  .oh-copilot-hero .sub { font-size: 15px !important; }
+  .oh-copilot__heading { font-size: clamp(22px, 5vw, 32px) !important; }
+  .copilot-rails { padding: 24px 16px !important; }
+  .oh-copilot__panel-body { padding: 14px !important; gap: 10px !important; }
+  .pipeline-steps { min-width: 520px !important; }
+
+  /* --- PRICING --- */
+  .plans-grid { grid-template-columns: 1fr !important; }
+  .oh-pricing-hero h1 { font-size: clamp(26px, 7vw, 38px) !important; }
+
+  /* --- FOOTER --- */
+  .oh-footer__nav-grid { grid-template-columns: 1fr 1fr !important; }
+  .oh-footer__bottom { flex-direction: column !important; gap: var(--oh-space-3) !important; align-items: flex-start !important; }
+}
+
+/* ── Mobile: ≤ 480px ─────────────────────────────────────────── */
+@media (max-width: 480px) {
+
+  /* --- GLOBAL --- */
+  .oh-wrap { padding: 0 16px !important; }
+
+  /* --- HOME --- */
+  .oh-home-hero { padding: 24px 0 16px !important; }
+  .oh-home-hero h1 { font-size: 22px !important; }
+  .oh-home-hero .sub { font-size: 14px !important; }
+  .oh-hero-stats { grid-template-columns: 1fr 1fr !important; gap: 8px !important; padding: 12px !important; }
+  .stat-num { font-size: 20px !important; }
+  .stat-lbl { font-size: 11px !important; }
+  .oh-btn-primary, .oh-btn-ghost { padding: 14px 20px !important; font-size: 14px !important; }
+
+  /* --- BOXTIME --- */
+  .boxtime-sec { padding: 40px 0 !important; }
+  .boxtime-tab { padding: 12px 14px !important; gap: 10px !important; }
+  .bt-tab-left { display: none !important; }
+  .bt-tab-content h4 { font-size: 14px !important; }
+  .bt-chevron { display: none !important; }
+  .boxtime-preview-card { padding: 16px !important; border-radius: 18px !important; }
+  .boxtime-preview-card h3 { font-size: 18px !important; }
+
+  /* --- ORG --- */
+  .org-hero h1 { font-size: 22px !important; }
+  .org-pane { padding: 20px 16px !important; }
+
+  /* --- CONTACT --- */
+  .talk-formsec { padding: 24px 16px !important; border-radius: 16px !important; }
+  .talk-fcard { padding: 20px 16px !important; }
+  .talk-fcard .av { width: 48px !important; height: 48px !important; font-size: 16px !important; }
+  .talk-fcard h3 { font-size: 17px !important; }
+  .talk-way { padding: 18px 14px !important; }
+
+  /* --- JOURNEY --- */
+  .oh-journey__bubble { padding: var(--oh-space-3) !important; }
+  .oh-journey__bubble-title { font-size: 16px !important; }
+
+  /* --- DIR / FIND PRACTITIONER --- */
+  .practitioner-card { padding: 18px !important; }
+  .dir-banner-card { padding: 28px 20px !important; }
+  .banner-content h2 { font-size: 22px !important; }
+
+  /* --- FOOTER --- */
+  .oh-footer__nav-grid { grid-template-columns: 1fr !important; }
+  .oh-footer__container { padding-top: var(--oh-space-8) !important; padding-bottom: var(--oh-space-6) !important; }
+}
+
 
 
 

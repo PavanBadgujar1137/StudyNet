@@ -40,7 +40,7 @@ export function ContactUs() {
         "We'll tell you honestly if we're wrong for you",
         'No slide decks or forced sales demos',
       ],
-      founderHint: 'Best with Dr. Anamika',
+      founderHint: 'Best with Assistant of Dr. Anamika',
     },
     {
       id: 'migration',
@@ -53,7 +53,7 @@ export function ContactUs() {
         'Your existing learner records moved smoothly',
         'Nothing goes live until you explicitly approve',
       ],
-      founderHint: 'Best with Dr. Rajendra Patil',
+      founderHint: 'Best with Assistant of Dr. Rajendra Patil',
     },
     {
       id: 'org',
@@ -184,160 +184,138 @@ export function ContactUs() {
         <div className="oh-wrap">
           <div className="talk-status-badge">
             <span className="talk-pulse-dot"></span>
-            <span>Contact Us — Direct founder response within 24 hours</span>
+            <span>Contact Us — Response within 24 hours guaranteed</span>
           </div>
 
-          <h1>
-            Contact <span className="talk-grad-text">Us.</span>
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 my-4">
+            Contact <span className="talk-grad-text">OpenHand Team.</span>
           </h1>
-          <p>
-            Have questions about OpenHand? Connect directly with our team for personalized guidance, practice setup help, or platform inquiries.
+          <p className="sub text-slate-600 text-base sm:text-lg max-w-2xl mx-auto font-medium leading-relaxed mb-8">
+            Have questions about OpenHand? Connect directly with the assistant of Dr. Anamika or the assistant of Dr. Rajendra Patil for personalized practice guidance, platform setup, or enterprise inquiries.
           </p>
 
           {/* Key Assurance Stats */}
-          <div className="talk-hero-stats">
+          <div className="talk-hero-stats grid grid-cols-2 sm:flex sm:flex-row rounded-2xl sm:rounded-full gap-4 sm:gap-6 px-6 sm:px-10 py-4">
             <div className="stat-item">
-              <span className="stat-num">2</span>
-              <span className="stat-lbl">Co-Founders Direct</span>
+              <span className="stat-num">24h SLA</span>
+              <span className="stat-lbl">Guaranteed Response</span>
             </div>
-            <div className="stat-divider"></div>
+            <div className="stat-divider hidden sm:block"></div>
             <div className="stat-item">
-              <span className="stat-num">15–20m</span>
-              <span className="stat-lbl">1:1 Dedicated Call</span>
+              <span className="stat-num">1:1 Support</span>
+              <span className="stat-lbl">Dedicated Assistance</span>
             </div>
-            <div className="stat-divider"></div>
+            <div className="stat-divider hidden sm:block"></div>
             <div className="stat-item">
               <span className="stat-num">0%</span>
-              <span className="stat-lbl">Sales Script Pitch</span>
+              <span className="stat-lbl">Sales Push</span>
             </div>
-            <div className="stat-divider"></div>
+            <div className="stat-divider hidden sm:block"></div>
             <div className="stat-item">
               <span className="stat-num">100%</span>
-              <span className="stat-lbl">Private & Confidential</span>
+              <span className="stat-lbl">Private &amp; Confidential</span>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Founders Section */}
+      {/* Executive Contact Desks Section */}
       <section className="talk-sec">
         <div className="oh-wrap">
           <div className="talk-sec-head">
-            <span className="talk-section-tag">Direct Founder Access</span>
-            <h2>Who you'll be speaking with</h2>
-            <p>Pick a founder whose background matches your questions, or select either.</p>
+            <span className="talk-section-tag">Executive Contact Desks</span>
+            <h2>Who would you like to reach out to?</h2>
+            <p>Connect with the Assistant of Dr. Anamika or the Assistant of Dr. Rajendra Patil based on your specific practice needs.</p>
           </div>
 
           <div className="talk-founders-container">
-            <div className="talk-link-loop-badge">
-              <svg
-                viewBox="0 0 68 40"
-                fill="none"
-                aria-hidden="true"
+            <div className="talk-founders grid grid-cols-1 md:grid-cols-2 gap-6">
+
+              {/* Assistant of Dr. Anamika Card */}
+              <div
+                className={`talk-fcard ${selectedFounder === 'anamika' ? 'active-founder' : ''}`}
+                onClick={() => setSelectedFounder('anamika')}
               >
-                <defs>
-                  <linearGradient id="g2" x1="0" y1="0" x2="68" y2="40">
-                    <stop offset="0" stopColor="#1F5FE0" />
-                    <stop offset="0.5" stopColor="#4733C9" />
-                    <stop offset="1" stopColor="#8A2BE0" />
-                  </linearGradient>
-                </defs>
-                <path
-                  d="M6 20c0-7 5-12 11-12s11 5 15 12c4 7 9 12 15 12s11-5 11-12-5-12-11-12-11 5-15 12c-4 7-9 12-15 12S6 27 6 20Z"
-                  stroke="url(#g2)"
-                  strokeWidth="4"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </div>
-
-            <div className="talk-founders">
-
-            {/* Dr. Anamika Card */}
-            <div
-              className={`talk-fcard ${selectedFounder === 'anamika' ? 'active-founder' : ''}`}
-              onClick={() => setSelectedFounder('anamika')}
-            >
-              <div className="fcard-badge">
-                <FiClock className="fcard-ic" /> 15-20 min
-              </div>
-              <div className="fcard-top">
-                <div className="av">AN</div>
-                <div>
-                  <h3>Dr. Anamika</h3>
-                  <div className="role">Co-founder · IIT Bombay</div>
+                <div className="fcard-badge">
+                  <FiClock className="fcard-ic" /> Executive Desk
                 </div>
-              </div>
-              <p>
-                Talk to Dr. Anamika if your questions are about the practice itself — how to shape a cohort, what to charge, whether your material works as a six-week container or a self-paced program.
-              </p>
-              <div className="talk-tags">
-                <span>Cohort Architecture</span>
-                <span>Pricing & Offers</span>
-                <span>Group Dynamics</span>
-              </div>
-              <button
-                type="button"
-                className={`fcard-btn ${selectedFounder === 'anamika' ? 'selected' : ''}`}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setSelectedFounder('anamika')
-                }}
-              >
-                {selectedFounder === 'anamika' ? (
-                  <>
-                    <FiCheck /> Preferred Founder
-                  </>
-                ) : (
-                  'Request Call with Anamika'
-                )}
-              </button>
-            </div>
-
-            {/* Dr. Rajendra Patil Card */}
-            <div
-              className={`talk-fcard ${selectedFounder === 'rajendra' ? 'active-founder' : ''}`}
-              onClick={() => setSelectedFounder('rajendra')}
-            >
-              <div className="fcard-badge">
-                <FiClock className="fcard-ic" /> 15-20 min
-              </div>
-              <div className="fcard-top">
-                <div className="av">RP</div>
-                <div>
-                  <h3>Dr. Rajendra Patil</h3>
-                  <div className="role">Co-founder</div>
+                <div className="fcard-top">
+                  <div className="av">AN</div>
+                  <div>
+                    <h3>Assistant of Dr. Anamika</h3>
+                    <div className="role">Co-Founder &amp; Practice Lead Desk</div>
+                  </div>
                 </div>
+                <p>
+                  Contact the assistant of Dr. Anamika for cohort architecture, offer design, pricing models, practice setup, and practitioner onboarding support.
+                </p>
+                <div className="talk-tags">
+                  <span>Cohort Architecture</span>
+                  <span>Pricing &amp; Offers</span>
+                  <span>Practitioner Setup</span>
+                </div>
+                <button
+                  type="button"
+                  className={`fcard-btn ${selectedFounder === 'anamika' ? 'selected' : ''}`}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setSelectedFounder('anamika')
+                  }}
+                >
+                  {selectedFounder === 'anamika' ? (
+                    <>
+                      <FiCheck /> Contacting Assistant of Dr. Anamika
+                    </>
+                  ) : (
+                    'Contact Assistant of Dr. Anamika'
+                  )}
+                </button>
               </div>
-              <p>
-                Talk to Dr. Rajendra if your questions are about the harder edges — learner confidentiality, ethical use of the in-session AURA, working with organisations, or moving an existing caseload across.
-              </p>
-              <div className="talk-tags">
-                <span>Data Confidentiality</span>
-                <span>Ethical AI AURA</span>
-                <span>Caseload Migration</span>
-              </div>
-              <button
-                type="button"
-                className={`fcard-btn ${selectedFounder === 'rajendra' ? 'selected' : ''}`}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setSelectedFounder('rajendra')
-                }}
+
+              {/* Assistant of Dr. Rajendra Patil Card */}
+              <div
+                className={`talk-fcard ${selectedFounder === 'rajendra' ? 'active-founder' : ''}`}
+                onClick={() => setSelectedFounder('rajendra')}
               >
-                {selectedFounder === 'rajendra' ? (
-                  <>
-                    <FiCheck /> Preferred Founder
-                  </>
-                ) : (
-                  'Request Call with Rajendra'
-                )}
-              </button>
+                <div className="fcard-badge">
+                  <FiClock className="fcard-ic" /> Executive Desk
+                </div>
+                <div className="fcard-top">
+                  <div className="av">RP</div>
+                  <div>
+                    <h3>Assistant of Dr. Rajendra Patil</h3>
+                    <div className="role">Co-Founder &amp; Tech/Ethics Desk</div>
+                  </div>
+                </div>
+                <p>
+                  Contact the assistant of Dr. Rajendra Patil for technical platform integration, data confidentiality, AURA AI ethics, and enterprise organizational pilots.
+                </p>
+                <div className="talk-tags">
+                  <span>Data Confidentiality</span>
+                  <span>Ethical AI AURA</span>
+                  <span>Caseload Migration</span>
+                </div>
+                <button
+                  type="button"
+                  className={`fcard-btn ${selectedFounder === 'rajendra' ? 'selected' : ''}`}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setSelectedFounder('rajendra')
+                  }}
+                >
+                  {selectedFounder === 'rajendra' ? (
+                    <>
+                      <FiCheck /> Contacting Assistant of Dr. Rajendra Patil
+                    </>
+                  ) : (
+                    'Contact Assistant of Dr. Rajendra Patil'
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
       {/* Three Conversations Section */}
       <section className="talk-sec">
@@ -348,7 +326,7 @@ export function ContactUs() {
             <p>Pick whichever is closest to your needs. Click any topic to select it for your booking.</p>
           </div>
 
-          <div className="talk-ways">
+          <div className="talk-ways grid grid-cols-1 md:grid-cols-3 gap-5">
             {topics.map((t, idx) => {
               const isSelected = selectedTopic === idx
               return (
@@ -392,7 +370,7 @@ export function ContactUs() {
       <section className="talk-sec" id="book">
         <div className="oh-wrap">
           <div className="talk-formsec">
-            <div className="talk-formgrid">
+            <div className="talk-formgrid grid grid-cols-1 lg:grid-cols-[1fr_1.1fr] gap-8">
               <div className="form-info-col">
                 <span className="form-eyebrow">
                   <FiZap className="sparkle-icon" /> Direct Access
@@ -453,7 +431,7 @@ export function ContactUs() {
                       Thanks, <strong>{formData.name.split(' ')[0]}</strong>. We have received your request.
                     </p>
                     <div className="ok-details">
-                      <div className="ok-item">
+<div className="ok-item">
                         <span>Reply Email:</span>
                         <strong>{formData.email}</strong>
                       </div>
@@ -461,10 +439,10 @@ export function ContactUs() {
                         <span>Founder Preference:</span>
                         <strong>
                           {selectedFounder === 'anamika'
-                            ? 'Dr. Anamika'
+                            ? 'Assistant of Dr. Anamika'
                             : selectedFounder === 'rajendra'
-                            ? 'Dr. Rajendra Patil'
-                            : 'Either Founder'}
+                            ? 'Assistant of Dr. Rajendra Patil'
+                            : 'General Executive Desk'}
                         </strong>
                       </div>
                       {selectedTopic !== null && (
@@ -497,30 +475,30 @@ export function ContactUs() {
                   </div>
                 ) : (
                   <form onSubmit={handleSubmit} className="talk-fields">
-                    {/* Founder Selector Tabs */}
+                    {/* Executive Contact Desk Tabs */}
                     <div className="founder-select-group">
-                      <label className="group-label">Founder Preference</label>
-                      <div className="founder-tabs">
-                        <button
-                          type="button"
-                          className={`ftab ${selectedFounder === 'either' ? 'active' : ''}`}
-                          onClick={() => setSelectedFounder('either')}
-                        >
-                          Either Founder
-                        </button>
+                      <label className="group-label">Contact Desk Preference</label>
+                      <div className="founder-tabs grid grid-cols-1 sm:grid-cols-3 gap-2">
                         <button
                           type="button"
                           className={`ftab ${selectedFounder === 'anamika' ? 'active' : ''}`}
                           onClick={() => setSelectedFounder('anamika')}
                         >
-                          Dr. Anamika
+                          Assistant of Dr. Anamika
                         </button>
                         <button
                           type="button"
                           className={`ftab ${selectedFounder === 'rajendra' ? 'active' : ''}`}
                           onClick={() => setSelectedFounder('rajendra')}
                         >
-                          Dr. Rajendra
+                          Assistant of Dr. Rajendra
+                        </button>
+                        <button
+                          type="button"
+                          className={`ftab ${selectedFounder === 'either' ? 'active' : ''}`}
+                          onClick={() => setSelectedFounder('either')}
+                        >
+                          General Desk
                         </button>
                       </div>
                     </div>

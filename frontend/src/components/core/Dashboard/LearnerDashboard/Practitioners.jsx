@@ -308,7 +308,7 @@ export function Practitioners({ onUpdate, setActiveTab }) {
           Loading practitioners database...
         </div>
       ) : filteredPractitioners.length > 0 ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '20px' }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredPractitioners.map((p) => {
             const pId = p.user?._id || p._id
             const firstName = p.user?.firstName || p.firstName || 'Practitioner'
