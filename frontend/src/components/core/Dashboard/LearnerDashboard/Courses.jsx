@@ -7,6 +7,7 @@ import {
 } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import { apiConnector } from '../../../../services/apiConnector'
+import { OHPricingModal } from '../../../openhand'
 
 function formatDuration(secs) {
   if (!secs) return '0:00'
@@ -174,51 +175,84 @@ function CourseDetailView({ course, hasAccess, onBack, subscription }) {
 }
 
 // ─── Course Card (Grid) ────────────────────────────────────────────────────────
-function CourseCard({ course, hasAccess, subscription, onClick }) {
+function CourseCard({ course, hasAccess, subscription, onClick, onBuyPaid }) {
   const totalDuration = course.videos?.reduce((s, v) => s + (v.durationSeconds || 0), 0) || 0
+  const isPaidCourse = course.price > 0 && !course.isFree
 
   return (
-    <div onClick={onClick}
-      style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, overflow: 'hidden', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
+    <div
+      style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, overflow: 'hidden', transition: 'all 0.2s', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
       onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.10)' }}
       onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)' }}
     >
       {/* Thumbnail */}
-      <div style={{ height: 150, background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)', position: 'relative', overflow: 'hidden' }}>
+      <div onClick={onClick} style={{ height: 150, background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)', position: 'relative', overflow: 'hidden', cursor: 'pointer' }}>
         {course.thumbnail
           ? <img src={course.thumbnail} alt={course.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}><FiBookOpen size={36} color="#fff" /></div>
         }
         {/* Access badge */}
         <div style={{ position: 'absolute', top: 10, right: 10 }}>
-          {hasAccess
-            ? <span style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 20, background: 'rgba(16,185,129,0.9)', color: '#fff', fontSize: 11, fontWeight: 700 }}><FiCheck size={10} /> Access</span>
-            : <span style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 20, background: 'rgba(0,0,0,0.7)', color: '#fff', fontSize: 11, fontWeight: 600 }}><FiLock size={10} /> {course.requiredPlan || 'Subscribe'}</span>
-          }
+          {hasAccess ? (
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 20, background: 'rgba(16,185,129,0.95)', color: '#fff', fontSize: 11, fontWeight: 700 }}>
+              <FiCheck size={10} /> Unlocked
+            </span>
+          ) : isPaidCourse ? (
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 20, background: 'linear-gradient(135deg, #D97706, #B45309)', color: '#fff', fontSize: 11, fontWeight: 700 }}>
+              ₹{course.price} • Paid
+            </span>
+          ) : (
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 20, background: 'rgba(15,23,42,0.85)', color: '#fff', fontSize: 11, fontWeight: 600 }}>
+              <FiLock size={10} /> Free Plan Course
+            </span>
+          )}
         </div>
       </div>
 
-      <div style={{ padding: '16px' }}>
-        <h3 style={{ margin: '0 0 6px', fontSize: 15, fontWeight: 700, color: '#1E293B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{course.title}</h3>
-        {course.description && (
-          <p style={{ margin: '0 0 10px', color: '#64748B', fontSize: 12, lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-            {course.description}
-          </p>
-        )}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, color: '#94A3B8', fontSize: 12 }}>
-          <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'linear-gradient(135deg, #8B5CF6, #EC4899)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 9, fontWeight: 700 }}>
-            {course.practitioner?.firstName?.[0]}
+      <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+        <div>
+          <div onClick={onClick} style={{ cursor: 'pointer' }}>
+            <h3 style={{ margin: '0 0 6px', fontSize: 15, fontWeight: 700, color: '#1E293B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{course.title}</h3>
+            {course.description && (
+              <p style={{ margin: '0 0 10px', color: '#64748B', fontSize: 12, lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                {course.description}
+              </p>
+            )}
           </div>
-          Dr. {course.practitioner?.firstName} {course.practitioner?.lastName}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, color: '#94A3B8', fontSize: 12 }}>
+            <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'linear-gradient(135deg, #8B5CF6, #EC4899)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 9, fontWeight: 700 }}>
+              {course.practitioner?.firstName?.[0]}
+            </div>
+            Dr. {course.practitioner?.firstName} {course.practitioner?.lastName}
+          </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #F1F5F9', paddingTop: 10 }}>
-          <div style={{ display: 'flex', gap: 12, fontSize: 12, color: '#94A3B8' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><FiVideo size={11} /> {course.videos?.length || 0}</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><FiClock size={11} /> {formatTotalDuration(totalDuration)}</span>
+
+        <div style={{ borderTop: '1px solid #F1F5F9', paddingTop: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <div style={{ display: 'flex', gap: 12, fontSize: 12, color: '#94A3B8' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><FiVideo size={11} /> {course.videos?.length || 0} vids</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><FiClock size={11} /> {formatTotalDuration(totalDuration)}</span>
+            </div>
+            {isPaidCourse && !hasAccess && (
+              <span style={{ fontSize: 13, fontWeight: 800, color: '#D97706' }}>₹{course.price}</span>
+            )}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: hasAccess ? '#10B981' : '#3B82F6', fontWeight: 600 }}>
-            {hasAccess ? 'Watch Now' : 'View Details'} <FiArrowRight size={12} />
-          </div>
+
+          {isPaidCourse && !hasAccess ? (
+            <button
+              onClick={() => onBuyPaid(course)}
+              style={{ width: '100%', padding: '8px 12px', background: 'linear-gradient(135deg, #D97706, #B45309)', border: 'none', borderRadius: 8, color: '#fff', fontWeight: 700, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+            >
+              Buy Course — ₹{course.price} <FiArrowRight size={12} />
+            </button>
+          ) : (
+            <button
+              onClick={onClick}
+              style={{ width: '100%', padding: '8px 12px', background: hasAccess ? '#F0FDF4' : '#EFF6FF', border: `1px solid ${hasAccess ? '#BBF7D0' : '#BFDBFE'}`, borderRadius: 8, color: hasAccess ? '#166534' : '#1D4ED8', fontWeight: 700, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+            >
+              {hasAccess ? 'Watch Videos' : 'Unlock Course'} <FiArrowRight size={12} />
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -228,6 +262,7 @@ function CourseCard({ course, hasAccess, subscription, onClick }) {
 // ─── Main Courses Component ───────────────────────────────────────────────────
 export default function Courses() {
   const { token } = useSelector(s => s.auth)
+  const { user } = useSelector(s => s.profile)
   const [courses, setCourses] = useState([])
   const [subscription, setSubscription] = useState(null)
   const [subInfo, setSubInfo] = useState(null)
@@ -235,16 +270,17 @@ export default function Courses() {
   const [search, setSearch] = useState('')
   const [selectedCourse, setSelectedCourse] = useState(null)
   const [accessMap, setAccessMap] = useState({})
+  const [showPricingModal, setShowPricingModal] = useState(false)
 
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
       const [coursesRes, subRes] = await Promise.all([
-        apiConnector('GET', '/api/v1/courses'),
-        token ? apiConnector('GET', '/api/v1/payment/subscription/mine', null, { Authorization: `Bearer ${token}` }) : Promise.resolve(null),
+        apiConnector('GET', '/api/v1/courses').catch(() => null),
+        token ? apiConnector('GET', '/api/v1/payments/subscription/mine', null, { Authorization: `Bearer ${token}` }).catch(() => null) : Promise.resolve(null),
       ])
 
-      const courseList = coursesRes?.data?.success ? coursesRes.data.courses : []
+      const courseList = coursesRes?.data?.success ? (coursesRes.data.courses || []) : []
       setCourses(courseList)
 
       const sData = subRes?.data || {}
@@ -252,33 +288,31 @@ export default function Courses() {
       setSubscription(sub)
       setSubInfo(sData)
 
-      const PLAN_RANKS = { starter: 1, growth: 2, practice: 3, master: 3 }
-
-      // Compute effective user plan (paid subscription or active 7-day trial)
-      let userPlan = null
-      if (sData.hasActiveSubscription && sub) {
-        userPlan = sub.planKey
-      } else if (sData.isTrialActive) {
-        userPlan = 'growth' // trial gives full Starter/Growth tier access during the 7 days!
-      }
-
+      // Access Rules:
+      // Free courses (price = 0) accessible if trial active OR subscription active
+      // Paid courses (price > 0) accessible if user enrolled or creator
       const map = {}
+      const userId = user?._id || user?.id
+
       courseList.forEach(c => {
-        if (!c.requiredPlan) {
-          map[c._id] = true // free course
-        } else if (userPlan) {
-          const userRank = PLAN_RANKS[String(userPlan).toLowerCase()] || 0
-          const reqRank = PLAN_RANKS[String(c.requiredPlan).toLowerCase()] || 0
-          map[c._id] = userRank >= reqRank
-        } else {
+        const isEnrolled = (c.enrolledClients || []).map(String).includes(String(userId))
+        const isCreator = String(c.practitioner?._id || c.practitioner) === String(userId)
+
+        if (isCreator || isEnrolled) {
+          map[c._id] = true
+        } else if (c.price > 0 && !c.isFree) {
           map[c._id] = false
+        } else {
+          // Free course: available during trial or active subscription
+          const hasAccess = sData.hasActiveSubscription || sData.isTrialActive
+          map[c._id] = hasAccess
         }
       })
       setAccessMap(map)
-    } catch (e) { toast.error('Failed to load courses') }
+    } catch (e) {}
     setLoading(false)
 
-  }, [token])
+  }, [token, user])
 
   useEffect(() => { loadData() }, [loadData])
 
@@ -288,6 +322,76 @@ export default function Courses() {
     c.description?.toLowerCase().includes(search.toLowerCase()) ||
     `${c.practitioner?.firstName} ${c.practitioner?.lastName}`.toLowerCase().includes(search.toLowerCase())
   )
+
+  const loadRazorpaySDK = () => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) return resolve(true)
+      const script = document.createElement('script')
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+      script.onload = () => resolve(true)
+      script.onerror = () => resolve(false)
+      document.body.appendChild(script)
+    })
+  }
+
+  const handleBuyPaidCourse = async (course) => {
+    if (!token) return toast.error('Please login to purchase course.')
+    const toastId = toast.loading(`Preparing Razorpay order for ${course.title}...`)
+    try {
+      const isLoaded = await loadRazorpaySDK()
+      if (!isLoaded) {
+        toast.error('Failed to load Razorpay SDK', { id: toastId })
+        return
+      }
+
+      const res = await apiConnector('POST', '/api/v1/payments/buy-course', { courseId: course._id }, { Authorization: `Bearer ${token}` })
+      if (!res?.data?.success) {
+        toast.error(res?.data?.message || 'Failed to create course order', { id: toastId })
+        return
+      }
+
+      const { order, key, courseTitle, practitionerName } = res.data
+      toast.dismiss(toastId)
+
+      const options = {
+        key,
+        amount: order.amount,
+        currency: order.currency,
+        name: `Course: ${courseTitle}`,
+        description: `By ${practitionerName}`,
+        order_id: order.id,
+        prefill: {
+          name: user ? `${user.firstName} ${user.lastName}` : '',
+          email: user?.email || '',
+        },
+        theme: { color: '#1F5FE0' },
+        handler: async (response) => {
+          const vToast = toast.loading('Verifying Razorpay payment...')
+          try {
+            const vRes = await apiConnector('POST', '/api/v1/payments/verify-course-payment', {
+              courseId: course._id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            }, { Authorization: `Bearer ${token}` })
+
+            if (vRes?.data?.success) {
+              toast.success(`🎉 ${courseTitle} Unlocked!`, { id: vToast })
+              loadData()
+            } else {
+              toast.error(vRes?.data?.message || 'Verification failed', { id: vToast })
+            }
+          } catch (e) {
+            toast.error('Payment verification failed', { id: vToast })
+          }
+        }
+      }
+      const rzp = new window.Razorpay(options)
+      rzp.open()
+    } catch (e) {
+      toast.error('Failed to initiate course payment', { id: toastId })
+    }
+  }
 
   if (selectedCourse) {
     return (
@@ -308,7 +412,7 @@ export default function Courses() {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h2 style={{ margin: '0 0 4px', color: '#1E293B', fontSize: 22, fontWeight: 800 }}>Courses Library</h2>
-          <p style={{ margin: 0, color: '#64748B', fontSize: 14 }}>Video courses from your practitioners — subscribe to unlock full access</p>
+          <p style={{ margin: 0, color: '#64748B', fontSize: 14 }}>Video courses from your practitioners — subscribe to unlock free courses or buy paid courses</p>
         </div>
         {subInfo?.hasActiveSubscription ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: '#DCFCE7', borderRadius: 20, border: '1px solid #BBF7D0' }}>
@@ -326,7 +430,7 @@ export default function Courses() {
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: '#FEE2E2', borderRadius: 20, border: '1px solid #FCA5A5' }}>
             <span style={{ color: '#DC2626', fontWeight: 700, fontSize: 13 }}>
-              ⚠️ Trial Expired — Subscribe to Unlock Courses
+              ⚠️ Free Trial Expired — Subscribe to Unlock Free Courses
             </span>
           </div>
         )}
@@ -349,18 +453,18 @@ export default function Courses() {
               </div>
               <div style={{ color: '#64748B', fontSize: 12 }}>
                 {subInfo?.isTrialActive
-                  ? 'Enjoy full practitioner courses during your trial. Subscribe anytime to keep uninterrupted access.'
-                  : 'Subscribe to one of our 3 plans (Starter ₹999, Growth ₹2,999, Master ₹5,999) to unlock all courses & benefits.'}
+                  ? 'Enjoy full free practitioner courses during your trial. Subscribe anytime to keep uninterrupted access.'
+                  : 'Subscribe to a Learner Plan (Beginner ₹51, Advance ₹151, Champion ₹1,500) to unlock all practitioner free courses.'}
               </div>
             </div>
           </div>
-          <a href="/practitioner-journey" style={{
+          <button onClick={() => setShowPricingModal(true)} style={{
             display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 18px',
             background: subInfo?.isTrialActive ? 'linear-gradient(135deg, #8B5CF6, #6D28D9)' : 'linear-gradient(135deg, #EF4444, #DC2626)',
-            borderRadius: 8, color: '#fff', textDecoration: 'none', fontWeight: 700, fontSize: 13
+            borderRadius: 8, color: '#fff', border: 'none', fontWeight: 700, fontSize: 13, cursor: 'pointer'
           }}>
             {subInfo?.isTrialActive ? 'Upgrade Plan' : 'Subscribe Now'} <FiArrowRight size={13} />
-          </a>
+          </button>
         </div>
       )}
 
@@ -391,10 +495,18 @@ export default function Courses() {
               hasAccess={accessMap[course._id]}
               subscription={subscription}
               onClick={() => setSelectedCourse(course)}
+              onBuyPaid={handleBuyPaidCourse}
             />
           ))}
         </div>
       )}
+
+      {/* Pricing Modal Overlay */}
+      <OHPricingModal
+        isOpen={showPricingModal}
+        onClose={() => setShowPricingModal(false)}
+        defaultRole="learner"
+      />
     </div>
   )
 }

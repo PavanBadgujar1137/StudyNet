@@ -8,6 +8,8 @@ const {
   verifyOfferBooking,
   getMyBookings,
   getPractitionerBookings,
+  createCourseOrder,
+  verifyCourseOrder,
   sendPaymentSuccessEmail,
 } = require("../controllers/payments")
 const { auth, isInstructor } = require("../middleware/auth")
@@ -16,6 +18,10 @@ const { auth, isInstructor } = require("../middleware/auth")
 router.post("/subscription/create", auth, createSubscriptionOrder)
 router.post("/subscription/verify", auth, verifySubscriptionPayment)
 router.get("/subscription/mine", auth, getMySubscription)
+
+// ─── Paid Course Purchases ────────────────────────────────────────────────────
+router.post("/buy-course", auth, createCourseOrder)
+router.post("/verify-course-payment", auth, verifyCourseOrder)
 
 // ─── Practitioner Offer Bookings (ALL types: session / circle / program) ───────
 // Client books any practitioner offer → payment goes to admin

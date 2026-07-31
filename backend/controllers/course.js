@@ -8,7 +8,7 @@ const cloudinary = require("cloudinary").v2
 exports.createCourse = async (req, res) => {
   try {
     const practitionerId = req.user.id
-    const { title, description, tags } = req.body
+    const { title, description, tags, price = 0, isFree = true } = req.body
 
     if (!title) {
       return res.status(400).json({ success: false, message: "Course title is required" })
@@ -23,18 +23,22 @@ exports.createCourse = async (req, res) => {
       thumbnailUrl = uploaded.secure_url
     }
 
-    // requiredPlan is set exclusively by Admin, default null (free) until Admin assigns a plan tier
+    const numPrice = Number(price) || 0
+    const courseIsFree = numPrice === 0 || isFree === true || isFree === "true"
+
     const course = await Course.create({
       title,
       description: description || "",
       thumbnail: thumbnailUrl,
       practitioner: practitionerId,
-      tags: tags ? JSON.parse(tags) : [],
+      tags: tags ? (typeof tags === "string" ? JSON.parse(tags) : tags) : [],
+      price: numPrice,
+      isFree: courseIsFree,
       requiredPlan: null,
       status: "draft",
     })
 
-    return res.status(201).json({ success: true, message: "Course created", course })
+    return res.status(201).json({ success: true, message: "Course created successfully", course })
   } catch (error) {
     console.error("createCourse error:", error)
     return res.status(500).json({ success: false, message: error.message })
@@ -46,7 +50,7 @@ exports.updateCourse = async (req, res) => {
   try {
     const practitionerId = req.user.id
     const { id } = req.params
-    const { title, description, tags, status } = req.body
+    const { title, description, tags, status, price, isFree } = req.body
 
     const course = await Course.findOne({ _id: id, practitioner: practitionerId })
     if (!course) {
@@ -57,6 +61,14 @@ exports.updateCourse = async (req, res) => {
     if (description !== undefined) course.description = description
     if (tags) course.tags = typeof tags === "string" ? JSON.parse(tags) : tags
     if (status) course.status = status
+    if (price !== undefined) {
+      course.price = Number(price) || 0
+      course.isFree = course.price === 0
+    }
+    if (isFree !== undefined) {
+      course.isFree = isFree === true || isFree === "true"
+      if (course.isFree) course.price = 0
+    }
 
     if (req.files?.thumbnail) {
       const uploaded = await cloudinary.uploader.upload(req.files.thumbnail.tempFilePath, {
@@ -67,7 +79,7 @@ exports.updateCourse = async (req, res) => {
     }
 
     await course.save()
-    return res.status(200).json({ success: true, message: "Course updated", course })
+    return res.status(200).json({ success: true, message: "Course updated successfully", course })
   } catch (error) {
     console.error("updateCourse error:", error)
     return res.status(500).json({ success: false, message: error.message })
@@ -253,7 +265,7 @@ exports.getCourseDetail = async (req, res) => {
     const userId = req.user?.id
 
     const course = await Course.findById(id)
-      .populate("practitioner", "firstName lastName image")
+      .populate("practitioner", "firstName lastName image email")
       .populate("videos", "title durationSeconds order thumbnail")
       .lean()
 
@@ -263,14 +275,24 @@ exports.getCourseDetail = async (req, res) => {
     let accessNotice = null
 
     if (userId) {
-      const isEnrolled = course.enrolledClients.map(String).includes(String(userId))
-      if (isEnrolled || !course.requiredPlan) {
+      const isEnrolled = (course.enrolledClients || []).map(String).includes(String(userId))
+      const isCreator = String(course.practitioner?._id || course.practitioner) === String(userId)
+
+      if (isCreator || isEnrolled) {
         hasAccess = true
+      } else if (course.price > 0 && !course.isFree) {
+        // Paid Course: requires separate purchase
+        hasAccess = false
+        accessNotice = `This is a premium paid course (₹${course.price}). Please purchase to unlock access.`
       } else {
+        // Free Course created by practitioner:
+        // Available during 7-day free trial OR with an active Learner subscription plan
         const accessCtx = await getUserAccessContext(userId)
-        hasAccess = checkAccess(accessCtx, course.requiredPlan)
-        if (!hasAccess && accessCtx.isExpired) {
-          accessNotice = "Your 7-day free trial has expired. Subscribe to a plan to unlock this course."
+        if (!accessCtx.isExpired || accessCtx.planKey !== "none") {
+          hasAccess = true
+        } else {
+          hasAccess = false
+          accessNotice = "Your 7-day free trial has expired. Subscribe to a Learner Plan to unlock practitioner free courses."
         }
       }
     }
@@ -291,29 +313,31 @@ exports.getCourseVideos = async (req, res) => {
     const course = await Course.findById(courseId).lean()
     if (!course) return res.status(404).json({ success: false, message: "Course not found" })
 
-    const isEnrolled = course.enrolledClients.map(String).includes(String(userId))
-    let hasAccess = isEnrolled || !course.requiredPlan
-    let accessCtx = { isExpired: false }
+    const isEnrolled = (course.enrolledClients || []).map(String).includes(String(userId))
+    const isCreator = String(course.practitioner) === String(userId)
+
+    let hasAccess = isCreator || isEnrolled
 
     if (!hasAccess) {
-      accessCtx = await getUserAccessContext(userId)
-      hasAccess = checkAccess(accessCtx, course.requiredPlan)
-    }
+      if (course.price > 0 && !course.isFree) {
+        return res.status(403).json({
+          success: false,
+          message: `This is a premium paid course (₹${course.price}). Please buy the course to view videos.`,
+        })
+      }
 
-    if (!hasAccess) {
-      const errorMsg = accessCtx.isExpired
-        ? "Your 7-day free trial has expired. Please subscribe to a plan on the Pricing page to access this course."
-        : `This course requires a ${course.requiredPlan} plan or higher.`
-
-      return res.status(403).json({
-        success: false,
-        message: errorMsg,
-      })
+      const accessCtx = await getUserAccessContext(userId)
+      if (!accessCtx.isExpired || accessCtx.planKey !== "none") {
+        hasAccess = true
+      } else {
+        return res.status(403).json({
+          success: false,
+          message: "Your 7-day free trial has expired. Please subscribe to a Learner Plan to access practitioner free courses.",
+        })
+      }
     }
 
     const videos = await CourseVideo.find({ course: courseId }).sort({ order: 1 }).lean()
-
-    // Increment views on access
     await CourseVideo.updateMany({ course: courseId }, { $inc: { views: 1 } })
 
     return res.status(200).json({ success: true, videos })

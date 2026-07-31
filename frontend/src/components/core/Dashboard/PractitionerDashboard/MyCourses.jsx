@@ -268,19 +268,23 @@ function CourseCard({ course, onUpdate }) {
 // ─── Create Course Modal ──────────────────────────────────────────────────────
 function CreateCourseModal({ onClose, onSuccess }) {
   const { token } = useSelector(s => s.auth)
-  const [form, setForm] = useState({ title: '', description: '', requiredPlan: '', tags: '' })
+  const [form, setForm] = useState({ title: '', description: '', price: 0, isFree: true, tags: '' })
   const [thumbnail, setThumbnail] = useState(null)
   const [creating, setCreating] = useState(false)
   const thumbRef = useRef()
 
   const handleCreate = async () => {
     if (!form.title) return toast.error('Course title is required')
+    if (!form.isFree && (!form.price || Number(form.price) <= 0)) {
+      return toast.error('Please enter a valid price for paid course')
+    }
     setCreating(true)
     try {
       const fd = new FormData()
       fd.append('title', form.title)
       fd.append('description', form.description)
-      fd.append('requiredPlan', form.requiredPlan)
+      fd.append('price', form.isFree ? 0 : Number(form.price))
+      fd.append('isFree', form.isFree)
       fd.append('tags', JSON.stringify(form.tags.split(',').map(t => t.trim()).filter(Boolean)))
       if (thumbnail) fd.append('thumbnail', thumbnail)
 
@@ -319,12 +323,52 @@ function CreateCourseModal({ onClose, onSuccess }) {
               rows={3} placeholder="What will learners learn?"
               style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #E2E8F0', borderRadius: 10, fontSize: 14, color: '#1E293B', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }} />
           </div>
-          <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10, padding: '12px 14px' }}>
-            <div style={{ color: '#1F5FE0', fontWeight: 700, fontSize: 12, marginBottom: 2 }}>ℹ️ Plan Assignment Notice</div>
-            <div style={{ color: '#64748B', fontSize: 12, lineHeight: 1.5 }}>
-              Course subscription plan access (Starter, Growth, Master, Free) is decided and assigned exclusively by the Platform Admin.
+
+          {/* Pricing Selector: Free vs Paid */}
+          <div>
+            <label style={{ display: 'block', fontSize: 12, color: '#64748B', marginBottom: 6, fontWeight: 600 }}>Course Pricing *</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <button
+                type="button"
+                onClick={() => setForm(f => ({ ...f, isFree: true, price: 0 }))}
+                style={{
+                  padding: '12px', borderRadius: 10, border: `2px solid ${form.isFree ? '#10B981' : '#E2E8F0'}`,
+                  background: form.isFree ? '#F0FDF4' : '#F8FAFC', color: form.isFree ? '#166534' : '#64748B',
+                  fontWeight: 700, fontSize: 13, cursor: 'pointer', textAlign: 'center'
+                }}
+              >
+                🟢 Free Course
+                <div style={{ fontSize: 11, fontWeight: 400, color: '#64748B', marginTop: 2 }}>Included in Learner Subscription</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setForm(f => ({ ...f, isFree: false }))}
+                style={{
+                  padding: '12px', borderRadius: 10, border: `2px solid ${!form.isFree ? '#D97706' : '#E2E8F0'}`,
+                  background: !form.isFree ? '#FFFBEB' : '#F8FAFC', color: !form.isFree ? '#B45309' : '#64748B',
+                  fontWeight: 700, fontSize: 13, cursor: 'pointer', textAlign: 'center'
+                }}
+              >
+                🏷️ Paid Course
+                <div style={{ fontSize: 11, fontWeight: 400, color: '#64748B', marginTop: 2 }}>Learners pay separate price via Razorpay</div>
+              </button>
             </div>
           </div>
+
+          {!form.isFree && (
+            <div>
+              <label style={{ display: 'block', fontSize: 12, color: '#64748B', marginBottom: 4, fontWeight: 600 }}>Course Price (₹) *</label>
+              <input
+                type="number"
+                min="1"
+                value={form.price}
+                onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
+                placeholder="e.g. 499"
+                style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #D97706', borderRadius: 10, fontSize: 14, color: '#1E293B', outline: 'none', boxSizing: 'border-box' }}
+              />
+            </div>
+          )}
+
           <div>
             <label style={{ display: 'block', fontSize: 12, color: '#64748B', marginBottom: 4, fontWeight: 600 }}>Tags (comma separated)</label>
             <input value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))}

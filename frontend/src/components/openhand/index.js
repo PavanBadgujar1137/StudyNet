@@ -12,6 +12,8 @@ export { OHCard, OHCardIcon, OHCardEyebrow, OHCardTitle, OHCardBody, OHCardFoote
 export { OHEyebrow }      from './OHEyebrow'
 export { OHChip, OHChipGroup } from './OHChip'
 export { OHModal }        from './OHModal'
+export { default as OHPricingSection } from './OHPricingSection'
+export { default as OHPricingModal } from './OHPricingModal'
 
 // Data visualization
 export { OHSparkline }    from './OHSparkline'

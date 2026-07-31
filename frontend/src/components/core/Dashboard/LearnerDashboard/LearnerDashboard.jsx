@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   FiMapPin,
   FiCheckSquare,
@@ -23,10 +24,14 @@ import Reflections from './Reflections'
 import Courses from './Courses'
 import Settings from '../Settings'
 import CommunityChatHub from '../CommunityChatHub'
-import { useSearchParams } from 'react-router-dom'
+import { OHPricingModal } from '../../../openhand'
+import { logout } from '../../../../services/operations/authAPI'
+import { apiConnector } from '../../../../services/apiConnector'
 import { fetchClientDashboardData } from '../../../../services/operations/dashboardAPI'
 
 export function LearnerDashboard() {
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const activeTab = searchParams.get('tab') || 'journey'
 
@@ -36,7 +41,9 @@ export function LearnerDashboard() {
 
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   const [dashboardData, setDashboardData] = useState(null)
+  const [subStatus, setSubStatus] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [showPricingModal, setShowPricingModal] = useState(false)
 
   const { user } = useSelector((state) => state.profile)
   const { token } = useSelector((state) => state.auth)
@@ -45,17 +52,30 @@ export function LearnerDashboard() {
   const practitionerObj = dashboardData?.practitioner
   const practitionerFirstName = practitionerObj?.firstName || 'Instructor'
 
+  const fetchSubStatus = useCallback(async () => {
+    if (!token) return
+    try {
+      const res = await apiConnector('GET', '/api/v1/payments/subscription/mine', null, { Authorization: `Bearer ${token}` })
+      if (res?.data?.success) setSubStatus(res.data)
+    } catch (e) {}
+  }, [token])
+
   const loadData = useCallback(async () => {
     if (!token) return
     setLoading(true)
+    await fetchSubStatus()
     const data = await fetchClientDashboardData(token)
     if (data) setDashboardData(data)
     setLoading(false)
-  }, [token])
+  }, [token, fetchSubStatus])
 
   useEffect(() => {
     loadData()
   }, [loadData])
+
+  const handleLogout = () => {
+    dispatch(logout(navigate))
+  }
 
   const handleCheckInSuccess = () => {
     loadData()
@@ -246,13 +266,13 @@ export function LearnerDashboard() {
                 ✨ {dashboardData.subscriptionStatus.subscription?.planName || 'Active Plan'}
               </span>
             ) : dashboardData?.subscriptionStatus?.isTrialActive ? (
-              <a href="/practitioner-journey" style={{ textDecoration: 'none', padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, background: '#F3E8FF', color: '#7E22CE', border: '1px solid #E9D5FF' }}>
+              <button onClick={() => setShowPricingModal(true)} style={{ border: '1px solid #E9D5FF', cursor: 'pointer', padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, background: '#F3E8FF', color: '#7E22CE' }}>
                 ⚡ 7-Day Trial ({dashboardData.subscriptionStatus.trialDaysRemaining}d left) →
-              </a>
+              </button>
             ) : (
-              <a href="/practitioner-journey" style={{ textDecoration: 'none', padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, background: '#FEE2E2', color: '#DC2626', border: '1px solid #FCA5A5' }}>
+              <button onClick={() => setShowPricingModal(true)} style={{ border: '1px solid #FCA5A5', cursor: 'pointer', padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, background: '#FEE2E2', color: '#DC2626' }}>
                 ⚠️ Trial Expired — Select Plan →
-              </a>
+              </button>
             )}
             <button
               onClick={() => setActiveTab('checkin')}
@@ -262,6 +282,27 @@ export function LearnerDashboard() {
             </button>
           </div>
         </div>
+
+        {/* Trial Expired Alert Banner */}
+        {subStatus && !subStatus.hasActiveSubscription && !subStatus.isTrialActive && (
+          <div style={{ background: 'linear-gradient(135deg, #FEF2F2, #FFF7ED)', border: '1px solid #FCA5A5', borderRadius: 16, padding: '16px 20px', margin: '0 24px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, boxShadow: '0 2px 10px rgba(220,38,38,0.06)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#FEE2E2', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>⚠️</div>
+              <div>
+                <div style={{ color: '#991B1B', fontWeight: 800, fontSize: 14 }}>Your 7-Day Free Trial Has Expired</div>
+                <div style={{ color: '#7F1D1D', fontSize: 12 }}>Subscribe to a Learner Plan (Beginner ₹51, Advance ₹151, Champion ₹1,500) to keep accessing free practitioner courses, or logout.</div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <button onClick={() => setShowPricingModal(true)} style={{ padding: '9px 18px', background: 'linear-gradient(135deg, #EF4444, #DC2626)', border: 'none', borderRadius: 8, color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+                Subscribe Now →
+              </button>
+              <button onClick={handleLogout} style={{ padding: '9px 18px', background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: 8, color: '#475569', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+                Logout
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* View Content */}
         <div className="oh-view-body">
@@ -320,6 +361,13 @@ export function LearnerDashboard() {
           )}
         </div>
       </main>
+
+      {/* Pricing Section Modal Overlay */}
+      <OHPricingModal
+        isOpen={showPricingModal}
+        onClose={() => setShowPricingModal(false)}
+        defaultRole="learner"
+      />
     </div>
   )
 }

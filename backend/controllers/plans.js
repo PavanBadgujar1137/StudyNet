@@ -102,7 +102,8 @@ const PLAN_DETAILS = {
   champion: { price: 1500, name: "Champion Plan", buttonId: "pl_champion" },
   starter: { price: 999, name: "Starter Plan", buttonId: "pl_TIp5rKJwNIOFhi" },
   growth: { price: 2999, name: "Growth Plan", buttonId: "pl_TIpGvgepbsigNC" },
-  master: { price: 5999, name: "Master Plan", buttonId: "pl_TIpJ8iM19tFFtf" },
+  practice: { price: 5999, name: "Practice Plan", buttonId: "pl_TIpJ8iM19tFFtf" },
+  master: { price: 5999, name: "Master VIP Plan", buttonId: "pl_TIpJ8iM19tFFtf" },
 }
 
 exports.createPlanOrder = async (req, res) => {
@@ -168,8 +169,24 @@ exports.verifyPlanPayment = async (req, res) => {
       .digest("hex")
 
     if (generated_signature === razorpay_signature) {
-      const planPrices = { starter: 999, growth: 2999, practice: 5999, master: 9999 }
-      const planNames = { starter: "Starter Plan", growth: "Growth Plan", practice: "Practice Plan", master: "Master Plan" }
+      const planPrices = {
+        beginner: 51,
+        advance: 151,
+        champion: 1500,
+        starter: 999,
+        growth: 2999,
+        practice: 5999,
+        master: 5999,
+      }
+      const planNames = {
+        beginner: "Beginner Plan",
+        advance: "Advance Plan",
+        champion: "Champion Plan",
+        starter: "Starter Plan",
+        growth: "Growth Plan",
+        practice: "Practice Plan",
+        master: "Master VIP Plan",
+      }
       const keyLower = planKey.toLowerCase()
       const amount = planPrices[keyLower] || 999
 
@@ -227,8 +244,8 @@ exports.verifyPlanPayment = async (req, res) => {
 
       return res.status(200).json({
         success: true,
-        message: `Payment successful! Welcome to the ${planKey} plan.`,
-        planKey,
+        message: `Payment successful! Welcome to the ${planNames[keyLower] || planKey}.`,
+        planKey: keyLower,
       })
     } else {
       return res.status(400).json({

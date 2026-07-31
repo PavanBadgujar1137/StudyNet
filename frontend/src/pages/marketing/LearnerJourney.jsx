@@ -1,10 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react'
-import { toast } from 'react-hot-toast'
-import { apiConnector } from '../../services/apiConnector'
 import {
   OHFooter,
   OHButton,
   OHEyebrow,
+  OHPricingSection,
 } from '../../components/openhand'
 import { 
   FiShield, 
@@ -110,86 +109,7 @@ const COPILOT_FEATURES = [
 
 export function LearnerJourney() {
   const [activeStages, setActiveStages] = useState({})
-  const [payingPlan, setPayingPlan] = useState(null)
   const progRef = useRef(null)
-
-  const loadRazorpaySDK = () => {
-    return new Promise((resolve) => {
-      if (window.Razorpay) {
-        resolve(true)
-        return
-      }
-      const script = document.createElement('script')
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
-      script.onload = () => resolve(true)
-      script.onerror = () => resolve(false)
-      document.body.appendChild(script)
-    })
-  }
-
-  const handlePayNow = async (planKey) => {
-    try {
-      setPayingPlan(planKey)
-      const isLoaded = await loadRazorpaySDK()
-      if (!isLoaded) {
-        toast.error('Razorpay SDK failed to load. Please check your network.')
-        setPayingPlan(null)
-        return
-      }
-
-      const res = await apiConnector('POST', '/api/v1/plans/create-order', { planKey })
-      if (!res?.data?.success) {
-        toast.error(res?.data?.message || 'Could not initiate plan order')
-        setPayingPlan(null)
-        return
-      }
-
-      const { order, key, planName } = res.data
-
-      const options = {
-        key: key || 'rzp_test_TDhFSRuAl18Gcb',
-        amount: order.amount,
-        currency: order.currency || 'INR',
-        name: 'OpenHand Practice Platform',
-        description: `Subscription: ${planName}`,
-        order_id: order.id,
-        handler: async function (response) {
-          try {
-            const verifyRes = await apiConnector('POST', '/api/v1/plans/verify-payment', {
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              planKey,
-            })
-
-            if (verifyRes?.data?.success) {
-              toast.success(`🎉 Payment Verified! Welcome to ${planName}.`)
-            } else {
-              toast.error(verifyRes?.data?.message || 'Payment verification failed.')
-            }
-          } catch (err) {
-            console.error('Verification error:', err)
-            toast.error('Payment verification failed.')
-          }
-        },
-        prefill: {
-          name: '',
-          email: '',
-        },
-        theme: {
-          color: '#4F46E5',
-        },
-      }
-
-      const rzpModal = new window.Razorpay(options)
-      rzpModal.open()
-    } catch (err) {
-      console.error('PayNow error:', err)
-      toast.error('Payment launch failed. Try again.')
-    } finally {
-      setPayingPlan(null)
-    }
-  }
 
   // Stage visibility observer
   useEffect(() => {
@@ -449,130 +369,8 @@ export function LearnerJourney() {
         </div>
       </section>
 
-      {/* Learner Membership Pricing Section */}
-      <section className="oh-sec py-16 bg-slate-50 border-t border-slate-200" id="pricing">
-        <div className="oh-wrap max-w-[1360px] mx-auto px-4">
-          <div className="text-center max-w-3xl mx-auto mb-12">
-            <OHEyebrow>Learner Membership Plans</OHEyebrow>
-            <h2 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight my-4">
-              Invest in your wellness. <span className="oh-grad-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">Care built around you.</span>
-            </h2>
-            <p className="text-slate-600 text-base sm:text-lg font-medium leading-relaxed">
-              Choose the learner membership plan that fits your personal care journey. Unlock practitioner courses, live group circles, daily check-ins, and AURA AI guidance.
-            </p>
-          </div>
-
-          <div className="plans-grid grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch pt-4">
-            
-            {/* Beginner Plan */}
-            <div className="plan-card bg-white border border-slate-200 rounded-3xl p-8 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
-              <div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-2">Beginner Plan</h3>
-                <p className="who text-slate-600 text-sm mb-6 min-h-[42px] font-medium leading-relaxed">
-                  For individuals starting their personal wellness &amp; mental health journey.
-                </p>
-                <div className="price-tag text-4xl font-extrabold text-slate-900 mb-3 tracking-tight">
-                  ₹51<small className="text-slate-500 font-medium text-base"> /month</small>
-                </div>
-                <div className="cut-badge bg-blue-50 text-blue-700 font-bold text-xs uppercase tracking-wider py-2 px-3.5 rounded-xl mb-6 inline-flex items-center gap-2 border border-blue-100">
-                  ESSENTIAL LEARNER MEMBERSHIP
-                </div>
-                <ul className="plan-features text-slate-700 text-sm space-y-3 mb-8">
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Access to core practitioner courses &amp; library</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> 1 Monthly group circle pass included</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Daily mood check-ins &amp; guided prompts</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Personal AI health &amp; reflection assistant (AURA)</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Standard 1:1 session booking access</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Secure digital health record vault</li>
-                </ul>
-              </div>
-              <div className="flex flex-col gap-2.5">
-                <OHButton
-                  onClick={() => handlePayNow('beginner')}
-                  disabled={payingPlan === 'beginner'}
-                  fullWidth
-                  size="lg"
-                >
-                  {payingPlan === 'beginner' ? 'Opening Razorpay...' : 'Subscribe to Beginner — ₹51'}
-                </OHButton>
-              </div>
-            </div>
-
-            {/* Advance Plan (Featured) */}
-            <div className="plan-card feat-card relative bg-slate-900 text-white border-2 border-indigo-500 rounded-3xl p-8 shadow-2xl transition-all flex flex-col justify-between transform -translate-y-2">
-              <span className="featured-badge absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white text-[11px] font-extrabold tracking-wider uppercase py-1.5 px-5 rounded-full shadow-lg whitespace-nowrap">
-                MOST POPULAR LEARNER CHOICE
-              </span>
-              <div>
-                <h3 className="text-2xl font-bold text-white mb-2 mt-2">Advance Plan</h3>
-                <p className="who text-slate-300 text-sm mb-6 min-h-[42px] font-normal leading-relaxed">
-                  For active wellness seekers wanting full access to courses, circles, and session discounts.
-                </p>
-                <div className="price-tag text-4xl font-extrabold text-white mb-3 tracking-tight">
-                  ₹151<small className="text-slate-300 font-medium text-base"> /month</small>
-                </div>
-                <div className="cut-badge bg-indigo-900/60 text-sky-300 font-bold text-xs uppercase tracking-wider py-2 px-3.5 rounded-xl mb-6 inline-flex items-center gap-2 border border-indigo-500/30">
-                  FULL ACCESS + 15% OFF SESSIONS
-                </div>
-                <ul className="plan-features text-slate-200 text-sm space-y-3 mb-8">
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> Everything in Beginner Plan</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> Unlimited access to ALL practitioner courses</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> Unlimited access to live group circles</li>
-                  <li className="flex items-center gap-2.5 font-semibold text-white"><span className="text-sky-400 font-bold text-base">✓</span> <b>15% discount on all 1:1 sessions</b></li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> Live in-session AURA companion &amp; insights</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> Priority session scheduling &amp; waitlist bypass</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> Monthly companion pass for a friend</li>
-                </ul>
-              </div>
-              <div className="flex flex-col gap-2.5">
-                <OHButton
-                  onClick={() => handlePayNow('advance')}
-                  disabled={payingPlan === 'advance'}
-                  fullWidth
-                  size="lg"
-                >
-                  {payingPlan === 'advance' ? 'Opening Razorpay...' : 'Subscribe to Advance — ₹151'}
-                </OHButton>
-              </div>
-            </div>
-
-            {/* Champion Plan */}
-            <div className="plan-card bg-white border border-slate-200 rounded-3xl p-8 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
-              <div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-2">Champion Plan</h3>
-                <p className="who text-slate-600 text-sm mb-6 min-h-[42px] font-medium leading-relaxed">
-                  For complete wellbeing coverage with dedicated care, free monthly session, and VIP perks.
-                </p>
-                <div className="price-tag text-4xl font-extrabold text-slate-900 mb-3 tracking-tight">
-                  ₹1,500<small className="text-slate-500 font-medium text-base"> /month</small>
-                </div>
-                <div className="cut-badge bg-emerald-50 text-emerald-700 font-bold text-xs uppercase tracking-wider py-2 px-3.5 rounded-xl mb-6 inline-flex items-center gap-2 border border-emerald-100">
-                  1 FREE 1:1 SESSION + 25% OFF EXTRA
-                </div>
-                <ul className="plan-features text-slate-700 text-sm space-y-3 mb-8">
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Everything in Advance Plan</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> <b>1 Free 1:1 private session included / mo</b></li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> <b>25% discount on additional 1:1 sessions</b></li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Dedicated care manager &amp; concierge support</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Family sharing (up to 3 family sub-accounts)</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Custom wellness path &amp; biometric analytics</li>
-                </ul>
-              </div>
-              <div className="flex flex-col gap-2.5">
-                <OHButton
-                  onClick={() => handlePayNow('champion')}
-                  disabled={payingPlan === 'champion'}
-                  fullWidth
-                  size="lg"
-                >
-                  {payingPlan === 'champion' ? 'Opening Razorpay...' : 'Subscribe to Champion — ₹1,500'}
-                </OHButton>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
+      {/* Learner Pricing Section */}
+      <OHPricingSection defaultRole="learner" hideRoleSwitcher={true} />
 
       {/* Closing CTA */}
       <section className="oh-journey-close">

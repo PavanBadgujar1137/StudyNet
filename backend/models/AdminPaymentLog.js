@@ -11,7 +11,7 @@ const adminPaymentLogSchema = new mongoose.Schema(
     // Type of payment
     paymentType: {
       type: String,
-      enum: ["subscription", "offer_booking", "org_booking"],
+      enum: ["subscription", "offer_booking", "paid_course", "org_booking"],
       required: true,
     },
 
@@ -22,7 +22,7 @@ const adminPaymentLogSchema = new mongoose.Schema(
     },
     clientName: { type: String }, // denormalized for admin display speed
 
-    // For offer_booking — which practitioner the client booked
+    // For offer_booking or paid_course — which practitioner the client paid
     practitioner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "user",
@@ -30,10 +30,10 @@ const adminPaymentLogSchema = new mongoose.Schema(
     practitionerName: { type: String }, // denormalized
 
     // What was purchased
-    description: { type: String }, // e.g. "Growth Plan Subscription", "1:1 Anxiety Session with Dr. Meera"
-    planKey: { type: String }, // for subscriptions: starter/growth/practice/master
+    description: { type: String }, // e.g. "Growth Plan Subscription", "1:1 Anxiety Session", "Depression Recovery Paid Course"
+    planKey: { type: String }, // for subscriptions: starter/growth/practice/master/beginner/advance/champion
     offerTitle: { type: String }, // for offer bookings
-    offerType: { type: String }, // session / circle / program
+    offerType: { type: String }, // session / circle / program / course
 
     // Money
     amount: { type: Number, required: true },
@@ -55,6 +55,10 @@ const adminPaymentLogSchema = new mongoose.Schema(
     bookingId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Booking",
+    },
+    courseId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Course",
     },
     subscriptionId: {
       type: mongoose.Schema.Types.ObjectId,

@@ -527,6 +527,114 @@ exports.sendPaymentSuccessEmail = async (req, res) => {
   }
 }
 
+// ─── 9. BUY PAID COURSE (Learner purchases paid course created by practitioner) ─
+exports.createCourseOrder = async (req, res) => {
+  try {
+    const { courseId } = req.body
+    const userId = req.user.id
+
+    const Course = require("../models/Course")
+    const course = await Course.findById(courseId).populate("practitioner", "firstName lastName email")
+    if (!course) {
+      return res.status(404).json({ success: false, message: "Course not found" })
+    }
+    if (course.isFree || course.price <= 0) {
+      return res.status(400).json({ success: false, message: "This course is free. No payment required." })
+    }
+
+    const isAlreadyEnrolled = (course.enrolledClients || []).map(String).includes(String(userId))
+    if (isAlreadyEnrolled) {
+      return res.status(400).json({ success: false, message: "You have already purchased this course." })
+    }
+
+    const { key_id } = getRazorpayKeys()
+    const options = {
+      amount: Math.round(course.price * 100),
+      currency: "INR",
+      receipt: `crs_${courseId.toString().slice(-6)}_${Date.now()}`,
+      notes: {
+        courseId: courseId.toString(),
+        clientId: userId.toString(),
+        practitionerId: course.practitioner?._id?.toString() || "",
+      },
+    }
+
+    const order = await getRazorpayInstance().orders.create(options)
+
+    return res.status(200).json({
+      success: true,
+      order,
+      key: key_id,
+      amount: course.price,
+      courseTitle: course.title,
+      practitionerName: course.practitioner ? `${course.practitioner.firstName} ${course.practitioner.lastName}` : "Practitioner",
+    })
+  } catch (error) {
+    console.error("createCourseOrder error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+exports.verifyCourseOrder = async (req, res) => {
+  try {
+    const { courseId, razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body
+    const userId = req.user.id
+
+    const Course = require("../models/Course")
+    const course = await Course.findById(courseId).populate("practitioner", "firstName lastName email")
+    if (!course) {
+      return res.status(404).json({ success: false, message: "Course not found" })
+    }
+
+    const { key_secret } = getRazorpayKeys()
+    const body = razorpay_order_id + "|" + razorpay_payment_id
+    const expectedSig = crypto.createHmac("sha256", key_secret).update(body).digest("hex")
+
+    if (expectedSig !== razorpay_signature) {
+      return res.status(400).json({ success: false, message: "Razorpay signature verification failed" })
+    }
+
+    // Enroll user into course
+    if (!course.enrolledClients.map(String).includes(String(userId))) {
+      course.enrolledClients.push(userId)
+      await course.save()
+    }
+
+    const practitionerId = course.practitioner?._id || course.practitioner
+    const practitionerPortion = Math.round(course.price * 0.8) // 80% to practitioner
+
+    const clientUser = await User.findById(userId).select("firstName lastName email")
+
+    // Log in Admin Payment Ledger
+    await AdminPaymentLog.create({
+      paymentType: "paid_course",
+      client: userId,
+      clientName: clientUser ? `${clientUser.firstName} ${clientUser.lastName}` : "Learner",
+      practitioner: practitionerId,
+      practitionerName: course.practitioner ? `${course.practitioner.firstName} ${course.practitioner.lastName}` : "Practitioner",
+      description: `Paid Course Purchase: ${course.title}`,
+      offerTitle: course.title,
+      offerType: "course",
+      amount: course.price,
+      amountOwedToPractitioner: practitionerPortion,
+      paymentGateway: "razorpay",
+      razorpayOrderId: razorpay_order_id,
+      razorpayPaymentId: razorpay_payment_id,
+      courseId: course._id,
+      status: "received",
+    })
+
+    return res.status(200).json({
+      success: true,
+      message: `Successfully purchased ${course.title}! Course is now unlocked.`,
+      course,
+    })
+  } catch (error) {
+    console.error("verifyCourseOrder error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
 // ─── HELPER: Create Invoice + Admin Payment Log ───────────────────────────────
 async function _createInvoiceAndAdminLog({
   booking,

@@ -44,6 +44,17 @@ const courseSchema = new mongoose.Schema(
       enum: ["starter", "growth", "practice", "master", null],
       default: null,
     },
+
+    // Price set by practitioner (0 = Free course included in learner plans, >0 = Paid course)
+    price: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    isFree: {
+      type: Boolean,
+      default: true,
+    },
   },
   { timestamps: true }
 )

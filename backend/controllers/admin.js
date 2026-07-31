@@ -235,7 +235,7 @@ exports.getAllPractitioners = async (req, res) => {
 
     const enriched = await Promise.all(
       practitioners.map(async (pract) => {
-        const [profile, bookingsCount, totalOwed, coursesCount] = await Promise.all([
+        const [profile, bookingsCount, totalOwed, coursesCount, courseSalesAgg, sessionSalesAgg] = await Promise.all([
           PractitionerProfile.findOne({ user: pract._id }).lean(),
           Booking.countDocuments({ practitioner: pract._id, status: { $in: ["confirmed", "completed"] } }),
           AdminPaymentLog.aggregate([
@@ -243,7 +243,20 @@ exports.getAllPractitioners = async (req, res) => {
             { $group: { _id: null, total: { $sum: "$amountOwedToPractitioner" } } },
           ]),
           Course.countDocuments({ practitioner: pract._id }),
+          AdminPaymentLog.aggregate([
+            { $match: { practitioner: pract._id, paymentType: "paid_course", status: "received" } },
+            { $group: { _id: null, total: { $sum: "$amount" } } },
+          ]),
+          AdminPaymentLog.aggregate([
+            { $match: { practitioner: pract._id, paymentType: "offer_booking", status: "received" } },
+            { $group: { _id: null, total: { $sum: "$amount" } } },
+          ]),
         ])
+
+        const courseSales = courseSalesAgg[0]?.total || 0
+        const sessionSales = sessionSalesAgg[0]?.total || 0
+        const grossGenerated = courseSales + sessionSales
+
         return {
           ...pract,
           profile: profile ? {
@@ -261,6 +274,9 @@ exports.getAllPractitioners = async (req, res) => {
           sessionsDelivered: bookingsCount,
           salaryOwed: totalOwed[0]?.total || 0,
           coursesCount,
+          totalCourseSales: courseSales,
+          totalSessionSales: sessionSales,
+          grossGenerated,
         }
       })
     )

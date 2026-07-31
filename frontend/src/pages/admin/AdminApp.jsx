@@ -551,9 +551,11 @@ function PractitionersTab() {
               </div>
             )},
             { key: 'specialization', label: 'Specialization', render: r => <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: '#EFF6FF', color: '#1D4ED8' }}>{r.profile?.specialties?.[0] || 'Integrative Health'}</span> },
-            { key: 'verification', label: 'Verification', render: r => <StatusBadge status={r.profile?.verificationStatus || 'pending'} /> },
             { key: 'sessions', label: 'Sessions', render: r => r.sessionsDelivered || 0 },
             { key: 'courses', label: 'Courses', render: r => r.coursesCount || 0 },
+            { key: 'totalCourseSales', label: 'Course Sales', render: r => <span style={{ color: '#0F172A', fontWeight: 600 }}>{fmt(r.totalCourseSales || 0)}</span> },
+            { key: 'totalSessionSales', label: 'Session Sales', render: r => <span style={{ color: '#0F172A', fontWeight: 600 }}>{fmt(r.totalSessionSales || 0)}</span> },
+            { key: 'grossGenerated', label: 'Gross Generated', render: r => <span style={{ color: '#10B981', fontWeight: 700 }}>{fmt(r.grossGenerated || 0)}</span> },
             { key: 'salaryOwed', label: 'Salary Owed', render: r => <span style={{ color: r.salaryOwed > 0 ? '#D97706' : '#64748B', fontWeight: 700 }}>{fmt(r.salaryOwed)}</span> },
             { key: 'action', label: 'Action', render: r => (
               <button onClick={() => { setPayoutModal(r); setPayoutAmount(String(r.salaryOwed || '')) }}
@@ -601,7 +603,8 @@ function PaymentsTab() {
           style={{ background: '#FFFFFF', border: '1.5px solid #E2E8F0', borderRadius: 12, padding: '10px 14px', color: '#0F172A', fontSize: 14, cursor: 'pointer' }}>
           <option value="">All Types</option>
           <option value="subscription">Subscription</option>
-          <option value="offer_booking">Offer Booking</option>
+          <option value="offer_booking">Offer Booking (Session/Circle)</option>
+          <option value="paid_course">Paid Course Purchase</option>
           <option value="org_booking">Org Booking</option>
         </select>
         <button onClick={load} style={{ background: '#FFFFFF', border: '1.5px solid #E2E8F0', borderRadius: 12, padding: '10px 16px', color: '#64748B', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600, fontSize: 13 }}>

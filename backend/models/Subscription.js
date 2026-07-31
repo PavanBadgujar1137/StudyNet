@@ -12,7 +12,7 @@ const subscriptionSchema = new mongoose.Schema(
     // Plan they subscribed to (matches Pricing page)
     planKey: {
       type: String,
-      enum: ["starter", "growth", "practice", "master"],
+      enum: ["beginner", "advance", "champion", "starter", "growth", "practice", "master"],
       required: true,
     },
 

@@ -21,6 +21,7 @@ import LiveClassRoom from "./pages/LiveClassRoom"
 // OpenHand Marketing Pages (Verbatim Specs)
 import HomeMarketing from "./pages/marketing/Home"
 import PractitionerJourney from "./pages/marketing/PractitionerJourney"
+import PricingPage from "./pages/marketing/PricingPage"
 import ForOrganizations from "./pages/marketing/ForOrganizations"
 import FindAPractitioner from "./pages/marketing/FindAPractitioner"
 import CoPilot from "./pages/marketing/CoPilot"
@@ -92,7 +93,7 @@ function App() {
         {/* OpenHand Marketing Sitemap (A1-A8) */}
         <Route path="/" element={<HomeMarketing />} />
         <Route path="/practitioner-journey" element={<PractitionerJourney />} />
-        <Route path="/pricing" element={<PractitionerJourney />} />
+        <Route path="/pricing" element={<PricingPage />} />
         <Route path="/for-organizations" element={<ForOrganizations />} />
         <Route path="/find-a-practitioner" element={<FindAPractitioner />} />
         <Route path="/co-pilot" element={<CoPilot />} />
