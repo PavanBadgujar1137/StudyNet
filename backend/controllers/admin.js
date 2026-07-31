@@ -20,7 +20,7 @@ exports.getAdminDashboardStats = async (req, res) => {
       newOrgConversations,
       recentPayments,
     ] = await Promise.all([
-      User.countDocuments({ accountType: { $in: ["Client", "Student"] } }),
+      User.countDocuments({ accountType: { $in: ["Client", "Student", "Learner"] } }),
       User.countDocuments({ accountType: { $in: ["Practitioner", "Instructor"] } }),
       AdminPaymentLog.aggregate([
         { $match: { status: "received" } },
@@ -64,8 +64,8 @@ exports.getAdminDashboardStats = async (req, res) => {
         { $match: { status: "received", createdAt: { $gte: startOfLastMonth, $lt: startOfCurrentMonth } } },
         { $group: { _id: null, total: { $sum: "$amount" } } },
       ]),
-      User.countDocuments({ accountType: { $in: ["Client", "Student"] }, createdAt: { $gte: startOfCurrentMonth } }),
-      User.countDocuments({ accountType: { $in: ["Client", "Student"] }, createdAt: { $gte: startOfLastMonth, $lt: startOfCurrentMonth } }),
+      User.countDocuments({ accountType: { $in: ["Client", "Student", "Learner"] }, createdAt: { $gte: startOfCurrentMonth } }),
+      User.countDocuments({ accountType: { $in: ["Client", "Student", "Learner"] }, createdAt: { $gte: startOfLastMonth, $lt: startOfCurrentMonth } }),
     ])
 
     const curRev = currentRevAgg[0]?.total || 0
@@ -129,7 +129,7 @@ exports.getAllClients = async (req, res) => {
     const skip = (Number(page) - 1) * Number(limit)
 
     const query = {
-      accountType: { $in: ["Client", "Student"] },
+      accountType: { $in: ["Client", "Student", "Learner"] },
     }
     if (search) {
       query.$or = [
@@ -169,19 +169,21 @@ exports.getAllClients = async (req, res) => {
         ])
 
         const hasActiveSub = !!subscription && new Date(subscription.endDate) > now
-        const trialStartedAt = client.trialStartedAt || client.createdAt || now
-        const trialExpiresAt = client.trialExpiresAt || new Date(new Date(trialStartedAt).getTime() + 7 * 24 * 60 * 60 * 1000)
+        const trialStartedAt = client.createdAt || client.trialStartedAt || now
+        // Trial expires strictly 7 days after registration date (createdAt)
+        const trialExpiresAt = new Date(new Date(trialStartedAt).getTime() + 7 * 24 * 60 * 60 * 1000)
 
-        const isTrialActive = !hasActiveSub && now < new Date(trialExpiresAt)
+        const msRemaining = trialExpiresAt.getTime() - now.getTime()
+        const isTrialActive = !hasActiveSub && msRemaining > 0
         const trialDaysRemaining = isTrialActive
-          ? Math.max(0, Math.ceil((new Date(trialExpiresAt) - now) / (1000 * 60 * 60 * 24)))
+          ? Math.min(7, Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24))))
           : 0
 
         let planDisplayStatus = "Trial Expired"
         if (hasActiveSub) {
           planDisplayStatus = `Subscribed (${subscription.planName || subscription.planKey})`
         } else if (isTrialActive) {
-          planDisplayStatus = `7-Day Trial (${trialDaysRemaining} days left)`
+          planDisplayStatus = `7-Day Trial (${trialDaysRemaining}d left)`
         }
 
         return {

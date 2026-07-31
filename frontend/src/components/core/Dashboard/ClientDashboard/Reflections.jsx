@@ -3,13 +3,22 @@ import { useSelector } from 'react-redux'
 import { apiConnector } from '../../../../services/apiConnector'
 import toast from 'react-hot-toast'
 
-export function Reflections({ practitionerName = 'your instructor', dashboardData, onReflectionUpdate }) {
+export function Reflections({ practitionerName, dashboardData, onReflectionUpdate }) {
   const { token } = useSelector((state) => state.auth)
   const [prompts, setPrompts] = useState([])
   const [answers, setAnswers] = useState({})
   const [loading, setLoading] = useState(false)
 
-  const instructorTitle = practitionerName ? (practitionerName.includes('Instructor') ? practitionerName : `Dr. ${practitionerName}`) : 'your instructor'
+  const activePractitioner = dashboardData?.activePractitioner || dashboardData?.practitioner
+  const displayName = activePractitioner
+    ? `${activePractitioner.firstName || ''} ${activePractitioner.lastName || ''}`.trim()
+    : (practitionerName && practitionerName !== 'your instructor' ? practitionerName : null)
+
+  const practitionerTitle = displayName
+    ? (displayName.startsWith('Dr.') ? displayName : `Dr. ${displayName}`)
+    : 'Practitioner Guide'
+
+  const avatarInitials = displayName ? displayName.slice(0, 2).toUpperCase() : 'PG'
 
   const fetchPrompts = useCallback(async () => {
     if (!token) return
@@ -61,7 +70,7 @@ export function Reflections({ practitionerName = 'your instructor', dashboardDat
       <div className="hd">
         <div className="k">Reflections</div>
         <h1>{pendingCount > 0 ? `${pendingCount} prompt(s) waiting for you` : 'Your Reflection Journal'}</h1>
-        <p>Written by {instructorTitle} from your sessions. There's no deadline — skip any that don't land.</p>
+        <p>Written by {practitionerTitle} to guide your personal journey. There's no deadline — skip any that don't land.</p>
       </div>
 
       {loading ? (
@@ -72,8 +81,8 @@ export function Reflections({ practitionerName = 'your instructor', dashboardDat
         prompts.map((p) => (
           <div key={p._id} className={`pr ${p.status === 'pending' ? 'unread' : ''}`}>
             <div className="meta">
-              <div className="a">{instructorTitle.slice(0, 2).toUpperCase()}</div>
-              <b>{instructorTitle}</b>
+              <div className="a">{avatarInitials}</div>
+              <b>{practitionerTitle}</b>
               <span className="t">{new Date(p.createdAt).toLocaleDateString()}</span>
             </div>
             <div className="q">"{p.promptText}"</div>
@@ -101,7 +110,7 @@ export function Reflections({ practitionerName = 'your instructor', dashboardDat
                     style={{ padding: '9px 20px', fontSize: '13.5px' }}
                     onClick={() => handleAction(p._id, 'answer', false)}
                   >
-                    Send to Instructor
+                    Send to Practitioner
                   </button>
                   <button className="mini" onClick={() => handleAction(p._id, 'answer', true)}>Keep private</button>
                   <button className="mini" onClick={() => handleAction(p._id, 'skip')}>Skip this one</button>
@@ -109,15 +118,15 @@ export function Reflections({ practitionerName = 'your instructor', dashboardDat
               )}
               <span className="priv">
                 {p.status === 'answered'
-                  ? p.isPrivate ? 'Saved privately' : `Shared with ${instructorTitle}`
-                  : p.status === 'skipped' ? 'Skipped' : `Only ${instructorTitle} sees this`}
+                  ? p.isPrivate ? 'Saved privately' : `Shared with ${practitionerTitle}`
+                  : p.status === 'skipped' ? 'Skipped' : `Only ${practitionerTitle} sees this`}
               </span>
             </div>
           </div>
         ))
       )}
 
-      <p className="note">Skipping prompts doesn't affect anything. Your instructor can see which ones you answered, never which ones you skipped and why.</p>
+      <p className="note">Skipping prompts doesn't affect anything. Your practitioner can see which ones you answered, never which ones you skipped and why.</p>
     </div>
   )
 }

@@ -86,7 +86,7 @@ export function TermsOfService() {
           <div id="plain-lang" className="p-8 sm:p-10 rounded-3xl bg-white border border-slate-200 border-l-4 border-l-blue-600 space-y-3 shadow-sm font-medium">
             <h2 className="text-lg sm:text-xl font-bold text-[#0F172A]">The plain-language version</h2>
             <p className="text-[#334155] leading-[1.65]">
-              By using Open Hand, you're agreeing to a few things: use the platform for legitimate practice work; be honest about your qualifications; treat your clients with the care and confidentiality they deserve; and pay your bills. In return, we'll do our best to keep the platform running, keep your data safe, and be straight with you when we can't. Here are the details.
+              By using Open Hand, you're agreeing to a few things: use the platform for legitimate practice work; be honest about your qualifications; treat your learners with the care and confidentiality they deserve; and pay your bills. In return, we'll do our best to keep the platform running, keep your data safe, and be straight with you when we can't. Here are the details.
             </p>
           </div>
 
@@ -100,7 +100,7 @@ export function TermsOfService() {
             </div>
             
             <p>
-              Open Hand is a platform for qualified practitioners — coaches, therapists, healers, counselors, consultants, and adjacent professions — to deliver services to clients.
+              Open Hand is a platform for qualified practitioners — coaches, therapists, healers, counselors, consultants, and adjacent professions — to deliver services to learners.
             </p>
 
             <h3 className="text-base sm:text-lg font-bold text-[#0F172A]">By creating a practitioner account, you confirm that:</h3>
@@ -124,11 +124,11 @@ export function TermsOfService() {
           <div id="sec-2" className="p-8 sm:p-10 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4 font-medium">
             <h2 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] tracking-tight">2. What Open Hand is (and isn't)</h2>
             <p>
-              Open Hand is a software platform. We provide tools for practitioners to run their practice. We are not a party to the practitioner-client relationship. We do not:
+              Open Hand is a software platform. We provide tools for practitioners to run their practice. We are not a party to the practitioner-learner relationship. We do not:
             </p>
             <ul className="list-disc list-inside space-y-1.5">
               <li>Provide therapy, coaching, or health advice directly</li>
-              <li>Match clients to practitioners or vouch for individual clinical outcomes</li>
+              <li>Match learners to practitioners or vouch for individual clinical outcomes</li>
               <li>Take responsibility for the clinical judgment of practitioners</li>
             </ul>
           </div>
@@ -150,7 +150,7 @@ export function TermsOfService() {
             <p>You agree not to use Open Hand to:</p>
             <ul className="list-disc list-inside space-y-1.5">
               <li>Break any local or international law</li>
-              <li>Harm, harass, or exploit clients or other users</li>
+              <li>Harm, harass, or exploit learners or other users</li>
               <li>Impersonate credentials or professional qualifications</li>
               <li>Upload malicious code, or attempt to breach platform security</li>
               <li>Scrape, reverse-engineer, or resell platform components</li>
@@ -161,7 +161,7 @@ export function TermsOfService() {
           <div id="sec-5" className="p-8 sm:p-10 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4 font-medium">
             <h2 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] tracking-tight">5. Content</h2>
             <p>
-              <strong className="text-[#0F172A]">Your content stays yours.</strong> You retain ownership of everything you upload to Open Hand — your courses, notes, and client records.
+              <strong className="text-[#0F172A]">Your content stays yours.</strong> You retain ownership of everything you upload to Open Hand — your courses, notes, and learner records.
             </p>
             <p>
               You grant us a limited license to store, process, display, and transmit your content solely to operate the platform service for you.
@@ -179,7 +179,7 @@ export function TermsOfService() {
 
             <ul className="list-disc list-inside space-y-1.5">
               <li><strong className="text-[#0F172A]">Subscription fees</strong> are billed monthly in advance</li>
-              <li><strong className="text-[#0F172A]">Transaction fees</strong> on client payments are deducted at payout</li>
+              <li><strong className="text-[#0F172A]">Transaction fees</strong> on learner payments are deducted at payout</li>
               <li><strong className="text-[#0F172A]">Refunds</strong> — subscription fees are refundable within 5 days of initial purchase</li>
             </ul>
           </div>

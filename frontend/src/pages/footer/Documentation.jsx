@@ -31,26 +31,26 @@ export function Documentation() {
       id: 'getting-started',
       title: 'Getting Started',
       icon: FiUserCheck,
-      desc: 'Initial setup guides for your profile, booking, payments, and client onboarding.',
+      desc: 'Initial setup guides for your profile, booking, payments, and learner onboarding.',
       items: [
         { title: 'Setting up your practitioner profile', snippet: 'Configure your bio, avatar, modalities, and public directory visibility settings.', details: 'Your practitioner profile is the front door to your practice on Open Hand. Head to Settings > Profile to upload a high-resolution headshot, write your bio in plain human language, select up to 5 core modalities (e.g. somatic coaching, CBT, spiritual direction), and set your public directory listing visibility.' },
         { title: 'Configuring your booking calendar', snippet: 'Sync Google/Outlook calendars, define available slots, buffer times, and session durations.', details: 'Connect your personal or work calendar via OAuth under Settings > Calendar Sync. Open Hand automatically prevents double booking, applies custom buffer times between back-to-back sessions, and lets you configure custom session lengths (30m, 50m, 90m).' },
-        { title: 'Connecting your payment account', snippet: 'Integrate Stripe or Razorpay to process client payments, subscriptions, and auto-payouts.', details: 'We support Stripe Connect for global accounts and Razorpay for Indian Rupees & regional cards. Funds are deposited directly to your bank account on a rolling 2-day payout schedule with 0% platform fee on your first ₹25,000 processed.' },
-        { title: 'Inviting your first client', snippet: 'Send secure email invitations, customized welcome notes, and portal access setup.', details: 'In your Practitioner Dashboard, click "+ Invite Client". Input their email and select whether to assign a pre-session intake reflection or send a direct 1:1 booking link.' },
+        { title: 'Connecting your payment account', snippet: 'Integrate Stripe or Razorpay to process learner payments, subscriptions, and auto-payouts.', details: 'We support Stripe Connect for global accounts and Razorpay for Indian Rupees & regional cards. Funds are deposited directly to your bank account on a rolling 2-day payout schedule with 0% platform fee on your first ₹25,000 processed.' },
+        { title: 'Inviting your first learner', snippet: 'Send secure email invitations, customized welcome notes, and portal access setup.', details: 'In your Practitioner Dashboard, click "+ Invite Learner". Input their email and select whether to assign a pre-session intake reflection or send a direct 1:1 booking link.' },
         { title: 'Setting up your first course or program', snippet: 'Create self-paced or cohort-based programs with video modules, reflections, and resources.', details: 'Build structured 6-week containers or self-paced courses. Combine video lessons with reflection check-ins and downloadable workbooks.' }
       ]
     },
     {
-      id: 'working-with-clients',
-      title: 'Working with Clients',
+      id: 'working-with-learners',
+      title: 'Working with Learners',
       icon: FiUsers,
-      desc: 'Client management tools, progress tracking, private notes, and boundary controls.',
+      desc: 'Learner management tools, progress tracking, private notes, and boundary controls.',
       items: [
-        { title: 'Client profiles and history', snippet: 'Centralized record of past sessions, notes, active packages, and communication log.', details: 'View complete longitudinal history for each client including session attendance, private SOAP notes, assigned worksheets, and billing status.' },
-        { title: 'Progress notes (private and shared)', snippet: 'Write HIPAA/GDPR compliant SOAP notes with private clinician mode or client-shared view.', details: 'All notes are encrypted at rest with AES-256. Switch between Private Clinician Notes (never visible to clients) and Shared Action Summaries.' },
+        { title: 'Learner profiles and history', snippet: 'Centralized record of past sessions, notes, active packages, and communication log.', details: 'View complete longitudinal history for each learner including session attendance, private SOAP notes, assigned worksheets, and billing status.' },
+        { title: 'Progress notes (private and shared)', snippet: 'Write HIPAA/GDPR compliant SOAP notes with private clinician mode or learner-shared view.', details: 'All notes are encrypted at rest with AES-256. Switch between Private Clinician Notes (never visible to learners) and Shared Action Summaries.' },
         { title: 'Session preparation and follow-up', snippet: 'Send pre-session prompts, agendas, and automated post-session action item checklists.', details: 'Automate gentle check-in notifications 15 minutes before calls and deliver key action points immediately after calls.' },
-        { title: 'Sharing resources and worksheets', snippet: 'Attach PDFs, audio guides, interactive forms, and reflections directly to client portals.', details: 'Upload workbooks, meditation audio files, and reflection prompts to client portals with view & download tracking.' },
-        { title: 'Client permissions and boundaries', snippet: 'Define messaging hours, portal access limits, and emergency contact visibility.', details: 'Set quiet hours for client messaging and display clear emergency resources on client portals.' }
+        { title: 'Sharing resources and worksheets', snippet: 'Attach PDFs, audio guides, interactive forms, and reflections directly to learner portals.', details: 'Upload workbooks, meditation audio files, and reflection prompts to learner portals with view & download tracking.' },
+        { title: 'Learner permissions and boundaries', snippet: 'Define messaging hours, portal access limits, and emergency contact visibility.', details: 'Set quiet hours for learner messaging and display clear emergency resources on learner portals.' }
       ]
     },
     {
@@ -61,8 +61,8 @@ export function Documentation() {
       items: [
         { title: '1-on-1 live sessions', snippet: 'HD WebRTC video rooms with built-in whiteboard, shared notes, and screen sharing.', details: 'Launch low-latency zero-download WebRTC video calls directly inside the Open Hand browser dashboard.' },
         { title: 'Group sessions and cohorts', snippet: 'Host interactive group cohorts with breakout rooms, group chat, and shared screen.', details: 'Host up to 50 participants per video cohort with interactive screen sharing, chat moderation, and recording options.' },
-        { title: 'Async video and audio messages', snippet: 'Exchange voice notes and quick video updates with clients between scheduled live sessions.', details: 'Send 2-minute voice or video check-ins between weekly calls to keep client momentum active.' },
-        { title: 'Recording sessions (and when not to)', snippet: 'Configure all-party consent prompts, cloud recording storage, and encryption rules.', details: 'Requires explicit on-screen client consent before recording starts. Cloud recordings are encrypted per-tenant.' },
+        { title: 'Async video and audio messages', snippet: 'Exchange voice notes and quick video updates with learners between scheduled live sessions.', details: 'Send 2-minute voice or video check-ins between weekly calls to keep learner momentum active.' },
+        { title: 'Recording sessions (and when not to)', snippet: 'Configure all-party consent prompts, cloud recording storage, and encryption rules.', details: 'Requires explicit on-screen learner consent before recording starts. Cloud recordings are encrypted per-tenant.' },
         { title: 'Session summaries and transcripts', snippet: 'Generate AI-assisted key takeaways, action items, and searchable audio transcripts.', details: 'Optionally process session audio through AURA for instant key takeaways and action points without manual scribbling.' }
       ]
     },
@@ -73,9 +73,9 @@ export function Documentation() {
       desc: 'Build self-paced or live cohort curricula with structured modules and reflections.',
       items: [
         { title: 'Building a self-paced program', snippet: 'Structure video lessons, downloadable workbooks, and automated module drip schedules.', details: 'Create evergreen learning content with drip-release modules based on sign-up date or custom calendar dates.' },
-        { title: 'Structuring modules, lessons, and check-ins', snippet: 'Combine video, text, quizzes, and reflection prompts into cohesive learning paths.', details: 'Organize course units with reflection prompts that require client responses before unlocking next modules.' },
-        { title: 'Assigning worksheets and reflections', snippet: 'Automate weekly journal assignments and review client submissions in dashboard.', details: 'Track completion rates and comment on client journal submissions directly in your practitioner hub.' },
-        { title: 'Certificates and completion tracking', snippet: 'Issue verified completion badges and track individual client progress across modules.', details: 'Automatically issue downloadable PDF completion certificates when clients finish 100% of course requirements.' }
+        { title: 'Structuring modules, lessons, and check-ins', snippet: 'Combine video, text, quizzes, and reflection prompts into cohesive learning paths.', details: 'Organize course units with reflection prompts that require learner responses before unlocking next modules.' },
+        { title: 'Assigning worksheets and reflections', snippet: 'Automate weekly journal assignments and review learner submissions in dashboard.', details: 'Track completion rates and comment on learner journal submissions directly in your practitioner hub.' },
+        { title: 'Certificates and completion tracking', snippet: 'Issue verified completion badges and track individual learner progress across modules.', details: 'Automatically issue downloadable PDF completion certificates when learners finish 100% of course requirements.' }
       ]
     },
     {
@@ -84,10 +84,10 @@ export function Documentation() {
       icon: FiDollarSign,
       desc: 'Rates, packages, sliding scale spots, refunds, payout schedules, and tax reports.',
       items: [
-        { title: 'Setting your rates', snippet: 'Configure hourly rates, package discounts, and currency selection for client checkout.', details: 'Set custom currency options (INR ₹, USD $, EUR €) and offer single session or multi-session bundle pricing.' },
+        { title: 'Setting your rates', snippet: 'Configure hourly rates, package discounts, and currency selection for learner checkout.', details: 'Set custom currency options (INR ₹, USD $, EUR €) and offer single session or multi-session bundle pricing.' },
         { title: 'Sliding scale and pro-bono spots', snippet: 'Reserve dedicated sliding-scale slots with automated application forms.', details: 'Allocate sliding-scale slots with custom discount codes or income-verified checkout links.' },
-        { title: 'Packages and subscriptions', snippet: 'Set up recurring monthly client retainers or multi-session package bundles.', details: 'Charge clients monthly subscriptions with automated invoice generation and failed payment retries.' },
-        { title: 'Refunds and disputes', snippet: 'Process instant client refunds directly from payment ledger and resolve chargebacks.', details: 'Issue full or partial refunds directly to original payment methods from your payment transactions log.' },
+        { title: 'Packages and subscriptions', snippet: 'Set up recurring monthly learner retainers or multi-session package bundles.', details: 'Charge learners monthly subscriptions with automated invoice generation and failed payment retries.' },
+        { title: 'Refunds and disputes', snippet: 'Process instant learner refunds directly from payment ledger and resolve chargebacks.', details: 'Issue full or partial refunds directly to original payment methods from your payment transactions log.' },
         { title: 'Payout schedules and tax documents', snippet: 'View rolling payout cycles, download 1099/GST tax summaries and invoice histories.', details: 'Export annual transaction logs, GST/VAT breakdowns, and 1099 summaries for accounting.' }
       ]
     },
@@ -97,9 +97,9 @@ export function Documentation() {
       icon: FiShare2,
       desc: 'Grow your practice through peer networking, supervision, and public directory listing.',
       items: [
-        { title: 'Getting listed in the practitioner directory', snippet: 'Optimize your public profile, specialty tags, and client review verification.', details: 'Get discovered by prospective clients browsing the Open Hand directory by modality and specialty.' },
+        { title: 'Getting listed in the practitioner directory', snippet: 'Optimize your public profile, specialty tags, and learner review verification.', details: 'Get discovered by prospective learners browsing the Open Hand directory by modality and specialty.' },
         { title: 'Peer supervision groups', snippet: 'Join small, closed cohorts of 4-6 practitioners for monthly confidential case consultation.', details: 'Connect with experienced peers for monthly clinical case reviews in confidential closed pods.' },
-        { title: 'Referral network', snippet: 'Connect with complementary practitioners to send and receive qualified client referrals.', details: 'Refer clients whose needs fall outside your scope to vetted Open Hand colleagues.' }
+        { title: 'Referral network', snippet: 'Connect with complementary practitioners to send and receive qualified learner referrals.', details: 'Refer learners whose needs fall outside your scope to vetted Open Hand colleagues.' }
       ]
     },
     {
@@ -109,9 +109,9 @@ export function Documentation() {
       desc: 'Connect Open Hand with your external calendar, video, payment, and automation tools.',
       items: [
         { title: 'Google Calendar, Outlook, iCal', snippet: 'Two-way calendar synchronization to automatically block off booked Open Hand sessions.', details: 'Two-way sync prevents scheduling conflicts across all your personal and professional calendars.' },
-        { title: 'Zoom, Google Meet (fallback options)', snippet: 'Configure custom external video fallback links for low-bandwidth connections.', details: 'Set backup external video meeting links if a client experiences local bandwidth bottlenecks.' },
+        { title: 'Zoom, Google Meet (fallback options)', snippet: 'Configure custom external video fallback links for low-bandwidth connections.', details: 'Set backup external video meeting links if a learner experiences local bandwidth bottlenecks.' },
         { title: 'Stripe, Razorpay', snippet: 'Direct gateway connection for localized regional currencies and instant payouts.', details: 'Process credit cards, debit cards, UPI, netbanking, and Apple Pay/Google Pay.' },
-        { title: 'Zapier / API', snippet: 'Connect Open Hand webhooks to 5,000+ apps for custom automated workflows.', details: 'Trigger webhooks on new bookings, session completions, or client payments to update CRM tools.' }
+        { title: 'Zapier / API', snippet: 'Connect Open Hand webhooks to 5,000+ apps for custom automated workflows.', details: 'Trigger webhooks on new bookings, session completions, or learner payments to update CRM tools.' }
       ]
     },
     {
@@ -122,8 +122,8 @@ export function Documentation() {
       items: [
         { title: 'Video/audio issues in sessions', snippet: 'Browser permission checks, camera/microphone diagnostics, and network troubleshooting.', details: 'Ensure browser permissions allow camera/microphone access (chrome://settings/content/camera).' },
         { title: 'Payment failures', snippet: 'Diagnosing declined cards, authentication errors, and retrying failed transactions.', details: 'Check card 3D Secure authentication status or retry via secondary payment gateway.' },
-        { title: 'Client can\'t log in', snippet: 'Password reset walkthroughs, magic link dispatching, and email verification checks.', details: 'Resend password reset emails or dispatch magic link directly from client profile.' },
-        { title: 'Email not sending', snippet: 'Checking spam filters, updating whitelist settings, and verifying domain delivery status.', details: 'Ensure support@openhand.com is added to client email contact list or check spam folder.' }
+        { title: 'Learner can\'t log in', snippet: 'Password reset walkthroughs, magic link dispatching, and email verification checks.', details: 'Resend password reset emails or dispatch magic link directly from learner profile.' },
+        { title: 'Email not sending', snippet: 'Checking spam filters, updating whitelist settings, and verifying domain delivery status.', details: 'Ensure support@openhand.com is added to learner email contact list or check spam folder.' }
       ]
     }
   ]
@@ -213,7 +213,7 @@ export function Documentation() {
           <div className="p-12 text-center rounded-3xl bg-white border border-slate-200 shadow-sm max-w-xl mx-auto">
             <FiHelpCircle className="text-5xl text-[#2563EB] mx-auto mb-4" />
             <h3 className="text-xl font-bold text-[#0F172A]">No documentation guides found</h3>
-            <p className="text-sm text-[#475569] mt-2 font-medium">Try searching for different terms like "calendar", "billing", or "client invitation".</p>
+            <p className="text-sm text-[#475569] mt-2 font-medium">Try searching for different terms like "calendar", "billing", or "learner invitation".</p>
             <button 
               onClick={() => { setSearchTerm(''); setActiveCategory('all'); }} 
               className="mt-6 px-6 py-2.5 rounded-xl bg-[#2563EB] text-white font-bold text-sm shadow"

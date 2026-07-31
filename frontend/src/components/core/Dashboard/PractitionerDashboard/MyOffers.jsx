@@ -286,7 +286,7 @@ export function MyOffers({ telemetryData, onUpdate }) {
             Offers &amp; Practice Settings
           </h1>
           <p style={{ color: '#64748B', fontSize: '14px', margin: '4px 0 0 0' }}>
-            Set custom prices for your 1:1 sessions, group circles, and programs. Client payments are processed centrally by Admin and settled via your monthly practitioner salary.
+            Set custom prices for your 1:1 sessions, group circles, and programs. Learner payments are processed centrally by Admin and settled via your monthly practitioner salary.
           </p>
         </div>
 
@@ -324,7 +324,7 @@ export function MyOffers({ telemetryData, onUpdate }) {
               Published Offers &amp; Programs ({offersList.length})
             </h3>
             <p style={{ color: '#64748B', fontSize: '13.5px', margin: '2px 0 0 0' }}>
-              Clients can view, select, and pay for these offers directly on your directory profile.
+              Learners can view, select, and pay for these offers directly on your directory profile.
             </p>
           </div>
 
@@ -860,11 +860,11 @@ export function MyOffers({ telemetryData, onUpdate }) {
               {/* Description */}
               <div>
                 <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
-                  Detailed Description &amp; What Client Receives
+                  Detailed Description &amp; What Learner Receives
                 </label>
                 <textarea
                   rows={3}
-                  placeholder="Describe what client receives in this session or program..."
+                  placeholder="Describe what learner receives in this session or program..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #CBD5E1', fontSize: '13.5px', outline: 'none', lineHeight: 1.45 }}

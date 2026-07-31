@@ -13,7 +13,7 @@ const FAQ_ITEMS = [
     badge: 'Clinical Boundaries',
   },
   {
-    q: 'What if it suggests something wrong for my client?',
+    q: 'What if it suggests something wrong for my learner?',
     a: 'You ignore it. Every suggestion has a "not now," nothing acts on its own, and dismissed suggestions teach it your boundaries. You remain the practitioner throughout.',
     badge: 'Control & Autonomy',
   },
@@ -24,7 +24,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'Who can see my session data?',
-    a: 'You. Not other practitioners, not your clients\' employers, not us for any purpose beyond running the service. Encrypted in transit and at rest, with retention you control.',
+    a: 'You. Not other practitioners, not your learners\' employers, not us for any purpose beyond running the service. Encrypted in transit and at rest, with retention you control.',
     badge: 'Data Privacy',
   },
   {
@@ -54,7 +54,7 @@ export function CoPilot() {
                 You can't listen properly <span className="copilot-grad-text">and take notes.</span>
               </h1>
               <p>
-                So don't. AURA listens alongside you — with your client's explicit consent — and hands you the next question, the technique that fits, and the thread you'd otherwise have missed. Your client never sees a word of it.
+                So don't. AURA listens alongside you — with your learner's explicit consent — and hands you the next question, the technique that fits, and the thread you'd otherwise have missed. Your learner never sees a word of it.
               </p>
               <div className="copilot-cta-row">
                 <Link to="/start-free" className="copilot-btn">Try it in a session</Link>
@@ -94,7 +94,7 @@ export function CoPilot() {
                   </div>
                 </div>
               </div>
-              <div className="copilot-pfoot">Visible only to you · Client consented at 00:00</div>
+              <div className="copilot-pfoot">Visible only to you · Learner consented at 00:00</div>
             </div>
           </div>
         </div>
@@ -162,14 +162,14 @@ export function CoPilot() {
               {/* 1. Live Session */}
               <rect x="20" y="40" width="160" height="66" rx="14" fill="#FFFFFF" stroke="#2563EB" strokeWidth="2" />
               <text x="100" y="66" textAnchor="middle" className="lbl">Live session</text>
-              <text x="100" y="86" textAnchor="middle" className="sm">You and your client</text>
+              <text x="100" y="86" textAnchor="middle" className="sm">You and your learner</text>
 
               <path d="M 180 73 H 238" stroke="#2563EB" strokeWidth="2" markerEnd="url(#a1)" fill="none" />
 
               {/* 2. Consent Gate */}
               <rect x="244" y="30" width="160" height="86" rx="14" fill="#FFF1F2" stroke="#E11D48" strokeWidth="2" strokeDasharray="6 4" />
               <text x="324" y="52" textAnchor="middle" className="gate">CONSENT GATE</text>
-              <text x="324" y="73" textAnchor="middle" className="lbl" fontSize="12" fill="#9F1239">Client must accept</text>
+              <text x="324" y="73" textAnchor="middle" className="lbl" fontSize="12" fill="#9F1239">Learner must accept</text>
               <text x="324" y="91" textAnchor="middle" className="sm" fill="#BE123C">Revocable mid-session</text>
               <text x="324" y="105" textAnchor="middle" className="sm" fill="#BE123C">No consent → stops here</text>
 
@@ -204,7 +204,7 @@ export function CoPilot() {
               {/* 6. Practitioner-only panel */}
               <rect x="425" y="240" width="210" height="70" rx="14" fill="#FFFFFF" stroke="#2563EB" strokeWidth="2" />
               <text x="530" y="266" textAnchor="middle" className="lbl">Practitioner-only panel</text>
-              <text x="530" y="286" textAnchor="middle" className="sm">Client's screen never shows this</text>
+              <text x="530" y="286" textAnchor="middle" className="sm">Learner's screen never shows this</text>
 
               <path d="M 425 275 H 360" stroke="#2563EB" strokeWidth="2" markerEnd="url(#a1)" fill="none" />
 
@@ -249,7 +249,7 @@ export function CoPilot() {
             <div className="copilot-card">
               <div className="n">02</div>
               <h3>Remembers across sessions</h3>
-              <p>The connective memory that makes a client feel genuinely held — without you rereading six sets of notes before every call.</p>
+              <p>The connective memory that makes a learner feel genuinely held — without you rereading six sets of notes before every call.</p>
               <div className="ex">"She mentioned her sister in week two. She's circling it again."</div>
             </div>
             <div className="copilot-card">
@@ -278,7 +278,7 @@ export function CoPilot() {
               <div className="copilot-rail does">
                 <h3>It always</h3>
                 <ul>
-                  <li>Asks your client's permission, out loud, before anything is heard</li>
+                  <li>Asks your learner's permission, out loud, before anything is heard</li>
                   <li>Stops the instant consent is withdrawn — mid-sentence if needed</li>
                   <li>Shows only to you, on your screen, never shared</li>
                   <li>Routes any crisis signal to a human escalation path</li>
@@ -288,7 +288,7 @@ export function CoPilot() {
               <div className="copilot-rail never">
                 <h3>It never</h3>
                 <ul>
-                  <li>Speaks to your client, or appears on their screen</li>
+                  <li>Speaks to your learner, or appears on their screen</li>
                   <li>Diagnoses, or suggests medication</li>
                   <li>Sends a message on your behalf without approval</li>
                   <li>Records without live, revocable consent</li>
@@ -307,11 +307,11 @@ export function CoPilot() {
             {/* Left Column: Title, Subtitle & Explanation */}
             <div className="flex flex-col gap-5">
               <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-extrabold uppercase tracking-wider w-fit">
-                Client Experiential Consent
+                Learner Experiential Consent
               </span>
 
               <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight" style={{ color: '#0F172A' }}>
-                What your client actually sees
+                What your learner actually sees
               </h2>
 
               <p className="text-base sm:text-lg font-bold text-slate-800 leading-snug" style={{ color: '#1E293B' }}>
@@ -323,7 +323,7 @@ export function CoPilot() {
                   Consent, done properly
                 </h3>
                 <p className="text-sm font-semibold text-slate-700 leading-relaxed" style={{ color: '#334155' }}>
-                  Buried checkboxes don't count as consent — not ethically and probably not legally. The client is asked in the room, in words they understand, and told exactly what happens either way.
+                  Buried checkboxes don't count as consent — not ethically and probably not legally. The learner is asked in the room, in words they understand, and told exactly what happens either way.
                 </p>
                 <p className="text-sm font-semibold text-slate-700 leading-relaxed" style={{ color: '#334155' }}>
                   If they decline, the session runs completely normally. You lose the panel; they lose nothing. Most practitioners tell us the conversation itself builds trust.

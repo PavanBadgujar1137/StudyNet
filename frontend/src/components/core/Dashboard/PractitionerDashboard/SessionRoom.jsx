@@ -98,8 +98,8 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
               <FiBell size={18} color="#8B5CF6" />
             </div>
             <div>
-              <div style={{ fontWeight: 700, color: '#1E293B', fontSize: 15 }}>Clients Booked With You</div>
-              <div style={{ color: '#64748B', fontSize: 12 }}>Clients who have paid and are scheduled to connect with you</div>
+              <div style={{ fontWeight: 700, color: '#1E293B', fontSize: 15 }}>Learners Booked With You</div>
+              <div style={{ color: '#64748B', fontSize: 12 }}>Learners who have paid and are scheduled to connect with you</div>
             </div>
           </div>
           <button onClick={loadBookings} style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: '6px 12px', color: '#64748B', cursor: 'pointer', fontSize: 12 }}>
@@ -116,7 +116,7 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
           <div style={{ padding: '28px 24px', textAlign: 'center', color: '#94A3B8' }}>
             <FiUser size={28} style={{ marginBottom: 8, opacity: 0.4 }} />
             <div style={{ fontSize: 14 }}>No confirmed bookings yet</div>
-            <div style={{ fontSize: 12, marginTop: 4 }}>When clients book your offers, they'll appear here</div>
+            <div style={{ fontSize: 12, marginTop: 4 }}>When learners book your offers, they'll appear here</div>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -569,8 +569,8 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
               <div className="k" style={{ fontSize: '13px', fontWeight: 700, color: '#2563EB', marginBottom: '4px' }}>Claude.ai Preparation &amp; Post-Session Notes Prompt</div>
               <p style={{ fontSize: '13px', color: '#334155', margin: 0 }}>
                 {upcomingClasses.length > 0
-                  ? `Upcoming Zoom session: "${upcomingClasses[0].title}". Claude.ai will synthesize client check-in notes and summarize post-session takeaways automatically.`
-                  : `No live session active. Claude.ai will analyze your Zoom recordings & client reflections to produce post-session summary notes.`}
+                  ? `Upcoming Zoom session: "${upcomingClasses[0].title}". Claude.ai will synthesize learner check-in notes and summarize post-session takeaways automatically.`
+                  : `No live session active. Claude.ai will analyze your Zoom recordings & learner reflections to produce post-session summary notes.`}
               </p>
             </div>
           </div>

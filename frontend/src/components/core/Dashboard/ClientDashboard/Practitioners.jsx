@@ -5,7 +5,6 @@ import {
   FiClock,
   FiSearch,
   FiMessageSquare,
-  FiStar,
   FiCreditCard,
   FiShield,
   FiCheckSquare,
@@ -384,7 +383,7 @@ export function Practitioners({ onUpdate, setActiveTab }) {
 
                 {/* Bio snippet */}
                 <p style={{ margin: 0, fontSize: '13px', color: '#475569', lineHeight: 1.45 }}>
-                  {p.bio || 'Certified practitioner specializing in holistic guidance, mental wellbeing, and client growth.'}
+                  {p.bio || 'Certified practitioner specializing in holistic guidance, mental wellbeing, and learner growth.'}
                 </p>
 
                 {/* Specialty Tags */}

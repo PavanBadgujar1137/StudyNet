@@ -108,7 +108,7 @@ export function PrivacyPolicy() {
             <p className="font-medium">This policy covers three groups of people whose data flows through Open Hand:</p>
             <ul className="space-y-2 list-disc list-inside font-medium">
               <li><strong className="text-[#0F172A]">Practitioners</strong> — coaches, therapists, healers, consultants, and their teams who use Open Hand to run their practice.</li>
-              <li><strong className="text-[#0F172A]">Clients</strong> — the people practitioners work with, whose data is entered into Open Hand by their practitioner or by themselves through a client portal.</li>
+              <li><strong className="text-[#0F172A]">Learners</strong> — the people practitioners work with, whose data is entered into Open Hand by their practitioner or by themselves through a learner portal.</li>
               <li><strong className="text-[#0F172A]">Visitors</strong> — anyone browsing openhand.live without an account.</li>
             </ul>
           </div>
@@ -131,7 +131,7 @@ export function PrivacyPolicy() {
               </div>
 
               <div>
-                <h3 className="text-xs sm:text-sm font-bold text-indigo-700 uppercase tracking-wider font-mono">From clients (typically entered by practitioner or client):</h3>
+                <h3 className="text-xs sm:text-sm font-bold text-indigo-700 uppercase tracking-wider font-mono">From learners (typically entered by practitioner or learner):</h3>
                 <ul className="list-disc list-inside mt-2 space-y-1.5">
                   <li>Identity information (name, contact details, date of birth where required)</li>
                   <li>
@@ -168,8 +168,8 @@ export function PrivacyPolicy() {
 
             <h3 className="text-base sm:text-lg font-bold text-[#0F172A]">Our approach:</h3>
             <ul className="space-y-2 list-disc list-inside font-medium">
-              <li>We process this data only on the lawful basis that the client has given <strong>explicit, informed consent</strong> to their practitioner — and the practitioner has consented, on their behalf and yours, to use Open Hand as a processor.</li>
-              <li>Practitioners are the <strong>data controllers</strong> for their client data. Open Hand is the <strong>data processor</strong>. Practitioners are responsible for obtaining valid consent from clients; Open Hand is responsible for handling the data securely and only as instructed.</li>
+              <li>We process this data only on the lawful basis that the learner has given <strong>explicit, informed consent</strong> to their practitioner — and the practitioner has consented, on their behalf and yours, to use Open Hand as a processor.</li>
+              <li>Practitioners are the <strong>data controllers</strong> for their learner data. Open Hand is the <strong>data processor</strong>. Practitioners are responsible for obtaining valid consent from learners; Open Hand is responsible for handling the data securely and only as instructed.</li>
               <li>Session recordings, transcripts, and notes are encrypted end-to-end where technically feasible, and encrypted at rest and in transit in all cases.</li>
             </ul>
 
@@ -192,8 +192,8 @@ export function PrivacyPolicy() {
             <h3 className="text-base sm:text-lg font-bold text-[#0F172A] pt-3">We do not:</h3>
             <ul className="list-disc list-inside space-y-1.5 text-emerald-700 font-bold">
               <li>Sell your data to anyone, ever</li>
-              <li>Use client session content to train AI models (see our AI use section)</li>
-              <li>Share practitioner or client data with advertisers</li>
+              <li>Use learner session content to train AI models (see our AI use section)</li>
+              <li>Share practitioner or learner data with advertisers</li>
             </ul>
           </div>
 
@@ -207,7 +207,7 @@ export function PrivacyPolicy() {
             </div>
             
             <p className="font-medium">
-              Where Open Hand uses AI features (transcription, session summaries, suggested resources), we use them only on data the practitioner has explicitly chosen to run through them. <strong>Client health data is never used to train AI models — ours or anyone else's.</strong> Where we use third-party AI providers, we contract for enterprise-grade agreements that prohibit training on your data.
+              Where Open Hand uses AI features (transcription, session summaries, suggested resources), we use them only on data the practitioner has explicitly chosen to run through them. <strong>Learner health data is never used to train AI models — ours or anyone else's.</strong> Where we use third-party AI providers, we contract for enterprise-grade agreements that prohibit training on your data.
             </p>
 
             <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs sm:text-sm text-amber-900 font-medium">
@@ -238,7 +238,7 @@ export function PrivacyPolicy() {
               <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold border border-amber-300 shrink-0">⚖️ Legal Review Required</span>
             </div>
 
-            <p className="font-medium">Practitioner and client data is stored in India.</p>
+            <p className="font-medium">Practitioner and learner data is stored in India.</p>
 
             <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs sm:text-sm text-amber-900 font-medium">
               ⚖️ <em>This section must accurately reflect where you actually store data.</em>

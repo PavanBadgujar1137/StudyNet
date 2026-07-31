@@ -74,7 +74,7 @@ export function PractitionerOnboarding() {
           {step === 1 && (
             <form onSubmit={handleNext} className="step-body">
               <h2>Step 1: Claim your space handle</h2>
-              <p>Your unique booking URL where clients find your profile and book sessions.</p>
+              <p>Your unique booking URL where learners find your profile and book sessions.</p>
               
               <div className="form-group">
                 <label htmlFor="handle">Your practice handle</label>

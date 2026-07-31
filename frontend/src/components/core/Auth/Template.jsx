@@ -45,15 +45,11 @@ function Template({ title, description1, description2, formType }) {
 
               {/* Platform Overview block */}
               <div className="auth-quote">
-                <p>"Empowering practitioners to build thriving practice spaces and clients to transform through live sessions, daily check-ins, and AURA guidance."</p>
+                <p>"Empowering practitioners to build thriving practice spaces and learners to transform through live sessions, daily check-ins, and AURA guidance."</p>
                 <span>OpenHand Platform Ecosystem</span>
               </div>
 
-              {/* Trust row */}
-              <div className="auth-trust">
-                <div className="auth-trust-dot" />
-                <span>Live MongoDB Database &amp; Zoom API Connected</span>
-              </div>
+
             </div>
 
             {/* Platform Feature Highlight Card */}

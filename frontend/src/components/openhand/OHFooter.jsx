@@ -22,7 +22,7 @@ const LINKS = [
       { label: 'Pricing',           to: '/pricing' },
       { label: 'Find a practitioner', to: '/find-a-practitioner' },
       { label: 'AURA AI',           to: '/aura', badge: 'AI' },
-      { label: 'Client journey',    to: '/client-journey' },
+      { label: 'Learner journey',   to: '/learner-journey' },
     ]
   },
   { 
@@ -119,7 +119,7 @@ export function OHFooter() {
             </h4>
 
             <p className="text-sm font-medium leading-relaxed max-w-md" style={{ color: '#E2E8F0' }}>
-              The next-generation platform connecting clients with qualified practitioners — powered by intelligent AURA tools.
+              The next-generation platform connecting learners with qualified practitioners — powered by intelligent AURA tools.
             </p>
 
             {/* Platform Status Indicator Badge */}

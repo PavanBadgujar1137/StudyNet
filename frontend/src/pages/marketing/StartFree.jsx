@@ -24,7 +24,7 @@ export function StartFree() {
   }
 
   const calcSliders = [
-    { id: 'cIn', label: 'Clients you see per month', min: 2, max: 60, value: 12 },
+    { id: 'cIn', label: 'Learners you see per month', min: 2, max: 60, value: 12 },
     { id: 'pIn', label: 'Your average price', min: 500, max: 15000, step: 250, value: 2500, format: (v) => `₹${v.toLocaleString('en-IN')}` },
     { id: 'mIn', label: 'Members in your circle', min: 0, max: 200, value: 0 },
   ]
@@ -41,11 +41,11 @@ export function StartFree() {
             Your practice, <span className="oh-grad-text">live in 20 minutes.</span>
           </h1>
           <p className="sub">
-            No card. No sales call. No time limit. Set up your space, invite your first client, and only pay us when you actually get paid.
+            No card. No sales call. No time limit. Set up your space, invite your first learner, and only pay us when you actually get paid.
           </p>
           <div className="cta-row">
             <OHButton href="/signup" size="lg">Create my practice space</OHButton>
-            <OHButton href="/client-journey" variant="ghost" size="lg">See a client journey →</OHButton>
+            <OHButton href="/learner-journey" variant="ghost" size="lg">See a learner journey →</OHButton>
           </div>
           <p className="trust-note text-center w-full mx-auto">Free forever on the Starter plan · You keep 100% until your first ₹25,000</p>
         </div>
@@ -56,7 +56,7 @@ export function StartFree() {
         <div className="oh-wrap max-w-[1400px] mx-auto">
           <div className="w-full text-center flex flex-col items-center justify-center mx-auto mb-6">
             <h2 className="text-center w-full text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight mb-2" style={{ color: '#0F172A' }}>
-              Four steps between you and your first paid client
+              Four steps between you and your first paid learner
             </h2>
             <p className="text-center w-full text-sm sm:text-base font-bold leading-relaxed" style={{ color: '#334155' }}>
               Most practitioners finish this in a single sitting. You can stop anywhere and come back — nothing is lost.
@@ -124,7 +124,7 @@ export function StartFree() {
               <div className="stream-box">
                 <span className="stream-tag">Stream two</span>
                 <h3>Cohorts &amp; circles</h3>
-                <p>Run eight people through a six-week container for the same hours you'd spend on two clients.</p>
+                <p>Run eight people through a six-week container for the same hours you'd spend on two learners.</p>
                 <span className="stream-num">₹15,000–₹45,000</span>
                 <span className="stream-per">typical per seat, per cohort</span>
               </div>
@@ -171,7 +171,7 @@ export function StartFree() {
           <div className="oh-grid-3">
             <OHCard surface="white" pad="lg">
               <h3>Bookings &amp; reminders</h3>
-              <p>Your calendar, your buffer times, your cancellation rules. Clients get WhatsApp and email reminders automatically.</p>
+              <p>Your calendar, your buffer times, your cancellation rules. Learners get WhatsApp and email reminders automatically.</p>
             </OHCard>
             <OHCard surface="white" pad="lg">
               <h3>One private cohort</h3>

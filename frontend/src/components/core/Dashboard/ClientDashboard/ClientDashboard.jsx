@@ -146,7 +146,7 @@ export function ClientDashboard() {
               <FiZap />
             </div>
             <div>
-              <div className="oh-sidebar-brand-title">Client Portal</div>
+              <div className="oh-sidebar-brand-title">Learner Portal</div>
               <div className="oh-sidebar-brand-sub">Personalized Space</div>
             </div>
           </div>
@@ -227,7 +227,7 @@ export function ClientDashboard() {
                 <span style={{ textTransform: 'capitalize' }}>{activeTab}</span>
               </div>
               <h1 className="oh-viewport-title">
-                {activeTab === 'journey' && `Welcome back, ${clientName} 👋`}
+                {activeTab === 'journey' && `Hello, ${clientName} 👋`}
                 {activeTab === 'checkin' && 'Daily Check-in Rhythm'}
                 {activeTab === 'practitioners' && 'All Registered Practitioners'}
                 {activeTab === 'courses' && 'Courses Library'}

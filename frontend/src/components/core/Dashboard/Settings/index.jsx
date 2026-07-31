@@ -18,7 +18,7 @@ export default function Settings() {
   const [activeSubTab, setActiveSubTab] = useState("profile")
 
   const fullName = `${user?.firstName || 'User'} ${user?.lastName || ''}`.trim()
-  const roleName = user?.accountType === "Instructor" || user?.accountType === "Practitioner" ? "Practitioner" : "Client"
+  const roleName = user?.accountType === "Instructor" || user?.accountType === "Practitioner" ? "Practitioner" : "Learner"
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', textAlign: 'left', maxWidth: '1000px', margin: '0 auto', width: '100%' }}>

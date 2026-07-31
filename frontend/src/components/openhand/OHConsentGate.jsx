@@ -18,13 +18,13 @@ const CONSENT_TYPES = {
   copilot_audio: {
     label: 'Live in-session AURA',
     description:
-      'During this session, audio will be transcribed in real time to generate live suggestions — visible only to you, not your client. You can revoke this any time.',
+      'During this session, audio will be transcribed in real time to generate live suggestions — visible only to you, not your learner. You can revoke this any time.',
     risk: 'medium',
   },
 }
 
 export function OHConsentGate({
-  clientName = 'your client',
+  clientName = 'your learner',
   activeConsents = [],     /* ['copilot_notes', 'copilot_audio'] */
   onGrant,                 /* (type) => void */
   onRevoke,                /* (type) => void */
@@ -75,7 +75,7 @@ export function OHConsentGate({
                 <p className="oh-consent__item-desc">{info.description}</p>
                 {info.risk === 'medium' && (
                   <p className="oh-consent__item-risk">
-                    ⚠ Requires explicit client acknowledgement before session.
+                    ⚠ Requires explicit learner acknowledgement before session.
                   </p>
                 )}
               </div>
@@ -97,10 +97,10 @@ export function OHConsentGate({
       <div className="oh-consent__rules">
         <p className="oh-consent__rules-title">Always / never</p>
         <ul>
-          <li>✓ Only you see AURA suggestions — never your client</li>
+          <li>✓ Only you see AURA suggestions — never your learner</li>
           <li>✓ Notes save only after your approval</li>
           <li>✗ Never diagnoses or suggests medication</li>
-          <li>✗ Never messages your client directly</li>
+          <li>✗ Never messages your learner directly</li>
           <li>✗ Nothing records without this live consent</li>
         </ul>
       </div>

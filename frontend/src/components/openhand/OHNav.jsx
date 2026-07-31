@@ -15,13 +15,13 @@ const PUBLIC_LINKS = [
   { label: 'For organizations',   to: '/for-organizations' },
   { label: 'Find a practitioner', to: '/find-a-practitioner' },
   { label: 'Talk to human',       to: '/talk-to-human' },
-  { label: 'Client journey',      to: '/client-journey' },
+  { label: 'Learner journey',     to: '/learner-journey' },
   { label: 'Start free',          to: '/start-free' },
   { label: 'AURA',                to: '/aura' },
   { label: 'Pricing',             to: '/pricing' },
 ]
 
-const CLIENT_LINKS = [
+const LEARNER_LINKS = [
   { label: 'My journey', to: '/app/journey' },
   { label: 'Check-in',   to: '/app/checkin' },
   { label: 'My circle',  to: '/app/circle' },
@@ -32,7 +32,7 @@ const CLIENT_LINKS = [
 const PRACTITIONER_LINKS = [
   { label: 'Dashboard', to: '/practice/dashboard' },
   { label: 'My offers', to: '/practice/offers' },
-  { label: 'Clients',   to: '/practice/clients' },
+  { label: 'Learners',  to: '/practice/clients' },
   { label: 'Circles',   to: '/practice/circles' },
   { label: 'Payouts',   to: '/practice/payouts' },
 ]
@@ -57,7 +57,7 @@ export function OHNav({ dark = false }) {
 
   const role = user?.accountType
   const links = role === 'Practitioner' ? PRACTITIONER_LINKS
-              : role === 'Client'       ? CLIENT_LINKS
+              : (role === 'Learner' || role === 'Client') ? LEARNER_LINKS
               : PUBLIC_LINKS
 
   const handleLogout = () => {

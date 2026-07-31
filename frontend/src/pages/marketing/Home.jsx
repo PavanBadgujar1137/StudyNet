@@ -27,7 +27,7 @@ export function Home() {
       tag: 'Time Box: 15 Mins',
       title: 'Pre-Session Check-In Box',
       subtitle: 'Delivered automatically before sessions',
-      desc: 'Clients complete a gentle 2-minute reflection check-in logging mood, current intentions, and key topics before stepping into the session container.',
+      desc: 'Learners complete a gentle 2-minute reflection check-in logging mood, current intentions, and key topics before stepping into the session container.',
       features: [
         'Gentle reflection prompts (no clinical forms)',
         'Real-time mood & intention logging',
@@ -35,7 +35,7 @@ export function Home() {
       ],
       previewWidget: {
         type: 'checkin',
-        status: 'Client Submitted · 10m ago',
+        status: 'Learner Submitted · 10m ago',
         clientName: 'Sarah M.',
         mood: 'Calm & Seeking Focus (8/10)',
         intention: 'Overcoming burnout in team communication.',
@@ -67,7 +67,7 @@ export function Home() {
       tag: 'Time Box: 7 Days',
       title: 'Between-Session Circle Box',
       subtitle: 'Peer pods & asynchronous support',
-      desc: 'Clients hold each other accountable in small 8-person peer pods. Daily human-sounding reflection prompts keep momentum alive between weekly calls.',
+      desc: 'Learners hold each other accountable in small 8-person peer pods. Daily human-sounding reflection prompts keep momentum alive between weekly calls.',
       features: [
         'Peer accountability pods (max 8 seats)',
         'Human-sounding reflection nudges',
@@ -87,7 +87,7 @@ export function Home() {
       tag: 'Time Box: Week 6+',
       title: 'Long-Term Growth Container',
       subtitle: 'Continuity & 1:1 escalation pathway',
-      desc: 'After completing a 6-week circle, clients seamlessly escalate into 1:1 private coaching or transition into ongoing monthly membership spaces.',
+      desc: 'After completing a 6-week circle, learners seamlessly escalate into 1:1 private coaching or transition into ongoing monthly membership spaces.',
       features: [
         'Seamless 1:1 private session booking',
         'Recurring monthly membership transition',
@@ -128,15 +128,15 @@ export function Home() {
 
           <p className="sub">
             OpenHand is the practice platform built for people who guide, not just teach.
-            Client check-ins, private cohorts, and real community — without the corporate LMS feel.
+            Learner check-ins, private cohorts, and real community — without the corporate LMS feel.
           </p>
 
           <div className="cta-row">
             <Link to="/start-free" className="oh-btn-primary">
               Start your free practice space <FiArrowRight style={{ marginLeft: '8px' }} />
             </Link>
-            <Link to="/client-journey" className="oh-btn-ghost">
-              See sample client journey →
+            <Link to="/learner-journey" className="oh-btn-ghost">
+              See sample learner journey →
             </Link>
           </div>
 
@@ -185,7 +185,7 @@ export function Home() {
             <span className="oh-sec-tag">Interactive Time-Boxed Architecture</span>
             <h2>The Box Time Practice System</h2>
             <p>
-              Experience how OpenHand structures client care into four seamless time-boxed containers — from pre-session intention to long-term community continuity.
+              Experience how OpenHand structures learner care into four seamless time-boxed containers — from pre-session intention to long-term community continuity.
             </p>
           </div>
 
@@ -237,7 +237,7 @@ export function Home() {
                   {activeBox.previewWidget.type === 'checkin' && (
                     <div className="w-content">
                       <div className="w-row">
-                        <span>Client Name:</span>
+                        <span>Learner Name:</span>
                         <strong>{activeBox.previewWidget.clientName}</strong>
                       </div>
                       <div className="w-row">
@@ -288,7 +288,7 @@ export function Home() {
                   {activeBox.previewWidget.type === 'growth' && (
                     <div className="w-content">
                       <div className="w-row">
-                        <span>Client:</span>
+                        <span>Learner:</span>
                         <strong>{activeBox.previewWidget.clientName}</strong>
                       </div>
                       <div className="w-row">
@@ -332,7 +332,7 @@ export function Home() {
               <div className="bento-icon">
                 <FiActivity />
               </div>
-              <h3>Client Check-Ins</h3>
+              <h3>Learner Check-Ins</h3>
               <p>
                 Simple, recurring check-ins that show you how someone's really doing between sessions — not just whether they clicked "complete."
               </p>
@@ -347,7 +347,7 @@ export function Home() {
               </div>
               <h3>Gentle Progress Tracking</h3>
               <p>
-                Mood and progress tracking your clients will actually use, because it feels like self-reflection, not a clinical hospital dashboard.
+                Mood and progress tracking your learners will actually use, because it feels like self-reflection, not a clinical hospital dashboard.
               </p>
               <div className="bento-badge">
                 <span>Self-Reflective Meter</span>
@@ -391,7 +391,7 @@ export function Home() {
               </div>
               <h3>Peer Circles</h3>
               <p>
-                Give clients a dedicated space to hold each other between sessions, guided by your container framework but not dependent on your 24/7 time.
+                Give learners a dedicated space to hold each other between sessions, guided by your container framework but not dependent on your 24/7 time.
               </p>
             </div>
 
@@ -613,8 +613,8 @@ export function Home() {
                   <span className="step-glow-ring"></span>
                 </div>
                 <div className="timeline-info">
-                  <h3>See a sample client journey</h3>
-                  <Link to="/client-journey" className="timeline-cta-btn btn-purple">
+                  <h3>See a sample learner journey</h3>
+                  <Link to="/learner-journey" className="timeline-cta-btn btn-purple">
                     View sample journey <FiArrowRight style={{ marginLeft: '6px' }} />
                   </Link>
                 </div>

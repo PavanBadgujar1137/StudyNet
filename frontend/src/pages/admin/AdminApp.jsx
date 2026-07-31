@@ -120,7 +120,7 @@ function DashboardTab({ stats, recentPayments, loading }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
         <KpiCard icon={<FiDollarSign />} label="Total Revenue" value={fmt(stats?.totalRevenue)} color="#10B981" trend={stats?.revenueTrend} />
-        <KpiCard icon={<FiUsers />} label="Total Clients" value={stats?.totalClients || 0} color="#3B82F6" trend={stats?.clientsTrend} />
+        <KpiCard icon={<FiUsers />} label="Total Learners" value={stats?.totalClients || 0} color="#3B82F6" trend={stats?.clientsTrend} />
         <KpiCard icon={<FiUser />} label="Practitioners" value={stats?.totalPractitioners || 0} color="#8B5CF6" />
         <KpiCard icon={<FiCreditCard />} label="Pending Payouts" value={fmt(stats?.pendingPayouts)} subLabel="Admin owes practitioners" color="#F59E0B" />
         <KpiCard icon={<FiCalendar />} label="Active Subscriptions" value={stats?.activeSubscriptions || 0} color="#06B6D4" />
@@ -137,7 +137,7 @@ function DashboardTab({ stats, recentPayments, loading }) {
           loading={loading}
           columns={[
             { key: 'createdAt', label: 'Date', render: r => fmtDate(r.createdAt) },
-            { key: 'clientName', label: 'Client', render: r => <span style={{ fontWeight: 600, color: '#0F172A' }}>{r.clientName}</span> },
+            { key: 'clientName', label: 'Learner', render: r => <span style={{ fontWeight: 600, color: '#0F172A' }}>{r.clientName}</span> },
             { key: 'paymentType', label: 'Type', render: r => (
               <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600,
                 background: r.paymentType === 'subscription' ? '#EFF6FF' : '#F5F3FF',
@@ -250,12 +250,12 @@ function ClientsTab() {
           <FiRefreshCw /> Refresh
         </button>
       </div>
-      <div style={{ color: '#64748B', fontSize: 13 }}>{total} total clients</div>
+      <div style={{ color: '#64748B', fontSize: 13 }}>{total} total learners</div>
       <div style={{ background: '#FFFFFF', borderRadius: 16, border: '1px solid #E2E8F0', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.03)' }}>
         <DataTable
           loading={loading}
           columns={[
-            { key: 'name', label: 'Client', render: r => (
+            { key: 'name', label: 'Learner', render: r => (
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
                   {r.firstName?.[0]}{r.lastName?.[0]}
@@ -614,7 +614,7 @@ function PaymentsTab() {
           loading={loading}
           columns={[
             { key: 'createdAt', label: 'Date', render: r => fmtDate(r.createdAt) },
-            { key: 'clientName', label: 'Client', render: r => (
+            { key: 'clientName', label: 'Learner', render: r => (
               <div>
                 <div style={{ color: '#0F172A', fontWeight: 600 }}>{r.clientName || `${r.client?.firstName} ${r.client?.lastName}`}</div>
                 <div style={{ color: '#64748B', fontSize: 11 }}>{r.client?.email}</div>
@@ -681,7 +681,7 @@ function SubscriptionsTab() {
         <DataTable
           loading={loading}
           columns={[
-            { key: 'client', label: 'Client', render: r => (
+            { key: 'client', label: 'Learner', render: r => (
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 12, fontWeight: 700 }}>
                   {r.client?.firstName?.[0]}{r.client?.lastName?.[0]}
@@ -751,7 +751,7 @@ function BookingsTab() {
         <DataTable
           loading={loading}
           columns={[
-            { key: 'client', label: 'Client', render: r => (
+            { key: 'client', label: 'Learner', render: r => (
               <div>
                 <div style={{ color: '#0F172A', fontWeight: 600 }}>{r.client?.firstName} {r.client?.lastName}</div>
                 <div style={{ color: '#64748B', fontSize: 11 }}>{r.client?.email}</div>
@@ -901,7 +901,7 @@ function OrgConversationsTab() {
 // ─── Main Admin Panel ─────────────────────────────────────────────────────────
 const TABS = [
   { id: 'dashboard', label: 'Dashboard', icon: <FiGrid /> },
-  { id: 'clients', label: 'Clients', icon: <FiUsers /> },
+  { id: 'clients', label: 'Learners', icon: <FiUsers /> },
   { id: 'courses', label: 'Courses & Plans', icon: <FiBookOpen /> },
   { id: 'practitioners', label: 'Practitioners', icon: <FiUser /> },
   { id: 'payments', label: 'All Payments', icon: <FiDollarSign /> },

@@ -16,8 +16,8 @@ export const NavbarLinks = [
     path: "/talk-to-human",
   },
   {
-    title: "Client Journey",
-    path: "/client-journey",
+    title: "Learner Journey",
+    path: "/learner-journey",
   },
   {
     title: "Start Free",

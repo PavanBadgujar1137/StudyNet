@@ -10,10 +10,9 @@ export function MyJourney({ clientName = 'Student', practitionerName = 'your ins
 
   return (
     <div id="journey">
-      <div className="hd">
-        <div className="k">My journey</div>
-        <h1>Hello, {clientName} 👋</h1>
-        <p>This is your personal learning path — kept private to you and your instructor. There's no score, no comparison with anyone else, and no wrong pace.</p>
+      <div className="hd" style={{ marginBottom: '18px' }}>
+        <div className="k">MY JOURNEY</div>
+        <p style={{ margin: '4px 0 0', color: '#64748B', fontSize: '14px' }}>This is your personal learning path — kept private to you and your practitioner. There's no score, no comparison with anyone else, and no wrong pace.</p>
       </div>
 
       <div className="card" style={{ marginBottom: '22px' }}>

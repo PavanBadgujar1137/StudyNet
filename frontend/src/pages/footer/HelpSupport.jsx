@@ -27,7 +27,7 @@ export function HelpSupport() {
     {
       title: 'In-app Live Chat',
       speed: 'Fastest Response',
-      desc: 'Available directly inside your practitioner or client dashboard for live technical assistance.',
+      desc: 'Available directly inside your practitioner or learner dashboard for live technical assistance.',
       icon: FiMessageSquare,
       ctaText: 'Launch Chat',
       action: () => setChatOpen(true)
@@ -83,11 +83,11 @@ export function HelpSupport() {
             
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-[#0F172A] tracking-tight my-4 leading-tight">
               Real human support, <br className="hidden sm:inline" />
-              <span className="text-[#2563EB]">whenever you or your clients need it.</span>
+              <span className="text-[#2563EB]">whenever you or your learners need it.</span>
             </h1>
 
             <p className="text-[#475569] text-base sm:text-lg max-w-3xl mx-auto font-medium leading-[1.65] mb-8">
-              We built Open Hand for practitioners whose work depends on presence. When something breaks — a video call won't connect, a payment fails, or a client can't log in — you don't have time for chatbot loops.
+              We built Open Hand for practitioners whose work depends on presence. When something breaks — a video call won't connect, a payment fails, or a learner can't log in — you don't have time for chatbot loops.
             </p>
 
             {/* Action Buttons */}
@@ -203,12 +203,12 @@ export function HelpSupport() {
         </div>
       </section>
 
-      {/* Notice for Clients of Practitioners */}
+      {/* Notice for Learners of Practitioners */}
       <section className="px-4 md:px-8 py-6 max-w-[1440px] mx-auto w-full">
         <div className="p-8 rounded-3xl bg-white border border-slate-200 border-l-4 border-l-blue-600 shadow-sm">
-          <h3 className="text-lg sm:text-xl font-bold text-[#0F172A] mb-2">For clients working with an Open Hand practitioner</h3>
+          <h3 className="text-lg sm:text-xl font-bold text-[#0F172A] mb-2">For learners working with an Open Hand practitioner</h3>
           <p className="text-xs sm:text-sm text-[#334155] leading-[1.65] font-medium">
-            If you're a client using Open Hand to work with a practitioner, we provide technical assistance (logging in, session link issues, payment setup). For anything regarding your session content, scheduling changes, or practice policies, please contact your practitioner directly.
+            If you're a learner using Open Hand to work with a practitioner, we provide technical assistance (logging in, session link issues, payment setup). For anything regarding your session content, scheduling changes, or practice policies, please contact your practitioner directly.
           </p>
         </div>
       </section>
@@ -230,7 +230,7 @@ export function HelpSupport() {
 
             <h3 className="text-xl sm:text-2xl font-black text-[#0F172A] mb-2">Emergency &amp; Crisis Helplines</h3>
             <p className="text-xs sm:text-sm text-red-700 font-bold mb-4">
-              Open Hand is a practice management platform and does not provide immediate crisis intervention. If you or your client are in distress:
+              Open Hand is a practice management platform and does not provide immediate crisis intervention. If you or your learner are in distress:
             </p>
 
             <div className="space-y-3 text-xs sm:text-sm">
@@ -285,7 +285,7 @@ export function HelpSupport() {
 
           <div className="p-5 space-y-3 max-h-80 overflow-y-auto bg-[#F8FAFC] text-xs">
             <div className="p-3 rounded-2xl bg-white border border-slate-200 text-[#334155]">
-              Hello! 👋 Welcome to Open Hand Support. How can we help with your practice or client portal today?
+              Hello! 👋 Welcome to Open Hand Support. How can we help with your practice or learner portal today?
             </div>
           </div>
 

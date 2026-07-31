@@ -89,7 +89,7 @@ export function FindAPractitioner() {
       })
 
       if (!orderRes?.data?.success) {
-        toast.error(orderRes?.data?.message || 'Please log in as a Client to connect with practitioners.')
+        toast.error(orderRes?.data?.message || 'Please log in as a Learner to connect with practitioners.')
         setConnectingId(null)
         return
       }
@@ -134,7 +134,7 @@ export function FindAPractitioner() {
       rzp.open()
     } catch (err) {
       console.error('Connect error:', err)
-      toast.error('Please log in as a Client to connect with practitioners.')
+      toast.error('Please log in as a Learner to connect with practitioners.')
       setConnectingId(null)
     }
   }
@@ -384,7 +384,7 @@ export function FindAPractitioner() {
                       <div className="p-card-head">
                         <div className="p-avatar-wrap">
                           <div className="p-avatar">{p.avatarInitials || name.slice(0, 2).toUpperCase()}</div>
-                          {p.onlineNow && <span className="p-online-dot" title="Accepting clients" />}
+                          {p.onlineNow && <span className="p-online-dot" title="Accepting learners" />}
                         </div>
 
                         <div className="p-meta-wrap">
@@ -535,9 +535,9 @@ export function FindAPractitioner() {
           <div className="dir-banner-card">
             <div className="banner-content">
               <span className="banner-badge">For Independent Practitioners</span>
-              <h2>Every client who finds you here costs zero acquisition fee.</h2>
+              <h2>Every learner who finds you here costs zero acquisition fee.</h2>
               <p>
-                Join India's premier network of verified guides. Keep 100% of your client revenue, showcase your practice, and get matched with clients searching for your exact modalities.
+                Join India's premier network of verified guides. Keep 100% of your learner revenue, showcase your practice, and get matched with learners searching for your exact modalities.
               </p>
               <div className="banner-btn-row">
                 <OHButton href="/start-free" size="lg">List Your Practice Free</OHButton>

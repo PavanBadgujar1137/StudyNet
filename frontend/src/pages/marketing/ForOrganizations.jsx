@@ -439,7 +439,7 @@ export function ForOrganizations() {
               className="org-loopsvg"
               viewBox="0 0 940 300"
               role="img"
-              aria-label="Circular flywheel diagram showing companies funding circles, practitioners earning, clients continuing, and the directory attracting more practitioners"
+              aria-label="Circular flywheel diagram showing companies funding circles, practitioners earning, learners continuing, and the directory attracting more practitioners"
             >
               <defs>
                 <linearGradient id="fg2" x1="408" y1="88" x2="532" y2="212">

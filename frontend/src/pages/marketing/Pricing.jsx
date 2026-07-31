@@ -171,8 +171,8 @@ export function Pricing() {
   const faqs = [
     {
       cat: 'Membership & Access',
-      q: 'How does the client membership work?',
-      a: 'Your client membership grants you instant access to practitioner-led courses, live group circles, daily reflection tools, AURA AI insights, and exclusive member discounts on 1:1 sessions.',
+      q: 'How does the learner membership work?',
+      a: 'Your learner membership grants you instant access to practitioner-led courses, live group circles, daily reflection tools, AURA AI insights, and exclusive member discounts on 1:1 sessions.',
     },
     {
       cat: 'Session Perks',
@@ -208,12 +208,12 @@ export function Pricing() {
       {/* Hero */}
       <header className="oh-pricing-hero pt-14 pb-8 text-center bg-gradient-to-b from-white to-slate-50 border-b border-slate-100">
         <div className="oh-wrap max-w-5xl mx-auto px-4">
-          <OHEyebrow>Transparent &amp; Fair Client Pricing</OHEyebrow>
+          <OHEyebrow>Transparent &amp; Fair Learner Pricing</OHEyebrow>
           <h1 className="whitespace-nowrap text-center w-full mx-auto text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight my-4">
             Invest in your wellness. <span className="oh-grad-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">Care built around you.</span>
           </h1>
           <p className="sub text-slate-600 text-base sm:text-lg max-w-2xl mx-auto font-medium leading-relaxed mb-6">
-            Choose the client membership plan that fits your personal care journey. Unlock practitioner courses, live group circles, daily check-ins, and AURA AI guidance.
+            Choose the learner membership plan that fits your personal care journey. Unlock practitioner courses, live group circles, daily check-ins, and AURA AI guidance.
           </p>
 
           {/* User Trial & Subscription Status Banner */}
@@ -258,7 +258,7 @@ export function Pricing() {
                   ₹999<small className="text-slate-500 font-medium text-base"> /month</small>
                 </div>
                 <div className="cut-badge bg-blue-50 text-blue-700 font-bold text-xs uppercase tracking-wider py-2 px-3.5 rounded-xl mb-6 inline-flex items-center gap-2 border border-blue-100">
-                  Essential Client Membership
+                  Essential Learner Membership
                 </div>
                 <ul className="plan-features text-slate-700 text-sm space-y-3 mb-8">
                   <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Access to core practitioner courses &amp; library</li>
@@ -284,7 +284,7 @@ export function Pricing() {
             {/* Growth Plan (Featured) */}
             <div className="plan-card feat-card relative bg-slate-900 text-white border-2 border-indigo-500 rounded-3xl p-8 shadow-2xl transition-all flex flex-col justify-between transform -translate-y-2">
               <span className="featured-badge absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white text-[11px] font-extrabold tracking-wider uppercase py-1.5 px-5 rounded-full shadow-lg whitespace-nowrap">
-                Most Popular Client Choice
+                Most Popular Learner Choice
               </span>
               <div>
                 <h3 className="text-2xl font-bold text-white mb-2 mt-2">Growth Plan</h3>
@@ -358,30 +358,31 @@ export function Pricing() {
         </div>
       </section>
 
-      {/* Client Savings Calculator */}
-      <section className="oh-sec py-12" id="calculator">
-        <div className="oh-wrap max-w-[1240px] mx-auto px-4">
-          <div className="sec-head text-center max-w-3xl mx-auto mb-8">
-            <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 mb-3">Calculate your monthly client savings</h2>
-            <p className="text-slate-600 text-base font-medium leading-relaxed">
-              Drag the sliders below to estimate your savings on 1:1 sessions, courses, and group circles with OpenHand client memberships.
+      {/* Learner Savings Calculator */}
+      <section className="oh-sec py-12 bg-white border-t border-b border-slate-200">
+        <div className="oh-wrap max-w-5xl mx-auto px-4 text-center">
+          <div className="max-w-2xl mx-auto mb-8">
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 mb-3">Calculate your monthly learner savings</h2>
+            <p className="text-slate-600 text-base font-medium">
+              Drag the sliders below to estimate your savings on 1:1 sessions, courses, and group circles with OpenHand learner memberships.
             </p>
           </div>
+
           <OHRangeCalculator
             sliders={calcSliders}
             compute={calcCompute}
-            note="Estimates based on standard standalone session & course prices vs OpenHand client membership benefits. Payment gateway charges and taxes are processed at checkout."
+            note="Estimates based on standard standalone session &amp; course prices vs OpenHand learner membership benefits. Payment gateway charges and taxes are processed at checkout."
           />
         </div>
       </section>
 
-      {/* Comparison Table */}
-      <section className="oh-sec py-12" id="compare">
-        <div className="oh-wrap max-w-[1240px] mx-auto px-4">
-          <div className="sec-head text-center max-w-3xl mx-auto mb-10">
-            <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 mb-3">Why clients choose OpenHand membership</h2>
-            <p className="text-slate-600 text-base font-medium leading-relaxed">
-              Compare OpenHand client subscriptions against traditional pay-as-you-go platforms and standalone sessions.
+      {/* Why Choose OpenHand Section */}
+      <section className="oh-sec py-16 bg-slate-50">
+        <div className="oh-wrap max-w-5xl mx-auto px-4 text-center">
+          <div className="max-w-2xl mx-auto mb-10">
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 mb-3">Why learners choose OpenHand membership</h2>
+            <p className="text-slate-600 text-base font-medium">
+              Compare OpenHand learner subscriptions against traditional pay-as-you-go platforms and standalone sessions.
             </p>
           </div>
           
@@ -414,8 +415,8 @@ export function Pricing() {
       <section className="oh-sec py-12" id="faq">
         <div className="oh-wrap max-w-[1240px] mx-auto px-4">
           <div className="sec-head text-center max-w-3xl mx-auto mb-10">
-            <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 mb-3">Frequently asked client questions</h2>
-            <p className="text-slate-600 text-base font-medium">Clear answers about client membership access, session perks, family sharing, and privacy.</p>
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 mb-3">Frequently asked learner questions</h2>
+            <p className="text-slate-600 text-base font-medium">Clear answers about learner membership access, session perks, family sharing, and privacy.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -455,10 +456,10 @@ export function Pricing() {
             Start your personal care journey today.
           </h2>
           <p className="text-slate-600 text-base sm:text-lg font-medium max-w-2xl mx-auto mb-8 leading-relaxed">
-            Subscribe to an OpenHand client plan or find a practitioner to get started. Switch or cancel anytime.
+            Subscribe to an OpenHand learner plan or find a practitioner to get started. Switch or cancel anytime.
           </p>
           <div className="cta-row flex flex-wrap items-center justify-center gap-4">
-            <OHButton href="#plans" size="lg">Choose a Client Plan</OHButton>
+            <OHButton href="#plans" size="lg">Choose a Learner Plan</OHButton>
             <OHButton href="/find-a-practitioner" variant="ghost" size="lg">Find a Practitioner →</OHButton>
           </div>
         </div>

@@ -30,7 +30,7 @@ const userSchema = new mongoose.Schema(
     // OpenHand account types (with backward compatible Student & Instructor)
     accountType: {
       type: String,
-      enum: ["Admin", "Client", "Practitioner", "OrgAdmin", "Student", "Instructor"],
+      enum: ["Admin", "Client", "Learner", "Practitioner", "OrgAdmin", "Student", "Instructor"],
       required: true,
     },
     active: {

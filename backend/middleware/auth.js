@@ -44,10 +44,10 @@ exports.auth = async (req, res, next) => {
 exports.isStudent = async (req, res, next) => {
 	try {
 		const userDetails = await User.findOne({ email: req.user.email });
-		if (userDetails.accountType !== "Student" && userDetails.accountType !== "Client") {
+		if (userDetails.accountType !== "Student" && userDetails.accountType !== "Client" && userDetails.accountType !== "Learner") {
 			return res.status(401).json({
 				success: false,
-				message: "This is a Protected Route for Clients/Students",
+				message: "This is a Protected Route for Learners/Students",
 			});
 		}
 		next();

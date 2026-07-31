@@ -45,12 +45,12 @@ export function TalkToHuman() {
     {
       id: 'migration',
       dur: '40 minutes',
-      title: `"I have clients already — how do I move?"`,
+      title: `"I have learners already — how do I move?"`,
       workTypeValue: 'Counselling or psychotherapy',
       desc: `You're running on WhatsApp, Google Meet, spreadsheets, and manual payment links. It works, but it's exhausting.`,
       points: [
-        'Migration mapped step-by-step',
-        'Your existing client records moved smoothly',
+        'A single transition window, zero dropped bookings',
+        'Your existing learner records moved smoothly',
         'Nothing goes live until you explicitly approve',
       ],
       founderHint: 'Best with Dr. Rajendra Patil',
@@ -76,16 +76,16 @@ export function TalkToHuman() {
       a: 'No. The free plan opens immediately without requiring a call, a credit card, or a demo. This page exists for practitioners who want a direct human conversation first — not as a paywall or gate in front of the product.',
     },
     {
-      q: 'Is my client data safe if I move here?',
-      a: 'Client records are end-to-end encrypted, access-controlled strictly per practitioner, and never used to train external public models. Bring this up on your call — Rajendra will walk you through exactly where data resides and what you can delete.',
+      q: 'Is my learner data safe if I move here?',
+      a: 'Learner records are end-to-end encrypted, access-controlled strictly per practitioner, and never used to train external public models. Bring this up on your call — Rajendra will walk you through exactly where data resides and what you can delete.',
     },
     {
       q: 'What if I already use TagMango, Topmate or my own site?',
-      a: "Plenty of practitioners run both concurrently for a transition phase. We'll assist you in migrating your calendar, your offers, and your existing clients without any mandatory hard cutover date.",
+      a: "Plenty of practitioners run both concurrently for a transition phase. We'll assist you in migrating your calendar, your offers, and your existing learners without any mandatory hard cutover date.",
     },
     {
       q: 'Can I turn the in-session AURA off?',
-      a: "Yes, entirely — at either the account level or on a per-session basis. It is opt-in for you and separately consented by your client. OpenHand sessions function seamlessly with or without it.",
+      a: "Yes, entirely — at either the account level or on a per-session basis. It is opt-in for you and separately consented by your learner. OpenHand sessions function seamlessly with or without it.",
     },
   ]
 
@@ -310,7 +310,7 @@ export function TalkToHuman() {
                 </div>
               </div>
               <p>
-                Talk to Dr. Rajendra if your questions are about the harder edges — client confidentiality, ethical use of the in-session AURA, working with organisations, or moving an existing caseload across.
+                Talk to Dr. Rajendra if your questions are about the harder edges — learner confidentiality, ethical use of the in-session AURA, working with organisations, or moving an existing caseload across.
               </p>
               <div className="talk-tags">
                 <span>Data Confidentiality</span>
@@ -568,7 +568,7 @@ export function TalkToHuman() {
                       <textarea
                         id="message"
                         rows="3"
-                        placeholder="e.g. I run two cohorts a year and see about eight 1:1 clients. Mostly curious about client data confidentiality."
+                        placeholder="e.g. I run two cohorts a year and see about eight 1:1 learners. Mostly curious about learner data confidentiality."
                         value={formData.message}
                         onChange={handleChange}
                       />
@@ -646,8 +646,8 @@ export function TalkToHuman() {
               <Link to="/start-free" className="talk-btn" style={{ width: 'auto', padding: '13px 28px' }}>
                 Start Free Practice Space <FiArrowRight style={{ marginLeft: '8px' }} />
               </Link>
-              <Link to="/client-journey" className="talk-btn-ghost">
-                See Client Journey →
+              <Link to="/learner-journey" className="talk-btn-ghost">
+                See Learner Journey →
               </Link>
             </div>
           </div>

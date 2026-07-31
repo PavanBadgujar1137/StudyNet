@@ -3,9 +3,9 @@ import Template from "../components/core/Auth/Template"
 function Signup() {
   return (
     <Template
-      title="Join millions learning to code and build skills with OpenHand"
-      description1="Build skills for today, tomorrow, and beyond."
-      description2="Education to future-proof your career."
+      title="Begin Your Journey of Growth & Healing with OpenHand"
+      description1="Connect with verified practitioners, join peer growth circles,"
+      description2="and track your daily wellness & self-reflection journey."
       formType="signup"
     />
   )

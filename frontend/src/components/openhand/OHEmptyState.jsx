@@ -25,6 +25,12 @@ const ICONS = {
       <path d="M8 40c0-8.837 7.163-16 16-16s16 7.163 16 16" stroke="url(#es-g)" strokeWidth="2.4" strokeLinecap="round"/>
     </svg>
   ),
+  'no-learners': (
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="24" cy="16" r="8" stroke="url(#es-g)" strokeWidth="2.4"/>
+      <path d="M8 40c0-8.837 7.163-16 16-16s16 7.163 16 16" stroke="url(#es-g)" strokeWidth="2.4" strokeLinecap="round"/>
+    </svg>
+  ),
   'no-offers': (
     <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="8" y="14" width="32" height="22" rx="5" stroke="url(#es-g)" strokeWidth="2.4"/>

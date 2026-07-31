@@ -1,35 +1,24 @@
 const ReflectionPrompt = require("../models/ReflectionPrompt")
 const ClientConnection = require("../models/ClientConnection")
 
+const DEFAULT_PROMPTS = [
+  "What felt heavy this week that you carried without asking for support?",
+  "Notice one moment in the last 3 days where you reacted differently than you would have 6 months ago.",
+]
+
 exports.getClientPrompts = async (req, res) => {
   try {
     const userId = req.user.id
-    let prompts = await ReflectionPrompt.find({ client: userId }).sort({ createdAt: -1 })
 
-    if (prompts.length === 0) {
-      // Look up the client's real connected practitioner
-      const connection = await ClientConnection.findOne({
-        client: userId,
-        status: { $in: ["approved", "active"] },
-      }).sort({ createdAt: -1 })
+    // Delete auto-generated default prompts if present
+    await ReflectionPrompt.deleteMany({
+      client: userId,
+      promptText: { $in: DEFAULT_PROMPTS },
+    })
 
-      const practitionerId = connection?.practitioner || userId // fallback to self if no practitioner
-
-      prompts = [
-        await ReflectionPrompt.create({
-          client: userId,
-          practitioner: practitionerId,
-          promptText: "What felt heavy this week that you carried without asking for support?",
-          status: "pending",
-        }),
-        await ReflectionPrompt.create({
-          client: userId,
-          practitioner: practitionerId,
-          promptText: "Notice one moment in the last 3 days where you reacted differently than you would have 6 months ago.",
-          status: "pending",
-        }),
-      ]
-    }
+    const prompts = await ReflectionPrompt.find({ client: userId })
+      .populate("practitioner", "firstName lastName email image")
+      .sort({ createdAt: -1 })
 
     return res.status(200).json({
       success: true,
@@ -79,6 +68,81 @@ exports.answerPrompt = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to process reflection prompt",
+      error: error.message,
+    })
+  }
+}
+
+exports.createPractitionerPrompt = async (req, res) => {
+  try {
+    const practitionerId = req.user.id
+    const { clientId, promptText } = req.body
+
+    if (!clientId || !promptText) {
+      return res.status(400).json({
+        success: false,
+        message: "Learner ID and prompt text are required",
+      })
+    }
+
+    const newPrompt = await ReflectionPrompt.create({
+      client: clientId,
+      practitioner: practitionerId,
+      promptText,
+      status: "pending",
+    })
+
+    const populatedPrompt = await ReflectionPrompt.findById(newPrompt._id)
+      .populate("client", "firstName lastName email image")
+      .populate("practitioner", "firstName lastName email image")
+
+    return res.status(201).json({
+      success: true,
+      message: "Reflection prompt sent to learner successfully",
+      prompt: populatedPrompt,
+    })
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to create reflection prompt",
+      error: error.message,
+    })
+  }
+}
+
+exports.getPractitionerReflections = async (req, res) => {
+  try {
+    const practitionerId = req.user.id
+
+    // Delete auto-generated default prompts if present
+    await ReflectionPrompt.deleteMany({
+      practitioner: practitionerId,
+      promptText: { $in: DEFAULT_PROMPTS },
+    })
+
+    const prompts = await ReflectionPrompt.find({ practitioner: practitionerId })
+      .populate("client", "firstName lastName email image")
+      .sort({ createdAt: -1 })
+      .lean()
+
+    const sanitizedPrompts = prompts.map((p) => {
+      if (p.isPrivate && p.status === "answered") {
+        return {
+          ...p,
+          answerText: "🔒 Learner saved this reflection privately.",
+        }
+      }
+      return p
+    })
+
+    return res.status(200).json({
+      success: true,
+      prompts: sanitizedPrompts,
+    })
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch practitioner reflections",
       error: error.message,
     })
   }

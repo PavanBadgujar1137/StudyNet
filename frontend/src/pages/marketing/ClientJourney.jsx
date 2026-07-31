@@ -16,7 +16,7 @@ const STAGES = [
     num: '01',
     when: 'Day 0',
     side: 'right',
-    who: 'Client',
+    who: 'Learner',
     whoType: 'cl',
     title: 'They land on your link',
     desc: "From your Instagram bio. They see who you are, what you help with, and one clear next step — not a menu of seventeen services. They book, pay by UPI, and get a confirmation before they've closed the tab.",
@@ -36,21 +36,21 @@ const STAGES = [
     num: '03',
     when: 'Day 5',
     side: 'right',
-    who: 'Client',
+    who: 'Learner',
     whoType: 'cl',
     title: 'The first session — and AURA beside you',
-    desc: "You hold the session. With their consent, OpenHand's AURA-powered engine listens quietly and offers you a next question, a technique that fits, or a gentle flag when something's worth returning to. Your client never sees it. You stay present instead of scribbling notes.",
+    desc: "You hold the session. With their consent, OpenHand's AURA-powered engine listens quietly and offers you a next question, a technique that fits, or a gentle flag when something's worth returning to. Your learner never sees it. You stay present instead of scribbling notes.",
     earn: 'Session notes drafted for you — ready to approve in 90 seconds',
   },
   {
     num: '04',
     when: 'Week 2',
     side: 'left',
-    who: 'Client',
+    who: 'Learner',
     whoType: 'cl',
     title: "Between sessions, they're not alone",
     desc: 'Two reflection prompts a week, written in your voice from your own session notes. A one-tap check-in that takes eleven seconds. You see the pattern before they tell you about it.',
-    earn: 'Clients who check in weekly rebook at a noticeably higher rate — track yours in the dashboard',
+    earn: 'Learners who check in weekly rebook at a noticeably higher rate — track yours in the dashboard',
   },
   {
     num: '05',
@@ -59,14 +59,14 @@ const STAGES = [
     who: 'You',
     whoType: 'co',
     title: 'You invite them into the circle',
-    desc: 'One-to-one work has a ceiling — your hours. So you open a six-week circle. Same material, eight people, one evening a week. Your client joins the one that fits them, and starts holding other people too.',
+    desc: 'One-to-one work has a ceiling — your hours. So you open a six-week circle. Same material, eight people, one evening a week. Your learner joins the one that fits them, and starts holding other people too.',
     earn: 'Circle of 8 at ₹15,000 = ₹1,20,000 for six evenings',
   },
   {
     num: '06',
     when: 'Week 8',
     side: 'left',
-    who: 'Client',
+    who: 'Learner',
     whoType: 'cl',
     title: "They can see how far they've come",
     desc: 'A progress view built from their own check-ins — not a score, not a leaderboard. Streaks they set themselves. A milestone marked when they finish the circle. The thing people quietly screenshot and send to a friend.',
@@ -80,7 +80,7 @@ const STAGES = [
     whoType: 'co',
     title: 'The loop closes — and starts again',
     desc: 'They finish. OpenHand asks for a testimonial at the moment they feel it, not three months later. They move onto your ₹799/month circle membership. And they send you two people who watched them change.',
-    earn: 'One client became ₹2,500 → ₹17,500 → recurring',
+    earn: 'One learner became ₹2,500 → ₹17,500 → recurring',
   },
 ]
 
@@ -88,7 +88,7 @@ const COPILOT_FEATURES = [
   {
     n: '01',
     title: 'It listens, with permission',
-    desc: 'Your client explicitly consents before any session is transcribed. They can withdraw it at any time, mid-session, and AURA goes silent immediately.',
+    desc: 'Your learner explicitly consents before any session is transcribed. They can withdraw it at any time, mid-session, and AURA goes silent immediately.',
   },
   {
     n: '02',
@@ -98,7 +98,7 @@ const COPILOT_FEATURES = [
   {
     n: '03',
     title: 'It remembers across sessions',
-    desc: '“She mentioned her sister in week two — she’s circling it again.” The connective memory that makes clients feel truly held, without you rereading six sets of notes before every call.',
+    desc: '“She mentioned her sister in week two — she’s circling it again.” The connective memory that makes learners feel truly held, without you rereading six sets of notes before every call.',
   },
   {
     n: '04',
@@ -174,13 +174,13 @@ export function ClientJourney() {
             Ninety days, <span className="oh-grad-text">from stranger to changed.</span>
           </h1>
           <p className="oh-journey-hero__sub">
-            This is a real shape of a client journey inside OpenHand — what your client feels at each turn, and what lands in your account while it happens.
+            This is a real shape of a learner journey inside OpenHand — what your learner feels at each turn, and what lands in your account while it happens.
           </p>
 
           <div className="oh-journey-legend">
             <span className="oh-journey-legend__item">
               <span className="oh-journey-dot oh-journey-dot--cl" />
-              <span>What your client experiences</span>
+              <span>What your learner experiences</span>
             </span>
             <span className="oh-journey-legend__item">
               <span className="oh-journey-dot oh-journey-dot--co" />
@@ -230,7 +230,7 @@ export function ClientJourney() {
                   <div className="oh-journey__bubble">
                     <div className={`oh-journey__who oh-journey__who--${s.whoType}`}>
                       <span className={`oh-journey-dot oh-journey-dot--${s.whoType}`} />
-                      <span>{s.who === 'You' ? 'You (Practitioner)' : 'Client'}</span>
+                      <span>{s.who === 'You' ? 'You (Practitioner)' : 'Learner'}</span>
                     </div>
                     <h3 className="oh-journey__bubble-title">{s.title}</h3>
                     <p className="oh-journey__bubble-desc">{s.desc}</p>
@@ -256,7 +256,7 @@ export function ClientJourney() {
                   <div className="oh-journey__bubble">
                     <div className={`oh-journey__who oh-journey__who--${s.whoType}`}>
                       <span className={`oh-journey-dot oh-journey-dot--${s.whoType}`} />
-                      <span>{s.who === 'You' ? 'You (Practitioner)' : 'Client'}</span>
+                      <span>{s.who === 'You' ? 'You (Practitioner)' : 'Learner'}</span>
                     </div>
                     <h3 className="oh-journey__bubble-title">{s.title}</h3>
                     <p className="oh-journey__bubble-desc">{s.desc}</p>
@@ -348,7 +348,7 @@ export function ClientJourney() {
                 </div>
 
                 <div className="oh-copilot__panel-foot">
-                  <FiLock style={{ marginRight: 6 }} /> Visible only to you · Client consented at 00:00
+                  <FiLock style={{ marginRight: 6 }} /> Visible only to you · Learner consented at 00:00
                 </div>
               </div>
             </div>
@@ -362,7 +362,7 @@ export function ClientJourney() {
               Where we draw the line
             </h3>
             <p className="oh-copilot__consent-desc">
-              AURA never speaks to your client, never diagnoses, and never sends anything on your behalf. Recordings are encrypted, retained only as long as you choose, and are not used to train external models. You are the practitioner. It's an instrument, and you're holding it.
+              AURA never speaks to your learner, never diagnoses, and never sends anything on your behalf. Recordings are encrypted, retained only as long as you choose, and are not used to train external models. You are the practitioner. It's an instrument, and you're holding it.
             </p>
           </div>
 

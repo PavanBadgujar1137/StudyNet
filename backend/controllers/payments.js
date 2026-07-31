@@ -180,13 +180,13 @@ exports.getMySubscription = async (req, res) => {
     const now = new Date()
     const hasActiveSubscription = !!subscription && new Date(subscription.endDate) > now
 
-    // Trial calculations
-    let trialStartedAt = user?.trialStartedAt || user?.createdAt || now
-    let trialExpiresAt = user?.trialExpiresAt || new Date(new Date(trialStartedAt).getTime() + 7 * 24 * 60 * 60 * 1000)
+    const trialStartedAt = user?.createdAt || user?.trialStartedAt || now
+    const trialExpiresAt = new Date(new Date(trialStartedAt).getTime() + 7 * 24 * 60 * 60 * 1000)
 
-    const isTrialActive = !hasActiveSubscription && now < new Date(trialExpiresAt)
+    const msRemaining = trialExpiresAt.getTime() - now.getTime()
+    const isTrialActive = !hasActiveSubscription && msRemaining > 0
     const trialDaysRemaining = isTrialActive
-      ? Math.max(0, Math.ceil((new Date(trialExpiresAt) - now) / (1000 * 60 * 60 * 24)))
+      ? Math.min(7, Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24))))
       : 0
 
     let effectivePlan = "none"

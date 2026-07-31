@@ -4,7 +4,6 @@ import { FiVideo } from 'react-icons/fi'
 
 export function Overview({ practitionerName = 'Practitioner', setActiveSection, telemetryData, loading }) {
   const navigate = useNavigate()
-  const firstName = practitionerName.replace('Dr. ', '').split(' ')[0]
 
   const stats = telemetryData?.stats || {
     monthlyEarnings: 0,
@@ -41,11 +40,9 @@ export function Overview({ practitionerName = 'Practitioner', setActiveSection, 
 
   return (
     <section className="view on" id="dash">
-      <div className="htop">
+      <div className="htop" style={{ marginBottom: '18px' }}>
         <div>
-          <div className="crumb">Dashboard</div>
-          <h1>Good day, {firstName}.</h1>
-          <p>{upcomingClasses.length} class(es) scheduled for today.</p>
+          <p style={{ margin: 0, color: '#64748B', fontSize: '14px' }}>{upcomingClasses.length} class(es) scheduled for today.</p>
         </div>
         <button className="btn" onClick={() => setActiveSection('room')}>Start next Zoom session</button>
       </div>
@@ -62,7 +59,7 @@ export function Overview({ practitionerName = 'Practitioner', setActiveSection, 
           <div className="dl flat">Scheduled payout</div>
         </div>
         <div className="card stat">
-          <div className="lbl">Active clients</div>
+          <div className="lbl">Active learners</div>
           <div className="val">{stats.activeClientsCount}</div>
           <div className="dl up">Enrolled students</div>
         </div>
@@ -172,17 +169,17 @@ export function Overview({ practitionerName = 'Practitioner', setActiveSection, 
           <div className="row">
             <div className="av g">!</div>
             <div className="who">
-              <b>Active Client Check-in Trends</b>
-              <span>{clients.length} client(s) currently connected in platform</span>
+              <b>Active Learner Check-in Trends</b>
+              <span>{clients.length} learner(s) currently connected in platform</span>
             </div>
             <div className="rt">
-              <button className="mini" onClick={() => setActiveSection('clients')}>View Clients</button>
+              <button className="mini" onClick={() => setActiveSection('clients')}>View Learners</button>
             </div>
           </div>
         </div>
 
         <div className="card">
-          <div className="sechd"><h3>Client wellbeing trend</h3></div>
+          <div className="sechd"><h3>Learner wellbeing trend</h3></div>
           {stats.avgWellbeing > 0 ? (
             <div style={{ padding: '12px 0' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
@@ -229,13 +226,13 @@ export function Overview({ practitionerName = 'Practitioner', setActiveSection, 
             </div>
           ) : (
             <div style={{ padding: '20px 0', textAlign: 'center', color: '#64748B', fontSize: '13px' }}>
-              No client check-ins logged yet. Connect with clients to start tracking wellbeing trends.
+              No learner check-ins logged yet. Connect with learners to start tracking wellbeing trends.
             </div>
           )}
           <p className="note" style={{ marginTop: '12px' }}>
             {stats.avgWellbeing > 0
-              ? `Average across ${stats.checkInClientCount || 0} client(s) who logged check-ins. Data stays private.`
-              : `0 check-ins logged so far. Connected client data stays 100% private.`}
+              ? `Average across ${stats.checkInClientCount || 0} learner(s) who logged check-ins. Data stays private.`
+              : `0 check-ins logged so far. Connected learner data stays 100% private.`}
           </p>
         </div>
       </div>

@@ -75,7 +75,7 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
         <div>
           <label style={{ display: 'block', fontSize: 12, color: '#64748B', marginBottom: 4, fontWeight: 600 }}>Description (optional)</label>
           <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-            rows={2} placeholder="What will clients learn in this video?"
+            rows={2} placeholder="What will learners learn in this video?"
             style={{ width: '100%', padding: '10px 14px', border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 14, color: '#1E293B', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }} />
         </div>
         <div>
@@ -316,7 +316,7 @@ function CreateCourseModal({ onClose, onSuccess }) {
           <div>
             <label style={{ display: 'block', fontSize: 12, color: '#64748B', marginBottom: 4, fontWeight: 600 }}>Description</label>
             <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-              rows={3} placeholder="What will clients learn?"
+              rows={3} placeholder="What will learners learn?"
               style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #E2E8F0', borderRadius: 10, fontSize: 14, color: '#1E293B', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }} />
           </div>
           <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10, padding: '12px 14px' }}>
@@ -388,7 +388,7 @@ export default function MyCourses() {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h2 style={{ margin: '0 0 4px', color: '#1E293B', fontSize: 22, fontWeight: 800 }}>My Courses</h2>
-          <p style={{ margin: 0, color: '#64748B', fontSize: 14 }}>Create video courses for your clients to access with their subscription</p>
+          <p style={{ margin: 0, color: '#64748B', fontSize: 14 }}>Create video courses for your learners to access with their subscription</p>
         </div>
         <button onClick={() => setShowCreate(true)}
           style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', background: 'linear-gradient(135deg, #3B82F6, #1D4ED8)', border: 'none', borderRadius: 12, color: '#fff', cursor: 'pointer', fontWeight: 700, fontSize: 14, boxShadow: '0 4px 12px rgba(59,130,246,0.3)' }}>
@@ -421,7 +421,7 @@ export default function MyCourses() {
         <div style={{ background: '#fff', border: '2px dashed #E2E8F0', borderRadius: 16, padding: '48px 24px', textAlign: 'center' }}>
           <FiBookOpen size={40} color="#CBD5E1" style={{ marginBottom: 16 }} />
           <h3 style={{ margin: '0 0 8px', color: '#1E293B' }}>No courses yet</h3>
-          <p style={{ margin: '0 0 20px', color: '#64748B' }}>Create your first course and start uploading videos for your clients</p>
+          <p style={{ margin: '0 0 20px', color: '#64748B' }}>Create your first course and start uploading videos for your learners</p>
           <button onClick={() => setShowCreate(true)}
             style={{ padding: '10px 24px', background: 'linear-gradient(135deg, #3B82F6, #1D4ED8)', border: 'none', borderRadius: 10, color: '#fff', cursor: 'pointer', fontWeight: 700 }}>
             Create First Course

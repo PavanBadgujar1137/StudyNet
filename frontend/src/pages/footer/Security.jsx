@@ -29,11 +29,11 @@ export function Security() {
           
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-[#0F172A] tracking-tight my-4 leading-tight">
             What we do to keep your practice — <br className="hidden sm:inline" />
-            <span className="text-[#2563EB]">and your clients' trust — safe.</span>
+            <span className="text-[#2563EB]">and your learners' trust — safe.</span>
           </h1>
 
           <p className="text-[#475569] text-base sm:text-lg max-w-4xl mx-auto font-medium leading-[1.65] mb-6">
-            Open Hand hosts sensitive practitioner and client data. We treat it with maximum security. Data is encrypted in transit and at rest. Access is strictly permissioned.
+            Open Hand hosts sensitive practitioner and learner data. We treat it with maximum security. Data is encrypted in transit and at rest. Access is strictly permissioned.
           </p>
 
           {/* Legal Disclaimer Banner */}

@@ -3,9 +3,9 @@ import Template from "../components/core/Auth/Template"
 function Login() {
   return (
     <Template
-      title="Welcome Back to OpenHand"
-      description1="Build skills for today, tomorrow, and beyond."
-      description2="Education to future-proof your career."
+      title="Welcome Back to Your OpenHand Sanctuary"
+      description1="Continue your daily check-in rhythm, live practitioner sessions,"
+      description2="and personal growth space."
       formType="login"
     />
   )

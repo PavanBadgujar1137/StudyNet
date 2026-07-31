@@ -120,9 +120,20 @@ exports.signup = async (req, res) => {
       })
     }
 
+    const token = jwt.sign(
+      { email: user.email, id: user._id, accountType: user.accountType, role: user.accountType },
+      process.env.JWT_SECRET,
+      { expiresIn: "24h" }
+    )
+
+    const userObj = user.toObject ? user.toObject() : user
+    delete userObj.password
+    userObj.token = token
+
     return res.status(200).json({
       success: true,
-      user,
+      token,
+      user: userObj,
       message: "User registered successfully",
     })
   } catch (error) {

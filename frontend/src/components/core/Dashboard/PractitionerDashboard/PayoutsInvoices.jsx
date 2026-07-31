@@ -17,7 +17,7 @@ export function PayoutsInvoices({ telemetryData }) {
           <div className="crumb">Business / Salary &amp; Payouts</div>
           <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#0F172A' }}>Monthly Salary &amp; Payout Ledger</h1>
           <p style={{ color: '#64748B', marginTop: '4px' }}>
-            Practitioners set offer prices. All client payments are collected centrally by Admin, and Admin disburses your monthly salary &amp; session earnings.
+            Practitioners set offer prices. All learner payments are collected centrally by Admin, and Admin disburses your monthly salary &amp; session earnings.
           </p>
         </div>
       </div>
@@ -81,8 +81,8 @@ export function PayoutsInvoices({ telemetryData }) {
               <span style={{ fontSize: '12px', color: '#64748B' }}>You set custom session &amp; cohort prices in 'My Offers'.</span>
             </div>
             <div style={{ borderLeft: '3px solid #10B981', paddingLeft: '12px' }}>
-              <b style={{ fontSize: '13px', color: '#0F172A', display: 'block' }}>2. Client Pays Central Admin</b>
-              <span style={{ fontSize: '12px', color: '#64748B' }}>Clients purchase offers or subscriptions. Payment is collected directly by Admin.</span>
+              <b style={{ fontSize: '13px', color: '#0F172A', display: 'block' }}>2. Learner Pays Central Admin</b>
+              <span style={{ fontSize: '12px', color: '#64748B' }}>Learners purchase offers or subscriptions. Payment is collected directly by Admin.</span>
             </div>
             <div style={{ borderLeft: '3px solid #3B82F6', paddingLeft: '12px' }}>
               <b style={{ fontSize: '13px', color: '#0F172A', display: 'block' }}>3. Session / Course Delivered</b>

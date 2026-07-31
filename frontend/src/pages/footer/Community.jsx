@@ -62,13 +62,13 @@ export function Community() {
   const principles = [
     {
       num: '01',
-      title: 'This is a space for practitioners, not clients.',
+      title: 'This is a space for practitioners, not learners.',
       desc: 'If you\'re seeking help for yourself, we\'ll gladly point you to our verified practitioner directory.'
     },
     {
       num: '02',
       title: 'Confidentiality is non-negotiable.',
-      desc: 'Never post identifiable client information. Anonymize case discussions; when in doubt, don\'t post.'
+      desc: 'Never post identifiable learner information. Anonymize case discussions; when in doubt, don\'t post.'
     },
     {
       num: '03',
@@ -121,7 +121,7 @@ export function Community() {
 
             <div className="p-5 rounded-2xl bg-white border border-slate-200 border-l-4 border-l-blue-600 max-w-2xl mx-auto text-xs sm:text-sm text-[#334155] font-semibold flex items-center justify-center gap-3 shadow-sm mb-8">
               <FiHeart className="text-red-500 shrink-0 text-base" />
-              <span>We built this space because the loneliest part of running a solo practice is everything around the client work.</span>
+              <span>We built this space because the loneliest part of running a solo practice is everything around the learner work.</span>
             </div>
 
             {/* Hero Action Buttons */}

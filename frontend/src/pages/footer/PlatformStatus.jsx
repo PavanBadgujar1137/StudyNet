@@ -51,8 +51,8 @@ export function PlatformStatus() {
       icon: FiServer
     },
     {
-      name: 'Client Management & Portal',
-      desc: 'Client profiles, private/shared progress notes, booking calendar, and client portal',
+      name: 'Learner Management & Portal',
+      desc: 'Learner profiles, private/shared progress notes, booking calendar, and learner portal',
       status: 'Operational',
       uptime: 100.0,
       latency: '22 ms',
@@ -76,7 +76,7 @@ export function PlatformStatus() {
     },
     {
       name: 'Mobile Apps & Sync Bridge',
-      desc: 'iOS and Android client portals & practitioner dashboard sync channels',
+      desc: 'iOS and Android learner portals & practitioner dashboard sync channels',
       status: 'Operational',
       uptime: 99.94,
       latency: '31 ms',
@@ -84,7 +84,7 @@ export function PlatformStatus() {
     },
     {
       name: 'Website & Core Dashboard',
-      desc: 'Practitioner admin dashboard, client web portal, and public directory index',
+      desc: 'Practitioner admin dashboard, learner web portal, and public directory index',
       status: 'Operational',
       uptime: 100.0,
       latency: '16 ms',
@@ -250,7 +250,7 @@ export function PlatformStatus() {
             <h2 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] tracking-tight">Performance &amp; Reliability Telemetry</h2>
           </div>
           <p className="text-sm sm:text-base text-[#475569] leading-[1.65] max-w-4xl font-medium">
-            We publish rolling uptime records calculated directly from real practitioner and client sessions, not synthetic idle check pings.
+            We publish rolling uptime records calculated directly from real practitioner and learner sessions, not synthetic idle check pings.
           </p>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 mt-8">

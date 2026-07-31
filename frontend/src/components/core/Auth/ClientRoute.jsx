@@ -20,6 +20,9 @@ function ClientRoute({ children }) {
 
   if (
     user?.accountType === ACCOUNT_TYPE.CLIENT ||
+    user?.accountType === ACCOUNT_TYPE.LEARNER ||
+    user?.accountType === "Client" ||
+    user?.accountType === "Learner" ||
     user?.accountType === ACCOUNT_TYPE.STUDENT
   ) {
     return children

@@ -63,7 +63,7 @@ export function PractitionerDashboard() {
     { id: 'community', label: 'Community Hub', icon: <FiMessageSquare /> },
     { id: 'offers', label: 'My offers', icon: <FiTag /> },
     { id: 'courses', label: 'My Courses', icon: <FiBookOpen /> },
-    { id: 'clients', label: 'My clients', icon: <FiUsers /> },
+    { id: 'clients', label: 'My learners', icon: <FiUsers /> },
     { id: 'circles', label: 'Circles', icon: <FiCircle /> },
   ]
 
@@ -259,11 +259,11 @@ export function PractitionerDashboard() {
                 <span style={{ textTransform: 'capitalize' }}>{activeSection}</span>
               </div>
               <h1 className="oh-viewport-title">
-                {activeSection === 'dash' && `Welcome back, ${practitionerName} 👋`}
+                {activeSection === 'dash' && `Hello, ${practitionerName} 👋`}
                 {activeSection === 'community' && 'Community & Chat Hub'}
                 {activeSection === 'offers' && 'My Practice Offers'}
                 {activeSection === 'courses' && 'My Courses'}
-                {activeSection === 'clients' && 'Client Management Hub'}
+                {activeSection === 'clients' && 'Learner Management Hub'}
                 {activeSection === 'circles' && 'Active Circles'}
                 {activeSection === 'room' && 'Live Session Room'}
                 {activeSection === 'payouts' && 'Salary & Payout Ledger'}

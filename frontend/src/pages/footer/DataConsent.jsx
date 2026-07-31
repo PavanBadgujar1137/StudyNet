@@ -57,7 +57,7 @@ export function DataConsent() {
             <button onClick={() => scrollToSection('why-exists')} className="block w-full text-left py-2 px-3 rounded-xl hover:bg-slate-100 text-[#334155] font-semibold transition">Why this page exists</button>
             <button onClick={() => scrollToSection('consent-practitioners')} className="block w-full text-left py-2 px-3 rounded-xl hover:bg-slate-100 text-[#334155] font-semibold transition">Consent from practitioners</button>
             <button onClick={() => scrollToSection('consent-clients')} className="block w-full text-left py-2 px-3 rounded-xl hover:bg-slate-100 text-[#334155] font-semibold transition flex items-center justify-between">
-              <span>Consent from clients</span> <span className="text-amber-600 font-bold">⚖️</span>
+              <span>Consent from learners</span> <span className="text-amber-600 font-bold">⚖️</span>
             </button>
             <button onClick={() => scrollToSection('recording-consent')} className="block w-full text-left py-2 px-3 rounded-xl hover:bg-slate-100 text-[#334155] font-semibold transition">Session recording consent</button>
             <button onClick={() => scrollToSection('withdrawing')} className="block w-full text-left py-2 px-3 rounded-xl hover:bg-slate-100 text-[#334155] font-semibold transition">Withdrawing consent</button>
@@ -89,15 +89,15 @@ export function DataConsent() {
             <p>When you sign up as a practitioner, you consent to account processing, payment processing, and service communications.</p>
           </div>
 
-          {/* Consent from clients */}
+          {/* Consent from learners */}
           <div id="consent-clients" className="p-8 sm:p-10 rounded-3xl bg-white border border-amber-300 shadow-sm space-y-4 font-medium">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] tracking-tight flex items-center gap-2">
-                <FiShield className="text-amber-600" /> Consent from clients
+                <FiShield className="text-amber-600" /> Consent from learners
               </h2>
               <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold border border-amber-300 shrink-0">⚖️ Legal Review Required</span>
             </div>
-            <p>Practitioners are responsible for obtaining valid informed consent from clients prior to logging personal notes or data.</p>
+            <p>Practitioners are responsible for obtaining valid informed consent from learners prior to logging personal notes or data.</p>
           </div>
 
           {/* Session recording consent */}
@@ -111,7 +111,7 @@ export function DataConsent() {
           {/* Withdrawing consent */}
           <div id="withdrawing" className="p-8 sm:p-10 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4 font-medium">
             <h2 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] tracking-tight">Withdrawing consent</h2>
-            <p>Clients or practitioners can withdraw non-essential consent at any time via settings or emailing support.</p>
+            <p>Learners or practitioners can withdraw non-essential consent at any time via settings or emailing support.</p>
           </div>
 
           {/* Data portability */}
@@ -119,7 +119,7 @@ export function DataConsent() {
             <h2 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] tracking-tight flex items-center gap-2">
               <FiDownload className="text-emerald-600" /> Data portability
             </h2>
-            <p>Full export tools are provided to practitioners to download notes, clients, and financial histories in standard CSV/JSON format.</p>
+            <p>Full export tools are provided to practitioners to download notes, learners, and financial histories in standard CSV/JSON format.</p>
           </div>
 
           {/* Data deletion */}
