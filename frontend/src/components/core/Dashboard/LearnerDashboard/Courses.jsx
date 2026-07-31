@@ -128,7 +128,7 @@ function CourseDetailView({ course, hasAccess, onBack, subscription }) {
               ? `This course requires a ${course.requiredPlan} plan or above.`
               : 'Subscribe to access all courses from our practitioners.'}
           </p>
-          <a href="/pricing" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', background: 'linear-gradient(135deg, #3B82F6, #1D4ED8)', borderRadius: 10, color: '#fff', textDecoration: 'none', fontWeight: 700, fontSize: 14 }}>
+          <a href="/practitioner-journey" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', background: 'linear-gradient(135deg, #3B82F6, #1D4ED8)', borderRadius: 10, color: '#fff', textDecoration: 'none', fontWeight: 700, fontSize: 14 }}>
             View Plans & Subscribe <FiArrowRight />
           </a>
         </div>
@@ -354,7 +354,7 @@ export default function Courses() {
               </div>
             </div>
           </div>
-          <a href="/pricing" style={{
+          <a href="/practitioner-journey" style={{
             display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 18px',
             background: subInfo?.isTrialActive ? 'linear-gradient(135deg, #8B5CF6, #6D28D9)' : 'linear-gradient(135deg, #EF4444, #DC2626)',
             borderRadius: 8, color: '#fff', textDecoration: 'none', fontWeight: 700, fontSize: 13

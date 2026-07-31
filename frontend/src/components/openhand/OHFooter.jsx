@@ -6,8 +6,7 @@ import { Link } from 'react-router-dom'
 import OHLogo from './OHLogo'
 import { 
   FaInstagram, 
-  FaLinkedin, 
-  FaYoutube 
+  FaLinkedin 
 } from 'react-icons/fa'
 import { 
   FiArrowUp, 
@@ -19,7 +18,7 @@ const LINKS = [
   { 
     group: 'PRODUCT',      
     items: [
-      { label: 'Pricing',           to: '/pricing' },
+      { label: 'Practitioner journey', to: '/practitioner-journey' },
       { label: 'Find a practitioner', to: '/find-a-practitioner' },
       { label: 'AURA AI',           to: '/aura', badge: 'AI' },
       { label: 'Learner journey',   to: '/learner-journey' },
@@ -28,9 +27,9 @@ const LINKS = [
   { 
     group: 'FOR PRACTITIONERS', 
     items: [
-      { label: 'Start free',        to: '/start-free', badge: 'Free' },
+      // { label: 'Start free',        to: '/start-free', badge: 'Free' },
       { label: 'For organizations', to: '/for-organizations' },
-      { label: 'Talk to a human',   to: '/talk-to-human' },
+      { label: 'Contact Us',        to: '/contact-us' },
       { label: 'Onboarding',        to: '/onboarding/practitioner' },
     ]
   },
@@ -57,7 +56,6 @@ const LINKS = [
 const SOCIAL_LINKS = [
   { icon: FaInstagram, href: 'https://www.instagram.com/openhand.live?igsh=MWNqMDhxeHFiMXZmdA%3D%3D&utm_source=qr', label: 'Instagram' },
   { icon: FaLinkedin, href: 'https://www.linkedin.com/showcase/openhandai/', label: 'LinkedIn' },
-  { icon: FaYoutube, href: 'https://youtube.com', label: 'YouTube' },
 ]
 
 export function OHFooter() {

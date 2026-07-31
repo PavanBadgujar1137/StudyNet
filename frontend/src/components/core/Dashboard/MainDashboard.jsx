@@ -1,6 +1,6 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
-import ClientDashboard from './ClientDashboard/ClientDashboard'
+import LearnerDashboard from './LearnerDashboard/LearnerDashboard'
 import PractitionerDashboard from './PractitionerDashboard/PractitionerDashboard'
 import AdminApp from '../../../pages/admin/AdminApp'
 import { ACCOUNT_TYPE } from '../../../utils/constants'
@@ -20,7 +20,7 @@ export function MainDashboard() {
     return <PractitionerDashboard />
   }
 
-  return <ClientDashboard />
+  return <LearnerDashboard />
 }
 
 export default MainDashboard

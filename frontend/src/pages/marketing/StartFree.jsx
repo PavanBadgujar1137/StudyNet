@@ -5,7 +5,6 @@ import {
   OHEyebrow,
   OHCard,
   OHRangeCalculator,
-  BubbleField,
 } from '../../components/openhand'
 
 export function StartFree() {
@@ -31,7 +30,7 @@ export function StartFree() {
 
   return (
     <div className="oh-startfree-page relative min-h-screen">
-      <BubbleField density="low" zone="fullscreen" />
+
 
       {/* Hero */}
       <header className="oh-startfree-hero">
@@ -194,7 +193,7 @@ export function StartFree() {
           </div>
           <div className="cta-row center-row">
             <OHButton href="/signup" size="lg">Create my practice space</OHButton>
-            <OHButton href="/talk-to-human" variant="ghost" size="lg">Talk to a real human →</OHButton>
+            <OHButton href="/contact-us" variant="ghost" size="lg">Talk to a real human →</OHButton>
           </div>
         </div>
       </section>

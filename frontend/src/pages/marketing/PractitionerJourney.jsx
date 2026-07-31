@@ -6,11 +6,10 @@ import {
   OHButton,
   OHEyebrow,
   OHRangeCalculator,
-  BubbleField,
 } from '../../components/openhand'
 import { apiConnector } from '../../services/apiConnector'
 
-export function Pricing() {
+export function PractitionerJourney() {
   const [openFaq, setOpenFaq] = useState(null)
   const [payingPlan, setPayingPlan] = useState(null)
   const [subStatus, setSubStatus] = useState(null)
@@ -203,12 +202,12 @@ export function Pricing() {
 
   return (
     <div className="oh-pricing-page font-sans bg-slate-50 min-h-screen text-slate-900 relative">
-      <BubbleField density="low" zone="fullscreen" />
+
 
       {/* Hero */}
       <header className="oh-pricing-hero pt-14 pb-8 text-center bg-gradient-to-b from-white to-slate-50 border-b border-slate-100">
         <div className="oh-wrap max-w-5xl mx-auto px-4">
-          <OHEyebrow>Transparent &amp; Fair Learner Pricing</OHEyebrow>
+          <OHEyebrow>Practitioner Journey &amp; Pricing</OHEyebrow>
           <h1 className="whitespace-nowrap text-center w-full mx-auto text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight my-4">
             Invest in your wellness. <span className="oh-grad-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">Care built around you.</span>
           </h1>
@@ -252,21 +251,21 @@ export function Pricing() {
               <div>
                 <h3 className="text-2xl font-bold text-slate-900 mb-2">Starter Plan</h3>
                 <p className="who text-slate-600 text-sm mb-6 min-h-[42px] font-medium leading-relaxed">
-                  For individuals starting their personal wellness &amp; mental health journey.
+                  For practitioners testing whether an online practice works at all.
                 </p>
                 <div className="price-tag text-4xl font-extrabold text-slate-900 mb-3 tracking-tight">
                   ₹999<small className="text-slate-500 font-medium text-base"> /month</small>
                 </div>
                 <div className="cut-badge bg-blue-50 text-blue-700 font-bold text-xs uppercase tracking-wider py-2 px-3.5 rounded-xl mb-6 inline-flex items-center gap-2 border border-blue-100">
-                  Essential Learner Membership
+                  WE TAKE 8% OF WHAT YOU EARN
                 </div>
                 <ul className="plan-features text-slate-700 text-sm space-y-3 mb-8">
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Access to core practitioner courses &amp; library</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> 1 Monthly group circle pass included</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Daily mood check-ins &amp; guided prompts</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Personal AI health &amp; reflection assistant (AURA)</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Standard 1:1 session booking access</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Secure digital health record vault</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Unlimited 1:1 sessions</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> One private circle</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> UPI, cards, net banking, Stripe</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Client check-ins &amp; reflection prompts</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Post-session AURA notes</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Listed in the practitioner directory</li>
                 </ul>
               </div>
               <div className="flex flex-col gap-2.5">
@@ -284,27 +283,27 @@ export function Pricing() {
             {/* Growth Plan (Featured) */}
             <div className="plan-card feat-card relative bg-slate-900 text-white border-2 border-indigo-500 rounded-3xl p-8 shadow-2xl transition-all flex flex-col justify-between transform -translate-y-2">
               <span className="featured-badge absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white text-[11px] font-extrabold tracking-wider uppercase py-1.5 px-5 rounded-full shadow-lg whitespace-nowrap">
-                Most Popular Learner Choice
+                MOST POPULAR PRACTITIONER CHOICE
               </span>
               <div>
                 <h3 className="text-2xl font-bold text-white mb-2 mt-2">Growth Plan</h3>
                 <p className="who text-slate-300 text-sm mb-6 min-h-[42px] font-normal leading-relaxed">
-                  For active wellness seekers wanting full access to courses, circles, and session discounts.
+                  For practitioners past ₹40,000/month who want the fee to stop stinging.
                 </p>
                 <div className="price-tag text-4xl font-extrabold text-white mb-3 tracking-tight">
                   ₹2,999<small className="text-slate-300 font-medium text-base"> /month</small>
                 </div>
                 <div className="cut-badge bg-indigo-900/60 text-sky-300 font-bold text-xs uppercase tracking-wider py-2 px-3.5 rounded-xl mb-6 inline-flex items-center gap-2 border border-indigo-500/30">
-                  Full Access + 15% OFF Sessions
+                  WE TAKE 5% OF WHAT YOU EARN
                 </div>
                 <ul className="plan-features text-slate-200 text-sm space-y-3 mb-8">
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> Everything in Starter Plan</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> Unlimited access to ALL practitioner courses</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> Unlimited access to live group circles</li>
-                  <li className="flex items-center gap-2.5 font-semibold text-white"><span className="text-sky-400 font-bold text-base">✓</span> <b>15% discount on all 1:1 sessions</b></li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> Live in-session AURA companion &amp; insights</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> Priority session scheduling &amp; waitlist bypass</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> Monthly companion pass for a friend</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> Everything in Starter</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> Unlimited circles &amp; cohorts</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> Recurring memberships</li>
+                  <li className="flex items-center gap-2.5 font-semibold text-white"><span className="text-sky-400 font-bold text-base">✓</span> <b>Live in-session AURA</b></li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> WhatsApp reminders &amp; broadcasts</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> GST-ready invoices</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-sky-400 font-bold text-base">✓</span> Priority placement in directory</li>
                 </ul>
               </div>
               <div className="flex flex-col gap-2.5">
@@ -324,22 +323,21 @@ export function Pricing() {
               <div>
                 <h3 className="text-2xl font-bold text-slate-900 mb-2">Master VIP Plan</h3>
                 <p className="who text-slate-600 text-sm mb-6 min-h-[42px] font-medium leading-relaxed">
-                  For complete wellbeing coverage with dedicated care, free monthly session, and VIP perks.
+                  For established practices running multiple cohorts under their own brand.
                 </p>
                 <div className="price-tag text-4xl font-extrabold text-slate-900 mb-3 tracking-tight">
                   ₹5,999<small className="text-slate-500 font-medium text-base"> /month</small>
                 </div>
                 <div className="cut-badge bg-emerald-50 text-emerald-700 font-bold text-xs uppercase tracking-wider py-2 px-3.5 rounded-xl mb-6 inline-flex items-center gap-2 border border-emerald-100">
-                  1 Free 1:1 Session + 25% OFF Extra
+                  0% — YOU KEEP 100% OF EARNINGS
                 </div>
                 <ul className="plan-features text-slate-700 text-sm space-y-3 mb-8">
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Everything in Growth Plan</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> <b>1 Free 1:1 private session included / mo</b></li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> <b>25% discount on additional 1:1 sessions</b></li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Dedicated care manager &amp; concierge support</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Family sharing (up to 3 family sub-accounts)</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Custom wellness path &amp; biometric analytics</li>
-                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> 24/7 Priority health helpline</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Everything in Growth</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Your own branded app (iOS + Android)</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Custom domain</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Team seats for associate practitioners</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Advanced client analytics</li>
+                  <li className="flex items-center gap-2.5 font-medium"><span className="text-emerald-600 font-bold text-base">✓</span> Named support contact</li>
                 </ul>
               </div>
               <div className="flex flex-col gap-2.5">
@@ -470,4 +468,4 @@ export function Pricing() {
   )
 }
 
-export default Pricing
+export default PractitionerJourney

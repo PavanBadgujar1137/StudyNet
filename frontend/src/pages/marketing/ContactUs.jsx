@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { OHFooter, BubbleField } from '../../components/openhand'
+import { OHFooter } from '../../components/openhand'
 import { apiConnector } from '../../services/apiConnector'
 import toast from 'react-hot-toast'
 import {
@@ -15,7 +15,7 @@ import {
   FiSend
 } from 'react-icons/fi'
 
-export function TalkToHuman() {
+export function ContactUs() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -164,12 +164,12 @@ export function TalkToHuman() {
 
       if (res?.data?.success) {
         setSubmitted(true)
-        toast.success('Conversation request sent successfully!')
+        toast.success('Contact message sent successfully!')
       } else {
         setSubmitted(true)
       }
     } catch (err) {
-      console.error('Talk to human submit error:', err)
+      console.error('Contact us submit error:', err)
       setSubmitted(true)
     } finally {
       setLoading(false)
@@ -178,20 +178,20 @@ export function TalkToHuman() {
 
   return (
     <div className="talk-page relative min-h-screen">
-      <BubbleField density="low" zone="fullscreen" />
+
       {/* Hero */}
       <header className="talk-hero">
         <div className="oh-wrap">
           <div className="talk-status-badge">
             <span className="talk-pulse-dot"></span>
-            <span>Founders accepting 1:1 conversation requests this week</span>
+            <span>Contact Us — Direct founder response within 24 hours</span>
           </div>
 
           <h1>
-            Talk to <span className="talk-grad-text">a real human.</span>
+            Contact <span className="talk-grad-text">Us.</span>
           </h1>
           <p>
-            Not a chatbot, not an SDR reading a script. One of the two people who built OpenHand, for fifteen to twenty minutes, about your practice specifically.
+            Have questions about OpenHand? Connect directly with our team for personalized guidance, practice setup help, or platform inquiries.
           </p>
 
           {/* Key Assurance Stats */}
@@ -397,7 +397,7 @@ export function TalkToHuman() {
                 <span className="form-eyebrow">
                   <FiZap className="sparkle-icon" /> Direct Access
                 </span>
-                <h2>Book a conversation</h2>
+                <h2>Contact Us</h2>
                 <p className="lede">
                   Tell us roughly where you are in your practice journey. We'll send two or three proposed time slots in your timezone within 24 hours.
                 </p>
@@ -448,7 +448,7 @@ export function TalkToHuman() {
                     <div className="ok-icon-wrap">
                       <FiCheckCircle className="ok-check" />
                     </div>
-                    <h3>Conversation request sent!</h3>
+                    <h3>Contact request sent!</h3>
                     <p>
                       Thanks, <strong>{formData.name.split(' ')[0]}</strong>. We have received your request.
                     </p>
@@ -475,7 +475,7 @@ export function TalkToHuman() {
                       )}
                     </div>
                     <p className="ok-subtext">
-                      We will review your practice context and reply with 2–3 time slots within one working day.
+                      We will review your context and reply with 2–3 time slots within one working day.
                     </p>
                     <button
                       type="button"
@@ -581,7 +581,7 @@ export function TalkToHuman() {
                         </>
                       ) : (
                         <>
-                          <FiSend style={{ marginRight: '8px' }} /> Request a Time Slot
+                          <FiSend style={{ marginRight: '8px' }} /> Send Message
                         </>
                       )}
                     </button>
@@ -640,10 +640,10 @@ export function TalkToHuman() {
           <div className="close-card">
             <h2>Or skip the call and explore directly.</h2>
             <p>
-              The free plan is open right now. You can create your practice space in seconds and book a call whenever you're ready.
+              The free plan is open right now. You can create your practice space in seconds and contact us whenever you're ready.
             </p>
             <div className="talk-cta-row">
-              <Link to="/start-free" className="talk-btn" style={{ width: 'auto', padding: '13px 28px' }}>
+              <Link to="/signup" className="talk-btn" style={{ width: 'auto', padding: '13px 28px' }}>
                 Start Free Practice Space <FiArrowRight style={{ marginLeft: '8px' }} />
               </Link>
               <Link to="/learner-journey" className="talk-btn-ghost">
@@ -659,4 +659,4 @@ export function TalkToHuman() {
   )
 }
 
-export default TalkToHuman
+export default ContactUs

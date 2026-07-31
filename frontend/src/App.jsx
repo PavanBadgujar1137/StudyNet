@@ -20,13 +20,13 @@ import LiveClassRoom from "./pages/LiveClassRoom"
 
 // OpenHand Marketing Pages (Verbatim Specs)
 import HomeMarketing from "./pages/marketing/Home"
-import Pricing from "./pages/marketing/Pricing"
+import PractitionerJourney from "./pages/marketing/PractitionerJourney"
 import ForOrganizations from "./pages/marketing/ForOrganizations"
 import FindAPractitioner from "./pages/marketing/FindAPractitioner"
 import CoPilot from "./pages/marketing/CoPilot"
-import ClientJourney from "./pages/marketing/ClientJourney"
-import StartFree from "./pages/marketing/StartFree"
-import TalkToHuman from "./pages/marketing/TalkToHuman"
+import LearnerJourney from "./pages/marketing/LearnerJourney"
+// import StartFree from "./pages/marketing/StartFree"
+import ContactUs from "./pages/marketing/ContactUs"
 import PractitionerOnboarding from "./pages/PractitionerOnboarding"
 
 // OpenHand Footer Pages
@@ -40,12 +40,12 @@ import DataConsent from "./pages/footer/DataConsent"
 import Security from "./pages/footer/Security"
 
 // OpenHand Authenticated Apps (B & C)
-import ClientApp from "./pages/app/ClientApp"
+import LearnerApp from "./pages/app/LearnerApp"
 import PractitionerApp from "./pages/practice/PractitionerApp"
 import OrgAdmin from "./pages/org/OrgAdmin"
 
 // Phase 2 — Role Guards
-import ClientRoute from "./components/core/Auth/ClientRoute"
+import LearnerRoute from "./components/core/Auth/LearnerRoute"
 import PractitionerRoute from "./components/core/Auth/PractitionerRoute"
 import OrgAdminRoute from "./components/core/Auth/OrgAdminRoute"
 import AdminRoute from "./components/core/Auth/AdminRoute"
@@ -91,15 +91,17 @@ function App() {
       <Routes>
         {/* OpenHand Marketing Sitemap (A1-A8) */}
         <Route path="/" element={<HomeMarketing />} />
-        <Route path="/pricing" element={<Pricing />} />
+        <Route path="/practitioner-journey" element={<PractitionerJourney />} />
+        <Route path="/pricing" element={<PractitionerJourney />} />
         <Route path="/for-organizations" element={<ForOrganizations />} />
         <Route path="/find-a-practitioner" element={<FindAPractitioner />} />
         <Route path="/co-pilot" element={<CoPilot />} />
         <Route path="/aura" element={<CoPilot />} />
-        <Route path="/client-journey" element={<ClientJourney />} />
-        <Route path="/learner-journey" element={<ClientJourney />} />
-        <Route path="/start-free" element={<StartFree />} />
-        <Route path="/talk-to-human" element={<TalkToHuman />} />
+        <Route path="/client-journey" element={<LearnerJourney />} />
+        <Route path="/learner-journey" element={<LearnerJourney />} />
+        {/* <Route path="/start-free" element={<StartFree />} /> */}
+        <Route path="/contact-us" element={<ContactUs />} />
+        <Route path="/talk-to-human" element={<ContactUs />} />
 
         {/* Footer Pages */}
         <Route path="/platform-status" element={<PlatformStatus />} />
@@ -112,13 +114,13 @@ function App() {
         <Route path="/data-consent" element={<DataConsent />} />
         <Route path="/security" element={<Security />} />
 
-        {/* Client App (5 Tabs) */}
+        {/* Learner App (5 Tabs) */}
         <Route
           path="/app/*"
           element={
-            <ClientRoute>
-              <ClientApp />
-            </ClientRoute>
+            <LearnerRoute>
+              <LearnerApp />
+            </LearnerRoute>
           }
         />
 

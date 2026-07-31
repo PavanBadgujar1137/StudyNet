@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { OHFooter, OHEyebrow, BubbleField } from '../../components/openhand'
+import { OHFooter, OHEyebrow } from '../../components/openhand'
 import { 
   FiMessageSquare, 
   FiMail, 
@@ -72,7 +72,7 @@ export function HelpSupport() {
 
   return (
     <div className="font-sans bg-[#F8FAFC] min-h-screen text-[#334155] flex flex-col relative">
-      <BubbleField density="low" zone="fullscreen" />
+
       {/* Modern Hero Section */}
       <header className="relative bg-white border-b border-slate-200/80 py-10 sm:py-14 overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:20px_20px] opacity-40 pointer-events-none" />

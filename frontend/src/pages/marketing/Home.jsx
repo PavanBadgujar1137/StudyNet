@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { OHFooter, BubbleField } from '../../components/openhand'
+import { OHFooter } from '../../components/openhand'
 import {
   FiClock,
   FiCheckCircle,
@@ -107,13 +107,8 @@ export function Home() {
 
   return (
     <div className="oh-home-page relative min-h-screen">
-      {/* Ambient Bubble Field (Page Level - Low Tier) */}
-      <BubbleField density="low" zone="fullscreen" />
-
       {/* Hero */}
       <header className="oh-home-hero relative overflow-hidden">
-        {/* Medium Density Ambient Bubble Field for Hero Section */}
-        <BubbleField density="medium" zone="section" />
 
         <div className="oh-wrap relative z-10">
           <div className="oh-hero-badge">
@@ -132,7 +127,7 @@ export function Home() {
           </p>
 
           <div className="cta-row">
-            <Link to="/start-free" className="oh-btn-primary">
+            <Link to="/signup" className="oh-btn-primary">
               Start your free practice space <FiArrowRight style={{ marginLeft: '8px' }} />
             </Link>
             <Link to="/learner-journey" className="oh-btn-ghost">
@@ -600,7 +595,7 @@ export function Home() {
                 </div>
                 <div className="timeline-info">
                   <h3>Start your free practice space</h3>
-                  <Link to="/start-free" className="timeline-cta-btn btn-blue">
+                  <Link to="/signup" className="timeline-cta-btn btn-blue">
                     Start free space <FiArrowRight style={{ marginLeft: '6px' }} />
                   </Link>
                 </div>
@@ -628,7 +623,7 @@ export function Home() {
                 </div>
                 <div className="timeline-info">
                   <h3>Talk to a real human</h3>
-                  <Link to="/talk-to-human" className="timeline-cta-btn btn-emerald">
+                  <Link to="/contact-us" className="timeline-cta-btn btn-emerald">
                     Book a conversation <FiArrowRight style={{ marginLeft: '6px' }} />
                   </Link>
                 </div>

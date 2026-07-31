@@ -2,7 +2,7 @@ import { useSelector } from "react-redux"
 import { Navigate } from "react-router-dom"
 import { ACCOUNT_TYPE } from "../../../utils/constants"
 
-function ClientRoute({ children }) {
+function LearnerRoute({ children }) {
   const { token } = useSelector((state) => state.auth)
   const { user, loading } = useSelector((state) => state.profile)
 
@@ -38,4 +38,4 @@ function ClientRoute({ children }) {
   return <Navigate to="/" />
 }
 
-export default ClientRoute
+export default LearnerRoute

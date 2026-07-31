@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { OHFooter, BubbleField } from '../../components/openhand'
+import { OHFooter } from '../../components/openhand'
 import { 
   FiChevronDown, 
   FiHelpCircle 
@@ -43,7 +43,7 @@ export function CoPilot() {
 
   return (
     <div className="copilot-page relative min-h-screen">
-      <BubbleField density="low" zone="fullscreen" />
+
       {/* Hero */}
       <header className="copilot-hero">
         <div className="oh-wrap">
@@ -57,7 +57,7 @@ export function CoPilot() {
                 So don't. AURA listens alongside you — with your learner's explicit consent — and hands you the next question, the technique that fits, and the thread you'd otherwise have missed. Your learner never sees a word of it.
               </p>
               <div className="copilot-cta-row">
-                <Link to="/start-free" className="copilot-btn">Try it in a session</Link>
+                <Link to="/signup" className="copilot-btn">Try it in a session</Link>
                 <a href="#how" className="copilot-btn-ghost">See how it works →</a>
               </div>
             </div>
@@ -440,8 +440,8 @@ export function CoPilot() {
           <h2>Start with the notes. Add the panel when you trust it.</h2>
           <p>Post-session drafting is on the free plan. You never have to switch on anything you're not ready for.</p>
           <div className="copilot-cta-row">
-            <Link to="/start-free" className="copilot-btn">Start your free practice space</Link>
-            <Link to="/talk-to-human" className="copilot-btn-ghost">Ask us the hard questions →</Link>
+            <Link to="/signup" className="copilot-btn">Start your free practice space</Link>
+            <Link to="/contact-us" className="copilot-btn-ghost">Ask us the hard questions →</Link>
           </div>
         </div>
       </section>

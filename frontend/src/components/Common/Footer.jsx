@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import logoIcon from "../../assets/Logo/Logo-Icon.png";
-import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin, FaYoutube } from "react-icons/fa";
+import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from "react-icons/fa";
 import { FiArrowRight, FiCheck, FiMail, FiHeart } from "react-icons/fi";
 
 const Footer = () => {
@@ -22,7 +22,8 @@ const Footer = () => {
       { label: "Home", to: "/" },
       { label: "For Organizations", to: "/for-organizations" },
       { label: "Find a Practitioner", to: "/find-a-practitioner" },
-      { label: "Pricing", to: "/pricing" },
+      { label: "Practitioner Journey", to: "/practitioner-journey" },
+      { label: "Contact Us", to: "/contact-us" },
       { label: "AURA AI", to: "/aura" },
     ],
     Resources: [
@@ -30,7 +31,7 @@ const Footer = () => {
       { label: "Documentation", to: "/documentation" },
       { label: "Community", to: "/community" },
       { label: "Help & Support", to: "/help-support" },
-      { label: "Start Free", to: "/start-free" },
+      // { label: "Start Free", to: "/start-free" },
     ],
     Legal: [
       { label: "Privacy Policy", to: "/privacy-policy" },
@@ -45,7 +46,6 @@ const Footer = () => {
     { Icon: FaTwitter, href: "https://twitter.com", label: "Twitter" },
     { Icon: FaInstagram, href: "https://www.instagram.com/openhand.live?igsh=MWNqMDhxeHFiMXZmdA%3D%3D&utm_source=qr", label: "Instagram" },
     { Icon: FaLinkedin, href: "https://www.linkedin.com/showcase/openhandai/", label: "LinkedIn" },
-    { Icon: FaYoutube, href: "https://youtube.com", label: "YouTube" },
   ];
 
   return (

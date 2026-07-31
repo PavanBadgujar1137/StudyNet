@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { OHFooter, BubbleField } from '../../components/openhand'
+import { OHFooter } from '../../components/openhand'
 import { apiConnector } from '../../services/apiConnector'
 import toast from 'react-hot-toast'
 import { FiSend, FiCheckCircle } from 'react-icons/fi'
@@ -53,7 +53,7 @@ export function ForOrganizations() {
 
   return (
     <div className="org-page relative min-h-screen">
-      <BubbleField density="low" zone="fullscreen" />
+
       {/* Hero */}
       <header className="org-hero">
         <div className="oh-wrap">
@@ -65,7 +65,7 @@ export function ForOrganizations() {
             Employee mental health benefits are widely reported to sit largely unused. Not because people don't need them — because a phone number to a stranger isn't how anyone actually opens up. We sell circles instead.
           </p>
           <div className="org-cta-row">
-            <Link to="/talk-to-human" className="org-btn">Request a pilot for one team</Link>
+            <Link to="/contact-us" className="org-btn">Request a pilot for one team</Link>
             <a href="#how" className="org-btn-ghost">See how a rollout works →</a>
           </div>
         </div>
@@ -385,7 +385,7 @@ export function ForOrganizations() {
                 <li>Weekly check-ins between sessions</li>
                 <li>Aggregate completion report</li>
               </ul>
-              <Link to="/talk-to-human" className="org-btn-ghost">Request a pilot</Link>
+              <Link to="/contact-us" className="org-btn-ghost">Request a pilot</Link>
             </div>
 
             <div className="org-tier feat">
@@ -403,7 +403,7 @@ export function ForOrganizations() {
                 <li>Quarterly leadership review</li>
                 <li>Manager briefing session</li>
               </ul>
-              <Link to="/talk-to-human" className="org-btn">Talk to a founder</Link>
+              <Link to="/contact-us" className="org-btn">Talk to a founder</Link>
             </div>
 
             <div className="org-tier">
@@ -418,7 +418,7 @@ export function ForOrganizations() {
                 <li>SSO and HRIS integration</li>
                 <li>Named account contact</li>
               </ul>
-              <Link to="/talk-to-human" className="org-btn-ghost">Talk to a founder</Link>
+              <Link to="/contact-us" className="org-btn-ghost">Talk to a founder</Link>
             </div>
           </div>
           <p className="org-note">
@@ -607,7 +607,7 @@ export function ForOrganizations() {
           <h2>Start with one team.</h2>
           <p>Eight weeks, eight seats, one invoice. If the numbers do not move, you walk away knowing something true.</p>
           <div className="org-cta-row">
-            <Link to="/talk-to-human" className="org-btn">Request a pilot</Link>
+            <Link to="/contact-us" className="org-btn">Request a pilot</Link>
             <Link to="/find-a-practitioner" className="org-btn-ghost">See our practitioners</Link>
           </div>
         </div>

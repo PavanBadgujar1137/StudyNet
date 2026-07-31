@@ -4,7 +4,7 @@ import { FiSearch, FiMessageSquare, FiVideo, FiX, FiCheckCircle, FiClock, FiFeat
 import toast from 'react-hot-toast'
 import { apiConnector } from '../../../../services/apiConnector'
 
-export function MyClients({ setActiveSection, telemetryData, onUpdate }) {
+export function MyLearners({ setActiveSection, telemetryData, onUpdate }) {
   const { token } = useSelector((state) => state.auth)
   const [searchTerm, setSearchTerm] = useState('')
   const [showInviteModal, setShowInviteModal] = useState(false)
@@ -191,7 +191,7 @@ export function MyClients({ setActiveSection, telemetryData, onUpdate }) {
                     borderRadius: '12px',
                     padding: '14px 18px',
                     display: 'flex',
-                    justifyInContent: 'space-between',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
                     flexWrap: 'wrap',
                     gap: '12px',
@@ -631,4 +631,4 @@ export function MyClients({ setActiveSection, telemetryData, onUpdate }) {
   )
 }
 
-export default MyClients
+export default MyLearners

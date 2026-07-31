@@ -105,7 +105,6 @@ export function Practitioners({ onUpdate, setActiveTab }) {
     return selectedOffers.reduce((sum, o) => sum + (o.price || 0), 0)
   }
 
-  // Handle client selecting practitioner, paying fee, and submitting connection request for approval
   // Helper to load Razorpay SDK dynamically
   const loadRazorpaySDK = () => {
     return new Promise((resolve) => {

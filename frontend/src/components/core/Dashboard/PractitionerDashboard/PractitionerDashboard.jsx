@@ -17,7 +17,7 @@ import {
 } from 'react-icons/fi'
 import Overview from './Overview'
 import MyOffers from './MyOffers'
-import MyClients from './MyClients'
+import MyLearners from './MyLearners'
 import Circles from './Circles'
 import SessionRoom from './SessionRoom'
 import PayoutsInvoices from './PayoutsInvoices'
@@ -304,7 +304,7 @@ export function PractitionerDashboard() {
             <MyCourses />
           )}
           {activeSection === 'clients' && (
-            <MyClients setActiveSection={setActiveSection} telemetryData={telemetryData} onUpdate={loadData} />
+            <MyLearners setActiveSection={setActiveSection} telemetryData={telemetryData} onUpdate={loadData} />
           )}
           {activeSection === 'circles' && (
             <Circles telemetryData={telemetryData} onUpdate={loadData} setActiveSection={setActiveSection} />

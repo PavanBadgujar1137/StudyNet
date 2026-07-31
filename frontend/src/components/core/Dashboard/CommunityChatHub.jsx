@@ -7,11 +7,6 @@ import {
   FiSend,
   FiSearch,
   FiRefreshCw,
-  FiPaperclip,
-  FiSmile,
-  FiX,
-  FiStar,
-  FiCheckCircle,
 } from "react-icons/fi"
 import {
   fetchGlobalMessages,
@@ -25,7 +20,7 @@ import {
 import { apiConnector } from "../../../services/apiConnector"
 import { toast } from "react-hot-toast"
 
-const QUICK_EMOJIS = ["👍", "❤️", "🔥", "🚀", "👏", "💡", "💯", "✨"]
+
 
 export default function CommunityChatHub({ defaultPractitionerId = null }) {
   const { token } = useSelector((state) => state.auth)
@@ -34,8 +29,11 @@ export default function CommunityChatHub({ defaultPractitionerId = null }) {
   const [activeTab, setActiveTab] = useState("global") // "global" | "circle" | "direct"
   const [messages, setMessages] = useState([])
   const [inputText, setInputText] = useState("")
+  // eslint-disable-next-line no-unused-vars
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
+  // eslint-disable-next-line no-unused-vars
+  const [msgFilter, setMsgFilter] = useState("")
 
   // Direct contacts list & selected contact
   const [contacts, setContacts] = useState([])
@@ -45,11 +43,6 @@ export default function CommunityChatHub({ defaultPractitionerId = null }) {
   // Dynamic Practitioner Circles List & Selected Circle
   const [userCircles, setUserCircles] = useState([])
   const [selectedCircle, setSelectedCircle] = useState(null)
-
-  // Filter messages search term inside chat
-  const [msgFilter, setMsgFilter] = useState("")
-  const [showMsgSearch, setShowMsgSearch] = useState(false)
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
 
   const messagesEndRef = useRef(null)
 
@@ -186,10 +179,7 @@ export default function CommunityChatHub({ defaultPractitionerId = null }) {
     }
   }
 
-  // Quick emoji insertion
-  const handleQuickEmojiClick = (emoji) => {
-    setInputText((prev) => prev + " " + emoji)
-  }
+
 
   // Filtered contacts list
   const filteredContacts = contacts.filter((c) => {

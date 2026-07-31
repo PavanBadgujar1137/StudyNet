@@ -26,7 +26,7 @@ import CommunityChatHub from '../CommunityChatHub'
 import { useSearchParams } from 'react-router-dom'
 import { fetchClientDashboardData } from '../../../../services/operations/dashboardAPI'
 
-export function ClientDashboard() {
+export function LearnerDashboard() {
   const [searchParams, setSearchParams] = useSearchParams()
   const activeTab = searchParams.get('tab') || 'journey'
 
@@ -246,11 +246,11 @@ export function ClientDashboard() {
                 ✨ {dashboardData.subscriptionStatus.subscription?.planName || 'Active Plan'}
               </span>
             ) : dashboardData?.subscriptionStatus?.isTrialActive ? (
-              <a href="/pricing" style={{ textDecoration: 'none', padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, background: '#F3E8FF', color: '#7E22CE', border: '1px solid #E9D5FF' }}>
+              <a href="/practitioner-journey" style={{ textDecoration: 'none', padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, background: '#F3E8FF', color: '#7E22CE', border: '1px solid #E9D5FF' }}>
                 ⚡ 7-Day Trial ({dashboardData.subscriptionStatus.trialDaysRemaining}d left) →
               </a>
             ) : (
-              <a href="/pricing" style={{ textDecoration: 'none', padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, background: '#FEE2E2', color: '#DC2626', border: '1px solid #FCA5A5' }}>
+              <a href="/practitioner-journey" style={{ textDecoration: 'none', padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, background: '#FEE2E2', color: '#DC2626', border: '1px solid #FCA5A5' }}>
                 ⚠️ Trial Expired — Select Plan →
               </a>
             )}
@@ -324,4 +324,4 @@ export function ClientDashboard() {
   )
 }
 
-export default ClientDashboard
+export default LearnerDashboard

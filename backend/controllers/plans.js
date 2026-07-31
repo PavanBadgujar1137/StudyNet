@@ -97,6 +97,9 @@ const crypto = require("crypto")
 const User = require("../models/User")
 
 const PLAN_DETAILS = {
+  beginner: { price: 51, name: "Beginner Plan", buttonId: "pl_beginner" },
+  advance: { price: 151, name: "Advance Plan", buttonId: "pl_advance" },
+  champion: { price: 1500, name: "Champion Plan", buttonId: "pl_champion" },
   starter: { price: 999, name: "Starter Plan", buttonId: "pl_TIp5rKJwNIOFhi" },
   growth: { price: 2999, name: "Growth Plan", buttonId: "pl_TIpGvgepbsigNC" },
   master: { price: 5999, name: "Master Plan", buttonId: "pl_TIpJ8iM19tFFtf" },

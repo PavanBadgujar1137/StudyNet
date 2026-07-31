@@ -7,18 +7,17 @@ import React, { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import OHLogo from './OHLogo'
-import OHButton from './OHButton'
+// import OHButton from './OHButton'
 import { logout } from '../../services/operations/authAPI'
 
 const PUBLIC_LINKS = [
-  { label: 'Home',                to: '/' },
-  { label: 'For organizations',   to: '/for-organizations' },
-  { label: 'Find a practitioner', to: '/find-a-practitioner' },
-  { label: 'Talk to human',       to: '/talk-to-human' },
-  { label: 'Learner journey',     to: '/learner-journey' },
-  { label: 'Start free',          to: '/start-free' },
-  { label: 'AURA',                to: '/aura' },
-  { label: 'Pricing',             to: '/pricing' },
+  { label: 'Home',                 to: '/' },
+  { label: 'Learner journey',      to: '/learner-journey' },
+  { label: 'Practitioner journey',  to: '/practitioner-journey' },
+  { label: 'For organizations',    to: '/for-organizations' },
+  { label: 'Find a practitioner',  to: '/find-a-practitioner' },
+  { label: 'AURA',                 to: '/aura' },
+  { label: 'Contact Us',           to: '/contact-us' },
 ]
 
 const LEARNER_LINKS = [
@@ -111,9 +110,9 @@ export function OHNav({ dark = false }) {
           ) : (
             <>
               <Link to="/login" className="oh-nav__link oh-nav__link--login">Log in</Link>
-              <OHButton href="/start-free" size="sm">
+              {/* <OHButton href="/start-free" size="sm">
                 Start free
-              </OHButton>
+              </OHButton> */}
             </>
           )}
         </div>
@@ -150,7 +149,7 @@ export function OHNav({ dark = false }) {
             ) : (
               <>
                 <Link to="/login" className="oh-btn oh-btn--ghost oh-btn--full">Log in</Link>
-                <OHButton href="/start-free" fullWidth>Start free</OHButton>
+                {/* <OHButton href="/start-free" fullWidth>Start free</OHButton> */}
               </>
             )}
           </div>

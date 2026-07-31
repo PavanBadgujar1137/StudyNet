@@ -4,6 +4,14 @@ export const NavbarLinks = [
     path: "/",
   },
   {
+    title: "Learner Journey",
+    path: "/learner-journey",
+  },
+  {
+    title: "Practitioner Journey",
+    path: "/practitioner-journey",
+  },
+  {
     title: "For Organizations",
     path: "/for-organizations",
   },
@@ -12,23 +20,11 @@ export const NavbarLinks = [
     path: "/find-a-practitioner",
   },
   {
-    title: "Talk to Human",
-    path: "/talk-to-human",
-  },
-  {
-    title: "Learner Journey",
-    path: "/learner-journey",
-  },
-  {
-    title: "Start Free",
-    path: "/start-free",
-  },
-  {
     title: "AURA",
     path: "/aura",
   },
   {
-    title: "Pricing",
-    path: "/pricing",
+    title: "Contact Us",
+    path: "/contact-us",
   },
 ];

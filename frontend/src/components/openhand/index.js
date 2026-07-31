@@ -30,7 +30,5 @@ export { OHConsentGate }  from './OHConsentGate'
 export { OHSkeleton, OHCardSkeleton, OHTableRowSkeleton } from './OHLoadingState'
 export { OHEmptyState }   from './OHEmptyState'
 
-// Ambient Bubble System (Marketing Only)
-export { BubbleField }    from './bubbles/BubbleField'
-export { getBubbleConfigForPath, BUBBLE_PAGE_CONFIG } from './bubbles/bubbleConfig'
+
 

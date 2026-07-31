@@ -5,7 +5,6 @@ import {
   OHEyebrow,
   OHCardSkeleton,
   OHEmptyState,
-  BubbleField,
 } from '../../components/openhand'
 import { apiConnector } from '../../services/apiConnector'
 import { toast } from 'react-hot-toast'
@@ -221,7 +220,7 @@ export function FindAPractitioner() {
 
   return (
     <div className="oh-dir-page relative min-h-screen">
-      <BubbleField density="low" zone="fullscreen" />
+
 
       {/* Hero Header */}
       <header className="oh-dir-hero">
@@ -540,8 +539,8 @@ export function FindAPractitioner() {
                 Join India's premier network of verified guides. Keep 100% of your learner revenue, showcase your practice, and get matched with learners searching for your exact modalities.
               </p>
               <div className="banner-btn-row">
-                <OHButton href="/start-free" size="lg">List Your Practice Free</OHButton>
-                <OHButton href="/talk-to-human" variant="ghost" size="lg">Learn How It Works →</OHButton>
+                <OHButton href="/signup" size="lg">List Your Practice Free</OHButton>
+                <OHButton href="/contact-us" variant="ghost" size="lg">Learn How It Works →</OHButton>
               </div>
             </div>
           </div>
