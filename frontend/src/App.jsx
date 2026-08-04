@@ -17,6 +17,7 @@ import Signup from "./pages/Signup"
 import UpdatePassword from "./pages/UpdatePassword"
 import VerifyEmail from "./pages/VerifyEmail"
 import LiveClassRoom from "./pages/LiveClassRoom"
+import SocialCallback from "./pages/SocialCallback"
 
 // OpenHand Marketing Pages (Verbatim Specs)
 import HomeMarketing from "./pages/marketing/Home"
@@ -103,6 +104,7 @@ function App() {
         {/* <Route path="/start-free" element={<StartFree />} /> */}
         <Route path="/contact-us" element={<ContactUs />} />
         <Route path="/talk-to-human" element={<ContactUs />} />
+        <Route path="/social-callback" element={<SocialCallback />} />
 
         {/* Footer Pages */}
         <Route path="/platform-status" element={<PlatformStatus />} />

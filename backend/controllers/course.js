@@ -226,7 +226,7 @@ exports.getAllCourses = async (req, res) => {
   }
 }
 
-const PLAN_RANKS = { starter: 1, growth: 2, practice: 3, master: 3 }
+const PLAN_RANKS = { beginner: 1, advance: 2, champion: 3, starter: 1, growth: 2, practice: 3, master: 3 }
 
 async function getUserAccessContext(userId) {
   if (!userId) return { planKey: null, isTrialActive: false, isExpired: true }
@@ -243,7 +243,7 @@ async function getUserAccessContext(userId) {
 
   const isTrialActive = trialExpiresAt && now < new Date(trialExpiresAt)
   if (isTrialActive) {
-    return { planKey: "growth", isTrialActive: true, isExpired: false }
+    return { planKey: "advance", isTrialActive: true, isExpired: false }
   }
 
   return { planKey: "none", isTrialActive: false, isExpired: true }

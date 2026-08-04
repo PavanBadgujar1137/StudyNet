@@ -10,9 +10,53 @@ const {
   SENDOTP_API,
   SIGNUP_API,
   LOGIN_API,
+  SOCIAL_LOGIN_API,
   RESETPASSTOKEN_API,
   RESETPASSWORD_API,
 } = endpoints
+
+export function socialLogin(provider, socialData, navigate) {
+  return async (dispatch) => {
+    const toastId = toast.loading(`Connecting to ${provider === "google" ? "Google" : "LinkedIn"}...`)
+    dispatch(setLoading(true))
+    try {
+      const response = await apiConnector("POST", SOCIAL_LOGIN_API, {
+        provider,
+        ...socialData,
+      })
+
+      if (!response?.data?.success) {
+        throw new Error(response?.data?.message || "Social authentication failed")
+      }
+
+      toast.success(response.data.message || "Authentication Successful")
+      const token = response.data.token
+      const user = response.data.user
+
+      dispatch(setToken(token))
+      const userImage = (user?.image && !user.image.includes("dicebear"))
+        ? user.image
+        : getInitialsAvatar(user?.firstName, user?.lastName)
+
+      const fullUser = { ...user, image: userImage }
+      dispatch(setUser(fullUser))
+
+      localStorage.setItem("token", JSON.stringify(token))
+      localStorage.setItem("user", JSON.stringify(fullUser))
+
+      if (user?.accountType === "Admin") {
+        navigate("/admin")
+      } else {
+        navigate("/dashboard")
+      }
+    } catch (error) {
+      console.error("SOCIAL_LOGIN_API ERROR............", error)
+      toast.error(error?.response?.data?.message || error.message || "Social Login Failed")
+    }
+    dispatch(setLoading(false))
+    toast.dismiss(toastId)
+  }
+}
 
 export function sendOtp(email, navigate) {
   return async (dispatch) => {

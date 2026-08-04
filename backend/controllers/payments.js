@@ -27,16 +27,22 @@ exports.createSubscriptionOrder = async (req, res) => {
     const userId = req.user.id
 
     const planPrices = {
+      beginner: 51,
+      advance: 151,
+      champion: 1500,
       starter: 999,
       growth: 2999,
       practice: 5999,
-      master: 9999,
+      master: 5999,
     }
     const planNames = {
+      beginner: "Beginner Plan",
+      advance: "Advance Plan",
+      champion: "Champion VIP Plan",
       starter: "Starter Plan",
       growth: "Growth Plan",
       practice: "Practice Plan",
-      master: "Master Plan",
+      master: "Master VIP Plan",
     }
 
     if (!planKey || !planPrices[planKey]) {
@@ -88,8 +94,8 @@ exports.verifySubscriptionPayment = async (req, res) => {
       return res.status(400).json({ success: false, message: "Payment verification failed" })
     }
 
-    const planPrices = { starter: 999, growth: 2999, practice: 5999, master: 9999 }
-    const planNames = { starter: "Starter Plan", growth: "Growth Plan", practice: "Practice Plan", master: "Master Plan" }
+    const planPrices = { beginner: 51, advance: 151, champion: 1500, starter: 999, growth: 2999, practice: 5999, master: 5999 }
+    const planNames = { beginner: "Beginner Plan", advance: "Advance Plan", champion: "Champion VIP Plan", starter: "Starter Plan", growth: "Growth Plan", practice: "Practice Plan", master: "Master VIP Plan" }
     const amount = planPrices[planKey] || 0
 
     // Deactivate any existing active subscription for this client
@@ -246,10 +252,10 @@ exports.bookOffer = async (req, res) => {
     let isFreeSession = false
 
     if (activeSub && new Date(activeSub.endDate) > now && (offer.type === "session" || !offer.type)) {
-      if (activeSub.planKey === "growth") {
+      if (activeSub.planKey === "growth" || activeSub.planKey === "advance") {
         discountPercentage = 15
         grossAmount = Math.round(offer.price * 0.85)
-      } else if (activeSub.planKey === "master") {
+      } else if (activeSub.planKey === "master" || activeSub.planKey === "champion") {
         const startOfMonth = new Date()
         startOfMonth.setDate(1)
         startOfMonth.setHours(0, 0, 0, 0)

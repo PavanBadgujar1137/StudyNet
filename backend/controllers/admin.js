@@ -432,26 +432,69 @@ exports.processMonthlyPayout = async (req, res) => {
   try {
     const { practitionerId, amount, notes } = req.body
 
-    if (!practitionerId || !amount) {
+    if (!practitionerId || amount === undefined || amount === null) {
       return res.status(400).json({ success: false, message: "practitionerId and amount are required" })
     }
 
-    // Create payout record
+    const numAmount = Number(amount)
+    if (isNaN(numAmount) || numAmount <= 0) {
+      return res.status(400).json({ success: false, message: "Payout amount must be a valid positive number" })
+    }
+
+    // 1. Verify practitioner exists
+    const practitioner = await User.findById(practitionerId).select("firstName lastName email accountType")
+    if (!practitioner) {
+      return res.status(404).json({ success: false, message: "Practitioner not found" })
+    }
+
+    // 2. Verify practitioner bank / UPI details exist
+    const PractitionerProfile = require("../models/PractitionerProfile")
+    const profile = await PractitionerProfile.findOne({ user: practitionerId }).lean()
+    const hasBankDetails = !!((profile?.bankAccountNumber && profile?.bankIfscCode) || profile?.upiId)
+    if (!hasBankDetails) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot process payout: Dr. ${practitioner.firstName} ${practitioner.lastName} has not entered bank account or UPI details yet.`,
+      })
+    }
+
+    // 3. Verify total pending salary owed
+    const totalOwedAgg = await AdminPaymentLog.aggregate([
+      { $match: { practitioner: new mongoose.Types.ObjectId(practitionerId), status: "received", practitionerSalaryPaid: false } },
+      { $group: { _id: null, total: { $sum: "$amountOwedToPractitioner" } } },
+    ])
+    const pendingSalaryOwed = totalOwedAgg[0]?.total || 0
+
+    if (pendingSalaryOwed <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Dr. ${practitioner.firstName} ${practitioner.lastName} has no pending salary balance owed.`,
+      })
+    }
+
+    if (numAmount > pendingSalaryOwed) {
+      return res.status(400).json({
+        success: false,
+        message: `Requested payout amount (₹${numAmount.toLocaleString('en-IN')}) exceeds practitioner's pending salary balance (₹${pendingSalaryOwed.toLocaleString('en-IN')}).`,
+      })
+    }
+
+    // 4. Create payout record
     const payout = await Payout.create({
       practitioner: practitionerId,
-      amount,
-      commissionDeducted: 0, // Admin decides externally
-      netAmount: amount,
+      amount: numAmount,
+      commissionDeducted: 0,
+      netAmount: numAmount,
       status: "settled",
       settledAt: new Date(),
-      payoutMethod: "manual_bank_transfer",
+      payoutMethod: profile.bankAccountNumber ? "manual_bank_transfer" : "upi",
       bookingsCount: await Booking.countDocuments({
         practitioner: practitionerId,
         status: "completed",
       }),
     })
 
-    // Mark all unsettled payment logs for this practitioner as salary-paid
+    // 5. Mark unsettled payment logs for this practitioner as salary-paid
     await AdminPaymentLog.updateMany(
       {
         practitioner: practitionerId,
@@ -465,11 +508,9 @@ exports.processMonthlyPayout = async (req, res) => {
       }
     )
 
-    const practitioner = await User.findById(practitionerId).select("firstName lastName email")
-
     return res.status(200).json({
       success: true,
-      message: `Salary of ₹${amount} marked as paid to ${practitioner?.firstName} ${practitioner?.lastName}`,
+      message: `Salary of ₹${numAmount.toLocaleString('en-IN')} successfully marked as paid to Dr. ${practitioner.firstName} ${practitioner.lastName}`,
       payout,
     })
   } catch (error) {
@@ -538,7 +579,17 @@ exports.updateClientPlan = async (req, res) => {
     if (planKey !== undefined) {
       user.activePlan = planKey
 
-      if (["starter", "growth", "practice", "master"].includes(planKey)) {
+      if (["beginner", "advance", "champion", "starter", "growth", "practice", "master"].includes(planKey)) {
+        const planNameMap = {
+          beginner: "Beginner Plan",
+          advance: "Advance Plan",
+          champion: "Champion VIP Plan",
+          starter: "Starter Plan",
+          growth: "Growth Plan",
+          practice: "Practice Plan",
+          master: "Master VIP Plan",
+        }
+
         // Create manual subscription record for client
         await Subscription.updateMany({ client: id, status: "active" }, { status: "expired" })
         const startDate = new Date()
@@ -548,13 +599,18 @@ exports.updateClientPlan = async (req, res) => {
         await Subscription.create({
           client: id,
           planKey,
-          planName: `${planKey.toUpperCase()} Plan (Admin Override)`,
+          planName: `${planNameMap[planKey] || planKey.toUpperCase()} (Admin Override)`,
           amount: 0,
           status: "active",
           startDate,
           endDate,
           paymentGateway: "manual",
         })
+      } else if (planKey === "trial") {
+        await Subscription.updateMany({ client: id, status: "active" }, { status: "expired" })
+      } else if (planKey === "none") {
+        await Subscription.updateMany({ client: id, status: "active" }, { status: "expired" })
+        user.trialExpiresAt = new Date(Date.now() - 1000)
       }
     }
 

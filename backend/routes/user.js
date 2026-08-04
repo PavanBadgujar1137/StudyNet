@@ -8,6 +8,7 @@ const {
   signup,
   sendotp,
   changePassword,
+  socialLogin,
 } = require("../controllers/Auth")
 const {
   resetPasswordToken,
@@ -27,6 +28,9 @@ router.post("/login", login)
 
 // Route for user signup
 router.post("/signup", signup)
+
+// Route for social login (Google & LinkedIn)
+router.post("/social-login", socialLogin)
 
 // Route for sending OTP to the user's email
 router.post("/sendotp", sendotp)

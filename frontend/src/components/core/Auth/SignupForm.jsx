@@ -7,6 +7,8 @@ import { sendOtp } from "../../../services/operations/authAPI"
 import { setSignupData } from "../../../slices/authSlice"
 import { ACCOUNT_TYPE } from "../../../utils/constants"
 
+import SocialAuthButtons from "./SocialAuthButtons"
+
 function SignupForm() {
   const navigate = useNavigate()
   const dispatch = useDispatch()
@@ -61,6 +63,8 @@ function SignupForm() {
           </button>
         ))}
       </div>
+
+      <SocialAuthButtons accountType={accountType} mode="signup" />
 
       <form onSubmit={handleOnSubmit} className="auth-field-list">
         {/* Name row */}

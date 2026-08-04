@@ -236,6 +236,108 @@ exports.login = async (req, res) => {
     })
   }
 }
+
+// ─── Social Login (Google & LinkedIn) ──────────────────────────────────────────
+exports.socialLogin = async (req, res) => {
+  try {
+    const { provider = "google", email, firstName, lastName, image, accountType = "Client" } = req.body
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required for social authentication",
+      })
+    }
+
+    const emailLower = String(email).toLowerCase().trim()
+    let user = await User.findOne({ email: emailLower }).populate("additionalDetails")
+
+    if (!user) {
+      // Create new account for social registration
+      const Profile = require("../models/Profile")
+      const PractitionerProfile = require("../models/PractitionerProfile")
+
+      const fName = firstName || emailLower.split("@")[0] || "User"
+      const lName = lastName || ""
+      const dummyPassword = await bcrypt.hash(`social_${provider}_${Date.now()}`, 10)
+
+      const profileDetails = await Profile.create({
+        gender: null,
+        dateOfBirth: null,
+        about: `Registered via ${provider === "google" ? "Google" : "LinkedIn"} Sign-In`,
+        contactNumber: null,
+      })
+
+      const userAccountType = ["Client", "Practitioner"].includes(accountType) ? accountType : "Client"
+      const now = new Date()
+      const trialExpiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+
+      user = await User.create({
+        firstName: fName,
+        lastName: lName,
+        email: emailLower,
+        password: dummyPassword,
+        accountType: userAccountType,
+        additionalDetails: profileDetails._id,
+        image: image || `https://api.dicebear.com/5.x/initials/svg?seed=${encodeURIComponent(fName + " " + lName)}`,
+        approved: true,
+        active: true,
+        trialStartedAt: userAccountType === "Client" ? now : undefined,
+        trialExpiresAt: userAccountType === "Client" ? trialExpiresAt : undefined,
+        activePlan: userAccountType === "Client" ? "trial" : "none",
+      })
+
+      if (userAccountType === "Practitioner") {
+        await PractitionerProfile.create({
+          user: user._id,
+          bio: "Verified practitioner registered via social login",
+        })
+      }
+
+      user = await User.findById(user._id).populate("additionalDetails")
+    } else {
+      // User exists - update profile picture if missing or dicebear placeholder
+      if (image && (!user.image || user.image.includes("dicebear"))) {
+        user.image = image
+        await user.save()
+      }
+
+      if ((user.accountType === "Client" || user.accountType === "Student") && !user.trialExpiresAt) {
+        user.trialStartedAt = user.createdAt || new Date()
+        user.trialExpiresAt = new Date(new Date(user.trialStartedAt).getTime() + 7 * 24 * 60 * 60 * 1000)
+        if (!user.activePlan) user.activePlan = "trial"
+        await user.save()
+      }
+    }
+
+    const token = jwt.sign(
+      { email: user.email, id: user._id, accountType: user.accountType, role: user.accountType },
+      process.env.JWT_SECRET,
+      { expiresIn: "24h" }
+    )
+
+    user.token = token
+    user.password = undefined
+
+    const options = {
+      expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+      httpOnly: true,
+    }
+
+    return res.cookie("token", token, options).status(200).json({
+      success: true,
+      token,
+      user,
+      message: `Successfully authenticated via ${provider === "google" ? "Google" : "LinkedIn"}!`,
+    })
+  } catch (error) {
+    console.error("socialLogin error:", error)
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Social authentication failed",
+    })
+  }
+}
 // Send OTP For Email Verification
 exports.sendotp = async (req, res) => {
   try {

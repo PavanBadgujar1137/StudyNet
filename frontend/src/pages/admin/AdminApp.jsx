@@ -165,7 +165,7 @@ function ClientsTab() {
   const [search, setSearch] = useState('')
   const [total, setTotal] = useState(0)
   const [planModal, setPlanModal] = useState(null)
-  const [selectedPlan, setSelectedPlan] = useState('growth')
+  const [selectedPlan, setSelectedPlan] = useState('advance')
   const [extendDays, setExtendDays] = useState('7')
   const [updating, setUpdating] = useState(false)
 
@@ -211,9 +211,9 @@ function ClientsTab() {
                 <select value={selectedPlan} onChange={e => setSelectedPlan(e.target.value)}
                   style={{ width: '100%', background: '#FFFFFF', border: '1.5px solid #CBD5E1', borderRadius: 10, padding: '10px 14px', color: '#0F172A', fontSize: 14, outline: 'none' }}>
                   <option value="trial">Keep 7-Day Free Trial</option>
-                  <option value="starter">Starter Plan (₹999/mo)</option>
-                  <option value="growth">Growth Plan (₹2,999/mo)</option>
-                  <option value="master">Master VIP Plan (₹5,999/mo)</option>
+                  <option value="beginner">Beginner Plan (₹51/mo)</option>
+                  <option value="advance">Advance Plan (₹151/mo)</option>
+                  <option value="champion">Champion VIP Plan (₹1,500/mo)</option>
                   <option value="none">No Active Plan (Trial Expired)</option>
                 </select>
               </div>
@@ -280,7 +280,7 @@ function ClientsTab() {
             { key: 'totalPaid', label: 'Total Paid', render: r => <span style={{ color: '#10B981', fontWeight: 700 }}>{fmt(r.totalPaid)}</span> },
             { key: 'createdAt', label: 'Joined', render: r => fmtDate(r.createdAt) },
             { key: 'action', label: 'Action', render: r => (
-              <button onClick={() => { setPlanModal(r); setSelectedPlan(r.subscription?.planKey || 'growth') }}
+              <button onClick={() => { setPlanModal(r); setSelectedPlan(r.subscription?.planKey || r.activePlan || 'advance') }}
                 style={{ padding: '6px 12px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, color: '#1D4ED8', cursor: 'pointer', fontWeight: 600, fontSize: 12 }}>
                 Manage Plan
               </button>
@@ -352,9 +352,9 @@ function CoursesTab() {
                 <select value={selectedPlan} onChange={e => setSelectedPlan(e.target.value)}
                   style={{ width: '100%', background: '#FFFFFF', border: '1.5px solid #CBD5E1', borderRadius: 10, padding: '10px 14px', color: '#0F172A', fontSize: 14, outline: 'none' }}>
                   <option value="">Free Access (No subscription needed)</option>
-                  <option value="starter">Starter Plan &amp; above (₹999/mo)</option>
-                  <option value="growth">Growth Plan &amp; above (₹2,999/mo)</option>
-                  <option value="master">Master VIP Plan (₹5,999/mo)</option>
+                  <option value="beginner">Beginner Plan &amp; above (₹51/mo)</option>
+                  <option value="advance">Advance Plan &amp; above (₹151/mo)</option>
+                  <option value="champion">Champion VIP Plan (₹1,500/mo)</option>
                 </select>
                 <p style={{ margin: '4px 0 0', color: '#94A3B8', fontSize: 11 }}>
                   Clients must have an active subscription or trial matching this tier to access videos.
@@ -416,8 +416,8 @@ function CoursesTab() {
               </div>
             )},
             { key: 'requiredPlan', label: 'Assigned Subscription Plan', render: r => r.requiredPlan ? (
-              <span style={{ padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: '#F3E8FF', color: '#7E22CE', border: '1px solid #E9D5FF', textTransform: 'capitalize' }}>
-                {r.requiredPlan} Plan
+              <span style={{ padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: '#F3E8FF', color: '#7E22CE', border: '1px solid #E9D5FF' }}>
+                {r.requiredPlan === 'beginner' ? 'Beginner Plan (₹51)' : r.requiredPlan === 'advance' ? 'Advance Plan (₹151)' : r.requiredPlan === 'champion' ? 'Champion VIP Plan (₹1,500)' : `${r.requiredPlan} Plan`}
               </span>
             ) : (
               <span style={{ padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: '#DCFCE7', color: '#166534', border: '1px solid #BBF7D0' }}>
@@ -462,12 +462,23 @@ function PractitionersTab() {
   useEffect(() => { load() }, [load])
 
   const handlePayout = async () => {
-    if (!payoutAmount || isNaN(payoutAmount)) return toast.error('Enter valid amount')
+    const hasBankDetails = !!((payoutModal?.profile?.bankAccountNumber && payoutModal?.profile?.bankIfscCode) || payoutModal?.profile?.upiId)
+    if (!hasBankDetails) {
+      return toast.error('Cannot process payout: Practitioner has not added bank account or UPI details yet.')
+    }
+    const amountNum = Number(payoutAmount)
+    if (!payoutAmount || isNaN(amountNum) || amountNum <= 0) {
+      return toast.error('Please enter a valid positive payout amount.')
+    }
+    if (amountNum > (payoutModal?.salaryOwed || 0)) {
+      return toast.error(`Payout amount (${fmt(amountNum)}) cannot exceed pending salary owed (${fmt(payoutModal.salaryOwed)}).`)
+    }
+
     setPayingOut(true)
     try {
       const res = await apiConnector('POST', '/api/v1/admin/payout', {
         practitionerId: payoutModal._id,
-        amount: Number(payoutAmount),
+        amount: amountNum,
       }, { Authorization: `Bearer ${token}` })
       if (res?.data?.success) {
         toast.success(res.data.message)
@@ -475,22 +486,43 @@ function PractitionersTab() {
         setPayoutAmount('')
         load()
       }
-    } catch (e) { toast.error('Payout failed') }
+    } catch (e) {
+      toast.error(e?.response?.data?.message || 'Payout failed')
+    }
     setPayingOut(false)
   }
+
+  const hasBankDetails = !!((payoutModal?.profile?.bankAccountNumber && payoutModal?.profile?.bankIfscCode) || payoutModal?.profile?.upiId)
+  const amountNum = Number(payoutAmount)
+  const isAmountValid = !isNaN(amountNum) && amountNum > 0 && amountNum <= (payoutModal?.salaryOwed || 0)
+  const canSubmitPayout = hasBankDetails && (payoutModal?.salaryOwed > 0) && isAmountValid
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* Payout Modal */}
       {payoutModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 20, padding: 32, width: 440, maxWidth: '90vw', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
-            <h3 style={{ margin: '0 0 4px', color: '#0F172A', fontSize: 18, fontWeight: 800 }}>Pay Salary — {payoutModal.firstName} {payoutModal.lastName}</h3>
-            <p style={{ margin: '0 0 16px', color: '#64748B', fontSize: 13 }}>Pending salary owed: <strong style={{ color: '#D97706' }}>{fmt(payoutModal.salaryOwed)}</strong></p>
+          <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 20, padding: 32, width: 460, maxWidth: '90vw', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
+            <h3 style={{ margin: '0 0 4px', color: '#0F172A', fontSize: 18, fontWeight: 800 }}>Pay Salary — Dr. {payoutModal.firstName} {payoutModal.lastName}</h3>
+            <p style={{ margin: '0 0 16px', color: '#64748B', fontSize: 13 }}>Pending salary owed: <strong style={{ color: payoutModal.salaryOwed > 0 ? '#D97706' : '#64748B' }}>{fmt(payoutModal.salaryOwed)}</strong></p>
+
+            {/* Missing Bank Details Banner */}
+            {!hasBankDetails && (
+              <div style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: 12, padding: '12px 16px', margin: '0 0 16px', color: '#991B1B', fontSize: 13, fontWeight: 600 }}>
+                ⚠️ Payout Disabled: Practitioner has not added bank details or UPI ID. Ask practitioner to update profile before paying.
+              </div>
+            )}
+
+            {/* Zero Salary Owed Banner */}
+            {hasBankDetails && payoutModal.salaryOwed <= 0 && (
+              <div style={{ background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: 12, padding: '12px 16px', margin: '0 0 16px', color: '#475569', fontSize: 13, fontWeight: 600 }}>
+                ℹ️ No Pending Balance: Dr. {payoutModal.firstName} {payoutModal.lastName} currently has no pending salary balance owed.
+              </div>
+            )}
 
             {/* Practitioner Bank & UPI Details */}
             <div style={{ background: '#F8FAFC', borderRadius: 12, padding: '14px 16px', margin: '0 0 20px', border: '1px solid #E2E8F0', fontSize: 13 }}>
-              <div style={{ color: '#1F5FE0', fontWeight: 700, marginBottom: 8 }}>Practitioner Bank Details:</div>
+              <div style={{ color: '#1F5FE0', fontWeight: 700, marginBottom: 8 }}>Practitioner Payout Info:</div>
               {payoutModal.profile?.bankAccountNumber ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   <div style={{ color: '#334155' }}><strong>Bank:</strong> {payoutModal.profile.bankName || 'N/A'}</div>
@@ -502,21 +534,36 @@ function PractitionersTab() {
               ) : payoutModal.profile?.upiId ? (
                 <div style={{ color: '#059669' }}><strong>UPI ID:</strong> {payoutModal.profile.upiId}</div>
               ) : (
-                <div style={{ color: '#DC2626' }}>⚠️ Practitioner has not added bank details yet.</div>
+                <div style={{ color: '#DC2626', fontWeight: 600 }}>❌ Bank Account &amp; UPI ID not added.</div>
               )}
             </div>
 
-            <label style={{ display: 'block', color: '#475569', fontSize: 12, marginBottom: 6, fontWeight: 600 }}>Amount to Pay (₹)</label>
-            <input type="number" value={payoutAmount} onChange={e => setPayoutAmount(e.target.value)}
-              placeholder={`e.g. ${payoutModal.salaryOwed}`}
-              style={{ width: '100%', background: '#FFFFFF', border: '1.5px solid #CBD5E1', borderRadius: 10, padding: '10px 14px', color: '#0F172A', fontSize: 15, outline: 'none', boxSizing: 'border-box', marginBottom: 20 }} />
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: 'block', color: '#475569', fontSize: 12, marginBottom: 6, fontWeight: 600 }}>Amount to Pay (₹)</label>
+              <input type="number" value={payoutAmount} onChange={e => setPayoutAmount(e.target.value)}
+                disabled={!hasBankDetails || payoutModal.salaryOwed <= 0}
+                placeholder={`Max: ${fmt(payoutModal.salaryOwed)}`}
+                style={{ width: '100%', background: '#FFFFFF', border: `1.5px solid ${payoutAmount && amountNum > (payoutModal.salaryOwed || 0) ? '#EF4444' : '#CBD5E1'}`, borderRadius: 10, padding: '10px 14px', color: '#0F172A', fontSize: 15, outline: 'none', boxSizing: 'border-box' }} />
+              {payoutAmount && amountNum > (payoutModal.salaryOwed || 0) && (
+                <div style={{ color: '#DC2626', fontSize: 12, marginTop: 4, fontWeight: 600 }}>
+                  ⚠️ Amount cannot exceed pending salary owed ({fmt(payoutModal.salaryOwed)})
+                </div>
+              )}
+            </div>
+
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={() => { setPayoutModal(null); setPayoutAmount('') }}
                 style={{ flex: 1, padding: '12px', background: '#F1F5F9', border: 'none', borderRadius: 10, color: '#64748B', cursor: 'pointer', fontWeight: 600 }}>
                 Cancel
               </button>
-              <button onClick={handlePayout} disabled={payingOut}
-                style={{ flex: 1, padding: '12px', background: 'linear-gradient(135deg, #10B981, #059669)', border: 'none', borderRadius: 10, color: '#fff', cursor: 'pointer', fontWeight: 700, opacity: payingOut ? 0.7 : 1 }}>
+              <button onClick={handlePayout} disabled={!canSubmitPayout || payingOut}
+                style={{
+                  flex: 1, padding: '12px',
+                  background: canSubmitPayout ? 'linear-gradient(135deg, #10B981, #059669)' : '#CBD5E1',
+                  border: 'none', borderRadius: 10, color: '#fff',
+                  cursor: canSubmitPayout ? 'pointer' : 'not-allowed',
+                  fontWeight: 700, opacity: payingOut ? 0.7 : 1
+                }}>
                 {payingOut ? 'Processing...' : 'Mark as Paid ✓'}
               </button>
             </div>

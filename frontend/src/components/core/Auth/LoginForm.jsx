@@ -4,6 +4,8 @@ import { useDispatch } from "react-redux"
 import { Link, useNavigate } from "react-router-dom"
 import { login } from "../../../services/operations/authAPI"
 
+import SocialAuthButtons from "./SocialAuthButtons"
+
 function LoginForm() {
   const navigate = useNavigate()
   const dispatch = useDispatch()
@@ -21,7 +23,10 @@ function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleOnSubmit} className="auth-inner-form">
+    <div className="auth-inner-form">
+      <SocialAuthButtons mode="login" />
+
+      <form onSubmit={handleOnSubmit} className="auth-field-list">
       <div className="auth-field">
         <label className="auth-label">
           Email Address <sup>*</sup>
@@ -71,7 +76,8 @@ function LoginForm() {
         Sign In to OpenHand
       </button>
     </form>
-  )
+  </div>
+)
 }
 
 export default LoginForm

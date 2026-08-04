@@ -768,7 +768,15 @@ details > summary::-webkit-details-marker { display: none; }
 .auth-role-btn { flex: 1; padding: 10px 0; border: 1.5px solid #E5E7EB; border-radius: 12px; font-size: 13px; font-weight: 600; color: #6B7280; background: #F9FAFB; cursor: pointer; transition: all 0.2s ease; }
 .auth-role-btn--active { border-color: #2563EB; background: rgba(37,99,235,0.07); color: #2563EB; }
 
-/* ─── Page Specific Styles ─────────────────────────────────────────── */
+/* ─── Social Login Buttons & Divider ────────────────────────────────────────── */
+.auth-divider { display: flex; align-items: center; text-align: center; margin: 12px 0 6px; color: #9CA3AF; font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; }
+.auth-divider::before, .auth-divider::after { content: ''; flex: 1; border-bottom: 1px solid #E5E7EB; }
+.auth-divider span { padding: 0 10px; }
+.auth-social-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.auth-social-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 10px 12px; border: 1.5px solid #E5E7EB; border-radius: 12px; background: #FFFFFF; color: #1F2937; font-size: 12.5px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.04); white-space: nowrap; }
+.auth-social-btn:hover { background: #F8FAFC; border-color: #CBD5E1; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+.auth-social-btn--google:hover { border-color: #4285F4; background: #EFF6FF; }
+.auth-social-btn--linkedin:hover { border-color: #0A66C2; background: #F0F9FF; }
 
 /* Certificate Page */
 .container { height: 400px; width: 560px; position: relative; }
