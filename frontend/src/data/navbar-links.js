@@ -24,6 +24,10 @@ export const NavbarLinks = [
     path: "/aura",
   },
   {
+    title: "Pricing",
+    path: "/pricing",
+  },
+  {
     title: "Contact Us",
     path: "/contact-us",
   },

@@ -203,17 +203,35 @@ function ClientsTab() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 20, padding: 32, width: 460, maxWidth: '90vw', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
             <h3 style={{ margin: '0 0 4px', color: '#0F172A', fontSize: 18, fontWeight: 800 }}>Manage Plan &amp; Trial — {planModal.firstName} {planModal.lastName}</h3>
-            <p style={{ margin: '0 0 16px', color: '#64748B', fontSize: 13 }}>Current status: <strong style={{ color: '#1F5FE0' }}>{planModal.planDisplayStatus}</strong></p>
+            <p style={{ margin: '0 0 16px', color: '#64748B', fontSize: 13 }}>
+              Current status: <strong style={{ color: '#1F5FE0' }}>
+                {planModal.hasActiveSub 
+                  ? `Subscribed (${planModal.subscription?.planName || planModal.subscription?.planKey || 'Active Plan'})` 
+                  : planModal.isTrialActive 
+                  ? `${(planModal.accountType === 'Practitioner' || planModal.accountType === 'Instructor') ? '14-Day' : '7-Day'} Trial (${Math.min((planModal.accountType === 'Practitioner' || planModal.accountType === 'Instructor') ? 14 : 7, planModal.trialDaysRemaining || 7)}d left)` 
+                  : 'Trial Expired'}
+              </strong>
+            </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 20 }}>
               <div>
                 <label style={{ display: 'block', color: '#475569', fontSize: 12, marginBottom: 6, fontWeight: 600 }}>Assign Subscription Plan</label>
                 <select value={selectedPlan} onChange={e => setSelectedPlan(e.target.value)}
                   style={{ width: '100%', background: '#FFFFFF', border: '1.5px solid #CBD5E1', borderRadius: 10, padding: '10px 14px', color: '#0F172A', fontSize: 14, outline: 'none' }}>
-                  <option value="trial">Keep 14-Day Free Trial</option>
-                  <option value="beginner">Beginner Plan (₹51/mo)</option>
-                  <option value="advance">Advance Plan (₹151/mo)</option>
-                  <option value="champion">Champion VIP Plan (₹1,500/mo)</option>
+                  <option value="trial">Keep Active Free Trial</option>
+                  {(planModal.accountType === 'Practitioner' || planModal.accountType === 'Instructor') ? (
+                    <>
+                      <option value="starter">Starter Plan (₹999/mo)</option>
+                      <option value="growth">Growth Plan (₹2,999/mo)</option>
+                      <option value="master">Master VIP Plan (₹5,999/mo)</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="beginner">Beginner Plan (₹51/mo)</option>
+                      <option value="advance">Advance Plan (₹151/mo)</option>
+                      <option value="champion">Champion VIP Plan (₹1,500/mo)</option>
+                    </>
+                  )}
                   <option value="none">No Active Plan (Trial Expired)</option>
                 </select>
               </div>
@@ -266,16 +284,25 @@ function ClientsTab() {
                 </div>
               </div>
             )},
-            { key: 'planDisplayStatus', label: 'Subscription / Trial Status', render: r => (
-              <span style={{
-                padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700,
-                background: r.hasActiveSub ? '#DCFCE7' : r.isTrialActive ? '#F3E8FF' : '#FEE2E2',
-                color: r.hasActiveSub ? '#166534' : r.isTrialActive ? '#7E22CE' : '#DC2626',
-                border: `1px solid ${r.hasActiveSub ? '#BBF7D0' : r.isTrialActive ? '#E9D5FF' : '#FCA5A5'}`
-              }}>
-                {r.planDisplayStatus}
-              </span>
-            )},
+            { key: 'planDisplayStatus', label: 'Subscription / Trial Status', render: r => {
+              const isPract = r.accountType === 'Practitioner' || r.accountType === 'Instructor'
+              const isLearner = !isPract
+              const statusText = r.hasActiveSub 
+                ? `Subscribed (${r.subscription?.planName || r.subscription?.planKey || 'Active Plan'})` 
+                : r.isTrialActive 
+                ? `${isLearner ? '7-Day' : '14-Day'} Trial (${Math.min(isLearner ? 7 : 14, r.trialDaysRemaining || (isLearner ? 7 : 14))}d left)` 
+                : 'Trial Expired'
+              return (
+                <span style={{
+                  padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700,
+                  background: r.hasActiveSub ? '#DCFCE7' : r.isTrialActive ? '#F3E8FF' : '#FEE2E2',
+                  color: r.hasActiveSub ? '#166534' : r.isTrialActive ? '#7E22CE' : '#DC2626',
+                  border: `1px solid ${r.hasActiveSub ? '#BBF7D0' : r.isTrialActive ? '#E9D5FF' : '#FCA5A5'}`
+                }}>
+                  {statusText}
+                </span>
+              )
+            }},
             { key: 'sessionsBooked', label: 'Sessions Booked', render: r => <span style={{ color: '#334155' }}>{r.sessionsBooked || 0}</span> },
             { key: 'totalPaid', label: 'Total Paid', render: r => <span style={{ color: '#10B981', fontWeight: 700 }}>{fmt(r.totalPaid)}</span> },
             { key: 'createdAt', label: 'Joined', render: r => fmtDate(r.createdAt) },
@@ -449,6 +476,16 @@ function PractitionersTab() {
   const [payoutModal, setPayoutModal] = useState(null)
   const [payoutAmount, setPayoutAmount] = useState('')
   const [payingOut, setPayingOut] = useState(false)
+  const [planModal, setPlanModal] = useState(null)
+  const [selectedPlan, setSelectedPlan] = useState('trial')
+  const [extendDays, setExtendDays] = useState('')
+  const [updatingPlan, setUpdatingPlan] = useState(false)
+
+  // Payment History Modal state
+  const [historyModal, setHistoryModal] = useState(null)
+  const [historyData, setHistoryData] = useState(null)
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [historyTab, setHistoryTab] = useState('payouts') // 'payouts' | 'logs'
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -460,6 +497,34 @@ function PractitionersTab() {
   }, [token, search])
 
   useEffect(() => { load() }, [load])
+
+  useEffect(() => {
+    if (historyModal?._id) {
+      setHistoryLoading(true)
+      apiConnector('GET', `/api/v1/admin/practitioners/${historyModal._id}/payment-history`, null, { Authorization: `Bearer ${token}` })
+        .then(res => {
+          if (res?.data?.success) setHistoryData(res.data)
+        })
+        .catch(() => toast.error('Failed to load practitioner payment history'))
+        .finally(() => setHistoryLoading(false))
+    }
+  }, [historyModal, token])
+
+  const handleUpdatePlan = async () => {
+    setUpdatingPlan(true)
+    try {
+      const res = await apiConnector('PATCH', `/api/v1/admin/clients/${planModal._id}/plan`, {
+        planKey: selectedPlan,
+        extendTrialDays: Number(extendDays) || 0,
+      }, { Authorization: `Bearer ${token}` })
+      if (res?.data?.success) {
+        toast.success('Practitioner plan updated successfully')
+        setPlanModal(null)
+        load()
+      }
+    } catch (e) { toast.error('Failed to update plan') }
+    setUpdatingPlan(false)
+  }
 
   const handlePayout = async () => {
     const hasBankDetails = !!((payoutModal?.profile?.bankAccountNumber && payoutModal?.profile?.bankIfscCode) || payoutModal?.profile?.upiId)
@@ -499,6 +564,48 @@ function PractitionersTab() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* Plan Override Modal for Practitioner */}
+      {planModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 20, padding: 32, width: 460, maxWidth: '90vw', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
+            <h3 style={{ margin: '0 0 4px', color: '#0F172A', fontSize: 18, fontWeight: 800 }}>Manage Practitioner Plan &amp; Trial — Dr. {planModal.firstName} {planModal.lastName}</h3>
+            <p style={{ margin: '0 0 16px', color: '#64748B', fontSize: 13 }}>Current status: <strong style={{ color: '#1F5FE0' }}>{planModal.planDisplayStatus || (planModal.hasActiveSub ? 'Subscribed' : planModal.isTrialActive ? `14-Day Trial (${planModal.trialDaysRemaining}d left)` : 'Trial Expired')}</strong></p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 20 }}>
+              <div>
+                <label style={{ display: 'block', color: '#475569', fontSize: 12, marginBottom: 6, fontWeight: 600 }}>Assign Practitioner Plan</label>
+                <select value={selectedPlan} onChange={e => setSelectedPlan(e.target.value)}
+                  style={{ width: '100%', background: '#FFFFFF', border: '1.5px solid #CBD5E1', borderRadius: 10, padding: '10px 14px', color: '#0F172A', fontSize: 14, outline: 'none' }}>
+                  <option value="trial">Keep Active 14-Day Free Trial</option>
+                  <option value="starter">Starter Plan (₹999/mo)</option>
+                  <option value="growth">Growth Plan (₹2,999/mo)</option>
+                  <option value="master">Master VIP Plan (₹5,999/mo)</option>
+                  <option value="none">No Active Plan (Trial Expired)</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', color: '#475569', fontSize: 12, marginBottom: 6, fontWeight: 600 }}>Extend Trial (Days)</label>
+                <input type="number" value={extendDays} onChange={e => setExtendDays(e.target.value)}
+                  placeholder="e.g. 14"
+                  style={{ width: '100%', background: '#FFFFFF', border: '1.5px solid #CBD5E1', borderRadius: 10, padding: '10px 14px', color: '#0F172A', fontSize: 14, outline: 'none' }} />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setPlanModal(null)}
+                style={{ flex: 1, padding: '12px', background: '#F1F5F9', border: 'none', borderRadius: 10, color: '#64748B', cursor: 'pointer', fontWeight: 600 }}>
+                Cancel
+              </button>
+              <button onClick={handleUpdatePlan} disabled={updatingPlan}
+                style={{ flex: 1, padding: '12px', background: 'linear-gradient(135deg, #3B82F6, #1D4ED8)', border: 'none', borderRadius: 10, color: '#fff', cursor: 'pointer', fontWeight: 700 }}>
+                {updatingPlan ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Payout Modal */}
       {payoutModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -571,6 +678,112 @@ function PractitionersTab() {
         </div>
       )}
 
+      {/* Practitioner Payment & Payout History Modal */}
+      {historyModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.65)', backdropFilter: 'blur(6px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 24, padding: 28, width: 840, maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 25px 60px rgba(0,0,0,0.25)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <div>
+                <h3 style={{ margin: 0, color: '#0F172A', fontSize: 20, fontWeight: 800 }}>📜 Payment &amp; Payout History</h3>
+                <div style={{ color: '#64748B', fontSize: 13, marginTop: 2 }}>
+                  Dr. <strong>{historyModal.firstName} {historyModal.lastName}</strong> ({historyModal.email})
+                </div>
+              </div>
+              <button onClick={() => { setHistoryModal(null); setHistoryData(null) }}
+                style={{ width: 36, height: 36, borderRadius: '50%', background: '#F1F5F9', border: '1px solid #CBD5E1', color: '#0F172A', cursor: 'pointer', fontWeight: 700, fontSize: 16 }}>
+                ✕
+              </button>
+            </div>
+
+            {/* Summary Stat Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 20 }}>
+              <div style={{ background: '#F8FAFC', padding: 14, borderRadius: 12, border: '1px solid #E2E8F0' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B' }}>TOTAL GROSS EARNED</div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: '#10B981', marginTop: 4 }}>{fmt(historyData?.totalEarned || historyModal.grossGenerated || 0)}</div>
+              </div>
+              <div style={{ background: '#FFFBEB', padding: 14, borderRadius: 12, border: '1px solid #FDE68A' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#B45309' }}>PENDING SALARY OWED</div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: '#D97706', marginTop: 4 }}>{fmt(historyData?.pendingSalaryOwed || historyModal.salaryOwed || 0)}</div>
+              </div>
+              <div style={{ background: '#F3E8FF', padding: 14, borderRadius: 12, border: '1px solid #E9D5FF' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#7E22CE' }}>DISBURSED PAYOUTS</div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: '#8B5CF6', marginTop: 4 }}>{historyData?.payouts?.length || 0} Settled</div>
+              </div>
+            </div>
+
+            {/* History Tabs */}
+            <div style={{ display: 'flex', gap: 10, borderBottom: '1px solid #E2E8F0', paddingBottom: 10, marginBottom: 16 }}>
+              <button onClick={() => setHistoryTab('payouts')}
+                style={{ padding: '8px 16px', borderRadius: 10, border: 'none', background: historyTab === 'payouts' ? '#2563EB' : '#F1F5F9', color: historyTab === 'payouts' ? '#FFF' : '#475569', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+                Disbursed Salary Payouts ({historyData?.payouts?.length || 0})
+              </button>
+              <button onClick={() => setHistoryTab('logs')}
+                style={{ padding: '8px 16px', borderRadius: 10, border: 'none', background: historyTab === 'logs' ? '#2563EB' : '#F1F5F9', color: historyTab === 'logs' ? '#FFF' : '#475569', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+                Learner Payment Logs ({historyData?.paymentLogs?.length || 0})
+              </button>
+            </div>
+
+            {historyLoading ? (
+              <div style={{ padding: 40, textAlign: 'center', color: '#64748B', fontWeight: 600 }}>Loading payment history...</div>
+            ) : historyTab === 'payouts' ? (
+              historyData?.payouts?.length > 0 ? (
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
+                      <th style={{ padding: '10px 12px', color: '#64748B', fontWeight: 700 }}>Settlement Date</th>
+                      <th style={{ padding: '10px 12px', color: '#64748B', fontWeight: 700 }}>Disbursed Amount</th>
+                      <th style={{ padding: '10px 12px', color: '#64748B', fontWeight: 700 }}>Payout Method</th>
+                      <th style={{ padding: '10px 12px', color: '#64748B', fontWeight: 700 }}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {historyData.payouts.map(p => (
+                      <tr key={p._id} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                        <td style={{ padding: '10px 12px', color: '#475569' }}>{new Date(p.createdAt || p.settledAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                        <td style={{ padding: '10px 12px', fontWeight: 800, color: '#10B981' }}>{fmt(p.amount)}</td>
+                        <td style={{ padding: '10px 12px', color: '#475569', textTransform: 'capitalize' }}>{p.payoutMethod?.replace('_', ' ') || 'Bank Payout'}</td>
+                        <td style={{ padding: '10px 12px' }}>
+                          <span style={{ padding: '3px 10px', borderRadius: 12, fontSize: 11, fontWeight: 700, background: '#DCFCE7', color: '#15803D' }}>{p.status?.toUpperCase() || 'SETTLED'}</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div style={{ padding: 30, textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>No disbursed payout records logged for this practitioner.</div>
+              )
+            ) : (
+              historyData?.paymentLogs?.length > 0 ? (
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
+                      <th style={{ padding: '10px 12px', color: '#64748B', fontWeight: 700 }}>Date</th>
+                      <th style={{ padding: '10px 12px', color: '#64748B', fontWeight: 700 }}>Learner / Client</th>
+                      <th style={{ padding: '10px 12px', color: '#64748B', fontWeight: 700 }}>Type</th>
+                      <th style={{ padding: '10px 12px', color: '#64748B', fontWeight: 700 }}>Gross Fee</th>
+                      <th style={{ padding: '10px 12px', color: '#64748B', fontWeight: 700 }}>Practitioner Share</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {historyData.paymentLogs.map(l => (
+                      <tr key={l._id} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                        <td style={{ padding: '10px 12px', color: '#475569' }}>{new Date(l.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                        <td style={{ padding: '10px 12px', fontWeight: 600, color: '#0F172A' }}>{l.client ? `${l.client.firstName} ${l.client.lastName}` : l.clientName || 'Learner'}</td>
+                        <td style={{ padding: '10px 12px', color: '#475569', textTransform: 'capitalize' }}>{l.paymentType?.replace('_', ' ') || 'Payment'}</td>
+                        <td style={{ padding: '10px 12px', fontWeight: 700, color: '#0F172A' }}>{fmt(l.amount)}</td>
+                        <td style={{ padding: '10px 12px', fontWeight: 800, color: '#10B981' }}>{fmt(l.amountOwedToPractitioner || l.amount)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div style={{ padding: 30, textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>No learner transaction logs logged for this practitioner.</div>
+              )
+            )}
+          </div>
+        </div>
+      )}
+
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#FFFFFF', border: '1.5px solid #E2E8F0', borderRadius: 12, padding: '8px 14px', flex: 1 }}>
           <FiSearch color="#94A3B8" />
@@ -598,17 +811,26 @@ function PractitionersTab() {
               </div>
             )},
             { key: 'specialization', label: 'Specialization', render: r => <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: '#EFF6FF', color: '#1D4ED8' }}>{r.profile?.specialties?.[0] || 'Integrative Health'}</span> },
+            { key: 'plan', label: 'Plan / Free Trial', render: r => (
+              <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: r.hasActiveSub ? '#DCFCE7' : r.isTrialActive ? '#F3E8FF' : '#FEE2E2', color: r.hasActiveSub ? '#166534' : r.isTrialActive ? '#7E22CE' : '#DC2626', border: `1px solid ${r.hasActiveSub ? '#BBF7D0' : r.isTrialActive ? '#E9D5FF' : '#FCA5A5'}` }}>
+                {r.planDisplayStatus || (r.isTrialActive ? `14-Day Trial (${r.trialDaysRemaining}d left)` : 'Trial Expired')}
+              </span>
+            )},
             { key: 'sessions', label: 'Sessions', render: r => r.sessionsDelivered || 0 },
             { key: 'courses', label: 'Courses', render: r => r.coursesCount || 0 },
-            { key: 'totalCourseSales', label: 'Course Sales', render: r => <span style={{ color: '#0F172A', fontWeight: 600 }}>{fmt(r.totalCourseSales || 0)}</span> },
-            { key: 'totalSessionSales', label: 'Session Sales', render: r => <span style={{ color: '#0F172A', fontWeight: 600 }}>{fmt(r.totalSessionSales || 0)}</span> },
             { key: 'grossGenerated', label: 'Gross Generated', render: r => <span style={{ color: '#10B981', fontWeight: 700 }}>{fmt(r.grossGenerated || 0)}</span> },
             { key: 'salaryOwed', label: 'Salary Owed', render: r => <span style={{ color: r.salaryOwed > 0 ? '#D97706' : '#64748B', fontWeight: 700 }}>{fmt(r.salaryOwed)}</span> },
-            { key: 'action', label: 'Action', render: r => (
-              <button onClick={() => { setPayoutModal(r); setPayoutAmount(String(r.salaryOwed || '')) }}
-                style={{ padding: '6px 14px', background: r.salaryOwed > 0 ? 'linear-gradient(135deg, #10B981, #059669)' : '#F1F5F9', border: 'none', borderRadius: 8, color: r.salaryOwed > 0 ? '#fff' : '#94A3B8', cursor: r.salaryOwed > 0 ? 'pointer' : 'not-allowed', fontWeight: 600, fontSize: 12 }}>
-                Pay Salary
-              </button>
+            { key: 'action', label: 'Actions', render: r => (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <button onClick={() => { setPayoutModal(r); setPayoutAmount(String(r.salaryOwed || '')) }}
+                  style={{ padding: '6px 10px', background: r.salaryOwed > 0 ? 'linear-gradient(135deg, #10B981, #059669)' : '#F1F5F9', border: 'none', borderRadius: 8, color: r.salaryOwed > 0 ? '#fff' : '#94A3B8', cursor: r.salaryOwed > 0 ? 'pointer' : 'not-allowed', fontWeight: 600, fontSize: 11 }}>
+                  Pay Salary
+                </button>
+                <button onClick={() => setHistoryModal(r)}
+                  style={{ padding: '6px 10px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, color: '#1D4ED8', cursor: 'pointer', fontWeight: 700, fontSize: 11 }}>
+                  📜 History
+                </button>
+              </div>
             )},
           ]}
           data={practitioners}

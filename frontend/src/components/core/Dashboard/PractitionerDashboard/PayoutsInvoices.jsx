@@ -10,6 +10,23 @@ export function PayoutsInvoices({ telemetryData }) {
   const monthlyEarnings = stats.monthlyEarnings || 0
   const clearingThisWeek = stats.clearingThisWeek || 0
 
+  const formatAmount = (val) => {
+    const num = Number(val) || 0
+    return num.toLocaleString('en-IN')
+  }
+
+  const getFontSize = (strVal) => {
+    const len = String(strVal).length
+    if (len > 18) return '14px'
+    if (len > 14) return '17px'
+    if (len > 10) return '20px'
+    return '24px'
+  }
+
+  const formattedMonthly = formatAmount(monthlyEarnings)
+  const formattedTotal = formatAmount(totalEarnings)
+  const formattedClearing = formatAmount(clearingThisWeek)
+
   return (
     <section className="view on" id="payouts">
       <div className="htop" style={{ marginBottom: '24px' }}>
@@ -24,48 +41,102 @@ export function PayoutsInvoices({ telemetryData }) {
 
       {/* Stats Cards Grid */}
       <div className="g4" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-        <div className="card stat" style={{ background: '#FFFFFF', padding: '20px', borderRadius: '14px', border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748B' }}>Earned This Month</span>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#EFF6FF', color: '#3B82F6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <FiDollarSign size={18} />
+        {/* Earned This Month */}
+        <div className="card stat" style={{ background: '#FFFFFF', padding: '20px', borderRadius: '14px', border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', justify: 'space-between' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748B' }}>Earned This Month</span>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: '#EFF6FF', color: '#3B82F6', display: 'flex', alignItems: 'center', justifyContent: 'center', shrink: 0 }}>
+                <FiDollarSign size={18} />
+              </div>
+            </div>
+            <div 
+              style={{ 
+                fontSize: getFontSize(formattedMonthly), 
+                fontWeight: 800, 
+                color: '#0F172A',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                lineHeight: 1.25,
+                margin: '4px 0'
+              }}
+              title={`₹${formattedMonthly}`}
+            >
+              ₹{formattedMonthly}
             </div>
           </div>
-          <div style={{ fontSize: '26px', fontWeight: 800, color: '#0F172A' }}>₹{monthlyEarnings.toLocaleString('en-IN')}</div>
-          <div style={{ fontSize: '12px', color: '#10B981', marginTop: '6px', fontWeight: 600 }}>Recorded session &amp; course fees</div>
+          <div style={{ fontSize: '12px', color: '#10B981', marginTop: '8px', fontWeight: 600 }}>Recorded session &amp; course fees</div>
         </div>
 
-        <div className="card stat" style={{ background: '#FFFFFF', padding: '20px', borderRadius: '14px', border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748B' }}>Total Lifetime Earnings</span>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#F0FDF4', color: '#166534', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <FiCheckCircle size={18} />
+        {/* Total Lifetime Earnings */}
+        <div className="card stat" style={{ background: '#FFFFFF', padding: '20px', borderRadius: '14px', border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', justify: 'space-between' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748B' }}>Total Lifetime Earnings</span>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: '#F0FDF4', color: '#166534', display: 'flex', alignItems: 'center', justifyContent: 'center', shrink: 0 }}>
+                <FiCheckCircle size={18} />
+              </div>
+            </div>
+            <div 
+              style={{ 
+                fontSize: getFontSize(formattedTotal), 
+                fontWeight: 800, 
+                color: '#0F172A',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                lineHeight: 1.25,
+                margin: '4px 0'
+              }}
+              title={`₹${formattedTotal}`}
+            >
+              ₹{formattedTotal}
             </div>
           </div>
-          <div style={{ fontSize: '26px', fontWeight: 800, color: '#0F172A' }}>₹{totalEarnings.toLocaleString('en-IN')}</div>
-          <div style={{ fontSize: '12px', color: '#64748B', marginTop: '6px' }}>Cumulative earnings</div>
+          <div style={{ fontSize: '12px', color: '#64748B', marginTop: '8px' }}>Cumulative earnings</div>
         </div>
 
-        <div className="card stat" style={{ background: '#FFFFFF', padding: '20px', borderRadius: '14px', border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748B' }}>Pending Admin Settlement</span>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#FFFBEB', color: '#D97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <FiClock size={18} />
+        {/* Pending Admin Settlement */}
+        <div className="card stat" style={{ background: '#FFFFFF', padding: '20px', borderRadius: '14px', border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', justify: 'space-between' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748B' }}>Pending Admin Settlement</span>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: '#FFFBEB', color: '#D97706', display: 'flex', alignItems: 'center', justifyContent: 'center', shrink: 0 }}>
+                <FiClock size={18} />
+              </div>
+            </div>
+            <div 
+              style={{ 
+                fontSize: getFontSize(formattedClearing), 
+                fontWeight: 800, 
+                color: '#D97706',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                lineHeight: 1.25,
+                margin: '4px 0'
+              }}
+              title={`₹${formattedClearing}`}
+            >
+              ₹{formattedClearing}
             </div>
           </div>
-          <div style={{ fontSize: '26px', fontWeight: 800, color: '#D97706' }}>₹{clearingThisWeek.toLocaleString('en-IN')}</div>
-          <div style={{ fontSize: '12px', color: '#D97706', marginTop: '6px', fontWeight: 600 }}>Scheduled in upcoming payout cycle</div>
+          <div style={{ fontSize: '12px', color: '#D97706', marginTop: '8px', fontWeight: 600 }}>Scheduled in upcoming payout cycle</div>
         </div>
 
-        <div className="card stat" style={{ background: '#FFFFFF', padding: '20px', borderRadius: '14px', border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748B' }}>Payout Settlements</span>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#F3E8FF', color: '#8B5CF6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <FiShield size={18} />
+        {/* Payout Settlements Count */}
+        <div className="card stat" style={{ background: '#FFFFFF', padding: '20px', borderRadius: '14px', border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', justify: 'space-between' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748B' }}>Payout Settlements</span>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: '#F3E8FF', color: '#8B5CF6', display: 'flex', alignItems: 'center', justifyContent: 'center', shrink: 0 }}>
+                <FiShield size={18} />
+              </div>
             </div>
+            <div style={{ fontSize: '24px', fontWeight: 800, color: '#0F172A', lineHeight: 1.25, margin: '4px 0' }}>{payouts.length}</div>
           </div>
-          <div style={{ fontSize: '26px', fontWeight: 800, color: '#0F172A' }}>{payouts.length}</div>
-          <div style={{ fontSize: '12px', color: '#8B5CF6', marginTop: '6px', fontWeight: 600 }}>Processed by Admin</div>
+          <div style={{ fontSize: '12px', color: '#8B5CF6', marginTop: '8px', fontWeight: 600 }}>Processed by Admin</div>
         </div>
       </div>
 
@@ -100,24 +171,33 @@ export function PayoutsInvoices({ telemetryData }) {
             <FiCheckCircle style={{ color: '#10B981' }} /> Recent Admin Payouts ({payouts.length})
           </h3>
           {payouts.length > 0 ? (
-            payouts.slice(0, 5).map((p) => (
-              <div key={p._id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #F1F5F9' }}>
-                <div>
-                  <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A' }}>₹{(p.amount || 0).toLocaleString('en-IN')}</div>
-                  <span style={{ fontSize: '12px', color: '#64748B' }}>{new Date(p.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+            payouts.slice(0, 5).map((p) => {
+              const formattedP = formatAmount(p.amount || 0)
+              return (
+                <div key={p._id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #F1F5F9' }}>
+                  <div style={{ maxWidth: '65%' }}>
+                    <div 
+                      style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                      title={`₹${formattedP}`}
+                    >
+                      ₹{formattedP}
+                    </div>
+                    <span style={{ fontSize: '12px', color: '#64748B' }}>{new Date(p.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                  </div>
+                  <span style={{
+                    padding: '4px 10px',
+                    borderRadius: '20px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    background: p.status === 'cleared' ? '#DCFCE7' : '#FEF3C7',
+                    color: p.status === 'cleared' ? '#15803D' : '#B45309',
+                    shrink: 0
+                  }}>
+                    {p.status ? p.status.toUpperCase() : 'CLEARED'}
+                  </span>
                 </div>
-                <span style={{
-                  padding: '4px 10px',
-                  borderRadius: '20px',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  background: p.status === 'cleared' ? '#DCFCE7' : '#FEF3C7',
-                  color: p.status === 'cleared' ? '#15803D' : '#B45309'
-                }}>
-                  {p.status ? p.status.toUpperCase() : 'CLEARED'}
-                </span>
-              </div>
-            ))
+              )
+            })
           ) : (
             <div style={{ padding: '24px 0', textAlign: 'center', color: '#64748B', fontSize: '13px' }}>
               No payout records logged yet. Admin settlements will appear here.
@@ -143,16 +223,19 @@ export function PayoutsInvoices({ telemetryData }) {
             </thead>
             <tbody>
               {invoices.length > 0 ? (
-                invoices.map((inv) => (
-                  <tr key={inv._id} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                    <td style={{ padding: '12px 16px', fontWeight: 600, color: '#0F172A' }}>{inv.invoiceNumber || inv._id}</td>
-                    <td style={{ padding: '12px 16px', fontWeight: 700, color: '#10B981' }}>₹{(inv.amount || 0).toLocaleString('en-IN')}</td>
-                    <td style={{ padding: '12px 16px', color: '#64748B' }}>{new Date(inv.createdAt).toLocaleDateString()}</td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 700, background: '#DCFCE7', color: '#15803D' }}>Paid</span>
-                    </td>
-                  </tr>
-                ))
+                invoices.map((inv) => {
+                  const invAmt = formatAmount(inv.amount || 0)
+                  return (
+                    <tr key={inv._id} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                      <td style={{ padding: '12px 16px', fontWeight: 600, color: '#0F172A' }}>{inv.invoiceNumber || inv._id}</td>
+                      <td style={{ padding: '12px 16px', fontWeight: 700, color: '#10B981' }}>₹{invAmt}</td>
+                      <td style={{ padding: '12px 16px', color: '#64748B' }}>{new Date(inv.createdAt).toLocaleDateString()}</td>
+                      <td style={{ padding: '12px 16px' }}>
+                        <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 700, background: '#DCFCE7', color: '#15803D' }}>Paid</span>
+                      </td>
+                    </tr>
+                  )
+                })
               ) : (
                 <tr>
                   <td colSpan={4} style={{ textAlign: 'center', padding: '24px', color: '#94A3B8' }}>

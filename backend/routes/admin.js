@@ -15,6 +15,7 @@ const {
   updateClientPlan,
   getAllCoursesAdmin,
   updateCourseAdmin,
+  getPractitionerPaymentHistory,
 } = require("../controllers/admin")
 
 // ─── Admin Account Setup (one-time, no auth required) ────────────────────────
@@ -35,6 +36,7 @@ router.patch("/courses/:id", auth, isAdmin, updateCourseAdmin)
 
 // Practitioner management
 router.get("/practitioners", auth, isAdmin, getAllPractitioners)
+router.get("/practitioners/:practitionerId/payment-history", auth, isAdmin, getPractitionerPaymentHistory)
 
 // Payment ledger
 router.get("/payments", auth, isAdmin, getAllPayments)

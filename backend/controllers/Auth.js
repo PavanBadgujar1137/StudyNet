@@ -87,7 +87,8 @@ exports.signup = async (req, res) => {
       contactNumber: null,
     })
     const now = new Date()
-    const trialExpiresAt = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000)
+    const trialDays = (accountType === "Learner" || accountType === "Client") ? 7 : 14
+    const trialExpiresAt = new Date(now.getTime() + trialDays * 24 * 60 * 60 * 1000)
 
     const user = await User.create({
       firstName,
@@ -191,8 +192,9 @@ exports.login = async (req, res) => {
 
     // Auto-heal missing trial dates for users
     if (!user.trialExpiresAt) {
+      const trialDays = (user.accountType === "Learner" || user.accountType === "Client") ? 7 : 14
       user.trialStartedAt = user.createdAt || new Date()
-      user.trialExpiresAt = new Date(new Date(user.trialStartedAt).getTime() + 14 * 24 * 60 * 60 * 1000)
+      user.trialExpiresAt = new Date(new Date(user.trialStartedAt).getTime() + trialDays * 24 * 60 * 60 * 1000)
       if (!user.activePlan || user.activePlan === "none") user.activePlan = "trial"
       await user.save()
     }
@@ -270,7 +272,8 @@ exports.socialLogin = async (req, res) => {
 
       const userAccountType = ["Client", "Practitioner"].includes(accountType) ? accountType : "Client"
       const now = new Date()
-      const trialExpiresAt = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000)
+      const trialDays = (userAccountType === "Learner" || userAccountType === "Client") ? 7 : 14
+      const trialExpiresAt = new Date(now.getTime() + trialDays * 24 * 60 * 60 * 1000)
 
       user = await User.create({
         firstName: fName,
@@ -303,8 +306,9 @@ exports.socialLogin = async (req, res) => {
       }
 
       if (!user.trialExpiresAt) {
+        const trialDays = (user.accountType === "Learner" || user.accountType === "Client") ? 7 : 14
         user.trialStartedAt = user.createdAt || new Date()
-        user.trialExpiresAt = new Date(new Date(user.trialStartedAt).getTime() + 14 * 24 * 60 * 60 * 1000)
+        user.trialExpiresAt = new Date(new Date(user.trialStartedAt).getTime() + trialDays * 24 * 60 * 60 * 1000)
         if (!user.activePlan || user.activePlan === "none") user.activePlan = "trial"
         await user.save()
       }

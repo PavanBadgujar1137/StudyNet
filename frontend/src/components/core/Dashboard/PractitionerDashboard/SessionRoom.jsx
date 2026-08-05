@@ -553,30 +553,43 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
         </div>
       )}
 
-      {/* Claude AI Copilot Section */}
-      <div className="cop" style={{ width: '100%', marginTop: '20px', background: '#F8FAFC', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '20px' }}>
-        <div className="h" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-          <b style={{ fontSize: '15px', fontWeight: 800, color: '#0F172A' }}>Claude.ai Session Co-Pilot &amp; Notes</b>
-          <div className="tog" onClick={() => setCoPilotOn(!coPilotOn)} style={{ cursor: 'pointer' }}>
-            <span style={{ fontSize: '12px', fontWeight: 700, padding: '4px 10px', borderRadius: '12px', background: coPilotOn ? '#DCFCE7' : '#F1F5F9', color: coPilotOn ? '#15803D' : '#64748B' }}>
-              {coPilotOn ? 'Claude.ai Active' : 'Claude.ai Paused'}
-            </span>
+      {/* AURA AI Copilot Section */}
+      <div style={{ width: '100%', marginTop: '20px', background: '#FFFFFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '18px' }}>✨</span>
+            <b style={{ fontSize: '15px', fontWeight: 800, color: '#0F172A' }}>AURA AI Session Co-Pilot &amp; Notes</b>
           </div>
+          <button 
+            type="button"
+            onClick={() => setCoPilotOn(!coPilotOn)} 
+            style={{ 
+              cursor: 'pointer', 
+              border: 'none', 
+              background: 'transparent',
+              padding: 0
+            }}
+          >
+            <span style={{ fontSize: '12px', fontWeight: 700, padding: '5px 12px', borderRadius: '14px', background: coPilotOn ? '#DCFCE7' : '#F1F5F9', color: coPilotOn ? '#15803D' : '#64748B', border: `1px solid ${coPilotOn ? '#BBF7D0' : '#CBD5E1'}`, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: coPilotOn ? '#22C55E' : '#94A3B8' }} />
+              {coPilotOn ? 'AURA AI Active' : 'AURA AI Paused'}
+            </span>
+          </button>
         </div>
         {coPilotOn ? (
-          <div className="b" style={{ background: '#FFFFFF', padding: '16px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
-            <div className="sug">
-              <div className="k" style={{ fontSize: '13px', fontWeight: 700, color: '#2563EB', marginBottom: '4px' }}>Claude.ai Preparation &amp; Post-Session Notes Prompt</div>
-              <p style={{ fontSize: '13px', color: '#334155', margin: 0 }}>
+          <div style={{ background: '#F8FAFC', padding: '16px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+            <div>
+              <div style={{ fontSize: '12px', fontWeight: 800, color: '#2563EB', marginBottom: '6px', letterSpacing: '0.04em' }}>AURA AI PREPARATION &amp; POST-SESSION NOTES PROMPT</div>
+              <p style={{ fontSize: '13px', color: '#334155', margin: 0, lineHeight: 1.5 }}>
                 {upcomingClasses.length > 0
-                  ? `Upcoming Zoom session: "${upcomingClasses[0].title}". Claude.ai will synthesize learner check-in notes and summarize post-session takeaways automatically.`
-                  : `No live session active. Claude.ai will analyze your Zoom recordings & learner reflections to produce post-session summary notes.`}
+                  ? `Upcoming Zoom session: "${upcomingClasses[0].title}". AURA AI will synthesize learner check-in notes and summarize post-session takeaways automatically.`
+                  : `No live session active. AURA AI will analyze your Zoom recordings & learner reflections to produce post-session summary notes.`}
               </p>
             </div>
           </div>
         ) : (
-          <div className="b" style={{ padding: '16px', textAlign: 'center', color: '#64748B', fontSize: '13px' }}>
-            Claude.ai Session Assistant is paused. Click toggle to enable instant Claude AI notes.
+          <div style={{ padding: '16px', textAlign: 'center', color: '#64748B', fontSize: '13px', background: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+            AURA AI Session Assistant is paused. Click toggle to enable instant AURA AI notes.
           </div>
         )}
       </div>

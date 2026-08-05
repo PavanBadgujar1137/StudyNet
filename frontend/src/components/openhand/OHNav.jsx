@@ -17,6 +17,7 @@ const PUBLIC_LINKS = [
   { label: 'For organizations',    to: '/for-organizations' },
   { label: 'Find a practitioner',  to: '/find-a-practitioner' },
   { label: 'AURA',                 to: '/aura' },
+  { label: 'Pricing',              to: '/pricing' },
   { label: 'Contact Us',           to: '/contact-us' },
 ]
 

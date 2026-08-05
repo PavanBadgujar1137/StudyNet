@@ -6,7 +6,7 @@ import toast from "react-hot-toast"
 import OHEyebrow from "./OHEyebrow"
 import { apiConnector } from "../../services/apiConnector"
 
-export default function OHPricingSection({ defaultRole = "learner", title, subtitle, hideRoleSwitcher = false }) {
+export default function OHPricingSection({ defaultRole = "learner", title, subtitle, hideRoleSwitcher = false, isModal = false }) {
   const [activeTab, setActiveTab] = useState(defaultRole) // "learner" | "practitioner"
   const [payingPlan, setPayingPlan] = useState(null)
   const [subStatus, setSubStatus] = useState(null)
@@ -271,7 +271,7 @@ export default function OHPricingSection({ defaultRole = "learner", title, subti
   const currentPlans = activeTab === "learner" ? learnerPlans : practitionerPlans
 
   return (
-    <section className="oh-sec py-16 bg-slate-50 border-t border-b border-slate-200" id="pricing">
+    <section className={isModal ? "py-6 bg-transparent" : "oh-sec py-16 bg-slate-50 border-t border-b border-slate-200"} id="pricing">
       <div className="oh-wrap max-w-[1360px] mx-auto px-4">
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-10">
@@ -321,10 +321,10 @@ export default function OHPricingSection({ defaultRole = "learner", title, subti
                   </span>
                 ) : subStatus.isTrialActive ? (
                   <span>
-                    ⚡ 14-Day Free Trial Active: <strong>{subStatus.trialDaysRemaining} days remaining</strong>
+                    ⚡ {activeTab === "learner" ? "7-Day" : "14-Day"} Free Trial Active: <strong>{subStatus.trialDaysRemaining} days remaining</strong>
                   </span>
                 ) : (
-                  <span>⚠️ 14-Day Free Trial Expired — Subscribe below to unlock all features</span>
+                  <span>⚠️ {activeTab === "learner" ? "7-Day" : "14-Day"} Free Trial Expired — Subscribe below to unlock all features</span>
                 )}
               </div>
             </div>
@@ -332,24 +332,30 @@ export default function OHPricingSection({ defaultRole = "learner", title, subti
 
           {/* Role Switcher Tabs */}
           {!hideRoleSwitcher && (
-            <div className="inline-flex flex-col sm:flex-row items-center p-1.5 bg-slate-200/80 rounded-2xl mt-8 shadow-inner border border-slate-300/60 max-w-full gap-1">
+            <div className="inline-flex flex-col sm:flex-row items-center p-1.5 rounded-2xl mt-8 shadow-sm border border-slate-300 max-w-full gap-1.5" style={{ backgroundColor: '#E2E8F0' }}>
               <button
+                type="button"
                 onClick={() => setActiveTab("learner")}
-                className={`w-full sm:w-auto px-5 sm:px-6 py-2.5 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-200 min-h-[44px] flex items-center justify-center ${
-                  activeTab === "learner"
-                    ? "bg-white text-blue-700 shadow-md transform scale-[1.02]"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
+                className="w-full sm:w-auto px-6 py-3 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-200 min-h-[44px] flex items-center justify-center cursor-pointer"
+                style={{
+                  backgroundColor: activeTab === "learner" ? "#2563EB" : "transparent",
+                  color: activeTab === "learner" ? "#FFFFFF" : "#0F172A",
+                  boxShadow: activeTab === "learner" ? "0 4px 14px rgba(37, 99, 235, 0.4)" : "none",
+                  transform: activeTab === "learner" ? "scale(1.02)" : "scale(1)",
+                }}
               >
                 🎓 Learner Plans (From ₹51/mo)
               </button>
               <button
+                type="button"
                 onClick={() => setActiveTab("practitioner")}
-                className={`w-full sm:w-auto px-5 sm:px-6 py-2.5 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-200 min-h-[44px] flex items-center justify-center ${
-                  activeTab === "practitioner"
-                    ? "bg-slate-900 text-white shadow-md transform scale-[1.02]"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
+                className="w-full sm:w-auto px-6 py-3 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-200 min-h-[44px] flex items-center justify-center cursor-pointer"
+                style={{
+                  backgroundColor: activeTab === "practitioner" ? "#0F172A" : "transparent",
+                  color: activeTab === "practitioner" ? "#FFFFFF" : "#0F172A",
+                  boxShadow: activeTab === "practitioner" ? "0 4px 14px rgba(15, 23, 42, 0.4)" : "none",
+                  transform: activeTab === "practitioner" ? "scale(1.02)" : "scale(1)",
+                }}
               >
                 🩺 Practitioner Plans (From ₹999/mo)
               </button>

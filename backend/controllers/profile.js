@@ -241,14 +241,16 @@ exports.getClientDashboardData = async (req, res) => {
     const activeSub = await Subscription.findOne({ client: userId, status: "active" }).sort({ createdAt: -1 }).lean()
     const hasActiveSubscription = !!activeSub && new Date(activeSub.endDate) > new Date()
 
+    const isLearner = user.accountType === "Learner" || user.accountType === "Client"
+    const trialDays = isLearner ? 7 : 14
     const regDate = user.createdAt || user.trialStartedAt || new Date()
-    const effectiveTrialExpiresAt = new Date(new Date(regDate).getTime() + 14 * 24 * 60 * 60 * 1000)
+    const effectiveTrialExpiresAt = user.trialExpiresAt || new Date(new Date(regDate).getTime() + trialDays * 24 * 60 * 60 * 1000)
 
     const now = new Date()
     const msRemaining = effectiveTrialExpiresAt.getTime() - now.getTime()
     const isTrialActive = !hasActiveSubscription && msRemaining > 0
     const trialDaysRemaining = isTrialActive
-      ? Math.min(14, Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24))))
+      ? Math.min(trialDays, Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24))))
       : 0
 
     return res.status(200).json({

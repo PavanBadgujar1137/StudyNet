@@ -238,8 +238,9 @@ async function getUserAccessContext(userId) {
     return { planKey: sub.planKey, isTrialActive: false, isExpired: false }
   }
 
-  const userObj = await User.findById(userId).select("trialStartedAt trialExpiresAt createdAt activePlan").lean()
-  const trialExpiresAt = userObj?.trialExpiresAt || (userObj?.createdAt ? new Date(new Date(userObj.createdAt).getTime() + 14 * 24 * 60 * 60 * 1000) : null)
+  const userObj = await User.findById(userId).select("trialStartedAt trialExpiresAt createdAt activePlan accountType").lean()
+  const trialDays = (userObj?.accountType === "Learner" || userObj?.accountType === "Client") ? 7 : 14
+  const trialExpiresAt = userObj?.trialExpiresAt || (userObj?.createdAt ? new Date(new Date(userObj.createdAt).getTime() + trialDays * 24 * 60 * 60 * 1000) : null)
 
   const isTrialActive = trialExpiresAt && now < new Date(trialExpiresAt)
   if (isTrialActive) {
@@ -292,7 +293,7 @@ exports.getCourseDetail = async (req, res) => {
           hasAccess = true
         } else {
           hasAccess = false
-          accessNotice = "Your 14-day free trial has expired. Subscribe to a Learner Plan to unlock practitioner free courses."
+          accessNotice = "Your free trial has expired. Subscribe to a Learner Plan to unlock practitioner free courses."
         }
       }
     }
@@ -332,7 +333,7 @@ exports.getCourseVideos = async (req, res) => {
       } else {
         return res.status(403).json({
           success: false,
-          message: "Your 14-day free trial has expired. Please subscribe to a Learner Plan to access practitioner free courses.",
+          message: "Your 7-day free trial has expired. Please subscribe to a Learner Plan to access practitioner free courses.",
         })
       }
     }

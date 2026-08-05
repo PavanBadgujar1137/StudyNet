@@ -365,15 +365,42 @@ export function PractitionerDashboard() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             {!isPractitionerSubscribed && (
-              <button 
-                onClick={() => setIsPlanModalOpen(true)}
-                className="oh-action-btn"
-                style={{ background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)', color: '#ffffff' }}
-              >
-                <FiZap /> Upgrade Plan
-              </button>
+              <>
+                <button
+                  onClick={() => setIsPlanModalOpen(true)}
+                  style={{
+                    border: isTrialActive ? '1px solid #E9D5FF' : '1px solid #FCA5A5',
+                    cursor: 'pointer',
+                    padding: '6px 14px',
+                    borderRadius: '20px',
+                    fontSize: '12.5px',
+                    fontWeight: 700,
+                    background: isTrialActive ? '#F3E8FF' : '#FEE2E2',
+                    color: isTrialActive ? '#7E22CE' : '#DC2626',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    whiteSpace: 'nowrap'
+                  }}
+                  title="Click to view subscription options"
+                >
+                  {isTrialActive ? (
+                    <span>⚡ 14-Day Trial ({trialDaysRemaining}d left) →</span>
+                  ) : (
+                    <span>⚠️ Trial Expired →</span>
+                  )}
+                </button>
+
+                <button 
+                  onClick={() => setIsPlanModalOpen(true)}
+                  className="oh-action-btn"
+                  style={{ background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)', color: '#ffffff' }}
+                >
+                  <FiZap /> Upgrade Plan
+                </button>
+              </>
             )}
             <button 
               onClick={() => setActiveSection('room')}
@@ -387,71 +414,6 @@ export function PractitionerDashboard() {
 
         {/* View Content */}
         <div className="oh-view-body main">
-          {/* Trial / Subscription Status Banner */}
-          {!isPractitionerSubscribed && (
-            <div style={{
-              background: isTrialActive ? 'linear-gradient(135deg, #EFF6FF 0%, #EEF2FF 100%)' : '#FEF2F2',
-              border: `1.5px solid ${isTrialActive ? '#C7D2FE' : '#FCA5A5'}`,
-              borderRadius: '16px',
-              padding: '14px 20px',
-              marginBottom: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '12px',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.03)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: '12px',
-                  background: isTrialActive ? '#6366F1' : '#EF4444',
-                  color: '#fff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 18,
-                  fontWeight: 700
-                }}>
-                  {isTrialActive ? '⚡' : '⚠️'}
-                </div>
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: isTrialActive ? '#1E1B4B' : '#991B1B' }}>
-                    {isTrialActive 
-                      ? `14-Day Free Trial Active (${trialDaysRemaining} ${trialDaysRemaining === 1 ? 'day' : 'days'} remaining)`
-                      : 'Free Trial Expired — Sandbox Mode'
-                    }
-                  </div>
-                  <div style={{ fontSize: 12.5, color: isTrialActive ? '#4338CA' : '#7F1D1D', marginTop: 2 }}>
-                    {isTrialActive 
-                      ? 'Build your profile, create 1:1 session offers, draft courses, and test all clinical tools for free.'
-                      : 'Subscribe to a Practitioner Plan (Starter, Growth, or Master) via Razorpay to publish live courses and accept paid bookings.'
-                    }
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setIsPlanModalOpen(true)}
-                style={{
-                  background: isTrialActive ? '#4F46E5' : '#DC2626',
-                  color: '#ffffff',
-                  border: 'none',
-                  padding: '8px 18px',
-                  borderRadius: '10px',
-                  fontWeight: 700,
-                  fontSize: 13,
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
-                }}
-              >
-                {isTrialActive ? 'Subscribe & Unlock Unlimited' : 'Subscribe via Razorpay'}
-              </button>
-            </div>
-          )}
 
           {/* Active Section Views */}
           {activeSection === 'dash' && (

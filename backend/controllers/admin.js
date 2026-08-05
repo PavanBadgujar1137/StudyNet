@@ -1,3 +1,4 @@
+const mongoose = require("mongoose")
 const User = require("../models/User")
 const Booking = require("../models/Booking")
 const Subscription = require("../models/Subscription")
@@ -169,21 +170,24 @@ exports.getAllClients = async (req, res) => {
         ])
 
         const hasActiveSub = !!subscription && new Date(subscription.endDate) > now
+        const isPractitioner = client.accountType === "Practitioner" || client.accountType === "Instructor"
+        const isLearner = !isPractitioner
+        const trialDays = isLearner ? 7 : 14
         const trialStartedAt = client.createdAt || client.trialStartedAt || now
-        // Trial expires strictly 14 days after registration date (createdAt)
-        const trialExpiresAt = new Date(new Date(trialStartedAt).getTime() + 14 * 24 * 60 * 60 * 1000)
+        const calculatedExpiresAt = new Date(new Date(trialStartedAt).getTime() + trialDays * 24 * 60 * 60 * 1000)
+        const trialExpiresAt = isLearner ? calculatedExpiresAt : (client.trialExpiresAt || calculatedExpiresAt)
 
         const msRemaining = trialExpiresAt.getTime() - now.getTime()
         const isTrialActive = !hasActiveSub && msRemaining > 0
         const trialDaysRemaining = isTrialActive
-          ? Math.min(14, Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24))))
+          ? Math.min(trialDays, Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24))))
           : 0
 
         let planDisplayStatus = "Trial Expired"
         if (hasActiveSub) {
           planDisplayStatus = `Subscribed (${subscription.planName || subscription.planKey})`
         } else if (isTrialActive) {
-          planDisplayStatus = `14-Day Trial (${trialDaysRemaining}d left)`
+          planDisplayStatus = `${isLearner ? "7-Day" : "14-Day"} Trial (${trialDaysRemaining}d left)`
         }
 
         return {
@@ -225,7 +229,7 @@ exports.getAllPractitioners = async (req, res) => {
 
     const [practitioners, total] = await Promise.all([
       User.find(query)
-        .select("firstName lastName email image createdAt accountType active practitionerProfile")
+        .select("firstName lastName email image createdAt accountType active practitionerProfile trialStartedAt trialExpiresAt activePlan")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(Number(limit))
@@ -233,9 +237,12 @@ exports.getAllPractitioners = async (req, res) => {
       User.countDocuments(query),
     ])
 
+    const now = new Date()
+
     const enriched = await Promise.all(
       practitioners.map(async (pract) => {
-        const [profile, bookingsCount, totalOwed, coursesCount, courseSalesAgg, sessionSalesAgg] = await Promise.all([
+        const [subscription, profile, bookingsCount, totalOwed, coursesCount, courseSalesAgg, sessionSalesAgg] = await Promise.all([
+          Subscription.findOne({ client: pract._id, status: "active" }).sort({ createdAt: -1 }).lean(),
           PractitionerProfile.findOne({ user: pract._id }).lean(),
           Booking.countDocuments({ practitioner: pract._id, status: { $in: ["confirmed", "completed"] } }),
           AdminPaymentLog.aggregate([
@@ -257,8 +264,31 @@ exports.getAllPractitioners = async (req, res) => {
         const sessionSales = sessionSalesAgg[0]?.total || 0
         const grossGenerated = courseSales + sessionSales
 
+        const hasActiveSub = !!subscription && new Date(subscription.endDate) > now
+        const trialDays = 14
+        const trialStartedAt = pract.createdAt || pract.trialStartedAt || now
+        const trialExpiresAt = pract.trialExpiresAt || new Date(new Date(trialStartedAt).getTime() + trialDays * 24 * 60 * 60 * 1000)
+
+        const msRemaining = trialExpiresAt.getTime() - now.getTime()
+        const isTrialActive = !hasActiveSub && msRemaining > 0
+        const trialDaysRemaining = isTrialActive
+          ? Math.min(trialDays, Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24))))
+          : 0
+
+        let planDisplayStatus = "Trial Expired"
+        if (hasActiveSub) {
+          planDisplayStatus = `Subscribed (${subscription.planName || subscription.planKey})`
+        } else if (isTrialActive) {
+          planDisplayStatus = `14-Day Trial (${trialDaysRemaining}d left)`
+        }
+
         return {
           ...pract,
+          subscription: subscription ? { planKey: subscription.planKey, planName: subscription.planName, status: subscription.status, endDate: subscription.endDate } : null,
+          hasActiveSub,
+          isTrialActive,
+          trialDaysRemaining,
+          planDisplayStatus,
           profile: profile ? {
             plan: profile.plan,
             specialties: profile.specialties,
@@ -284,6 +314,54 @@ exports.getAllPractitioners = async (req, res) => {
     return res.status(200).json({ success: true, practitioners: enriched, total, page: Number(page), limit: Number(limit) })
   } catch (error) {
     console.error("getAllPractitioners error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// ─── Practitioner Payment & Payout History (Admin) ───────────────────────────
+exports.getPractitionerPaymentHistory = async (req, res) => {
+  try {
+    const { practitionerId } = req.params
+    if (!practitionerId) {
+      return res.status(400).json({ success: false, message: "practitionerId is required" })
+    }
+
+    const practitioner = await User.findById(practitionerId).select("firstName lastName email image accountType").lean()
+    if (!practitioner) {
+      return res.status(404).json({ success: false, message: "Practitioner not found" })
+    }
+
+    const [payouts, paymentLogs, profile] = await Promise.all([
+      Payout.find({ practitioner: practitionerId }).sort({ createdAt: -1 }).lean(),
+      AdminPaymentLog.find({ practitioner: practitionerId })
+        .populate("client", "firstName lastName email")
+        .sort({ createdAt: -1 })
+        .lean(),
+      PractitionerProfile.findOne({ user: practitionerId }).lean(),
+    ])
+
+    const practitionerObjId = mongoose.Types.ObjectId.isValid(practitionerId) ? new mongoose.Types.ObjectId(practitionerId) : practitionerId
+
+    const totalOwedAgg = await AdminPaymentLog.aggregate([
+      { $match: { practitioner: { $in: [practitionerId, practitionerObjId] }, status: "received", practitionerSalaryPaid: false } },
+      { $group: { _id: null, total: { $sum: "$amountOwedToPractitioner" } } },
+    ])
+    const totalEarnedAgg = await AdminPaymentLog.aggregate([
+      { $match: { practitioner: { $in: [practitionerId, practitionerObjId] }, status: "received" } },
+      { $group: { _id: null, total: { $sum: "$amount" } } },
+    ])
+
+    return res.status(200).json({
+      success: true,
+      practitioner,
+      profile,
+      payouts,
+      paymentLogs,
+      pendingSalaryOwed: totalOwedAgg[0]?.total || 0,
+      totalEarned: totalEarnedAgg[0]?.total || 0,
+    })
+  } catch (error) {
+    console.error("getPractitionerPaymentHistory error:", error)
     return res.status(500).json({ success: false, message: error.message })
   }
 }
