@@ -424,7 +424,7 @@ export default function Courses() {
         ) : subInfo?.isTrialActive ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: '#F3E8FF', borderRadius: 20, border: '1px solid #E9D5FF' }}>
             <span style={{ color: '#7E22CE', fontWeight: 700, fontSize: 13 }}>
-              ⚡ 7-Day Free Trial Active ({subInfo.trialDaysRemaining} days remaining)
+              ⚡ 14-Day Free Trial Active ({subInfo.trialDaysRemaining} days remaining)
             </span>
           </div>
         ) : (
@@ -448,8 +448,8 @@ export default function Courses() {
             <div>
               <div style={{ color: '#1E293B', fontWeight: 700, fontSize: 14 }}>
                 {subInfo?.isTrialActive
-                  ? `Your 7-Day Free Trial is Active (${subInfo.trialDaysRemaining} days remaining)`
-                  : 'Your 7-Day Free Trial has Expired!'}
+                  ? `Your 14-Day Free Trial is Active (${subInfo.trialDaysRemaining} days remaining)`
+                  : 'Your 14-Day Free Trial has Expired!'}
               </div>
               <div style={{ color: '#64748B', fontSize: 12 }}>
                 {subInfo?.isTrialActive

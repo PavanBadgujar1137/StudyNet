@@ -43,6 +43,7 @@ export function PractitionerDashboard() {
   const [loading, setLoading] = useState(true)
   const [subStatus, setSubStatus] = useState(null)
   const [payingPlan, setPayingPlan] = useState(null)
+  const [isPlanModalOpen, setIsPlanModalOpen] = useState(false)
 
   const { user } = useSelector((state) => state.profile)
   const { token } = useSelector((state) => state.auth)
@@ -146,6 +147,8 @@ export function PractitionerDashboard() {
   }
 
   const isPractitionerSubscribed = subStatus?.hasActiveSubscription || ['starter', 'growth', 'practice', 'master'].includes(user?.activePlan)
+  const isTrialActive = subStatus ? subStatus.isTrialActive : (user?.activePlan === 'trial' || !user?.activePlan || user?.activePlan === 'none')
+  const trialDaysRemaining = subStatus?.trialDaysRemaining ?? 14
 
   const practiceItems = [
     { id: 'dash', label: 'Dashboard', icon: <FiGrid /> },
@@ -363,6 +366,15 @@ export function PractitionerDashboard() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {!isPractitionerSubscribed && (
+              <button 
+                onClick={() => setIsPlanModalOpen(true)}
+                className="oh-action-btn"
+                style={{ background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)', color: '#ffffff' }}
+              >
+                <FiZap /> Upgrade Plan
+              </button>
+            )}
             <button 
               onClick={() => setActiveSection('room')}
               className="oh-action-btn"
@@ -375,47 +387,213 @@ export function PractitionerDashboard() {
 
         {/* View Content */}
         <div className="oh-view-body main">
-          {!isPractitionerSubscribed && activeSection !== 'profile' ? (
-            <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 24, padding: '40px 24px', textAlign: 'center', maxWidth: 900, margin: '0 auto', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
-              <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#FEF2F2', border: '1px solid #FCA5A5', color: '#DC2626', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 28, fontWeight: 800 }}>
-                🔒
+          {/* Trial / Subscription Status Banner */}
+          {!isPractitionerSubscribed && (
+            <div style={{
+              background: isTrialActive ? 'linear-gradient(135deg, #EFF6FF 0%, #EEF2FF 100%)' : '#FEF2F2',
+              border: `1.5px solid ${isTrialActive ? '#C7D2FE' : '#FCA5A5'}`,
+              borderRadius: '16px',
+              padding: '14px 20px',
+              marginBottom: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '12px',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.03)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: '12px',
+                  background: isTrialActive ? '#6366F1' : '#EF4444',
+                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 18,
+                  fontWeight: 700
+                }}>
+                  {isTrialActive ? '⚡' : '⚠️'}
+                </div>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: isTrialActive ? '#1E1B4B' : '#991B1B' }}>
+                    {isTrialActive 
+                      ? `14-Day Free Trial Active (${trialDaysRemaining} ${trialDaysRemaining === 1 ? 'day' : 'days'} remaining)`
+                      : 'Free Trial Expired — Sandbox Mode'
+                    }
+                  </div>
+                  <div style={{ fontSize: 12.5, color: isTrialActive ? '#4338CA' : '#7F1D1D', marginTop: 2 }}>
+                    {isTrialActive 
+                      ? 'Build your profile, create 1:1 session offers, draft courses, and test all clinical tools for free.'
+                      : 'Subscribe to a Practitioner Plan (Starter, Growth, or Master) via Razorpay to publish live courses and accept paid bookings.'
+                    }
+                  </div>
+                </div>
               </div>
-              <h2 style={{ margin: '0 0 8px', color: '#0F172A', fontSize: 24, fontWeight: 800 }}>
-                Practitioner Platform Access Locked
-              </h2>
-              <p style={{ margin: '0 0 24px', color: '#64748B', fontSize: 15, maxWidth: 640, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.6 }}>
-                Practitioners do not get a free trial. To publish courses, create 1:1 session offers, host live group circles, and access clinical tools, please subscribe to a Practitioner Plan via <strong>Razorpay</strong>.
-              </p>
+
+              <button
+                onClick={() => setIsPlanModalOpen(true)}
+                style={{
+                  background: isTrialActive ? '#4F46E5' : '#DC2626',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '8px 18px',
+                  borderRadius: '10px',
+                  fontWeight: 700,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+                }}
+              >
+                {isTrialActive ? 'Subscribe & Unlock Unlimited' : 'Subscribe via Razorpay'}
+              </button>
+            </div>
+          )}
+
+          {/* Active Section Views */}
+          {activeSection === 'dash' && (
+            <Overview 
+              practitionerName={practitionerName} 
+              setActiveSection={setActiveSection}
+              telemetryData={telemetryData}
+              loading={loading}
+            />
+          )}
+          {activeSection === 'community' && (
+            <CommunityChatHub />
+          )}
+          {activeSection === 'offers' && (
+            <MyOffers telemetryData={telemetryData} onUpdate={loadData} />
+          )}
+          {activeSection === 'courses' && (
+            <MyCourses />
+          )}
+          {activeSection === 'clients' && (
+            <MyLearners setActiveSection={setActiveSection} telemetryData={telemetryData} onUpdate={loadData} />
+          )}
+          {activeSection === 'circles' && (
+            <Circles telemetryData={telemetryData} onUpdate={loadData} setActiveSection={setActiveSection} />
+          )}
+          {activeSection === 'room' && (
+            <SessionRoom practitionerName={practitionerName} telemetryData={telemetryData} onUpdate={loadData} setActiveSection={setActiveSection} />
+          )}
+          {activeSection === 'payouts' && (
+            <PayoutsInvoices telemetryData={telemetryData} />
+          )}
+          {activeSection === 'growth' && (
+            <GrowthTools telemetryData={telemetryData} />
+          )}
+          {activeSection === 'profile' && (
+            <Settings />
+          )}
+        </div>
+
+        {/* Plan Upgrade Selection Modal */}
+        {isPlanModalOpen && (
+          <div 
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 999,
+              background: 'rgba(15, 23, 42, 0.65)',
+              backdropFilter: 'blur(6px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '20px'
+            }}
+            onClick={() => setIsPlanModalOpen(false)}
+          >
+            <div 
+              style={{
+                background: '#FFFFFF',
+                borderRadius: '24px',
+                padding: '32px 28px',
+                maxWidth: '920px',
+                width: '100%',
+                maxHeight: '90vh',
+                overflowY: 'auto',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                position: 'relative'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setIsPlanModalOpen(false)}
+                style={{
+                  position: 'absolute',
+                  top: 20,
+                  right: 20,
+                  background: '#F1F5F9',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: 36,
+                  height: 36,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: '#475569'
+                }}
+              >
+                <FiX fontSize={18} />
+              </button>
+
+              <div style={{ textAlign: 'center', marginBottom: 28 }}>
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '4px 12px',
+                  borderRadius: 20,
+                  background: '#EEF2FF',
+                  color: '#4F46E5',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  marginBottom: 10
+                }}>
+                  ✨ PRACTITIONER PLATFORM
+                </div>
+                <h2 style={{ margin: '0 0 8px', color: '#0F172A', fontSize: 26, fontWeight: 800 }}>
+                  Choose Your Practitioner Plan
+                </h2>
+                <p style={{ margin: 0, color: '#64748B', fontSize: 14 }}>
+                  Publish courses, launch 1:1 sessions, host live circles, and access clinical analytics.
+                </p>
+              </div>
 
               {/* Plans Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, textAlign: 'left', marginTop: 24 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 20, textAlign: 'left' }}>
                 {/* Starter Plan */}
-                <div style={{ background: '#F8FAFC', border: '1.5px solid #E2E8F0', borderRadius: 20, padding: 20, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div style={{ background: '#F8FAFC', border: '1.5px solid #E2E8F0', borderRadius: 20, padding: 22, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <div>
                     <div style={{ color: '#0F172A', fontWeight: 800, fontSize: 18, marginBottom: 4 }}>Starter Plan</div>
-                    <div style={{ color: '#0F172A', fontSize: 26, fontWeight: 900, marginBottom: 12 }}>₹999<small style={{ fontSize: 13, color: '#64748B' }}>/mo</small></div>
-                    <ul style={{ margin: '0 0 16px', padding: 0, listStyle: 'none', fontSize: 12, color: '#475569', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div style={{ color: '#0F172A', fontSize: 28, fontWeight: 900, marginBottom: 14 }}>₹999<small style={{ fontSize: 13, color: '#64748B' }}>/mo</small></div>
+                    <ul style={{ margin: '0 0 20px', padding: 0, listStyle: 'none', fontSize: 13, color: '#475569', display: 'flex', flexDirection: 'column', gap: 8 }}>
                       <li>✓ Publish courses & 1:1 session offers</li>
                       <li>✓ 1 Live group circle</li>
                       <li>✓ Directory listing & client booking link</li>
                     </ul>
                   </div>
                   <button
-                    onClick={() => handlePayNow('starter')}
+                    onClick={() => { handlePayNow('starter'); setIsPlanModalOpen(false); }}
                     disabled={payingPlan === 'starter'}
-                    style={{ width: '100%', padding: '10px', background: '#0F172A', border: 'none', borderRadius: 10, color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: 13 }}
+                    style={{ width: '100%', padding: '12px', background: '#0F172A', border: 'none', borderRadius: 12, color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: 13.5 }}
                   >
                     {payingPlan === 'starter' ? 'Opening Razorpay...' : 'Subscribe Starter — ₹999'}
                   </button>
                 </div>
 
                 {/* Growth Plan (Featured) */}
-                <div style={{ background: '#0F172A', border: '2px solid #6366F1', borderRadius: 20, padding: 20, color: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', position: 'relative' }}>
-                  <span style={{ position: 'absolute', top: -10, right: 16, background: '#6366F1', color: '#fff', fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 10 }}>MOST POPULAR</span>
+                <div style={{ background: '#0F172A', border: '2px solid #6366F1', borderRadius: 20, padding: 22, color: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', position: 'relative' }}>
+                  <span style={{ position: 'absolute', top: -11, right: 16, background: '#6366F1', color: '#fff', fontSize: 10, fontWeight: 800, padding: '3px 10px', borderRadius: 10 }}>MOST POPULAR</span>
                   <div>
                     <div style={{ color: '#fff', fontWeight: 800, fontSize: 18, marginBottom: 4 }}>Growth Plan</div>
-                    <div style={{ color: '#fff', fontSize: 26, fontWeight: 900, marginBottom: 12 }}>₹2,999<small style={{ fontSize: 13, color: '#94A3B8' }}>/mo</small></div>
-                    <ul style={{ margin: '0 0 16px', padding: 0, listStyle: 'none', fontSize: 12, color: '#CBD5E1', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div style={{ color: '#fff', fontSize: 28, fontWeight: 900, marginBottom: 14 }}>₹2,999<small style={{ fontSize: 13, color: '#94A3B8' }}>/mo</small></div>
+                    <ul style={{ margin: '0 0 20px', padding: 0, listStyle: 'none', fontSize: 13, color: '#CBD5E1', display: 'flex', flexDirection: 'column', gap: 8 }}>
                       <li>✓ Everything in Starter</li>
                       <li>✓ Unlimited live circles & cohorts</li>
                       <li>✓ Automated check-in sequences</li>
@@ -423,20 +601,20 @@ export function PractitionerDashboard() {
                     </ul>
                   </div>
                   <button
-                    onClick={() => handlePayNow('growth')}
+                    onClick={() => { handlePayNow('growth'); setIsPlanModalOpen(false); }}
                     disabled={payingPlan === 'growth'}
-                    style={{ width: '100%', padding: '10px', background: 'linear-gradient(135deg, #3B82F6, #1D4ED8)', border: 'none', borderRadius: 10, color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: 13 }}
+                    style={{ width: '100%', padding: '12px', background: 'linear-gradient(135deg, #3B82F6, #1D4ED8)', border: 'none', borderRadius: 12, color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: 13.5 }}
                   >
                     {payingPlan === 'growth' ? 'Opening Razorpay...' : 'Subscribe Growth — ₹2,999'}
                   </button>
                 </div>
 
                 {/* Master VIP Plan */}
-                <div style={{ background: '#F8FAFC', border: '1.5px solid #E2E8F0', borderRadius: 20, padding: 20, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div style={{ background: '#F8FAFC', border: '1.5px solid #E2E8F0', borderRadius: 20, padding: 22, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <div>
                     <div style={{ color: '#0F172A', fontWeight: 800, fontSize: 18, marginBottom: 4 }}>Master VIP</div>
-                    <div style={{ color: '#0F172A', fontSize: 26, fontWeight: 900, marginBottom: 12 }}>₹5,999<small style={{ fontSize: 13, color: '#64748B' }}>/mo</small></div>
-                    <ul style={{ margin: '0 0 16px', padding: 0, listStyle: 'none', fontSize: 12, color: '#475569', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div style={{ color: '#0F172A', fontSize: 28, fontWeight: 900, marginBottom: 14 }}>₹5,999<small style={{ fontSize: 13, color: '#64748B' }}>/mo</small></div>
+                    <ul style={{ margin: '0 0 20px', padding: 0, listStyle: 'none', fontSize: 13, color: '#475569', display: 'flex', flexDirection: 'column', gap: 8 }}>
                       <li>✓ Everything in Growth</li>
                       <li>✓ Zero commission options</li>
                       <li>✓ White-label client portal</li>
@@ -444,55 +622,17 @@ export function PractitionerDashboard() {
                     </ul>
                   </div>
                   <button
-                    onClick={() => handlePayNow('master')}
+                    onClick={() => { handlePayNow('master'); setIsPlanModalOpen(false); }}
                     disabled={payingPlan === 'master'}
-                    style={{ width: '100%', padding: '10px', background: '#0F172A', border: 'none', borderRadius: 10, color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: 13 }}
+                    style={{ width: '100%', padding: '12px', background: '#0F172A', border: 'none', borderRadius: 12, color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: 13.5 }}
                   >
                     {payingPlan === 'master' ? 'Opening Razorpay...' : 'Subscribe Master — ₹5,999'}
                   </button>
                 </div>
               </div>
             </div>
-          ) : (
-            <>
-              {activeSection === 'dash' && (
-                <Overview 
-                  practitionerName={practitionerName} 
-                  setActiveSection={setActiveSection}
-                  telemetryData={telemetryData}
-                  loading={loading}
-                />
-              )}
-              {activeSection === 'community' && (
-                <CommunityChatHub />
-              )}
-              {activeSection === 'offers' && (
-                <MyOffers telemetryData={telemetryData} onUpdate={loadData} />
-              )}
-              {activeSection === 'courses' && (
-                <MyCourses />
-              )}
-              {activeSection === 'clients' && (
-                <MyLearners setActiveSection={setActiveSection} telemetryData={telemetryData} onUpdate={loadData} />
-              )}
-              {activeSection === 'circles' && (
-                <Circles telemetryData={telemetryData} onUpdate={loadData} setActiveSection={setActiveSection} />
-              )}
-              {activeSection === 'room' && (
-                <SessionRoom practitionerName={practitionerName} telemetryData={telemetryData} onUpdate={loadData} setActiveSection={setActiveSection} />
-              )}
-              {activeSection === 'payouts' && (
-                <PayoutsInvoices telemetryData={telemetryData} />
-              )}
-              {activeSection === 'growth' && (
-                <GrowthTools telemetryData={telemetryData} />
-              )}
-              {activeSection === 'profile' && (
-                <Settings />
-              )}
-            </>
-          )}
-        </div>
+          </div>
+        )}
       </main>
     </div>
   )

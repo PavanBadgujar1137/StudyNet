@@ -210,7 +210,7 @@ function ClientsTab() {
                 <label style={{ display: 'block', color: '#475569', fontSize: 12, marginBottom: 6, fontWeight: 600 }}>Assign Subscription Plan</label>
                 <select value={selectedPlan} onChange={e => setSelectedPlan(e.target.value)}
                   style={{ width: '100%', background: '#FFFFFF', border: '1.5px solid #CBD5E1', borderRadius: 10, padding: '10px 14px', color: '#0F172A', fontSize: 14, outline: 'none' }}>
-                  <option value="trial">Keep 7-Day Free Trial</option>
+                  <option value="trial">Keep 14-Day Free Trial</option>
                   <option value="beginner">Beginner Plan (₹51/mo)</option>
                   <option value="advance">Advance Plan (₹151/mo)</option>
                   <option value="champion">Champion VIP Plan (₹1,500/mo)</option>

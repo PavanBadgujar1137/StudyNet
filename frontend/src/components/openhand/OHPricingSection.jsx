@@ -321,10 +321,10 @@ export default function OHPricingSection({ defaultRole = "learner", title, subti
                   </span>
                 ) : subStatus.isTrialActive ? (
                   <span>
-                    ⚡ 7-Day Free Trial Active: <strong>{subStatus.trialDaysRemaining} days remaining</strong>
+                    ⚡ 14-Day Free Trial Active: <strong>{subStatus.trialDaysRemaining} days remaining</strong>
                   </span>
                 ) : (
-                  <span>⚠️ 7-Day Free Trial Expired — Subscribe below to unlock all features</span>
+                  <span>⚠️ 14-Day Free Trial Expired — Subscribe below to unlock all features</span>
                 )}
               </div>
             </div>

@@ -33,15 +33,15 @@ export function PricingPage() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200">
-                <h3 className="font-bold text-slate-900 mb-2 text-base">How does the Learner 7-Day Free Trial work?</h3>
+                <h3 className="font-bold text-slate-900 mb-2 text-base">How does the Learner 14-Day Free Trial work?</h3>
                 <p className="text-slate-600 text-sm leading-relaxed">
-                  Upon registration, all Learners receive 7 days of free access to practitioner free courses and platform tools. After 7 days, you can choose to subscribe to a Learner plan (Beginner ₹51, Advance ₹151, or Champion ₹1,500) via Razorpay.
+                  Upon registration, all Learners receive 14 days of free access to practitioner free courses and platform tools. After 14 days, you can choose to subscribe to a Learner plan (Beginner ₹51, Advance ₹151, or Champion ₹1,500) via Razorpay.
                 </p>
               </div>
               <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200">
                 <h3 className="font-bold text-slate-900 mb-2 text-base">Do Practitioners get a free trial?</h3>
                 <p className="text-slate-600 text-sm leading-relaxed">
-                  Practitioners do not get a free trial. To access practitioner tools, publish courses, and offer 1:1 sessions, practitioners must subscribe to a Practitioner Plan (Starter ₹999, Growth ₹2,999, or Master ₹5,999).
+                  Yes! Practitioners get a 14-day free trial upon registration to explore clinical tools, set up 1:1 session offers, build courses, and test live circles. To publish live to learners, practitioners can subscribe to a Practitioner Plan (Starter ₹999, Growth ₹2,999, or Master ₹5,999).
                 </p>
               </div>
               <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200">

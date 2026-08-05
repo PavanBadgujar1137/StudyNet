@@ -84,14 +84,14 @@ const userSchema = new mongoose.Schema(
         ref: "Batch",
       },
     ],
-    // 7-day free trial & plan tracking
+    // 14-day free trial & plan tracking
     trialStartedAt: {
       type: Date,
       default: Date.now,
     },
     trialExpiresAt: {
       type: Date,
-      default: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      default: () => new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
     },
     activePlan: {
       type: String,

@@ -267,7 +267,7 @@ export function LearnerDashboard() {
               </span>
             ) : dashboardData?.subscriptionStatus?.isTrialActive ? (
               <button onClick={() => setShowPricingModal(true)} style={{ border: '1px solid #E9D5FF', cursor: 'pointer', padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, background: '#F3E8FF', color: '#7E22CE' }}>
-                ⚡ 7-Day Trial ({dashboardData.subscriptionStatus.trialDaysRemaining}d left) →
+                ⚡ 14-Day Trial ({dashboardData.subscriptionStatus.trialDaysRemaining}d left) →
               </button>
             ) : (
               <button onClick={() => setShowPricingModal(true)} style={{ border: '1px solid #FCA5A5', cursor: 'pointer', padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, background: '#FEE2E2', color: '#DC2626' }}>
@@ -289,7 +289,7 @@ export function LearnerDashboard() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#FEE2E2', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>⚠️</div>
               <div>
-                <div style={{ color: '#991B1B', fontWeight: 800, fontSize: 14 }}>Your 7-Day Free Trial Has Expired</div>
+                <div style={{ color: '#991B1B', fontWeight: 800, fontSize: 14 }}>Your 14-Day Free Trial Has Expired</div>
                 <div style={{ color: '#7F1D1D', fontSize: 12 }}>Subscribe to a Learner Plan (Beginner ₹51, Advance ₹151, Champion ₹1,500) to keep accessing free practitioner courses, or logout.</div>
               </div>
             </div>

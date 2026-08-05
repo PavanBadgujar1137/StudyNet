@@ -87,7 +87,7 @@ exports.signup = async (req, res) => {
       contactNumber: null,
     })
     const now = new Date()
-    const trialExpiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+    const trialExpiresAt = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000)
 
     const user = await User.create({
       firstName,
@@ -101,7 +101,7 @@ exports.signup = async (req, res) => {
       image: "",
       trialStartedAt: now,
       trialExpiresAt: trialExpiresAt,
-      activePlan: accountType === "Client" || accountType === "Student" ? "trial" : "none",
+      activePlan: "trial",
     })
 
     // If Practitioner / Instructor, auto-create PractitionerProfile with bank payout details
@@ -189,11 +189,11 @@ exports.login = async (req, res) => {
       })
     }
 
-    // Auto-heal missing trial dates for Client/Student users
-    if ((user.accountType === "Client" || user.accountType === "Student") && !user.trialExpiresAt) {
+    // Auto-heal missing trial dates for users
+    if (!user.trialExpiresAt) {
       user.trialStartedAt = user.createdAt || new Date()
-      user.trialExpiresAt = new Date(new Date(user.trialStartedAt).getTime() + 7 * 24 * 60 * 60 * 1000)
-      if (!user.activePlan) user.activePlan = "trial"
+      user.trialExpiresAt = new Date(new Date(user.trialStartedAt).getTime() + 14 * 24 * 60 * 60 * 1000)
+      if (!user.activePlan || user.activePlan === "none") user.activePlan = "trial"
       await user.save()
     }
 
@@ -270,7 +270,7 @@ exports.socialLogin = async (req, res) => {
 
       const userAccountType = ["Client", "Practitioner"].includes(accountType) ? accountType : "Client"
       const now = new Date()
-      const trialExpiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+      const trialExpiresAt = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000)
 
       user = await User.create({
         firstName: fName,
@@ -282,9 +282,9 @@ exports.socialLogin = async (req, res) => {
         image: image || `https://api.dicebear.com/5.x/initials/svg?seed=${encodeURIComponent(fName + " " + lName)}`,
         approved: true,
         active: true,
-        trialStartedAt: userAccountType === "Client" ? now : undefined,
-        trialExpiresAt: userAccountType === "Client" ? trialExpiresAt : undefined,
-        activePlan: userAccountType === "Client" ? "trial" : "none",
+        trialStartedAt: now,
+        trialExpiresAt: trialExpiresAt,
+        activePlan: "trial",
       })
 
       if (userAccountType === "Practitioner") {
@@ -302,10 +302,10 @@ exports.socialLogin = async (req, res) => {
         await user.save()
       }
 
-      if ((user.accountType === "Client" || user.accountType === "Student") && !user.trialExpiresAt) {
+      if (!user.trialExpiresAt) {
         user.trialStartedAt = user.createdAt || new Date()
-        user.trialExpiresAt = new Date(new Date(user.trialStartedAt).getTime() + 7 * 24 * 60 * 60 * 1000)
-        if (!user.activePlan) user.activePlan = "trial"
+        user.trialExpiresAt = new Date(new Date(user.trialStartedAt).getTime() + 14 * 24 * 60 * 60 * 1000)
+        if (!user.activePlan || user.activePlan === "none") user.activePlan = "trial"
         await user.save()
       }
     }

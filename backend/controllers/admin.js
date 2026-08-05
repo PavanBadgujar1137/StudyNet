@@ -170,20 +170,20 @@ exports.getAllClients = async (req, res) => {
 
         const hasActiveSub = !!subscription && new Date(subscription.endDate) > now
         const trialStartedAt = client.createdAt || client.trialStartedAt || now
-        // Trial expires strictly 7 days after registration date (createdAt)
-        const trialExpiresAt = new Date(new Date(trialStartedAt).getTime() + 7 * 24 * 60 * 60 * 1000)
+        // Trial expires strictly 14 days after registration date (createdAt)
+        const trialExpiresAt = new Date(new Date(trialStartedAt).getTime() + 14 * 24 * 60 * 60 * 1000)
 
         const msRemaining = trialExpiresAt.getTime() - now.getTime()
         const isTrialActive = !hasActiveSub && msRemaining > 0
         const trialDaysRemaining = isTrialActive
-          ? Math.min(7, Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24))))
+          ? Math.min(14, Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24))))
           : 0
 
         let planDisplayStatus = "Trial Expired"
         if (hasActiveSub) {
           planDisplayStatus = `Subscribed (${subscription.planName || subscription.planKey})`
         } else if (isTrialActive) {
-          planDisplayStatus = `7-Day Trial (${trialDaysRemaining}d left)`
+          planDisplayStatus = `14-Day Trial (${trialDaysRemaining}d left)`
         }
 
         return {
