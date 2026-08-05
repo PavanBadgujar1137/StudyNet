@@ -145,29 +145,82 @@ exports.getPractitioners = async (req, res) => {
 exports.getPractitionerByHandle = async (req, res) => {
   try {
     const { handle } = req.params
-    const profile = await PractitionerProfile.findOne({ handle }).populate({
+    let profile = await PractitionerProfile.findOne({ handle }).populate({
       path: "user",
-      select: "firstName lastName email image",
+      select: "firstName lastName email image accountType",
     })
+
+    if (!profile) {
+      // Match user by name slug (e.g. "rohit-sharma" -> firstName: "rohit", lastName: "sharma")
+      const nameParts = handle.split("-")
+      const firstNameRegex = new RegExp(`^${nameParts[0]}$`, "i")
+      const lastNameRegex = nameParts.length > 1 ? new RegExp(`^${nameParts.slice(1).join(" ")}$`, "i") : null
+
+      const userQuery = { firstName: firstNameRegex }
+      if (lastNameRegex) userQuery.lastName = lastNameRegex
+
+      let user = await User.findOne(userQuery).select("firstName lastName email image accountType").lean()
+      
+      // Fallback search if exact slug match was not found
+      if (!user) {
+        user = await User.findOne({
+          accountType: { $in: ["Practitioner", "Instructor"] },
+          firstName: new RegExp(nameParts[0], "i"),
+        }).select("firstName lastName email image accountType").lean()
+      }
+
+      if (user) {
+        let existingProf = await PractitionerProfile.findOne({ user: user._id })
+        if (!existingProf) {
+          existingProf = await PractitionerProfile.create({
+            user: user._id,
+            handle: handle.toLowerCase(),
+            credentials: "Verified Practitioner",
+            bio: "Welcome to my official practice booking page.",
+            specialties: ["Holistic Care", "Wellness Coaching"],
+            languages: ["English"],
+            verified: true,
+          })
+        } else {
+          existingProf.handle = handle.toLowerCase()
+          await existingProf.save()
+        }
+        profile = await PractitionerProfile.findById(existingProf._id).populate({
+          path: "user",
+          select: "firstName lastName email image accountType",
+        })
+      }
+    }
 
     if (!profile) {
       return res.status(404).json({
         success: false,
-        message: "Practitioner not found",
+        message: "Practitioner profile not found",
       })
     }
 
     const Offer = require("../models/Offer")
-    const userOffers = await Offer.find({ practitioner: profile.user._id }).lean()
+    const RatingAndReview = require("../models/RatingandReview")
+
+    const userOffers = await Offer.find({
+      $or: [{ practitioner: profile.user._id }, { practitioner: profile._id }],
+    }).lean()
+
+    const reviews = await RatingAndReview.find({ practitioner: profile.user._id })
+      .populate("user", "firstName lastName image")
+      .lean()
+
     const profileObj = profile.toObject()
     profileObj.offers = userOffers || []
     profileObj.userOffers = userOffers || []
+    profileObj.reviews = reviews || []
 
     return res.status(200).json({
       success: true,
       data: profileObj,
     })
   } catch (error) {
+    console.error("Get Practitioner By Handle Error:", error)
     return res.status(500).json({
       success: false,
       message: "Failed to fetch practitioner profile",

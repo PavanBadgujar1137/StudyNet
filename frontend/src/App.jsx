@@ -25,6 +25,7 @@ import PractitionerJourney from "./pages/marketing/PractitionerJourney"
 import PricingPage from "./pages/marketing/PricingPage"
 import ForOrganizations from "./pages/marketing/ForOrganizations"
 import FindAPractitioner from "./pages/marketing/FindAPractitioner"
+import PractitionerPublicProfile from "./pages/marketing/PractitionerPublicProfile"
 import CoPilot from "./pages/marketing/CoPilot"
 import LearnerJourney from "./pages/marketing/LearnerJourney"
 // import StartFree from "./pages/marketing/StartFree"
@@ -97,6 +98,8 @@ function App() {
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/for-organizations" element={<ForOrganizations />} />
         <Route path="/find-a-practitioner" element={<FindAPractitioner />} />
+        <Route path="/practitioner/:handle" element={<PractitionerPublicProfile />} />
+        <Route path="/practitioners/:handle" element={<PractitionerPublicProfile />} />
         <Route path="/co-pilot" element={<CoPilot />} />
         <Route path="/aura" element={<CoPilot />} />
         <Route path="/client-journey" element={<LearnerJourney />} />

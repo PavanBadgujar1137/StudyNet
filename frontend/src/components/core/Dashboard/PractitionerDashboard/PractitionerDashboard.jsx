@@ -13,7 +13,8 @@ import {
   FiZap,
   FiUser,
   FiMessageSquare,
-  FiBookOpen
+  FiBookOpen,
+  FiShare2
 } from 'react-icons/fi'
 import Overview from './Overview'
 import MyOffers from './MyOffers'
@@ -23,6 +24,7 @@ import SessionRoom from './SessionRoom'
 import PayoutsInvoices from './PayoutsInvoices'
 import GrowthTools from './GrowthTools'
 import MyCourses from './MyCourses'
+import SocialPostStudio from './SocialPostStudio'
 import Settings from '../Settings'
 import CommunityChatHub from '../CommunityChatHub'
 import { useSearchParams } from 'react-router-dom'
@@ -152,6 +154,7 @@ export function PractitionerDashboard() {
 
   const practiceItems = [
     { id: 'dash', label: 'Dashboard', icon: <FiGrid /> },
+    { id: 'social', label: 'Social Posts', icon: <FiShare2 /> },
     { id: 'community', label: 'Community Hub', icon: <FiMessageSquare /> },
     { id: 'offers', label: 'My offers', icon: <FiTag /> },
     { id: 'courses', label: 'My Courses', icon: <FiBookOpen /> },
@@ -360,6 +363,7 @@ export function PractitionerDashboard() {
                 {activeSection === 'room' && 'Live Session Room'}
                 {activeSection === 'payouts' && 'Salary & Payout Ledger'}
                 {activeSection === 'growth' && 'Growth & Practice Tools'}
+                {activeSection === 'social' && 'Social Post & Media Studio'}
                 {activeSection === 'profile' && 'Edit Profile & Account Settings'}
               </h1>
             </div>
@@ -446,7 +450,10 @@ export function PractitionerDashboard() {
             <PayoutsInvoices telemetryData={telemetryData} />
           )}
           {activeSection === 'growth' && (
-            <GrowthTools telemetryData={telemetryData} />
+            <GrowthTools telemetryData={telemetryData} setActiveSection={setActiveSection} />
+          )}
+          {activeSection === 'social' && (
+            <SocialPostStudio />
           )}
           {activeSection === 'profile' && (
             <Settings />

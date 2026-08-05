@@ -70,6 +70,16 @@ export const chatEndpoints = {
   GET_CHAT_CONTACTS_API: BASE_URL + "/chat/contacts",
 }
 
+// SOCIAL POST ENDPOINTS
+export const socialPostEndpoints = {
+  CREATE_POST_API: BASE_URL + "/social-posts/create",
+  GET_POSTS_API: BASE_URL + "/social-posts/mine",
+  PUBLISH_POST_API: BASE_URL + "/social-posts", // + "/:postId/publish"
+  DELETE_POST_API: BASE_URL + "/social-posts",  // + "/:postId"
+  GET_ACCOUNTS_API: BASE_URL + "/social-posts/accounts",
+  TOGGLE_ACCOUNT_API: BASE_URL + "/social-posts/accounts/toggle",
+}
+
 // SOCKET BASE URL (for Socket.io client)
 export const SOCKET_BASE_URL = process.env.REACT_APP_BASE_URL
   ? process.env.REACT_APP_BASE_URL.replace("/api/v1", "")
