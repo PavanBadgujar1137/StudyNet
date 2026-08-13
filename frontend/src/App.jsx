@@ -3,7 +3,7 @@ import { useEffect } from "react"
 // Redux
 import { useDispatch } from "react-redux"
 // React Router
-import { Route, Routes, useNavigate, useLocation } from "react-router-dom"
+import { Route, Routes, Navigate, useNavigate, useLocation } from "react-router-dom"
 
 // Components
 import Navbar from "./components/Common/Navbar"
@@ -106,6 +106,8 @@ function App() {
         <Route path="/learner-journey" element={<LearnerJourney />} />
         {/* <Route path="/start-free" element={<StartFree />} /> */}
         <Route path="/contact-us" element={<ContactUs />} />
+        {/* 4.4 — Hard redirect: /contact → /contact-us (fixes nav 404 + stale bookmarks) */}
+        <Route path="/contact" element={<Navigate to="/contact-us" replace />} />
         <Route path="/talk-to-human" element={<ContactUs />} />
         <Route path="/social-callback" element={<SocialCallback />} />
 

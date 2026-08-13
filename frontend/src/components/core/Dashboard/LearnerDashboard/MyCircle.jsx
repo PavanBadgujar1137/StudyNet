@@ -50,7 +50,7 @@ export function MyCircle({ setActiveTab, clientName = 'Student', practitionerNam
   // Handle client joining a circle
   const handleJoinCircle = async (circleId) => {
     if (!token) {
-      toast.error('Please login to join circle cohorts')
+      toast.error('Please login to join Circles')
       return
     }
     setJoiningId(circleId)
@@ -63,7 +63,7 @@ export function MyCircle({ setActiveTab, clientName = 'Student', practitionerNam
       )
 
       if (res?.data?.success) {
-        toast.success(res.data.message || 'Successfully joined circle cohort!')
+        toast.success(res.data.message || 'Successfully joined Circle!')
         setJoinedIds((prev) => [...prev, circleId])
         loadCircles()
       } else {
@@ -71,7 +71,7 @@ export function MyCircle({ setActiveTab, clientName = 'Student', practitionerNam
       }
     } catch (err) {
       console.error('Join circle error:', err)
-      toast.error('Could not join circle cohort.')
+      toast.error('Could not join this Circle.')
     } finally {
       setJoiningId(null)
     }
@@ -81,12 +81,12 @@ export function MyCircle({ setActiveTab, clientName = 'Student', practitionerNam
     <div id="circle" style={{ width: '100%' }}>
       {/* Header */}
       <div className="hd" style={{ marginBottom: '24px' }}>
-        <div className="k">My Circles &amp; Cohorts</div>
+        <div className="k">My Circles</div>
         <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#0F172A' }}>
           Peer Support &amp; Practitioner Growth Circles
         </h1>
         <p style={{ color: '#64748B', fontSize: '14px' }}>
-          Join small group cohorts led by verified OpenHand practitioners. Connected circle chats automatically sync to your Community Hub.
+          Join small Circles led by verified OpenHand practitioners. Connected Circle chats automatically sync to your Community Hub.
         </p>
       </div>
 
@@ -154,7 +154,7 @@ export function MyCircle({ setActiveTab, clientName = 'Student', practitionerNam
                       letterSpacing: '0.5px',
                     }}
                   >
-                    {isJoined ? 'ENROLLED COHORT' : 'PRACTITIONER CIRCLE'}
+                    {isJoined ? 'ENROLLED CIRCLE' : 'PRACTITIONER CIRCLE'}
                   </span>
 
                   <span
@@ -178,7 +178,7 @@ export function MyCircle({ setActiveTab, clientName = 'Student', practitionerNam
                     {c.name}
                   </h2>
                   <p style={{ fontSize: '13px', color: '#475569', lineHeight: 1.5, margin: 0 }}>
-                    {c.topic || c.description || 'Interactive small group growth cohort focusing on practical wellness techniques and peer support.'}
+                    {c.topic || c.description || 'Interactive small Circle focusing on practical wellness techniques and peer support.'}
                   </p>
                 </div>
 
@@ -290,7 +290,7 @@ export function MyCircle({ setActiveTab, clientName = 'Student', practitionerNam
                       }}
                     >
                       <FiPlusCircle size={15} />
-                      <span>{joiningId === c._id ? 'Joining Circle...' : 'Join Circle Cohort'}</span>
+                      <span>{joiningId === c._id ? 'Joining...' : 'Join this Circle'}</span>
                     </button>
                   )}
                 </div>
@@ -332,7 +332,7 @@ export function MyCircle({ setActiveTab, clientName = 'Student', practitionerNam
           <div className="feed">
             <div className="fitem">
               <b>Automatic Chat Sync</b>
-              <p>When you join any practitioner circle, its cohort group thread automatically appears under Practitioner Circle in your Community &amp; Chat Hub.</p>
+              <p>When you join any practitioner Circle, its group thread automatically appears under Practitioner Circle in your Community &amp; Chat Hub.</p>
               <div className="t">Live Sync</div>
             </div>
           </div>

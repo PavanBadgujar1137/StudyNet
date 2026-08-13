@@ -23,7 +23,7 @@ const SPECIALTIES = [
 const FORMATS = [
   { value: 'all', label: 'Any Format' },
   { value: '1:1', label: '1:1 Sessions' },
-  { value: 'circle', label: 'Group Circles' },
+  { value: 'circle', label: 'Circles' },
   { value: 'membership', label: 'Membership' },
 ]
 
@@ -442,7 +442,7 @@ export function FindAPractitioner() {
                               >
                                 <div>
                                   <span style={{ fontWeight: 700, color: '#0F172A', display: 'block' }}>{o.title}</span>
-                                  <span style={{ fontSize: '10.5px', color: '#64748B' }}>{o.type === 'circle' ? 'Group Circle' : '1:1 Session'} • {o.durationMinutes || 50}m</span>
+                                  <span style={{ fontSize: '10.5px', color: '#64748B' }}>{o.type === 'circle' ? 'Circle' : '1:1 Session'} • {o.durationMinutes || 50}m</span>
                                 </div>
                                 <span style={{ fontWeight: 800, color: '#2563EB' }}>₹{o.price}</span>
                               </div>

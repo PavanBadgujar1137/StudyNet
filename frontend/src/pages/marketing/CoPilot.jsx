@@ -29,7 +29,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'What about regulated clinical practice?',
-    a: "Requirements vary by jurisdiction and by the register you're on. Talk to Dr. Rajendra Patil before you switch it on — he'll walk you through what applies to you, and will tell you if it doesn't fit your practice.",
+    a: "Requirements vary by jurisdiction and by the register you're on. Talk to our Tech & Ethics Desk before you switch it on — our team will walk you through what applies to you, and will tell you if it doesn't fit your practice.",
     badge: 'Compliance Guidance',
   },
 ]
@@ -49,7 +49,8 @@ export function CoPilot() {
         <div className="oh-wrap">
           <div className="copilot-hgrid grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
             <div>
-              <span className="copilot-eyebrow">Powered by AURA</span>
+              {/* 5.5: canonical AURA descriptor — first mention per glossary */}
+              <span className="copilot-eyebrow">AURA — consent-first session AI</span>
               <h1>
                 You can't listen properly <span className="copilot-grad-text">and take notes.</span>
               </h1>
@@ -227,9 +228,15 @@ export function CoPilot() {
               </text>
             </svg>
           </div>
-          <p className="copilot-note">
-            This describes the intended architecture. Implementation details — transcription provider, retention windows, regional data residency — should be confirmed against your final build and reviewed by legal counsel before launch.
-          </p>
+          {/* 5.5: Architecture disclaimer moved to collapsible so it doesn't read as "not built yet" */}
+          <details className="copilot-note" style={{ marginTop: '12px', cursor: 'pointer' }}>
+            <summary style={{ fontWeight: 600, fontSize: '13px', color: '#475569' }}>
+              Security & architecture details →
+            </summary>
+            <p style={{ marginTop: '8px', fontSize: '13px', color: '#64748B', lineHeight: 1.6 }}>
+              This describes the intended architecture. Implementation details — transcription provider, retention windows, regional data residency — should be confirmed against your final build and reviewed by legal counsel before launch.
+            </p>
+          </details>
         </div>
       </section>
 
@@ -237,31 +244,36 @@ export function CoPilot() {
       <section className="copilot-sec">
         <div className="oh-wrap">
           <div className="copilot-sec-head">
+            {/* 5.5: Using canonical AURA capability names per glossary */}
             <h2>Four things it does, and what they look like</h2>
           </div>
           <div className="copilot-grid2 grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div className="copilot-card">
               <div className="n">01</div>
-              <h3>Hands you the next question</h3>
+              {/* Glossary: AURA Live Prompts */}
+              <h3>AURA Live Prompts</h3>
               <p>Not a script to read out. A prompt in your peripheral vision — the question a good supervisor might have nudged you toward, arriving while it's still useful.</p>
-              <div className="ex">"You said 'I should be over it by now' — whose voice is the 'should' in?"</div>
+              <div className="ex">&ldquo;You said 'I should be over it by now' — whose voice is the 'should' in?&rdquo;</div>
             </div>
             <div className="copilot-card">
               <div className="n">02</div>
-              <h3>Remembers across sessions</h3>
+              {/* Glossary: AURA Cross-Session Memory */}
+              <h3>AURA Cross-Session Memory</h3>
               <p>The connective memory that makes a learner feel genuinely held — without you rereading six sets of notes before every call.</p>
-              <div className="ex">"She mentioned her sister in week two. She's circling it again."</div>
+              <div className="ex">&ldquo;She mentioned her sister in week two. She's circling it again.&rdquo;</div>
             </div>
             <div className="copilot-card">
               <div className="n">03</div>
-              <h3>Offers a technique that fits</h3>
+              {/* Glossary: AURA Technique Match */}
+              <h3>AURA Technique Match</h3>
               <p>Matched to how you actually work — you tell it your modality once, and it stops suggesting things you'd never do.</p>
-              <div className="ex">"Two-chair work — she's holding both sides herself. Full script ready."</div>
+              <div className="ex">&ldquo;Two-chair work — she's holding both sides herself. Full script ready.&rdquo;</div>
             </div>
             <div className="copilot-card">
               <div className="n">04</div>
-              <h3>Writes the aftermath</h3>
-              <p>Session notes, the next set of reflection prompts, and a plan for next time — drafted the moment you hang up. You edit, you approve, you send.</p>
+              {/* Glossary: AURA Aftercare Notes — available FREE on every plan */}
+              <h3>AURA Aftercare Notes</h3>
+              <p>Session notes, the next set of reflection prompts, and a plan for next time — drafted the moment you hang up. You edit, you approve, you send. <strong>Free on every plan.</strong></p>
               <div className="ex">Draft ready in ~90 seconds. Approve, edit, or delete entirely.</div>
             </div>
           </div>
@@ -328,6 +340,11 @@ export function CoPilot() {
                 <p className="text-sm font-semibold text-slate-700 leading-relaxed" style={{ color: '#334155' }}>
                   If they decline, the session runs completely normally. You lose the panel; they lose nothing. Most practitioners tell us the conversation itself builds trust.
                 </p>
+                <div className="pt-2 border-t border-slate-200 mt-1">
+                  <Link to="/data-consent" className="text-xs font-extrabold text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                    🛡️ Read our dedicated Data &amp; Consent Policy →
+                  </Link>
+                </div>
               </div>
             </div>
 

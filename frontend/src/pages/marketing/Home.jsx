@@ -56,7 +56,7 @@ export function Home() {
       previewWidget: {
         type: 'session',
         status: 'Live Container · 42m elapsed',
-        circleName: 'Leadership Circle Cohort #4',
+        circleName: 'Leadership Circle #4',
         participants: 8,
         aiInsight: 'Theme detected: Transition boundaries & workload delegation',
       },
@@ -71,7 +71,7 @@ export function Home() {
       features: [
         'Peer accountability pods (max 8 seats)',
         'Human-sounding reflection nudges',
-        'Protected private cohort activity feed',
+        'Protected private Circle activity feed',
       ],
       previewWidget: {
         type: 'pod',
@@ -110,34 +110,55 @@ export function Home() {
       {/* Hero */}
       <header className="oh-home-hero relative overflow-hidden">
 
-        <div className="oh-wrap relative z-10">
-          <div className="oh-hero-badge">
+        <div className="oh-wrap relative z-10 flex flex-col items-center text-center">
+          <div className="oh-hero-badge mx-auto">
             <span className="oh-pulse-dot"></span>
             <span className="hidden sm:inline">The Modern Practice Platform Built for Guides, Not Course Sellers</span>
             <span className="sm:hidden">Built for Guides, Not Course Sellers</span>
           </div>
 
-          <h1 className="text-[clamp(22px,6vw,58px)] leading-tight">
-            You already know how to hold space.<br />
-            <span className="oh-grad-text">We'll help you hold it online — and get paid for it.</span>
+          <h1 className="text-center text-[clamp(20px,5.2vw,54px)] leading-tight max-w-5xl mx-auto my-4">
+            <span className="block whitespace-nowrap">You already know how to hold space.</span>
+            <span className="oh-grad-text block">We'll help you hold it online and get paid for it.</span>
           </h1>
 
-          <p className="sub text-[clamp(14px,2.5vw,18px)] px-2 sm:px-0">
+          <p className="sub text-center text-[clamp(14px,2.5vw,18px)] max-w-2xl mx-auto px-2 sm:px-0">
             OpenHand is the practice platform built for people who guide, not just teach.
-            Learner check-ins, private cohorts, and real community — without the corporate LMS feel.
+            Learner check-ins, private Circles, and real community — without the corporate LMS feel.
           </p>
 
-          <div className="cta-row flex-col sm:flex-row w-full sm:w-auto items-stretch sm:items-center">
-            <Link to="/signup" className="oh-btn-primary w-full sm:w-auto text-center justify-center">
+          {/* Unified 3-Button Hero CTA Row */}
+          <div className="flex flex-wrap items-center justify-center gap-3 my-6">
+            <Link
+              to="/signup"
+              className="inline-flex items-center justify-center px-6 py-3 rounded-full text-white font-bold text-sm sm:text-base shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-0.5 transition-all duration-200"
+              style={{ background: 'linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)' }}
+            >
               Start your free practice space <FiArrowRight style={{ marginLeft: '8px' }} />
             </Link>
-            <Link to="/learner-journey" className="oh-btn-ghost w-full sm:w-auto text-center justify-center">
+
+            <Link
+              to="/learner-journey"
+              className="inline-flex items-center justify-center px-5 py-3 rounded-full bg-white border border-slate-300 text-slate-700 hover:text-slate-900 hover:border-slate-400 hover:bg-slate-50 font-semibold text-sm shadow-sm hover:-translate-y-0.5 transition-all duration-200"
+            >
               See sample learner journey →
+            </Link>
+
+            <Link
+              to="/for-organizations"
+              className="inline-flex items-center justify-center px-5 py-3 rounded-full bg-slate-100/90 border border-slate-300 text-slate-800 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-900 font-semibold text-sm shadow-sm hover:-translate-y-0.5 transition-all duration-200"
+            >
+              🏢 For Organizations &amp; EAP →
             </Link>
           </div>
 
           {/* Key Assurance Stats Bar */}
           <div className="oh-hero-stats grid grid-cols-2 sm:flex sm:flex-row rounded-2xl sm:rounded-full px-4 sm:px-10 py-4">
+            <div className="stat-item">
+              <span className="stat-num">1,200+</span>
+              <span className="stat-lbl">Practitioners Active</span>
+            </div>
+            <div className="stat-divider hidden sm:block"></div>
             <div className="stat-item">
               <span className="stat-num">100%</span>
               <span className="stat-lbl">Human-Led Growth</span>
@@ -145,7 +166,7 @@ export function Home() {
             <div className="stat-divider hidden sm:block"></div>
             <div className="stat-item">
               <span className="stat-num">6-Week</span>
-              <span className="stat-lbl">Time-Boxed Containers</span>
+              <span className="stat-lbl">Time-Boxed Circles</span>
             </div>
             <div className="stat-divider hidden sm:block"></div>
             <div className="stat-item">
@@ -158,28 +179,59 @@ export function Home() {
               <span className="stat-lbl">Corporate LMS Clutter</span>
             </div>
           </div>
+
+          {/* HOME-1: Proof strip — trust signals above the fold */}
+          <div className="oh-proof-strip" style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px',
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+            marginTop: '24px',
+            padding: '12px 24px',
+            borderRadius: '9999px',
+            background: 'rgba(255, 255, 255, 0.95)',
+            border: '1.5px solid #CBD5E1',
+            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.05)',
+            color: '#0F172A'
+          }}>
+            {/* Practitioner avatar placeholders — real photos + consent needed from client */}
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              {['P1','P2','P3'].map((label, i) => (
+                <div key={label} style={{
+                  width: 32, height: 32, borderRadius: '50%',
+                  background: `linear-gradient(135deg, hsl(${220 + i * 30},80%,55%), hsl(${240 + i * 30},80%,45%))`,
+                  border: '2px solid #FFFFFF',
+                  marginLeft: i > 0 ? '-10px' : 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '11px', fontWeight: 800, color: '#FFFFFF'
+                }}>
+                  {label}
+                </div>
+              ))}
+              <span style={{ marginLeft: '12px', fontSize: '13.5px', fontWeight: 700, color: '#0F172A' }}>
+                1,200+ practitioners on OpenHand
+              </span>
+            </div>
+            <div style={{ width: '1px', height: '20px', background: '#CBD5E1' }} className="hidden sm:block" />
+            {/* Outcome metric */}
+            <span style={{ fontSize: '13px', fontWeight: 600, color: '#1E293B' }}>
+              📈 <strong style={{ color: '#2563EB' }}>94% client retention across 6-week containers</strong>
+            </span>
+            <div style={{ width: '1px', height: '20px', background: '#CBD5E1' }} className="hidden sm:block" />
+            <span style={{ fontSize: '12px', color: '#475569', fontWeight: 600 }}>
+              Built by Zwiebel AI · India-first wellness tech
+            </span>
+          </div>
         </div>
       </header>
-
-      {/* Decorative Held Wave Line */}
-      <div className="held-line-wrap oh-wrap" aria-hidden="true">
-        <svg className="held-line" viewBox="0 0 1080 64" preserveAspectRatio="none">
-          <path
-            d="M0 32 C 180 4, 360 60, 540 32 C 720 4, 900 60, 1080 32"
-            fill="none"
-            stroke="var(--oh-blue)"
-            strokeWidth="1.8"
-            opacity="0.4"
-          />
-        </svg>
-      </div>
 
       {/* NEW INNOVATIVE SECTION: Box Time Practice Container System */}
       <section className="oh-sec boxtime-sec">
         <div className="oh-wrap">
           <div className="sec-head-center">
             <span className="oh-sec-tag">Interactive Time-Boxed Architecture</span>
-            <h2 className="text-[clamp(20px,4vw,38px)]">The Box Time Practice System</h2>
+            <h2 className="text-[clamp(20px,4vw,38px)]">The Care Loop &amp; Practice Operating System</h2>
             <p className="text-[clamp(14px,2vw,17px)]">
               Experience how OpenHand structures learner care into four seamless time-boxed containers — from pre-session intention to long-term community continuity.
             </p>
@@ -354,7 +406,7 @@ export function Home() {
               <div className="bento-icon">
                 <FiUsers />
               </div>
-              <h3>Private Cohorts</h3>
+              <h3>Private Circles</h3>
               <p>
                 Small group containers capped at eight people with their own rhythm and boundaries — not a public course feed anyone can wander into.
               </p>
@@ -385,7 +437,7 @@ export function Home() {
                   <span className="cav av-plus">+5</span>
                 </div>
               </div>
-              <h3>Peer Circles</h3>
+              <h3>Circles</h3>
               <p>
                 Give learners a dedicated space to hold each other between sessions, guided by your container framework but not dependent on your 24/7 time.
               </p>
@@ -413,6 +465,130 @@ export function Home() {
               <h3>Accountability Pods</h3>
               <p>
                 Small, self-organizing peer pods that keep momentum and mutual care going long after the container module ends.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Page 10 Correction 1: Headline Feature Depth Section */}
+      <section 
+        className="oh-sec py-16 relative z-10"
+        style={{
+          backgroundColor: '#F8FAFC',
+          color: '#0F172A',
+          borderTop: '1px solid #E2E8F0',
+          borderBottom: '1px solid #E2E8F0',
+        }}
+      >
+        <div className="oh-wrap max-w-6xl mx-auto px-4">
+          <div className="text-center max-w-3xl mx-auto mb-12">
+            <span 
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider mb-4"
+              style={{
+                backgroundColor: '#EEF2FF',
+                border: '1px solid #C7D2FE',
+                color: '#4F46E5',
+              }}
+            >
+              ⚡ Deep Practice Infrastructure
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-black tracking-tight" style={{ color: '#0F172A', margin: '8px 0 12px 0' }}>
+              Built for real practice depth, not basic course sales
+            </h2>
+            <p className="text-base font-medium" style={{ color: '#475569', margin: 0 }}>
+              Everything your practice requires — built-in, encrypted, and ready out of the box.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div 
+              className="p-6 rounded-2xl transition-all hover:-translate-y-0.5"
+              style={{
+                backgroundColor: '#FFFFFF',
+                border: '1.5px solid #E2E8F0',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.03)'
+              }}
+            >
+              <div className="text-2xl mb-3">📅</div>
+              <h3 className="text-lg font-extrabold mb-2" style={{ color: '#0F172A' }}>Google Calendar &amp; Outlook Sync</h3>
+              <p className="text-sm font-medium leading-relaxed" style={{ color: '#334155', margin: 0 }}>
+                Two-way automated sync with Google Calendar, Outlook, and iCal. Prevents double-booking and applies custom buffer times between calls.
+              </p>
+            </div>
+
+            <div 
+              className="p-6 rounded-2xl transition-all hover:-translate-y-0.5"
+              style={{
+                backgroundColor: '#FFFFFF',
+                border: '1.5px solid #E2E8F0',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.03)'
+              }}
+            >
+              <div className="text-2xl mb-3">💳</div>
+              <h3 className="text-lg font-extrabold mb-2" style={{ color: '#0F172A' }}>Stripe &amp; Razorpay Payouts</h3>
+              <p className="text-sm font-medium leading-relaxed" style={{ color: '#334155', margin: 0 }}>
+                Accept UPI, credit cards, and international currencies directly to your bank account with automated payout schedules and zero platform commission options.
+              </p>
+            </div>
+
+            <div 
+              className="p-6 rounded-2xl transition-all hover:-translate-y-0.5"
+              style={{
+                backgroundColor: '#FFFFFF',
+                border: '1.5px solid #E2E8F0',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.03)'
+              }}
+            >
+              <div className="text-2xl mb-3">📹</div>
+              <h3 className="text-lg font-extrabold mb-2" style={{ color: '#0F172A' }}>Breakout Rooms &amp; HD Video</h3>
+              <p className="text-sm font-medium leading-relaxed" style={{ color: '#334155', margin: 0 }}>
+                Interactive zero-download WebRTC video rooms equipped with breakout rooms, screen sharing, live chat moderation, and cloud recordings.
+              </p>
+            </div>
+
+            <div 
+              className="p-6 rounded-2xl transition-all hover:-translate-y-0.5"
+              style={{
+                backgroundColor: '#FFFFFF',
+                border: '1.5px solid #E2E8F0',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.03)'
+              }}
+            >
+              <div className="text-2xl mb-3">📜</div>
+              <h3 className="text-lg font-extrabold mb-2" style={{ color: '#0F172A' }}>Certificates &amp; SOAP Progress Notes</h3>
+              <p className="text-sm font-medium leading-relaxed" style={{ color: '#334155', margin: 0 }}>
+                Automated completion certificates for Circle graduates and HIPAA/GDPR-compliant structured SOAP progress notes for clinical records.
+              </p>
+            </div>
+
+            <div 
+              className="p-6 rounded-2xl transition-all hover:-translate-y-0.5"
+              style={{
+                backgroundColor: '#FFFFFF',
+                border: '1.5px solid #E2E8F0',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.03)'
+              }}
+            >
+              <div className="text-2xl mb-3">⚡</div>
+              <h3 className="text-lg font-extrabold mb-2" style={{ color: '#0F172A' }}>Zapier &amp; REST API Integrations</h3>
+              <p className="text-sm font-medium leading-relaxed" style={{ color: '#334155', margin: 0 }}>
+                Connect OpenHand seamlessly to 5,000+ apps via Zapier, webhooks, and REST APIs for custom workflow automation.
+              </p>
+            </div>
+
+            <div 
+              className="p-6 rounded-2xl transition-all hover:-translate-y-0.5"
+              style={{
+                backgroundColor: '#FFFFFF',
+                border: '1.5px solid #E2E8F0',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.03)'
+              }}
+            >
+              <div className="text-2xl mb-3">🤝</div>
+              <h3 className="text-lg font-extrabold mb-2" style={{ color: '#0F172A' }}>Peer Supervision &amp; Referrals</h3>
+              <p className="text-sm font-medium leading-relaxed" style={{ color: '#334155', margin: 0 }}>
+                Join confidential peer supervision groups (4–6 practitioners) and send/receive verified client referrals across the network.
               </p>
             </div>
           </div>
@@ -520,7 +696,8 @@ export function Home() {
 
               <div className="robot-status-badge">
                 <span className="status-live-dot"></span>
-                <span>AURA Voice Intelligence</span>
+                {/* AURA descriptor — canonical name per glossary */}
+                <span>AURA — consent-first session AI</span>
               </div>
             </div>
 
@@ -568,6 +745,298 @@ export function Home() {
           </div>
         </div>
       </section>
+
+      {/* Comparison Table Section - Under Quietly Intelligent */}
+      <section className="oh-sec comparison-sec py-16 relative z-10">
+        <div className="oh-wrap max-w-6xl mx-auto px-4">
+          <div 
+            className="sec-head-center text-center mb-10"
+            style={{ maxWidth: '100%', width: '100%', margin: '0 auto 40px auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+          >
+            <span className="oh-sec-tag">Why Guides Choose OpenHand</span>
+            <h2 
+              className="font-black tracking-tight text-slate-900"
+              style={{
+                fontSize: 'clamp(16px, 2.7vw, 34px)',
+                whiteSpace: 'nowrap',
+                textAlign: 'center',
+                width: '100%',
+                margin: '8px auto 12px auto'
+              }}
+            >
+              Built for practice OS depth, not generic course storefronts
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500 max-w-2xl mx-auto text-center font-medium leading-relaxed">
+              Traditional course storefronts treat your work as video downloads — OpenHand is built for human transformation &amp; privacy-first AI.
+            </p>
+          </div>
+
+          <div 
+            className="w-full overflow-x-auto rounded-[24px] bg-white p-4 sm:p-6 mb-8"
+            style={{
+              border: '1.5px solid #CBD5E1',
+              boxShadow: '0 8px 30px rgba(0, 0, 0, 0.05)'
+            }}
+          >
+            <table className="w-full min-w-[800px] border-collapse text-left text-xs sm:text-sm" style={{ borderSpacing: 0 }}>
+              <thead>
+                <tr>
+                  <th 
+                    className="py-4 px-5 font-bold w-[24%]"
+                    style={{ color: '#0F172A', borderBottom: '1.5px solid #E2E8F0', fontSize: '14px' }}
+                  >
+                    Feature / Capability
+                  </th>
+                  
+                  {/* OpenHand Highlight Header */}
+                  <th className="p-0 text-center w-[28%] align-bottom">
+                    <div 
+                      className="py-3.5 px-4 text-center font-extrabold text-white text-sm"
+                      style={{
+                        background: 'linear-gradient(135deg, #3B82F6 0%, #7C3AED 100%)',
+                        borderTopLeftRadius: '14px',
+                        borderTopRightRadius: '14px',
+                        borderTop: '2px solid #7C3AED',
+                        borderLeft: '2px solid #7C3AED',
+                        borderRight: '2px solid #7C3AED',
+                        boxShadow: '0 4px 12px rgba(124, 58, 237, 0.25)'
+                      }}
+                    >
+                      OpenHand Practice OS
+                    </div>
+                  </th>
+
+                  <th 
+                    className="py-4 px-3 text-center font-bold w-[16%]"
+                    style={{ color: '#1E293B', borderBottom: '1.5px solid #E2E8F0', fontSize: '13.5px' }}
+                  >
+                    Topmate (Storefront)
+                  </th>
+                  <th 
+                    className="py-4 px-3 text-center font-bold w-[16%]"
+                    style={{ color: '#1E293B', borderBottom: '1.5px solid #E2E8F0', fontSize: '13.5px' }}
+                  >
+                    TagMango (Community)
+                  </th>
+                  <th 
+                    className="py-4 px-3 text-center font-bold w-[16%]"
+                    style={{ color: '#1E293B', borderBottom: '1.5px solid #E2E8F0', fontSize: '13.5px' }}
+                  >
+                    Graphy (LMS)
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {/* Row 1 */}
+                <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
+                  <td className="py-4 px-5 font-bold" style={{ color: '#0F172A' }}>
+                    Build-Before-Pay Free Setup
+                  </td>
+                  <td 
+                    className="py-4 px-3 text-center font-bold" 
+                    style={{ 
+                      color: '#7C3AED', 
+                      background: '#FFFFFF',
+                      borderLeft: '2px solid #7C3AED', 
+                      borderRight: '2px solid #7C3AED' 
+                    }}
+                  >
+                    ✓ Full Setup Free (0% Paywall Lock)
+                  </td>
+                  <td className="py-4 px-3 text-center font-semibold" style={{ color: '#1E293B' }}>
+                    ✓ Free (10% Cut)
+                  </td>
+                  <td className="py-4 px-3 text-center font-semibold" style={{ color: '#1E293B' }}>
+                    ✓ Free Start
+                  </td>
+                  <td className="py-4 px-3 text-center font-semibold" style={{ color: '#1E293B' }}>
+                    ✓ Trial
+                  </td>
+                </tr>
+
+                {/* Row 2 */}
+                <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
+                  <td className="py-4 px-5 font-bold" style={{ color: '#0F172A' }}>
+                    Consent-First Session AI (AURA)
+                  </td>
+                  <td 
+                    className="py-4 px-3 text-center font-bold" 
+                    style={{ 
+                      color: '#7C3AED', 
+                      background: '#FFFFFF',
+                      borderLeft: '2px solid #7C3AED', 
+                      borderRight: '2px solid #7C3AED' 
+                    }}
+                  >
+                    ✓ Included (Notes Free, Live Panel Paid)
+                  </td>
+                  <td className="py-4 px-3 text-center font-medium" style={{ color: '#475569' }}>
+                    ✕ N/A
+                  </td>
+                  <td className="py-4 px-3 text-center font-medium" style={{ color: '#475569' }}>
+                    ✕ Bot Only
+                  </td>
+                  <td className="py-4 px-3 text-center font-medium" style={{ color: '#475569' }}>
+                    ✕ Generic Bot
+                  </td>
+                </tr>
+
+                {/* Row 3 */}
+                <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
+                  <td className="py-4 px-5 font-bold" style={{ color: '#0F172A' }}>
+                    Capped 8-Seat Group Circles
+                  </td>
+                  <td 
+                    className="py-4 px-3 text-center font-bold" 
+                    style={{ 
+                      color: '#7C3AED', 
+                      background: '#FFFFFF',
+                      borderLeft: '2px solid #7C3AED', 
+                      borderRight: '2px solid #7C3AED' 
+                    }}
+                  >
+                    ✓ Built-in (6-wk Containers)
+                  </td>
+                  <td className="py-4 px-3 text-center font-medium" style={{ color: '#475569' }}>
+                    ✕ Mass Webinars
+                  </td>
+                  <td className="py-4 px-3 text-center font-medium" style={{ color: '#475569' }}>
+                    ✕ Uncapped Groups
+                  </td>
+                  <td className="py-4 px-3 text-center font-medium" style={{ color: '#475569' }}>
+                    ✕ Video Streams
+                  </td>
+                </tr>
+
+                {/* Row 4 */}
+                <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
+                  <td className="py-4 px-5 font-bold" style={{ color: '#0F172A' }}>
+                    B2B EAP Org Billing Mode
+                  </td>
+                  <td 
+                    className="py-4 px-3 text-center font-bold" 
+                    style={{ 
+                      color: '#7C3AED', 
+                      background: '#FFFFFF',
+                      borderLeft: '2px solid #7C3AED', 
+                      borderRight: '2px solid #7C3AED' 
+                    }}
+                  >
+                    ✓ Per-Seat Billing + HR Confidentiality
+                  </td>
+                  <td className="py-4 px-3 text-center font-medium" style={{ color: '#475569' }}>
+                    ✕ N/A
+                  </td>
+                  <td className="py-4 px-3 text-center font-medium" style={{ color: '#475569' }}>
+                    ✕ N/A
+                  </td>
+                  <td className="py-4 px-3 text-center font-medium" style={{ color: '#475569' }}>
+                    ✕ N/A
+                  </td>
+                </tr>
+
+                {/* Row 5 */}
+                <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
+                  <td className="py-4 px-5 font-bold" style={{ color: '#0F172A' }}>
+                    Branded Mobile App &amp; White-label
+                  </td>
+                  <td 
+                    className="py-4 px-3 text-center font-bold" 
+                    style={{ 
+                      color: '#7C3AED', 
+                      background: '#FFFFFF',
+                      borderLeft: '2px solid #7C3AED', 
+                      borderRight: '2px solid #7C3AED' 
+                    }}
+                  >
+                    ✓ Master Studio Plan Included
+                  </td>
+                  <td className="py-4 px-3 text-center font-medium" style={{ color: '#475569' }}>
+                    ✕ N/A
+                  </td>
+                  <td className="py-4 px-3 text-center font-semibold" style={{ color: '#1E293B' }}>
+                    ✓ Included
+                  </td>
+                  <td className="py-4 px-3 text-center font-semibold" style={{ color: '#1E293B' }}>
+                    ✓ Included
+                  </td>
+                </tr>
+
+                {/* Row 6 */}
+                <tr>
+                  <td className="py-4 px-5 font-bold" style={{ color: '#0F172A' }}>
+                    Direct T+2 Bank Payouts
+                  </td>
+                  <td 
+                    className="py-4 px-3 text-center font-bold" 
+                    style={{ 
+                      color: '#7C3AED', 
+                      background: '#FFFFFF',
+                      borderLeft: '2px solid #7C3AED', 
+                      borderRight: '2px solid #7C3AED',
+                      borderBottom: '2px solid #7C3AED',
+                      borderBottomLeftRadius: '14px',
+                      borderBottomRightRadius: '14px'
+                    }}
+                  >
+                    ✓ Razorpay &amp; Stripe Direct
+                  </td>
+                  <td className="py-4 px-3 text-center font-semibold" style={{ color: '#1E293B' }}>
+                    ✓ Razorpay
+                  </td>
+                  <td className="py-4 px-3 text-center font-semibold" style={{ color: '#1E293B' }}>
+                    ✓ Razorpay
+                  </td>
+                  <td className="py-4 px-3 text-center font-semibold" style={{ color: '#1E293B' }}>
+                    ✓ Razorpay
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Bottom Highlight Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="p-5 rounded-2xl bg-indigo-50/60 border border-indigo-100 flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-blue-600 text-white font-extrabold text-sm flex items-center justify-center flex-shrink-0 shadow-sm">
+                0%
+              </div>
+              <div>
+                <h4 className="font-extrabold text-slate-900 text-sm mb-1">Zero Paywall Lock</h4>
+                <p className="text-xs text-slate-600 leading-relaxed m-0">
+                  Build your space, onboard learners, and host check-ins completely free without forced paywalls.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-purple-50/60 border border-purple-100 flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-purple-600 text-white font-extrabold text-sm flex items-center justify-center flex-shrink-0 shadow-sm">
+                🔒
+              </div>
+              <div>
+                <h4 className="font-extrabold text-slate-900 text-sm mb-1">Confidential &amp; EAP Ready</h4>
+                <p className="text-xs text-slate-600 leading-relaxed m-0">
+                  Enterprise-grade HR confidentiality with per-seat organizational billing for corporate wellness programs.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-emerald-50/60 border border-emerald-100 flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white font-extrabold text-sm flex items-center justify-center flex-shrink-0 shadow-sm">
+                ⚡
+              </div>
+              <div>
+                <h4 className="font-extrabold text-slate-900 text-sm mb-1">AURA Session Intelligence</h4>
+                <p className="text-xs text-slate-600 leading-relaxed m-0">
+                  Consent-first AI that assists with notes and session insights tuned strictly to your authentic voice.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
 
 
 

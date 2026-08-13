@@ -1,35 +1,52 @@
 import React, { useState } from 'react'
+import { useSelector } from 'react-redux'
 import {
   FiCopy,
   FiCheck,
   FiShare2,
   FiStar,
-  FiTrendingUp,
   FiUsers,
   FiSend,
   FiGlobe,
   FiCheckCircle,
   FiMaximize2,
-  FiMail
+  FiMail,
+  FiExternalLink
 } from 'react-icons/fi'
 import { toast } from 'react-hot-toast'
 
 export function GrowthTools({ telemetryData, setActiveSection }) {
+  const { user } = useSelector((state) => state.profile)
+
   const [copiedLink, setCopiedLink] = useState(false)
   const [showQrModal, setShowQrModal] = useState(false)
   const [showReviewModal, setShowReviewModal] = useState(false)
   const [clientEmail, setClientEmail] = useState('')
   const [featuredReviews, setFeaturedReviews] = useState({})
 
-  const practitioner = telemetryData?.practitioner || {}
-  const firstName = practitioner.firstName || 'Dr.'
-  const lastName = practitioner.lastName || 'Practitioner'
-  const handle = practitioner.firstName
-    ? `${practitioner.firstName.toLowerCase()}-${practitioner.lastName?.toLowerCase() || ''}`
-    : 'practitioner'
+  const savedOnboarding = typeof window !== 'undefined' ? localStorage.getItem('oh_onboarding_data') : null
+  const parsedSaved = savedOnboarding ? JSON.parse(savedOnboarding) : null
 
-  const domain = typeof window !== 'undefined' ? window.location.origin : 'https://openhand.live'
-  const bookingLink = `${domain}/practitioner/${handle}`
+  const practitioner = telemetryData?.practitioner || telemetryData?.data?.practitioner || user || {}
+  const firstName = practitioner.user?.firstName || practitioner.firstName || user?.firstName || ''
+  const lastName = practitioner.user?.lastName || practitioner.lastName || user?.lastName || ''
+  
+  // Clean handle computation in real-time: check saved onboarding first, then practitioner profile, then user profile
+  const rawHandle = parsedSaved?.handle || practitioner.handle || user?.handle || (firstName ? `${firstName.toLowerCase().trim()}-${lastName.toLowerCase().trim()}` : 'practitioner')
+  const cleanHandle = rawHandle
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9-]/gi, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '') || 'practitioner'
+
+  // Dynamic origin matching active deployment environment (local, staging, production)
+  const currentOrigin = (
+    process.env.REACT_APP_CLIENT_URL || 
+    (typeof window !== 'undefined' ? window.location.origin : 'https://openhand.live')
+  ).replace(/\/$/, '')
+
+  const bookingLink = `${currentOrigin}/practitioner/${cleanHandle}`
 
   const reviews = telemetryData?.reviews || []
   const activeClients = telemetryData?.stats?.activeClientsCount || 0
@@ -136,11 +153,30 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
           >
             <FiMaximize2 fontSize={16} /> QR Code
           </button>
+
+          <button
+            onClick={() => setActiveSection('setup')}
+            style={{
+              background: 'rgba(255, 255, 255, 0.15)',
+              color: '#ffffff',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              padding: '10px 16px',
+              borderRadius: '10px',
+              fontWeight: 700,
+              fontSize: '13.5px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            ⚙️ Setup Wizard
+          </button>
         </div>
       </div>
 
       {/* Analytics KPI Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
         <div className="card stat" style={{ padding: '20px', background: '#ffffff', border: '1px solid #E2E8F0', borderRadius: '12px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ color: '#64748B', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase' }}>Directory Status</span>
@@ -167,15 +203,6 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
           <div style={{ fontSize: '24px', fontWeight: 800, color: '#0F172A', margin: '8px 0 4px 0' }}>{rating}</div>
           <div style={{ fontSize: '12px', color: '#D97706', fontWeight: 600 }}>Based on {reviews.length} client reviews</div>
         </div>
-
-        <div className="card stat" style={{ padding: '20px', background: '#ffffff', border: '1px solid #E2E8F0', borderRadius: '12px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ color: '#64748B', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase' }}>Directory Link Status</span>
-            <FiTrendingUp color="#7E22CE" fontSize={20} />
-          </div>
-          <div style={{ fontSize: '24px', fontWeight: 800, color: '#0F172A', margin: '8px 0 4px 0' }}>Active</div>
-          <div style={{ fontSize: '12px', color: '#7E22CE', fontWeight: 600 }}>Direct booking profile enabled</div>
-        </div>
       </div>
 
       {/* Main Grid: Booking Link vs Growth Checklist */}
@@ -183,18 +210,56 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
         
         {/* Left Column: Direct Booking Link */}
         <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', alignSelf: 'start' }}>
-          <div>
-            <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#0F172A', margin: 0 }}>Your Dedicated Practice Link</h3>
-            <p style={{ fontSize: '13px', color: '#64748B', margin: '4px 0 0 0' }}>
-              Share this link on your email signature, Instagram bio, LinkedIn, or business cards.
-            </p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+            <div>
+              <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#0F172A', margin: 0 }}>Your Dedicated Practice Link</h3>
+              <p style={{ fontSize: '13px', color: '#64748B', margin: '4px 0 0 0' }}>
+                Share this link on your email signature, Instagram bio, LinkedIn, or business cards.
+              </p>
+            </div>
+            <button
+              onClick={() => setActiveSection('setup')}
+              style={{
+                background: '#EFF6FF',
+                color: '#1D4ED8',
+                border: '1px solid #BFDBFE',
+                padding: '6px 14px',
+                borderRadius: '8px',
+                fontSize: '12.5px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                whiteSpace: 'nowrap'
+              }}
+              title="Open Practice Setup Wizard to edit specialties and bio"
+            >
+              ⚙️ Customize Profile Setup →
+            </button>
           </div>
 
           {/* Link Box */}
           <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
-            <span style={{ fontSize: '13.5px', fontWeight: 600, color: '#1E293B', wordBreak: 'break-all' }}>
+            <a
+              href={bookingLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                fontSize: '13.5px',
+                fontWeight: 600,
+                color: '#2563EB',
+                wordBreak: 'break-all',
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+              title="Open public profile in new tab"
+            >
               {bookingLink}
-            </span>
+              <FiExternalLink style={{ flexShrink: 0 }} />
+            </a>
             <button
               onClick={handleCopyLink}
               style={{

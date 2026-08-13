@@ -1092,7 +1092,7 @@ details > summary::-webkit-details-marker { display: none; }
 /* Marketing: Home */
 .oh-home-page { min-height: 100vh; display: flex; flex-direction: column; }
 .oh-home-hero { padding: var(--oh-space-16) 0 var(--oh-space-12); text-align: center; }
-.oh-home-hero h1 { font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif !important; font-size: var(--oh-text-5xl); max-width: 22ch; margin: 0 auto var(--oh-space-6); line-height: 1.15; font-weight: 800 !important; color: #0F172A !important; letter-spacing: -0.025em; }
+.oh-home-hero h1 { font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif !important; font-size: var(--oh-text-5xl); max-width: 36ch; margin: 0 auto var(--oh-space-6); line-height: 1.15; font-weight: 800 !important; color: #0F172A !important; letter-spacing: -0.025em; text-align: center; }
 .oh-home-hero .sub { font-family: 'Plus Jakarta Sans', sans-serif !important; max-width: 58ch; margin: 0 auto var(--oh-space-8); color: #334155 !important; font-size: var(--oh-text-lg); font-weight: 500 !important; line-height: 1.6; }
 .cta-row { display: flex; gap: var(--oh-space-4); justify-content: center; flex-wrap: wrap; }
 .held-line-wrap { margin: 0 auto; overflow: hidden; }
@@ -2752,12 +2752,15 @@ details > summary::-webkit-details-marker { display: none; }
 }
 
 .talk-hero h1 {
-  font-size: clamp(38px, 5.8vw, 64px);
-  max-width: 16ch;
-  margin: 0 auto 22px;
-  line-height: 1.1;
-  font-weight: 700;
+  font-size: clamp(20px, 6vw, 56px);
+  max-width: 100%;
+  width: 100%;
+  text-align: center;
+  margin: 0 auto 20px;
+  line-height: 1.15;
+  font-weight: 800;
   letter-spacing: -0.03em;
+  white-space: nowrap;
 }
 
 .talk-grad-text {
@@ -2880,6 +2883,46 @@ details > summary::-webkit-details-marker { display: none; }
   display: block;
 }
 
+.talk-sec-head {
+  text-align: center;
+  max-width: 700px;
+  margin: 0 auto 36px auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.talk-section-tag {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--indigo);
+  background: rgba(71, 51, 201, 0.08);
+  padding: 5px 16px;
+  border-radius: 999px;
+  margin-bottom: 12px;
+  width: fit-content;
+}
+
+.talk-sec-head h2 {
+  font-size: clamp(24px, 4vw, 36px);
+  font-weight: 800;
+  color: var(--ink);
+  margin-bottom: 8px;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.talk-sec-head p {
+  font-size: 15.5px;
+  color: var(--muted);
+  line-height: 1.6;
+  text-align: center;
+  margin: 0 auto;
+}
+
 .talk-founders {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -2912,19 +2955,27 @@ details > summary::-webkit-details-marker { display: none; }
   box-shadow: 0 0 0 2px var(--indigo), var(--shadow-hover);
 }
 
+.fcard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  width: 100%;
+}
+
 .fcard-badge {
-  position: absolute;
-  top: 24px;
-  right: 24px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 11.5px;
+  font-weight: 700;
   color: var(--indigo);
   background: rgba(71, 51, 201, 0.08);
   padding: 5px 12px;
   border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .fcard-ic {
@@ -2934,13 +2985,13 @@ details > summary::-webkit-details-marker { display: none; }
 .fcard-top {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 18px;
+  gap: 14px;
+  margin-bottom: 16px;
 }
 
 .talk-fcard .av {
-  width: 64px;
-  height: 64px;
+  width: 54px;
+  height: 54px;
   border-radius: 50%;
   background: var(--grad);
   display: flex;
@@ -2948,16 +2999,17 @@ details > summary::-webkit-details-marker { display: none; }
   justify-content: center;
   font-family: 'Outfit', 'Inter', sans-serif;
   font-weight: 700;
-  font-size: 22px;
+  font-size: 19px;
   color: #fff;
   box-shadow: 0 8px 20px -6px rgba(31, 95, 224, 0.4);
   flex-shrink: 0;
 }
 
 .talk-fcard h3 {
-  font-size: 21px;
-  margin-bottom: 2px;
+  font-size: 19px;
+  margin-bottom: 3px;
   font-weight: 700;
+  line-height: 1.3;
 }
 
 .talk-fcard .role {
@@ -3701,11 +3753,12 @@ details > summary::-webkit-details-marker { display: none; }
 
 .oh-home-hero h1 {
   font-size: clamp(38px, 5.8vw, 64px);
-  max-width: 20ch;
+  max-width: 36ch;
   margin: 0 auto 24px;
   line-height: 1.12;
   font-weight: 700;
   letter-spacing: -0.03em;
+  text-align: center;
 }
 
 .oh-grad-text {

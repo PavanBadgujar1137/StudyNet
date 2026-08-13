@@ -48,7 +48,7 @@ const PRESETS = [
     durationMinutes: 90,
     maxSeats: 12,
     weekCount: 4,
-    tags: '90 Min Weekly Circle, Max 12 Participants, 4-Week Cohort, Private Group Chat',
+    tags: '90 Min Weekly Circle, Max 8 Participants, 4-Week Container, Private Group Chat',
     description: 'Intimate, safe group healing space designed to build community, share reflections, and practice mindfulness together weekly.',
   },
   {
@@ -60,7 +60,7 @@ const PRESETS = [
     maxSeats: 20,
     weekCount: 4,
     tags: '4 Weekly Sessions, Workbook & Audio Tools, 1:1 Mid-way Check-in, Lifetime Access',
-    description: 'Structured 4-week program offering evidence-based tools, weekly guided cohorts, and direct practitioner support to master stress.',
+    description: 'Structured 4-week program offering evidence-based tools, weekly guided Circles, and direct practitioner support to master stress.',
   },
 ]
 
@@ -286,7 +286,7 @@ export function MyOffers({ telemetryData, onUpdate }) {
             Offers &amp; Practice Settings
           </h1>
           <p style={{ color: '#64748B', fontSize: '14px', margin: '4px 0 0 0' }}>
-            Set custom prices for your 1:1 sessions, group circles, and programs. Learner payments are processed centrally by Admin and settled via your monthly practitioner salary.
+            Set custom prices for your 1:1 sessions, Circles, and programs. Learner payments are processed centrally by Admin and settled via your monthly practitioner salary.
           </p>
         </div>
 
@@ -445,7 +445,7 @@ export function MyOffers({ telemetryData, onUpdate }) {
                                 : '#1E40AF',
                           }}
                         >
-                          {offerType === 'circle' ? 'Group Circle' : offerType === 'program' ? 'Program' : '1:1 Session'}
+                          {offerType === 'circle' ? 'Circle' : offerType === 'program' ? 'Program' : '1:1 Session'}
                         </span>
 
                         <span
@@ -594,7 +594,7 @@ export function MyOffers({ telemetryData, onUpdate }) {
                 No offers found under "{activeTab}"
               </h4>
               <p style={{ margin: '0 0 16px 0', fontSize: '14px' }}>
-                Click "+ Create New Offer / Program" above to add your 1:1 sessions, group circles, or multi-week programs!
+                Click "+ Create New Offer / Program" above to add your 1:1 sessions, Circles, or multi-week programs!
               </p>
               <button
                 onClick={handleOpenCreateModal}

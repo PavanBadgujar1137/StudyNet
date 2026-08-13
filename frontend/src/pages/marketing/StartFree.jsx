@@ -76,7 +76,7 @@ export function StartFree() {
               <div className="node-badge">2</div>
               <div>
                 <h3>Add one offer</h3>
-                <p>A single 1:1 session, a six-week cohort, or a self-paced program. Start with one. You can add the rest once you see how people respond to the first.</p>
+                <p>A single 1:1 session, a six-week Circle, or a self-paced program. Start with one. You can add the rest once you see how people respond to the first.</p>
                 <span className="step-time-tag">~6 minutes</span>
               </div>
             </div>
@@ -122,10 +122,10 @@ export function StartFree() {
 
               <div className="stream-box">
                 <span className="stream-tag">Stream two</span>
-                <h3>Cohorts &amp; circles</h3>
+                <h3>Circles</h3>
                 <p>Run eight people through a six-week container for the same hours you'd spend on two learners.</p>
                 <span className="stream-num">₹15,000–₹45,000</span>
-                <span className="stream-per">typical per seat, per cohort</span>
+                <span className="stream-per">typical per seat, per Circle</span>
               </div>
 
               <div className="stream-box">
@@ -151,7 +151,7 @@ export function StartFree() {
                 <tbody>
                   <tr><td>Starter</td><td>₹999/mo</td><td>8% of what you earn</td><td>You're testing whether this works at all</td></tr>
                   <tr><td>Growth</td><td>₹2,999/mo</td><td>5% of what you earn</td><td>You're past ₹40,000/month and want the fee to stop stinging</td></tr>
-                  <tr><td>Master</td><td>₹5,999/mo</td><td>0% — you keep everything</td><td>You're running cohorts and want your own branded app</td></tr>
+                  <tr><td>Master</td><td>₹5,999/mo</td><td>0% — you keep everything</td><td>You're running Circles and want your own branded app</td></tr>
 
                 </tbody>
               </table>
@@ -173,7 +173,7 @@ export function StartFree() {
               <p>Your calendar, your buffer times, your cancellation rules. Learners get WhatsApp and email reminders automatically.</p>
             </OHCard>
             <OHCard surface="white" pad="lg">
-              <h3>One private cohort</h3>
+              <h3>One private Circle</h3>
               <p>A closed group container with its own feed, resources, and check-ins. Nobody wanders in from outside.</p>
             </OHCard>
             <OHCard surface="white" pad="lg">

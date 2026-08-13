@@ -1,18 +1,18 @@
 import React, { useState } from 'react'
 import { OHFooter, OHEyebrow } from '../../components/openhand'
-import { 
-  FiUsers, 
-  FiMessageSquare, 
-  FiVideo, 
-  FiUserCheck, 
-  FiAward, 
-  FiFolder, 
-  FiShield, 
-  FiHeart, 
-  FiArrowRight, 
+import {
+  FiUsers,
+  FiShield,
+  FiHeart,
   FiAlertTriangle,
   FiCheckCircle,
-  FiX
+  FiX,
+  FiMessageSquare,
+  FiVideo,
+  FiUserCheck,
+  FiAward,
+  FiFolder,
+  FiArrowRight
 } from 'react-icons/fi'
 
 export function Community() {
@@ -30,7 +30,8 @@ export function Community() {
       color: 'bg-slate-100 border-slate-200 text-[#2563EB]'
     },
     {
-      title: 'Monthly Practitioner Circles',
+      // COMM-1: renamed from "Monthly Practitioner Circles" to avoid conflating with the 8-seat learner Circle
+      title: 'Practitioner Meetups',
       desc: 'Live video meetups organized by modality (somatic, cognitive, coaching, energy work, spiritual direction) and by career stage (first year, growing, seasoned).',
       tag: 'Live Meetups',
       icon: FiVideo,
@@ -38,8 +39,8 @@ export function Community() {
     },
     {
       title: 'Peer Supervision Groups',
-      desc: 'Small, closed cohorts of 4–6 practitioners meeting monthly to discuss cases in confidence.',
-      tag: 'Closed Cohorts',
+      desc: 'Small, closed groups of 4–6 practitioners meeting monthly to discuss cases in confidence.',
+      tag: 'Closed Groups',
       icon: FiUserCheck,
       color: 'bg-slate-100 border-slate-200 text-[#2563EB]'
     },
@@ -103,46 +104,46 @@ export function Community() {
     <div className="font-sans bg-[#F8FAFC] min-h-screen text-[#334155] flex flex-col relative">
 
       {/* Modern Hero Section with Subtle Pattern */}
-      <header className="relative bg-white border-b border-slate-200/80 py-10 sm:py-14 overflow-hidden">
+      <header className="relative bg-white border-b border-slate-200/80 py-6 sm:py-8 overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:20px_20px] opacity-40 pointer-events-none" />
-        
+
         <div className="relative max-w-[1440px] mx-auto px-4 md:px-8">
-          <div className="max-w-4xl mx-auto text-center">
+          <div className="max-w-5xl mx-auto flex flex-col items-center justify-center text-center">
             <OHEyebrow>Open Hand Practitioner Network</OHEyebrow>
-            
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-[#0F172A] tracking-tight my-4 leading-tight">
-              Practitioners helping practitioners. <br className="hidden sm:inline" />
-              <span className="text-[#2563EB]">Real conversation, zero pretense.</span>
+
+            <h1 className="text-center text-[clamp(20px,4.2vw,52px)] leading-tight max-w-full mx-auto my-2 font-black tracking-tight text-[#0F172A]">
+              <span className="block whitespace-nowrap">Practitioners helping practitioners.</span>
+              <span className="text-[#2563EB] block whitespace-nowrap">Real conversation, zero pretense.</span>
             </h1>
 
-            <p className="text-[#475569] text-base sm:text-lg max-w-3xl mx-auto font-medium leading-[1.65] mb-6">
+            <p className="text-[#475569] text-base sm:text-lg max-w-3xl mx-auto font-medium leading-[1.65] mb-3">
               The people best qualified to help you run your practice well are the people doing it every day. The Open Hand community is a space for coaches, therapists, healers, and consultants to support each other.
             </p>
 
-            <div className="p-5 rounded-2xl bg-white border border-slate-200 border-l-4 border-l-blue-600 max-w-2xl mx-auto text-xs sm:text-sm text-[#334155] font-semibold flex items-center justify-center gap-3 shadow-sm mb-8">
+            <div className="p-3.5 rounded-2xl bg-white border border-slate-200 border-l-4 border-l-blue-600 max-w-2xl mx-auto text-xs sm:text-sm text-[#334155] font-semibold flex items-center justify-center gap-3 shadow-sm mb-4">
               <FiHeart className="text-red-500 shrink-0 text-base" />
               <span>We built this space because the loneliest part of running a solo practice is everything around the learner work.</span>
             </div>
 
             {/* Hero Action Buttons */}
-            <div className="flex flex-wrap justify-center gap-3">
+            <div className="flex flex-wrap items-center justify-center gap-3 my-2">
               <button 
                 onClick={() => setJoinedModal(true)}
-                className="px-6 py-3.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white font-bold text-sm sm:text-base shadow-md flex items-center gap-2 transition"
+                className="inline-flex items-center justify-center px-6 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white font-bold text-sm sm:text-base shadow-sm transition-all hover:scale-[1.02]"
               >
-                <FiUsers /> Join Community
+                <FiUsers className="text-lg" /> Join Community
               </button>
-              <a 
-                href="#principles" 
-                className="px-6 py-3.5 rounded-xl bg-white hover:bg-slate-100 text-[#0F172A] font-bold text-sm sm:text-base border border-slate-200 flex items-center gap-2 transition shadow-sm"
+              <a
+                href="#principles"
+                className="inline-flex items-center justify-center px-6 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white font-bold text-sm sm:text-base shadow-sm transition-all hover:scale-[1.02]"
               >
-                <FiShield className="text-[#2563EB]" /> Community Guidelines
+                <FiShield className="text-lg" /> Community Guidelines
               </a>
               <button 
                 onClick={() => setReportModal(true)}
-                className="px-6 py-3.5 rounded-xl bg-white hover:bg-slate-100 text-[#475569] font-bold text-sm sm:text-base border border-slate-200 flex items-center gap-2 transition shadow-sm"
+                className="inline-flex items-center justify-center px-6 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white font-bold text-sm sm:text-base shadow-sm transition-all hover:scale-[1.02]"
               >
-                <FiAlertTriangle className="text-amber-500" /> Report Concern
+                <FiAlertTriangle className="text-lg" /> Report Concern
               </button>
             </div>
           </div>
@@ -154,7 +155,7 @@ export function Community() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight">Community Channels &amp; Spaces</h2>
-            <p className="text-sm text-[#475569] mt-1 font-medium">Structured cohorts, forums, and peer supervision groups.</p>
+            <p className="text-sm text-[#475569] mt-1 font-medium">Practitioner Meetups, forums, and peer supervision groups.</p>
           </div>
           <span className="text-xs font-mono font-bold px-3 py-1.5 rounded-xl bg-blue-50 text-[#2563EB] border border-blue-200 self-start sm:self-auto">
             1,200+ Active Members
@@ -165,7 +166,7 @@ export function Community() {
           {offerings.map((item, idx) => {
             const Icon = item.icon
             return (
-              <div 
+              <div
                 key={idx}
                 className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between group hover:-translate-y-1"
               >
@@ -183,8 +184,8 @@ export function Community() {
                 </div>
 
                 <div className="mt-6 pt-4 border-t border-slate-100">
-                  <button 
-                    onClick={() => setJoinedModal(true)} 
+                  <button
+                    onClick={() => setJoinedModal(true)}
                     className="text-xs sm:text-sm font-bold text-[#2563EB] hover:text-blue-700 flex items-center gap-1 transition group-hover:translate-x-1"
                   >
                     Enter Channel <FiArrowRight />
@@ -229,7 +230,7 @@ export function Community() {
       {joinedModal && (
         <div className="fixed inset-0 z-[1000] bg-[#0F172A]/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="p-8 rounded-3xl bg-white border border-slate-200 max-w-md w-full text-center relative shadow-2xl">
-            <button 
+            <button
               onClick={() => setJoinedModal(false)}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl font-bold p-2 cursor-pointer"
             >
@@ -238,9 +239,9 @@ export function Community() {
             <FiCheckCircle className="text-5xl text-emerald-600 mx-auto mb-4" />
             <h3 className="text-xl sm:text-2xl font-bold text-[#0F172A]">Welcome to the Community!</h3>
             <p className="text-xs sm:text-sm text-[#475569] mt-2 leading-[1.6] font-medium">
-              You are now connected to the Open Hand practitioner network. Access circles, peer supervision cohorts, and the template library directly from your dashboard.
+              You are now connected to the Open Hand practitioner network. Access Circles, peer supervision groups, and the template library directly from your dashboard.
             </p>
-            <button 
+            <button
               onClick={() => setJoinedModal(false)}
               className="mt-6 w-full py-3 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white font-bold text-sm sm:text-base transition shadow"
             >
@@ -254,7 +255,7 @@ export function Community() {
       {reportModal && (
         <div className="fixed inset-0 z-[1000] bg-[#0F172A]/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="p-8 rounded-3xl bg-white border border-slate-200 max-w-lg w-full relative shadow-2xl">
-            <button 
+            <button
               onClick={() => setReportModal(false)}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl font-bold p-2 cursor-pointer"
             >
@@ -275,7 +276,7 @@ export function Community() {
               </div>
             ) : (
               <form onSubmit={handleReportSubmit} className="mt-4 space-y-4">
-                <textarea 
+                <textarea
                   value={reportText}
                   onChange={(e) => setReportText(e.target.value)}
                   placeholder="Describe the issue or rule violation in detail..."
@@ -284,15 +285,15 @@ export function Community() {
                   required
                 />
                 <div className="flex gap-3">
-                  <button 
-                    type="button" 
-                    onClick={() => setReportModal(false)} 
+                  <button
+                    type="button"
+                    onClick={() => setReportModal(false)}
                     className="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs sm:text-sm font-bold text-[#0F172A]"
                   >
                     Cancel
                   </button>
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     className="flex-1 py-3 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-xs sm:text-sm font-bold text-white shadow"
                   >
                     Submit Report

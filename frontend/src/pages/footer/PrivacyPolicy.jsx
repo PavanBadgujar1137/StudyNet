@@ -1,5 +1,5 @@
-import React from 'react'
 import { OHFooter, OHEyebrow } from '../../components/openhand'
+import { LEGAL_FLAGS } from '../../config/productConfig'
 import { 
   FiShield, 
   FiDatabase, 
@@ -36,18 +36,23 @@ export function PrivacyPolicy() {
 
           <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-xs sm:text-sm font-mono text-[#64748B] mb-6">
             <span className="px-3 py-1 rounded-full bg-slate-100 border border-slate-200">Last updated: <strong className="text-[#0F172A]">30.07.2026</strong></span>
-            <span className="px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-[#0F172A] font-bold">Effective: 30.07.2028</span>
+            <span className="px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-[#0F172A] font-bold">
+              {/* LEGAL-2 fix: effective date corrected from 30.07.2028 to 30.07.2026 */}
+              Effective: 30.07.2026
+            </span>
             <span className="px-3 py-1 rounded-full bg-slate-100 text-emerald-800 border border-slate-200 font-bold">India DPDP Act 2023 + GDPR</span>
           </div>
 
-          {/* Legal Disclaimer Banner */}
-          <div className="p-5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs sm:text-sm leading-[1.65] text-left flex items-start gap-3 shadow-sm max-w-4xl mx-auto">
-            <span className="text-xl shrink-0">⚖️</span>
-            <div>
-              <strong className="font-bold block text-amber-950">Legal Review Template Notice</strong>
-              Content below is a content template only and is not formal legal advice. Passages marked with <span className="px-2 py-0.5 rounded bg-amber-100 border border-amber-300 font-bold">⚖️</span> require qualified data-protection lawyer review before publishing in production.
+          {/* Legal Review Disclaimer Banner — toggled by LEGAL_FLAGS.privacyPolicy */}
+          {!LEGAL_FLAGS.privacyPolicy && (
+            <div className="p-5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs sm:text-sm leading-[1.65] text-left flex items-start gap-3 shadow-sm max-w-4xl mx-auto">
+              <span className="text-xl shrink-0">⚖️</span>
+              <div>
+                <strong className="font-bold block text-amber-950">Pending Legal Counsel Review</strong>
+                This Privacy Policy document is pending formal review by qualified legal counsel.
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </header>
 
@@ -154,12 +159,14 @@ export function PrivacyPolicy() {
           </div>
 
           {/* Section 4: Special category */}
-          <div id="special-category" className="p-8 sm:p-10 rounded-3xl bg-white border border-amber-300 shadow-sm space-y-4">
+          <div id="special-category" className={`p-8 sm:p-10 rounded-3xl bg-white border ${!LEGAL_FLAGS.privacyPolicy ? 'border-amber-300' : 'border-slate-200'} shadow-sm space-y-4`}>
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] tracking-tight flex items-center gap-2">
                 <FiShield className="text-amber-600" /> The special-category data problem
               </h2>
-              <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold border border-amber-300 shrink-0">⚖️ Legal Review Required</span>
+              {!LEGAL_FLAGS.privacyPolicy && (
+                <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold border border-amber-300 shrink-0">⚖️ Legal Review Required</span>
+              )}
             </div>
             
             <p className="font-medium">
@@ -173,9 +180,11 @@ export function PrivacyPolicy() {
               <li>Session recordings, transcripts, and notes are encrypted end-to-end where technically feasible, and encrypted at rest and in transit in all cases.</li>
             </ul>
 
-            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs sm:text-sm text-amber-900 font-medium">
-              ⚖️ <em>This section describes a controller/processor architecture that must actually match how your platform is built. Have your lawyer confirm the model matches your product.</em>
-            </div>
+            {!LEGAL_FLAGS.privacyPolicy && (
+              <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs sm:text-sm text-amber-900 font-medium">
+                ⚖️ <em>This section describes a controller/processor architecture that must actually match how your platform is built. Have your lawyer confirm the model matches your product.</em>
+              </div>
+            )}
           </div>
 
           {/* Section 5: How we use */}
@@ -198,21 +207,25 @@ export function PrivacyPolicy() {
           </div>
 
           {/* Section 6: AI & ML */}
-          <div id="ai-ml" className="p-8 sm:p-10 rounded-3xl bg-white border border-amber-300 shadow-sm space-y-4">
+          <div id="ai-ml" className={`p-8 sm:p-10 rounded-3xl bg-white border ${!LEGAL_FLAGS.privacyPolicy ? 'border-amber-300' : 'border-slate-200'} shadow-sm space-y-4`}>
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] tracking-tight flex items-center gap-2">
                 <FiCpu className="text-[#2563EB]" /> AI and machine learning
               </h2>
-              <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold border border-amber-300 shrink-0">⚖️ Legal Review Required</span>
+              {!LEGAL_FLAGS.privacyPolicy && (
+                <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold border border-amber-300 shrink-0">⚖️ Legal Review Required</span>
+              )}
             </div>
             
             <p className="font-medium">
               Where Open Hand uses AI features (transcription, session summaries, suggested resources), we use them only on data the practitioner has explicitly chosen to run through them. <strong>Learner health data is never used to train AI models — ours or anyone else's.</strong> Where we use third-party AI providers, we contract for enterprise-grade agreements that prohibit training on your data.
             </p>
 
-            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs sm:text-sm text-amber-900 font-medium">
-              ⚖️ <em>Confirm this matches your actual AI vendor contracts before publishing.</em>
-            </div>
+            {!LEGAL_FLAGS.privacyPolicy && (
+              <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs sm:text-sm text-amber-900 font-medium">
+                ⚖️ <em>Confirm this matches your actual AI vendor contracts before publishing.</em>
+              </div>
+            )}
           </div>
 
           {/* Section 7: Sharing */}
@@ -230,19 +243,23 @@ export function PrivacyPolicy() {
           </div>
 
           {/* Section 8: Storage */}
-          <div id="storage" className="p-8 sm:p-10 rounded-3xl bg-white border border-amber-300 shadow-sm space-y-4">
+          <div id="storage" className={`p-8 sm:p-10 rounded-3xl bg-white border ${!LEGAL_FLAGS.privacyPolicy ? 'border-amber-300' : 'border-slate-200'} shadow-sm space-y-4`}>
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] tracking-tight flex items-center gap-2">
                 <FiGlobe className="text-emerald-600" /> Where your data is stored
               </h2>
-              <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold border border-amber-300 shrink-0">⚖️ Legal Review Required</span>
+              {!LEGAL_FLAGS.privacyPolicy && (
+                <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold border border-amber-300 shrink-0">⚖️ Legal Review Required</span>
+              )}
             </div>
 
             <p className="font-medium">Practitioner and learner data is stored in India.</p>
 
-            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs sm:text-sm text-amber-900 font-medium">
-              ⚖️ <em>This section must accurately reflect where you actually store data.</em>
-            </div>
+            {!LEGAL_FLAGS.privacyPolicy && (
+              <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs sm:text-sm text-amber-900 font-medium">
+                ⚖️ <em>This section must accurately reflect where you actually store data.</em>
+              </div>
+            )}
           </div>
 
           {/* Section 9: Rights */}
@@ -257,16 +274,18 @@ export function PrivacyPolicy() {
               <li><strong className="text-[#0F172A]">Object / withdraw consent</strong> — stop us from processing your data on certain grounds</li>
               <li><strong className="text-[#0F172A]">Complain</strong> — to your data protection authority (in India, the Data Protection Board)</li>
             </ul>
-            <p className="text-xs sm:text-sm text-[#2563EB] font-bold">To exercise any of these rights, email <strong className="text-[#0F172A]">support@openhand.com</strong>. We respond within 15 days.</p>
+            <p className="text-xs sm:text-sm text-[#2563EB] font-bold">To exercise any of these rights, email <strong className="text-[#0F172A]">support@openhand.live</strong>. We respond within 15 days.</p>
           </div>
 
           {/* Section 10: Retention */}
-          <div id="retention" className="p-8 sm:p-10 rounded-3xl bg-white border border-amber-300 shadow-sm space-y-4">
+          <div id="retention" className={`p-8 sm:p-10 rounded-3xl bg-white border ${!LEGAL_FLAGS.privacyPolicy ? 'border-amber-300' : 'border-slate-200'} shadow-sm space-y-4`}>
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] tracking-tight flex items-center gap-2">
                 <FiClock className="text-indigo-600" /> How long we keep data
               </h2>
-              <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold border border-amber-300 shrink-0">⚖️ Legal Review Required</span>
+              {!LEGAL_FLAGS.privacyPolicy && (
+                <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold border border-amber-300 shrink-0">⚖️ Legal Review Required</span>
+              )}
             </div>
 
             <ul className="space-y-2 list-disc list-inside font-medium">
@@ -276,9 +295,11 @@ export function PrivacyPolicy() {
               <li><strong className="text-[#0F172A]">Backups</strong> — up to 90 days after primary deletion</li>
             </ul>
 
-            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs sm:text-sm text-amber-900 font-medium">
-              ⚖️ <em>Retention periods must match your actual data lifecycle.</em>
-            </div>
+            {!LEGAL_FLAGS.privacyPolicy && (
+              <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs sm:text-sm text-amber-900 font-medium">
+                ⚖️ <em>Retention periods must match your actual data lifecycle.</em>
+              </div>
+            )}
           </div>
 
           {/* Section 11: Children */}
@@ -290,19 +311,23 @@ export function PrivacyPolicy() {
           </div>
 
           {/* Section 12: Contact */}
-          <div id="contact" className="p-8 sm:p-10 rounded-3xl bg-white border border-amber-300 shadow-sm space-y-4">
+          <div id="contact" className={`p-8 sm:p-10 rounded-3xl bg-white border ${!LEGAL_FLAGS.privacyPolicy ? 'border-amber-300' : 'border-slate-200'} shadow-sm space-y-4`}>
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] tracking-tight flex items-center gap-2">
                 <FiMail className="text-[#2563EB]" /> Contact &amp; Grievances
               </h2>
-              <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold border border-amber-300 shrink-0">⚖️ Legal Review Required</span>
+              {!LEGAL_FLAGS.privacyPolicy && (
+                <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold border border-amber-300 shrink-0">⚖️ Legal Review Required</span>
+              )}
             </div>
 
-            <p className="font-medium">For anything privacy-related, email: <strong className="text-[#2563EB]">support@openhand.com</strong></p>
+            <p className="font-medium">For anything privacy-related, email: <strong className="text-[#2563EB]">support@openhand.live</strong></p>
 
-            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs sm:text-sm text-amber-900 font-medium">
-              ⚖️ <em>India DPDP Act requires appointing a Grievance Officer with contact details published.</em>
-            </div>
+            {!LEGAL_FLAGS.privacyPolicy && (
+              <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs sm:text-sm text-amber-900 font-medium">
+                ⚖️ <em>India DPDP Act requires appointing a Grievance Officer with contact details published.</em>
+              </div>
+            )}
           </div>
 
         </div>

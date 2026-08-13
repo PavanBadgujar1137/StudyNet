@@ -1,55 +1,8 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { Link } from 'react-router-dom'
 import { OHFooter } from '../../components/openhand'
-import { apiConnector } from '../../services/apiConnector'
-import toast from 'react-hot-toast'
-import { FiSend, FiCheckCircle } from 'react-icons/fi'
 
 export function ForOrganizations() {
-  const [convForm, setConvForm] = useState({
-    organizationName: '',
-    contactName: '',
-    contactEmail: '',
-    contactPhone: '',
-    companySize: '',
-    message: '',
-    interestedIn: [],
-  })
-  const [submitting, setSubmitting] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
-
-  const interests = ['1:1 Coaching', 'Group Circles', 'Employee Wellbeing', 'EAP Replacement', 'Pilot Programme']
-
-  const toggleInterest = (item) => {
-    setConvForm(f => ({
-      ...f,
-      interestedIn: (f.interestedIn || []).includes(item)
-        ? f.interestedIn.filter(i => i !== item)
-        : [...(f.interestedIn || []), item]
-    }))
-  }
-
-  const handleBookConversation = async (e) => {
-    e.preventDefault()
-    if (!convForm.organizationName || !convForm.contactName || !convForm.contactEmail || !convForm.message) {
-      toast.error('Please fill in all required fields')
-      return
-    }
-    setSubmitting(true)
-    try {
-      const res = await apiConnector('POST', '/api/v1/auth/organization-lead', convForm)
-      if (res?.data?.success) {
-        setSubmitted(true)
-        toast.success("Thank you! We'll be in touch within 24 hours.")
-      } else {
-        toast.error(res?.data?.message || 'Failed to submit. Please try again.')
-      }
-    } catch (err) {
-      console.error('Org lead error:', err)
-      toast.error('Failed to submit. Please try again.')
-    }
-    setSubmitting(false)
-  }
 
   return (
     <div className="org-page relative min-h-screen">
@@ -359,6 +312,16 @@ export function ForOrganizations() {
                   <path d="M12 8v4l3 3M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                 </svg>
               </div>
+              <h3>15-Minute Emergency SLA</h3>
+              <p>24/7 dedicated support desk with 15-minute first response SLA for live-session technical or crisis escalations.</p>
+            </div>
+            <div className="org-card">
+              <div className="ic">
+                <svg viewBox="0 0 24 24">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="8.5" cy="7" r="4" />
+                </svg>
+              </div>
               <h3>1:1 access when a circle isn't enough</h3>
               <p>Anyone in a circle can escalate to private sessions with the same practitioner. Continuity, not a fresh referral to a stranger.</p>
             </div>
@@ -534,70 +497,6 @@ export function ForOrganizations() {
               </ul>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Book a Conversation Form */}
-      <section className="org-sec" id="book-conversation" style={{ background: '#F8FAFC' }}>
-        <div className="oh-wrap" style={{ maxWidth: 640 }}>
-          <div className="org-sec-head" style={{ textAlign: 'center' }}>
-            <h2>Book a Conversation</h2>
-            <p>Tell us about your organisation and what you are looking for. Our team will respond within 24 hours.</p>
-          </div>
-
-          {submitted ? (
-            <div style={{ background: '#fff', borderRadius: 20, padding: '48px 32px', textAlign: 'center', border: '1px solid #E2E8F0' }}>
-              <FiCheckCircle size={56} color="#10B981" style={{ marginBottom: 16 }} />
-              <h3 style={{ margin: '0 0 8px', fontSize: 22 }}>Message Received!</h3>
-              <p style={{ color: '#64748B' }}>We will reach out to <strong>{convForm.contactEmail}</strong> within 24 hours.</p>
-            </div>
-          ) : (
-            <form onSubmit={handleBookConversation} style={{ background: '#fff', borderRadius: 20, padding: '36px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, color: '#64748B', marginBottom: 4, fontWeight: 600 }}>Organisation Name *</label>
-                  <input value={convForm.organizationName} onChange={e => setConvForm(f => ({ ...f, organizationName: e.target.value }))} placeholder="e.g. Acme Corp" required style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #E2E8F0', borderRadius: 10, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, color: '#64748B', marginBottom: 4, fontWeight: 600 }}>Company Size</label>
-                  <select value={convForm.companySize} onChange={e => setConvForm(f => ({ ...f, companySize: e.target.value }))} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #E2E8F0', borderRadius: 10, fontSize: 14, outline: 'none', background: '#fff', boxSizing: 'border-box' }}>
-                    <option value="">Select size</option>
-                    <option value="1-50">1 to 50</option>
-                    <option value="50-200">50 to 200</option>
-                    <option value="200-1000">200 to 1000</option>
-                    <option value="1000+">1000 plus</option>
-                  </select>
-                </div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, color: '#64748B', marginBottom: 4, fontWeight: 600 }}>Your Name *</label>
-                  <input value={convForm.contactName} onChange={e => setConvForm(f => ({ ...f, contactName: e.target.value }))} placeholder="Full name" required style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #E2E8F0', borderRadius: 10, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, color: '#64748B', marginBottom: 4, fontWeight: 600 }}>Work Email *</label>
-                  <input type="email" value={convForm.contactEmail} onChange={e => setConvForm(f => ({ ...f, contactEmail: e.target.value }))} placeholder="you@company.com" required style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #E2E8F0', borderRadius: 10, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
-                </div>
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 12, color: '#64748B', marginBottom: 8, fontWeight: 600 }}>Interested In</label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {interests.map(item => (
-                    <button key={item} type="button" onClick={() => toggleInterest(item)} style={{ padding: '6px 14px', border: convForm.interestedIn.includes(item) ? '1.5px solid #1F5FE0' : '1.5px solid #E2E8F0', borderRadius: 20, fontSize: 13, cursor: 'pointer', background: convForm.interestedIn.includes(item) ? '#EFF6FF' : '#fff', color: convForm.interestedIn.includes(item) ? '#1F5FE0' : '#64748B' }}>
-                      {item}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 12, color: '#64748B', marginBottom: 4, fontWeight: 600 }}>Your Message *</label>
-                <textarea value={convForm.message} onChange={e => setConvForm(f => ({ ...f, message: e.target.value }))} rows={4} placeholder="Tell us about your team needs and what outcome you are hoping for..." required style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #E2E8F0', borderRadius: 10, fontSize: 14, outline: 'none', resize: 'vertical', boxSizing: 'border-box' }} />
-              </div>
-              <button type="submit" disabled={submitting} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '13px', background: submitting ? '#CBD5E1' : 'linear-gradient(135deg, #1F5FE0, #8A2BE0)', border: 'none', borderRadius: 12, color: '#fff', cursor: submitting ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: 15 }}>
-                <FiSend /> {submitting ? 'Sending...' : 'Book a Conversation'}
-              </button>
-            </form>
-          )}
         </div>
       </section>
 

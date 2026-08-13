@@ -14,7 +14,8 @@ import {
   FiUser,
   FiMessageSquare,
   FiBookOpen,
-  FiShare2
+  FiShare2,
+  FiCheckSquare
 } from 'react-icons/fi'
 import Overview from './Overview'
 import MyOffers from './MyOffers'
@@ -27,6 +28,7 @@ import MyCourses from './MyCourses'
 import SocialPostStudio from './SocialPostStudio'
 import Settings from '../Settings'
 import CommunityChatHub from '../CommunityChatHub'
+import { PractitionerOnboarding } from '../../../../pages/PractitionerOnboarding'
 import { useSearchParams } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
 import { apiConnector } from '../../../../services/apiConnector'
@@ -50,8 +52,19 @@ export function PractitionerDashboard() {
   const { user } = useSelector((state) => state.profile)
   const { token } = useSelector((state) => state.auth)
 
-  const practitionerName = user ? `Dr. ${user.firstName} ${user.lastName}` : 'Practitioner'
-  const initials = `${user?.firstName?.slice(0, 1) || 'P'}${user?.lastName?.slice(0, 1) || 'R'}`
+  // DASH-BUG fix: build name correctly — don't prefix "Dr." if firstName already
+  // contains a title (e.g. "Dr.", "Mr.", "Ms."). Prevent "Dr. dr chawhan".
+  const rawFirst = user?.firstName || ''
+  const rawLast  = user?.lastName  || ''
+  const hasTitlePrefix = /^(dr\.?|mr\.?|ms\.?|mrs\.?|prof\.?)\s*/i.test(rawFirst.trim())
+  const practitionerName = user
+    ? hasTitlePrefix
+      ? `${rawFirst} ${rawLast}`.trim()
+      : rawFirst
+        ? `${rawFirst} ${rawLast}`.trim()
+        : 'Practitioner'
+    : 'Practitioner'
+  const initials = `${rawFirst?.[0] || 'P'}${rawLast?.[0] || 'R'}`.toUpperCase()
 
   const fetchSubStatus = useCallback(async () => {
     if (!token) return
@@ -148,18 +161,22 @@ export function PractitionerDashboard() {
     }
   }
 
+  // 4.2 FREE TIER: isPractitionerSubscribed means they have a PAID plan.
+  // A practitioner with NO plan is on the free tier — they are NOT blocked.
+  // isTrialActive is only true when the server says so (not inferred from missing plan).
   const isPractitionerSubscribed = subStatus?.hasActiveSubscription || ['starter', 'growth', 'practice', 'master'].includes(user?.activePlan)
-  const isTrialActive = subStatus ? subStatus.isTrialActive : (user?.activePlan === 'trial' || !user?.activePlan || user?.activePlan === 'none')
-  const trialDaysRemaining = subStatus?.trialDaysRemaining ?? 14
+  const isTrialActive = subStatus?.isTrialActive === true  // only when server confirms a real trial
+  const trialDaysRemaining = subStatus?.trialDaysRemaining ?? 0
+  // Free tier: any practitioner who is NOT on a paid plan gets the free tier (no block).
 
   const practiceItems = [
-    { id: 'dash', label: 'Dashboard', icon: <FiGrid /> },
-    { id: 'social', label: 'Social Posts', icon: <FiShare2 /> },
-    { id: 'community', label: 'Community Hub', icon: <FiMessageSquare /> },
-    { id: 'offers', label: 'My offers', icon: <FiTag /> },
-    { id: 'courses', label: 'My Courses', icon: <FiBookOpen /> },
-    { id: 'clients', label: 'My learners', icon: <FiUsers /> },
-    { id: 'circles', label: 'Circles', icon: <FiCircle /> },
+    { id: 'dash',      label: 'Practice Cockpit', icon: <FiGrid /> },  // 5.7: renamed from "Dashboard"
+    { id: 'social',    label: 'Social Posts',     icon: <FiShare2 /> },
+    { id: 'community', label: 'Community Hub',    icon: <FiMessageSquare /> },
+    { id: 'offers',    label: 'Offers',           icon: <FiTag /> },     // glossary: "Offers"
+    { id: 'courses',   label: 'My Courses',       icon: <FiBookOpen /> },
+    { id: 'clients',   label: 'Learners',         icon: <FiUsers /> },   // glossary: "Learners"
+    { id: 'circles',   label: 'Circles',          icon: <FiCircle /> },  // glossary: "Circles"
   ]
 
   const liveItems = [
@@ -167,8 +184,9 @@ export function PractitionerDashboard() {
   ]
 
   const businessItems = [
-    { id: 'payouts', label: 'Salary & Payouts', icon: <FiDollarSign /> },
-    { id: 'growth', label: 'Growth tools', icon: <FiTrendingUp /> },
+    { id: 'setup',   label: 'Practice Setup Wizard', icon: <FiCheckSquare /> },
+    { id: 'growth',  label: 'Growth tools',          icon: <FiTrendingUp /> },
+    { id: 'payouts', label: 'Payouts',               icon: <FiDollarSign /> }, // glossary: "Payouts"
   ]
 
   const accountItems = [
@@ -363,6 +381,7 @@ export function PractitionerDashboard() {
                 {activeSection === 'room' && 'Live Session Room'}
                 {activeSection === 'payouts' && 'Salary & Payout Ledger'}
                 {activeSection === 'growth' && 'Growth & Practice Tools'}
+                {(activeSection === 'setup' || activeSection === 'onboarding') && 'Practice Setup & Profile Link Builder'}
                 {activeSection === 'social' && 'Social Post & Media Studio'}
                 {activeSection === 'profile' && 'Edit Profile & Account Settings'}
               </h1>
@@ -370,19 +389,21 @@ export function PractitionerDashboard() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {!isPractitionerSubscribed && (
+            {/* 4.2 FREE TIER: Only show upgrade prompt when user is genuinely on a trial.
+                Free-tier practitioners (isFreeTier) get the Practice Cockpit without a countdown. */}
+            {isTrialActive && !isPractitionerSubscribed && (
               <>
                 <button
                   onClick={() => setIsPlanModalOpen(true)}
                   style={{
-                    border: isTrialActive ? '1px solid #E9D5FF' : '1px solid #FCA5A5',
+                    border: '1px solid #E9D5FF',
                     cursor: 'pointer',
                     padding: '6px 14px',
                     borderRadius: '20px',
                     fontSize: '12.5px',
                     fontWeight: 700,
-                    background: isTrialActive ? '#F3E8FF' : '#FEE2E2',
-                    color: isTrialActive ? '#7E22CE' : '#DC2626',
+                    background: '#F3E8FF',
+                    color: '#7E22CE',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
@@ -390,14 +411,10 @@ export function PractitionerDashboard() {
                   }}
                   title="Click to view subscription options"
                 >
-                  {isTrialActive ? (
-                    <span>⚡ 14-Day Trial ({trialDaysRemaining}d left) →</span>
-                  ) : (
-                    <span>⚠️ Trial Expired →</span>
-                  )}
+                  <span>⚡ Trial active — {trialDaysRemaining}d remaining →</span>
                 </button>
 
-                <button 
+                <button
                   onClick={() => setIsPlanModalOpen(true)}
                   className="oh-action-btn"
                   style={{ background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)', color: '#ffffff' }}
@@ -451,6 +468,9 @@ export function PractitionerDashboard() {
           )}
           {activeSection === 'growth' && (
             <GrowthTools telemetryData={telemetryData} setActiveSection={setActiveSection} />
+          )}
+          {(activeSection === 'setup' || activeSection === 'onboarding') && (
+            <PractitionerOnboarding embedded={true} telemetryData={telemetryData} onUpdate={loadData} />
           )}
           {activeSection === 'social' && (
             <SocialPostStudio />
@@ -527,10 +547,11 @@ export function PractitionerDashboard() {
                   ✨ PRACTITIONER PLATFORM
                 </div>
                 <h2 style={{ margin: '0 0 8px', color: '#0F172A', fontSize: 26, fontWeight: 800 }}>
-                  Choose Your Practitioner Plan
+                  Unlock More for Your Practice
                 </h2>
                 <p style={{ margin: 0, color: '#64748B', fontSize: 14 }}>
-                  Publish courses, launch 1:1 sessions, host live circles, and access clinical analytics.
+                  Free tier: 1 offer, directory listing, AURA Aftercare Notes.
+                  Upgrade to add Circles, automations, the live AURA panel, and more.
                 </p>
               </div>
 
@@ -564,8 +585,8 @@ export function PractitionerDashboard() {
                     <div style={{ color: '#fff', fontSize: 28, fontWeight: 900, marginBottom: 14 }}>₹2,999<small style={{ fontSize: 13, color: '#94A3B8' }}>/mo</small></div>
                     <ul style={{ margin: '0 0 20px', padding: 0, listStyle: 'none', fontSize: 13, color: '#CBD5E1', display: 'flex', flexDirection: 'column', gap: 8 }}>
                       <li>✓ Everything in Starter</li>
-                      <li>✓ Unlimited live circles & cohorts</li>
-                      <li>✓ Automated check-in sequences</li>
+                      <li>✓ Unlimited live Circles</li>
+                      <li>✓ Automated Check-in sequences</li>
                       <li>✓ Priority directory badge</li>
                     </ul>
                   </div>
@@ -581,13 +602,13 @@ export function PractitionerDashboard() {
                 {/* Master VIP Plan */}
                 <div style={{ background: '#F8FAFC', border: '1.5px solid #E2E8F0', borderRadius: 20, padding: 22, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <div>
-                    <div style={{ color: '#0F172A', fontWeight: 800, fontSize: 18, marginBottom: 4 }}>Master VIP</div>
+                  <div style={{ color: '#0F172A', fontWeight: 800, fontSize: 18, marginBottom: 4 }}>Master Plan</div>
                     <div style={{ color: '#0F172A', fontSize: 28, fontWeight: 900, marginBottom: 14 }}>₹5,999<small style={{ fontSize: 13, color: '#64748B' }}>/mo</small></div>
                     <ul style={{ margin: '0 0 20px', padding: 0, listStyle: 'none', fontSize: 13, color: '#475569', display: 'flex', flexDirection: 'column', gap: 8 }}>
                       <li>✓ Everything in Growth</li>
-                      <li>✓ Zero commission options</li>
-                      <li>✓ White-label client portal</li>
-                      <li>✓ Dedicated care manager</li>
+                      <li>✓ White-label portal & custom domain</li>
+                      <li>✓ Branded app</li>
+                      <li>✓ Dedicated account manager</li>
                     </ul>
                   </div>
                   <button

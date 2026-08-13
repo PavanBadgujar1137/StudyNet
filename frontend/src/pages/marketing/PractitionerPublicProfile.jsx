@@ -221,7 +221,7 @@ export function PractitionerPublicProfile() {
             </p>
 
             <p style={{ color: '#475569', fontSize: '15.5px', lineHeight: '1.65', margin: '0 0 24px 0', maxWidth: '720px' }}>
-              {profile.bio || 'Welcome to my official practice profile! I offer personalized 1-on-1 consultations, group circles, and structured health learning programs.'}
+              {profile.bio || 'Welcome to my official practice profile! I offer personalized 1-on-1 consultations, Circles, and structured health learning programs.'}
             </p>
 
             {/* Specialties & Languages Badges */}

@@ -126,7 +126,7 @@ function CourseDetailView({ course, hasAccess, onBack, subscription }) {
           <h3 style={{ margin: '0 0 8px', color: '#1E293B' }}>Subscription Required</h3>
           <p style={{ margin: '0 0 20px', color: '#64748B' }}>
             {course.requiredPlan
-              ? `This course requires a ${course.requiredPlan === 'beginner' ? 'Beginner Plan (₹51/mo)' : course.requiredPlan === 'advance' ? 'Advance Plan (₹151/mo)' : course.requiredPlan === 'champion' ? 'Champion VIP Plan (₹1,500/mo)' : `${course.requiredPlan} Plan`} or above.`
+              ? `This course requires a ${course.requiredPlan === 'beginner' ? 'Beginner Plan (₹51/mo)' : course.requiredPlan === 'advance' ? 'Growth Plan (₹151/mo)' : course.requiredPlan === 'champion' ? 'Premium Plan (₹1,500/mo)' : `${course.requiredPlan} Plan`} or above.`
               : 'Subscribe to access all courses from our practitioners.'}
           </p>
           <a href="/pricing" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', background: 'linear-gradient(135deg, #3B82F6, #1D4ED8)', borderRadius: 10, color: '#fff', textDecoration: 'none', fontWeight: 700, fontSize: 14 }}>

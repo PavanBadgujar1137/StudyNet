@@ -1,18 +1,18 @@
 import React, { useState } from 'react'
 import { OHFooter, OHEyebrow } from '../../components/openhand'
-import { 
-  FiCheckCircle, 
-  FiClock, 
-  FiBell, 
-  FiMail, 
-  FiMessageSquare, 
-  FiRss, 
+import {
+  FiCheckCircle,
+  FiBell,
+  FiRss,
   FiRefreshCw,
   FiX,
   FiActivity,
   FiZap,
   FiShield,
-  FiServer
+  FiServer,
+  FiClock,
+  FiMail,
+  FiMessageSquare
 } from 'react-icons/fi'
 
 export function PlatformStatus() {
@@ -43,8 +43,9 @@ export function PlatformStatus() {
       icon: FiZap
     },
     {
-      name: 'LMS & Learning Engine',
-      desc: 'Courses, learning modules, assignments, reflection check-ins, and resource delivery',
+      // 4.7: renamed from "LMS & Learning Engine" — contradicted the homepage "0% Corporate LMS Clutter" claim
+      name: 'Circles & Sessions Engine',
+      desc: 'Circles, reflection check-ins, session scheduling, and learning resource delivery',
       status: 'Operational',
       uptime: 99.97,
       latency: '34 ms',
@@ -76,7 +77,7 @@ export function PlatformStatus() {
     },
     {
       name: 'Mobile Apps & Sync Bridge',
-      desc: 'iOS and Android learner portals & practitioner dashboard sync channels',
+      desc: 'iOS and Android mobile web portals & practitioner sync channels',
       status: 'Operational',
       uptime: 99.94,
       latency: '31 ms',
@@ -114,7 +115,7 @@ export function PlatformStatus() {
       title: 'Transient Audio Sync Lag in High-Capacity Group Sessions',
       duration: '18 minutes',
       status: 'Resolved',
-      summary: 'Some practitioners running group cohorts with >25 concurrent video streams experienced brief audio latency spikes.',
+      summary: 'Some practitioners running Circles with >25 concurrent video streams experienced brief audio latency spikes.',
       fix: 'Deployed adaptive bitrate dynamic routing across secondary WebRTC edge clusters.'
     }
   ]
@@ -125,14 +126,14 @@ export function PlatformStatus() {
       {/* Modern Top Hero Section */}
       <header className="relative bg-white border-b border-slate-200/80 py-10 sm:py-14 overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:20px_20px] opacity-40 pointer-events-none" />
-        
+
         <div className="relative max-w-[1440px] mx-auto px-4 md:px-8">
-          <div className="max-w-4xl mx-auto text-center">
+          <div className="max-w-5xl mx-auto flex flex-col items-center justify-center text-center">
             <OHEyebrow>Live Infrastructure &amp; Health</OHEyebrow>
-            
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-[#0F172A] tracking-tight my-4 leading-tight">
-              A live look at what's running, <br className="hidden sm:inline" />
-              <span className="text-[#2563EB]">what isn't, and what we're fixing.</span>
+
+            <h1 className="text-center text-[clamp(20px,4.2vw,52px)] leading-tight max-w-full mx-auto my-4 font-black tracking-tight text-[#0F172A]">
+              <span className="block whitespace-nowrap">A live look at what's running,</span>
+              <span className="text-[#2563EB] block whitespace-nowrap">what isn't, and what we're fixing.</span>
             </h1>
 
             <p className="text-[#475569] text-base sm:text-lg max-w-3xl mx-auto font-medium leading-[1.65] mb-8">
@@ -163,14 +164,14 @@ export function PlatformStatus() {
               </div>
 
               <div className="flex items-center gap-3 shrink-0">
-                <button 
-                  onClick={() => window.location.reload()} 
+                <button
+                  onClick={() => window.location.reload()}
                   className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs sm:text-sm font-bold text-[#0F172A] border border-slate-200 shadow-sm flex items-center gap-2 transition"
                 >
                   <FiRefreshCw className="text-[#2563EB]" /> Refresh Status
                 </button>
-                <button 
-                  onClick={() => setSubscribeModal(true)} 
+                <button
+                  onClick={() => setSubscribeModal(true)}
                   className="px-5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-xs sm:text-sm font-bold text-white shadow-sm flex items-center gap-2 transition"
                 >
                   <FiBell /> Subscribe to Alerts
@@ -197,7 +198,7 @@ export function PlatformStatus() {
           {services.map((srv) => {
             const Icon = srv.icon
             return (
-              <div 
+              <div
                 key={srv.name}
                 className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between group"
               >
@@ -224,9 +225,9 @@ export function PlatformStatus() {
                       <span className="text-emerald-700 font-bold">{srv.uptime}%</span>
                     </div>
                     <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
-                      <div 
-                        className="h-full bg-emerald-500 rounded-full transition-all duration-500" 
-                        style={{ width: `${srv.uptime}%` }} 
+                      <div
+                        className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                        style={{ width: `${srv.uptime}%` }}
                       />
                     </div>
                   </div>
@@ -303,7 +304,7 @@ export function PlatformStatus() {
 
                 <h3 className="text-lg sm:text-xl font-bold text-[#0F172A] mb-2">{inc.title}</h3>
                 <p className="text-sm sm:text-base text-[#334155] leading-[1.65] mb-4 font-medium">{inc.summary}</p>
-                
+
                 <div className="p-4 rounded-2xl bg-[#F8FAFC] border border-slate-200 text-xs sm:text-sm text-[#475569]">
                   <strong className="text-[#2563EB] font-bold">Deployed Resolution: </strong> {inc.fix}
                 </div>
@@ -317,7 +318,7 @@ export function PlatformStatus() {
       {subscribeModal && (
         <div className="fixed inset-0 z-[1000] bg-[#0F172A]/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="p-8 rounded-3xl bg-white border border-slate-200 max-w-md w-full relative shadow-2xl text-center">
-            <button 
+            <button
               onClick={() => setSubscribeModal(false)}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl font-bold p-2 cursor-pointer"
             >
@@ -332,21 +333,21 @@ export function PlatformStatus() {
             </p>
 
             <div className="flex justify-center items-center gap-2 mt-5">
-              <button 
+              <button
                 type="button"
                 onClick={() => setSubscribeMethod('email')}
                 className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition ${subscribeMethod === 'email' ? 'bg-[#2563EB] text-white shadow-sm' : 'bg-slate-100 text-slate-700 border border-slate-200'}`}
               >
                 <FiMail /> Email
               </button>
-              <button 
+              <button
                 type="button"
                 onClick={() => setSubscribeMethod('sms')}
                 className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition ${subscribeMethod === 'sms' ? 'bg-[#2563EB] text-white shadow-sm' : 'bg-slate-100 text-slate-700 border border-slate-200'}`}
               >
                 <FiMessageSquare /> SMS
               </button>
-              <button 
+              <button
                 type="button"
                 onClick={() => setSubscribeMethod('rss')}
                 className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition ${subscribeMethod === 'rss' ? 'bg-[#2563EB] text-white shadow-sm' : 'bg-slate-100 text-slate-700 border border-slate-200'}`}
@@ -362,7 +363,7 @@ export function PlatformStatus() {
                 </div>
               ) : (
                 <>
-                  <input 
+                  <input
                     type={subscribeMethod === 'email' ? 'email' : 'tel'}
                     value={contactVal}
                     onChange={(e) => setContactVal(e.target.value)}
@@ -370,7 +371,7 @@ export function PlatformStatus() {
                     className="w-full px-4 py-3 rounded-xl bg-[#F8FAFC] border border-slate-200 text-sm text-[#0F172A] placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white transition"
                     required
                   />
-                  <button 
+                  <button
                     type="submit"
                     className="w-full py-3.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-sm font-bold shadow-sm transition"
                   >

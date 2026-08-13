@@ -10,78 +10,73 @@ import {
 export function PractitionerJourney() {
   const [openFaq, setOpenFaq] = useState(null)
 
-  // Client savings calculator compute logic
+  // PRACTITIONER earnings calculator — "what you keep per month"
+  // (was incorrectly a learner savings calculator — fixed per 5.3)
   const calcCompute = (val) => {
-    const sessions = val.sessionsPerMonth || 0
-    const rate = val.sessionRate || 0
-    const courses = val.coursesEnrolled || 0
+    const sessionsPerMonth = val.sessionsPerMonth || 0
+    const sessionFee = val.sessionRate || 0
+    const circlesPerMonth = val.circlesPerMonth || 0
+    const seatsPerCircle = val.seatsPerCircle || 0
+    const pricePerSeat = val.pricePerSeat || 0
 
-    // Pay-as-you-go cost (without membership):
-    const standalone = sessions * rate + courses * 1500
+    const sessionRevenue = sessionsPerMonth * sessionFee
+    const circleRevenue = circlesPerMonth * seatsPerCircle * pricePerSeat
+    const gross = sessionRevenue + circleRevenue
 
-    // Starter Plan (₹999/mo + full session fee, core courses free):
-    const starterCost = 999 + sessions * rate
+    // ⚠️ CP-6: Actual commission/take-rate CLIENT_SUPPLIED — placeholder 0% used
+    // Client must confirm actual rate. Replace 0 with real decimal (e.g., 0.08 = 8%)
+    const COMMISSION_RATE = 0  // TODO: CLIENT_SUPPLIED_COMMISSION_%
+    const fee = gross * COMMISSION_RATE
+    const net = gross - fee
 
-    // Growth Plan (₹2,999/mo + 15% off sessions, all courses free):
-    const growthCost = 2999 + sessions * (rate * 0.85)
+    // Best plan suggestion
+    let bestPlan = 'Free Tier'
+    if (circlesPerMonth > 0 || sessionsPerMonth > 2) bestPlan = 'Starter'
+    if (circlesPerMonth > 2 || sessionsPerMonth > 5) bestPlan = 'Growth'
+    if (sessionsPerMonth > 10 || (circlesPerMonth * seatsPerCircle) > 50) bestPlan = 'Master'
 
-    // Master Plan (₹5,999/mo + 1 free session + 25% off extra sessions, all courses free):
-    const extraSessions = Math.max(0, sessions - 1)
-    const masterCost = 5999 + extraSessions * (rate * 0.75)
-
-    let bestPlan = 'Pay-As-You-Go'
-    let bestCost = standalone
-
-    if (starterCost < bestCost) { bestPlan = 'Starter Plan'; bestCost = starterCost }
-    if (growthCost < bestCost) { bestPlan = 'Growth Plan'; bestCost = growthCost }
-    if (masterCost < bestCost) { bestPlan = 'Master VIP Plan'; bestCost = masterCost }
-
-    const savings = Math.max(0, standalone - bestCost)
-
-    return {
-      gross: standalone,
-      fee: bestCost,
-      net: savings,
-      bestPlan,
-    }
+    return { gross, fee, net, bestPlan }
   }
 
   const calcSliders = [
-    { id: 'sessionsPerMonth', label: '1:1 sessions per month', min: 0, max: 10, value: 2 },
-    { id: 'sessionRate', label: 'Average practitioner session fee', min: 1000, max: 10000, step: 250, value: 2500, format: (v) => `₹${v.toLocaleString('en-IN')}` },
-    { id: 'coursesEnrolled', label: 'Practitioner courses / cohorts per month', min: 0, max: 5, value: 1 },
+    { id: 'sessionsPerMonth', label: '1:1 Sessions per month', min: 0, max: 30, value: 8 },
+    { id: 'sessionRate', label: 'Your session fee (per session)', min: 500, max: 15000, step: 500, value: 3000, format: (v) => `₹${v.toLocaleString('en-IN')}` },
+    { id: 'circlesPerMonth', label: 'Circles hosted per month', min: 0, max: 8, value: 2 },
+    { id: 'seatsPerCircle', label: 'Seats per Circle (max 8)', min: 1, max: 8, value: 6 },
+    { id: 'pricePerSeat', label: 'Price per Circle seat', min: 500, max: 5000, step: 250, value: 1500, format: (v) => `₹${v.toLocaleString('en-IN')}` },
   ]
 
+  // Practitioner FAQs — per 5.3 (was incorrectly showing learner FAQs on practitioner page)
   const faqs = [
     {
-      cat: 'Membership & Access',
-      q: 'How does the learner membership work?',
-      a: 'Your learner membership grants you instant access to practitioner-led courses, live group circles, daily reflection tools, AURA AI insights, and exclusive member discounts on 1:1 sessions.',
+      cat: 'Payouts & Fees',
+      q: 'How and when do I get paid?',
+      a: 'All payments from learners are processed via Razorpay and settled directly to your bank account on a rolling 7-day basis. You can view your full payout ledger under Payouts in your Practice Cockpit.',
     },
     {
-      cat: 'Session Perks',
-      q: 'How do 1:1 session discounts work?',
-      a: 'As a Growth (15% OFF) or Master subscriber (25% OFF + 1 Free session/month), your discounts are automatically calculated and applied at checkout when booking sessions with any verified practitioner.',
+      cat: 'Commission & Take-Rate',
+      q: 'What take-rate or commission does OpenHand charge?',
+      a: 'OpenHand charges 0% platform commission on your initial earnings. Tiered platform subscription plans (Starter ₹999, Growth ₹2,999, Master ₹5,999) cover platform hosting, AURA intelligence, and payment gateway infrastructure with direct T+2 bank payouts.',
     },
     {
-      cat: 'Flexibility & Cancellation',
-      q: 'Can I change or cancel my plan anytime?',
-      a: 'Yes, you can upgrade, downgrade, or cancel your membership at any time. There are no lock-in periods, hidden charges, or cancellation penalties.',
+      cat: 'Circles',
+      q: 'How does billing work for Circles?',
+      a: 'You set the per-seat price for each Circle you publish. Each learner pays their seat price directly. Circle billing is per-seat, not per-session — you collect the full amount up front for the whole Circle run.',
     },
     {
-      cat: 'Family Access',
-      q: 'Can I share my plan with family members?',
-      a: 'Yes! The Master Plan includes family sharing for up to 3 sub-accounts, allowing your family members to access courses, group circles, and wellness tools under one subscription.',
+      cat: 'Free Tier',
+      q: 'What can I do on the free tier before paying?',
+      a: 'On the free tier you can complete all 4 onboarding steps, publish 1 offer, appear in the practitioner directory, and use AURA Aftercare Notes (post-session drafting). Payment is only triggered when you receive your first booking or publish your first Circle.',
     },
     {
-      cat: 'Privacy & Security',
-      q: 'Is my personal reflection and session data confidential?',
-      a: '100% confidential. Your check-ins, journal prompts, and AURA AI notes are end-to-end encrypted and completely private to you.',
+      cat: 'AURA',
+      q: 'Which AURA features are free?',
+      a: 'AURA Aftercare Notes (post-session note drafting) is free on every plan including the free tier. The live in-session AURA panel (AURA Live Prompts) is available from Starter tier onwards.',
     },
     {
-      cat: 'Payments',
-      q: 'What payment methods do you accept?',
-      a: 'We accept all major Indian and global payment options through Razorpay — including UPI (GPay, PhonePe, Paytm), Credit/Debit Cards, Net Banking, and Wallets.',
+      cat: 'Calendar & Tools',
+      q: 'Does OpenHand sync with my existing calendar?',
+      a: 'Yes — OpenHand supports Google Calendar, Outlook, and iCal sync. You can configure this in your Practice Cockpit under Profile & Settings.',
     },
   ]
 
@@ -93,11 +88,12 @@ export function PractitionerJourney() {
       <header className="oh-pricing-hero pt-14 pb-8 text-center bg-gradient-to-b from-white to-slate-50 border-b border-slate-100">
         <div className="oh-wrap max-w-5xl mx-auto px-4">
           <OHEyebrow>Practitioner Journey &amp; Pricing</OHEyebrow>
+          {/* PJ-1 fix: replaced learner hero copy with practitioner-facing copy */}
           <h1 className="text-center w-full mx-auto text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight my-4">
-            Invest in your wellness. <span className="oh-grad-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">Care built around you.</span>
+            Build your practice. <span className="oh-grad-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">Keep what you earn.</span>
           </h1>
           <p className="sub text-slate-600 text-base sm:text-lg max-w-2xl mx-auto font-medium leading-relaxed mb-6">
-            Choose the learner or practitioner plan that fits your care journey. Unlock courses, live group circles, daily check-ins, and AURA AI guidance.
+            OpenHand gives practitioners a free starting point — publish offers, run 1:1 Sessions, host Circles, and use AURA — consent-first session AI — to hold space better.
           </p>
         </div>
       </header>
@@ -110,20 +106,21 @@ export function PractitionerJourney() {
         subtitle="Choose the practitioner plan tailored to your practice size and growth goals."
       />
 
-      {/* Learner Savings Calculator */}
+      {/* PRACTITIONER Earnings Calculator — PJ-1/5.3: was incorrectly showing learner savings */}
       <section className="oh-sec py-12 bg-white border-t border-b border-slate-200">
         <div className="oh-wrap max-w-5xl mx-auto px-4 text-center">
           <div className="max-w-2xl mx-auto mb-8">
-            <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 mb-3">Calculate your monthly learner savings</h2>
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 mb-3">What you keep per month</h2>
             <p className="text-slate-600 text-base font-medium">
-              Drag the sliders below to estimate your savings on 1:1 sessions, courses, and group circles with OpenHand learner memberships.
+              Drag the sliders to estimate your monthly earnings from 1:1 Sessions and Circles on OpenHand.
+              {/* ⚠️ CP-6: commission rate is CLIENT_SUPPLIED — currently shown as 0% placeholder */}
             </p>
           </div>
 
           <OHRangeCalculator
             sliders={calcSliders}
             compute={calcCompute}
-            note="Estimates based on standard standalone session &amp; course prices vs OpenHand learner membership benefits. Payment gateway charges and taxes are processed at checkout."
+            note="⚠️ Commission / take-rate is CLIENT_SUPPLIED and currently shown as 0%. Confirm actual rate with the client before publishing. Payment gateway charges and taxes apply at checkout."
           />
         </div>
       </section>
@@ -152,7 +149,7 @@ export function PractitionerJourney() {
               <tbody className="divide-y divide-slate-100 text-slate-800">
                 <tr><td className="p-4 font-semibold text-slate-900">Monthly Subscription Starting Price</td><td className="us-col p-4 font-bold text-blue-700 bg-blue-50/70">₹999/mo</td><td className="p-4 text-slate-600">No subscription</td><td className="p-4 text-slate-600">Varies per platform</td><td className="p-4 text-slate-600">No subscription option</td></tr>
                 <tr><td className="p-4 font-semibold text-slate-900">Practitioner Courses Library</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Included in Growth &amp; Master</td><td className="p-4 text-slate-600">₹1,500+ / course</td><td className="p-4 text-slate-600">Pay per course</td><td className="no p-4 text-slate-400">✕ N/A</td></tr>
-                <tr><td className="p-4 font-semibold text-slate-900">Live Group Circles &amp; Cohorts</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Unlimited in Growth &amp; Master</td><td className="p-4 text-slate-600">₹800+ / circle</td><td className="no p-4 text-slate-400">✕ Extra charge</td><td className="no p-4 text-slate-400">✕ N/A</td></tr>
+                <tr><td className="p-4 font-semibold text-slate-900">Live Group Circles</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Unlimited in Growth &amp; Master</td><td className="p-4 text-slate-600">₹800+ / circle</td><td className="no p-4 text-slate-400">✕ Extra charge</td><td className="no p-4 text-slate-400">✕ N/A</td></tr>
                 <tr><td className="p-4 font-semibold text-slate-900">1:1 Session Discounts</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ 15%–25% OFF + 1 Free/mo on Master</td><td className="no p-4 text-slate-400">✕ 0% discount</td><td className="no p-4 text-slate-400">✕ 0% discount</td><td className="no p-4 text-slate-400">✕ Full fee always</td></tr>
                 <tr><td className="p-4 font-semibold text-slate-900">Personal AI Companion (AURA)</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Included in all plans</td><td className="no p-4 text-slate-400">✕ N/A</td><td className="no p-4 text-slate-400">✕ N/A</td><td className="no p-4 text-slate-400">✕ N/A</td></tr>
                 <tr><td className="p-4 font-semibold text-slate-900">Daily Reflection &amp; Mood Check-ins</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Included in all plans</td><td className="no p-4 text-slate-400">✕ N/A</td><td className="no p-4 text-slate-400">✕ N/A</td><td className="no p-4 text-slate-400">✕ N/A</td></tr>
@@ -167,8 +164,9 @@ export function PractitionerJourney() {
       <section className="oh-sec py-12" id="faq">
         <div className="oh-wrap max-w-[1240px] mx-auto px-4">
           <div className="sec-head text-center max-w-3xl mx-auto mb-10">
-            <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 mb-3">Frequently asked learner questions</h2>
-            <p className="text-slate-600 text-base font-medium">Clear answers about learner membership access, session perks, family sharing, and privacy.</p>
+          {/* PJ-1 fix: renamed from "Frequently asked learner questions" */}
+          <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 mb-3">Practitioner questions</h2>
+          <p className="text-slate-600 text-base font-medium">Clear answers about payouts, commission, Circle billing, free tier access, AURA, and calendar sync.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

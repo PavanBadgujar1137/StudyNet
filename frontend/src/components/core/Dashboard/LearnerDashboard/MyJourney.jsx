@@ -81,7 +81,7 @@ export function MyJourney({ clientName = 'Student', practitionerName = 'your ins
           <div className="mark"><div className="ring">4</div><div className="when">Ongoing</div></div>
           <div className="bub">
             <h3>Peer Support & Growth Circles</h3>
-            <p>Join group cohorts to share reflections, track milestones, and learn alongside peers.</p>
+            <p>Join Circles to share reflections, track milestones, and learn alongside peers.</p>
           </div>
         </div>
       </div>

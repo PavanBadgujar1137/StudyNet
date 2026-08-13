@@ -1,5 +1,5 @@
-import React from 'react'
 import { OHFooter, OHEyebrow } from '../../components/openhand'
+import { LEGAL_FLAGS } from '../../config/productConfig'
 import { 
   FiUserCheck, 
   FiShield, 
@@ -31,19 +31,20 @@ export function TermsOfService() {
             Terms of Service
           </h1>
 
-          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-xs sm:text-sm font-mono text-[#64748B] mb-6">
-            <span className="px-3 py-1 rounded-full bg-slate-100 border border-slate-200">Last updated: <strong className="text-[#0F172A]">30.07.2026</strong></span>
-            <span className="px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-[#0F172A] font-bold">Effective: 30.07.2028</span>
-            <span className="px-3 py-1 rounded-full bg-slate-100 text-emerald-800 border border-slate-200 font-bold">Jurisdiction: India / Pune</span>
-          </div>
-
-          {/* Legal Disclaimer Callout Banner */}
-          <div className="p-5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs sm:text-sm leading-[1.65] text-left flex items-start gap-3 shadow-sm max-w-4xl mx-auto">
-            <span className="text-xl shrink-0">⚖️</span>
-            <div>
-              <strong className="font-bold block text-amber-950">Legal Review Template Notice</strong>
-              Content below is a content template only and is not formal legal advice. Passages marked with <span className="px-2 py-0.5 rounded bg-amber-100 border border-amber-300 font-bold">⚖️</span> require qualified legal counsel review before publishing.
+          {!LEGAL_FLAGS.termsOfService && (
+            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs sm:text-sm leading-relaxed max-w-3xl mx-auto my-4 text-left flex items-center gap-3">
+              <span className="text-xl shrink-0">⚖️</span>
+              <div>
+                <strong className="font-bold block text-amber-950">Pending Legal Counsel Review</strong>
+                This Terms of Service document is pending formal review by qualified legal counsel.
+              </div>
             </div>
+          )}
+
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-xs sm:text-sm font-mono text-[#64748B] mb-2">
+            <span className="px-3 py-1 rounded-full bg-slate-100 border border-slate-200">Last updated: <strong className="text-[#0F172A]">30.07.2026</strong></span>
+            <span className="px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-[#0F172A] font-bold">Effective: 30.07.2026</span>
+            <span className="px-3 py-1 rounded-full bg-slate-100 text-emerald-800 border border-slate-200 font-bold">Jurisdiction: India / Pune</span>
           </div>
         </div>
       </header>
@@ -91,12 +92,14 @@ export function TermsOfService() {
           </div>
 
           {/* 1. Who can use */}
-          <div id="sec-1" className="p-8 sm:p-10 rounded-3xl bg-white border border-amber-300 shadow-sm space-y-4 font-medium">
+          <div id="sec-1" className={`p-8 sm:p-10 rounded-3xl bg-white border ${!LEGAL_FLAGS.termsOfService ? 'border-amber-300' : 'border-slate-200'} shadow-sm space-y-4 font-medium`}>
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] tracking-tight flex items-center gap-2">
                 <FiUserCheck className="text-[#2563EB]" /> 1. Who can use Open Hand
               </h2>
-              <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold border border-amber-300 shrink-0">⚖️ Legal Review Required</span>
+              {!LEGAL_FLAGS.termsOfService && (
+                <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold border border-amber-300 shrink-0">⚖️ Legal Review Required</span>
+              )}
             </div>
             
             <p>
@@ -115,9 +118,11 @@ export function TermsOfService() {
               Open Hand does not verify practitioner qualifications. We ask you to represent them accurately. Misrepresenting qualifications is a material breach of terms.
             </p>
 
-            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs sm:text-sm text-amber-900">
-              ⚖️ <em>This clause balances platform representation with legal liability.</em>
-            </div>
+            {!LEGAL_FLAGS.termsOfService && (
+              <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs sm:text-sm text-amber-900">
+                ⚖️ <em>This clause balances platform representation with legal liability.</em>
+              </div>
+            )}
           </div>
 
           {/* 2. What Open Hand is */}
@@ -169,12 +174,14 @@ export function TermsOfService() {
           </div>
 
           {/* 6. Payments and refunds */}
-          <div id="sec-6" className="p-8 sm:p-10 rounded-3xl bg-white border border-amber-300 shadow-sm space-y-4 font-medium">
+          <div id="sec-6" className={`p-8 sm:p-10 rounded-3xl bg-white border ${!LEGAL_FLAGS.termsOfService ? 'border-amber-300' : 'border-slate-200'} shadow-sm space-y-4 font-medium`}>
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] tracking-tight flex items-center gap-2">
                 <FiDollarSign className="text-emerald-600" /> 6. Payments and refunds
               </h2>
-              <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold border border-amber-300 shrink-0">⚖️ Legal Review Required</span>
+              {!LEGAL_FLAGS.termsOfService && (
+                <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold border border-amber-300 shrink-0">⚖️ Legal Review Required</span>
+              )}
             </div>
 
             <ul className="list-disc list-inside space-y-1.5">
@@ -193,23 +200,27 @@ export function TermsOfService() {
           </div>
 
           {/* 8. Disclaimers */}
-          <div id="sec-8" className="p-8 sm:p-10 rounded-3xl bg-white border border-amber-300 shadow-sm space-y-4 font-medium">
+          <div id="sec-8" className={`p-8 sm:p-10 rounded-3xl bg-white border ${!LEGAL_FLAGS.termsOfService ? 'border-amber-300' : 'border-slate-200'} shadow-sm space-y-4 font-medium`}>
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] tracking-tight flex items-center gap-2">
                 <FiAlertTriangle className="text-amber-600" /> 8. Disclaimers
               </h2>
-              <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold border border-amber-300 shrink-0">⚖️ Legal Review Required</span>
+              {!LEGAL_FLAGS.termsOfService && (
+                <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold border border-amber-300 shrink-0">⚖️ Legal Review Required</span>
+              )}
             </div>
             <p>Open Hand is provided "as is." Nothing on the platform constitutes medical, legal, or financial advice.</p>
           </div>
 
           {/* 9. Limitation of liability */}
-          <div id="sec-9" className="p-8 sm:p-10 rounded-3xl bg-white border border-amber-300 shadow-sm space-y-4 font-medium">
+          <div id="sec-9" className={`p-8 sm:p-10 rounded-3xl bg-white border ${!LEGAL_FLAGS.termsOfService ? 'border-amber-300' : 'border-slate-200'} shadow-sm space-y-4 font-medium`}>
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] tracking-tight flex items-center gap-2">
                 <FiShield className="text-red-600" /> 9. Limitation of liability
               </h2>
-              <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold border border-amber-300 shrink-0">⚖️ Legal Review Required</span>
+              {!LEGAL_FLAGS.termsOfService && (
+                <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold border border-amber-300 shrink-0">⚖️ Legal Review Required</span>
+              )}
             </div>
             <p>Total liability is limited to fees paid to Open Hand in the preceding 12 months.</p>
           </div>
@@ -233,7 +244,7 @@ export function TermsOfService() {
             <h2 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] tracking-tight flex items-center gap-2">
               <FiMail className="text-[#2563EB]" /> 12. Contact
             </h2>
-            <p>Legal inquiries: <strong className="text-[#2563EB]">legal@openhand.com</strong></p>
+            <p>Legal inquiries: <strong className="text-[#2563EB]">legal@openhand.live</strong></p>
           </div>
 
         </div>

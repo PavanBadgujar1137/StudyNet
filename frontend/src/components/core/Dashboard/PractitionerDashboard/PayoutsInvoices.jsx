@@ -149,7 +149,7 @@ export function PayoutsInvoices({ telemetryData }) {
           <div className="tl" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div style={{ borderLeft: '3px solid #10B981', paddingLeft: '12px' }}>
               <b style={{ fontSize: '13px', color: '#0F172A', display: 'block' }}>1. Practitioner Sets Offer Prices</b>
-              <span style={{ fontSize: '12px', color: '#64748B' }}>You set custom session &amp; cohort prices in 'My Offers'.</span>
+              <span style={{ fontSize: '12px', color: '#64748B' }}>You set custom session &amp; Circle prices in 'Offers'.</span>
             </div>
             <div style={{ borderLeft: '3px solid #10B981', paddingLeft: '12px' }}>
               <b style={{ fontSize: '13px', color: '#0F172A', display: 'block' }}>2. Learner Pays Central Admin</b>

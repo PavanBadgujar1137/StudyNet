@@ -111,7 +111,7 @@ export function LearnerDashboard() {
       id: 'circle',
       label: 'My circle',
       icon: <FiUsers />,
-      badge: 'Cohorts',
+      badge: 'Circles',  // was 'Cohorts' — glossary fix
     },
     {
       id: 'community',

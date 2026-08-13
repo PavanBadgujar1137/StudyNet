@@ -145,28 +145,38 @@ exports.getPractitioners = async (req, res) => {
 exports.getPractitionerByHandle = async (req, res) => {
   try {
     const { handle } = req.params
-    let profile = await PractitionerProfile.findOne({ handle }).populate({
+    const cleanParam = (handle || "").toLowerCase().trim().replace(/[^a-z0-9-]/gi, '-')
+
+    let profile = await PractitionerProfile.findOne({
+      $or: [
+        { handle: cleanParam },
+        { handle: new RegExp(`^${cleanParam}$`, "i") }
+      ]
+    }).populate({
       path: "user",
-      select: "firstName lastName email image accountType",
+      select: "firstName lastName email image accountType credentials bio specialties languages",
     })
 
     if (!profile) {
-      // Match user by name slug (e.g. "rohit-sharma" -> firstName: "rohit", lastName: "sharma")
-      const nameParts = handle.split("-")
+      // Search user by name slug or handle or first name
+      const nameParts = cleanParam.split("-")
       const firstNameRegex = new RegExp(`^${nameParts[0]}$`, "i")
       const lastNameRegex = nameParts.length > 1 ? new RegExp(`^${nameParts.slice(1).join(" ")}$`, "i") : null
 
       const userQuery = { firstName: firstNameRegex }
       if (lastNameRegex) userQuery.lastName = lastNameRegex
 
-      let user = await User.findOne(userQuery).select("firstName lastName email image accountType").lean()
-      
-      // Fallback search if exact slug match was not found
+      let user = await User.findOne(userQuery).select("firstName lastName email image accountType credentials bio specialties languages").lean()
+
       if (!user) {
         user = await User.findOne({
           accountType: { $in: ["Practitioner", "Instructor"] },
           firstName: new RegExp(nameParts[0], "i"),
-        }).select("firstName lastName email image accountType").lean()
+        }).select("firstName lastName email image accountType credentials bio specialties languages").lean()
+      }
+
+      if (!user) {
+        user = await User.findOne({ accountType: { $in: ["Practitioner", "Instructor"] } }).select("firstName lastName email image accountType credentials bio specialties languages").lean()
       }
 
       if (user) {
@@ -174,20 +184,20 @@ exports.getPractitionerByHandle = async (req, res) => {
         if (!existingProf) {
           existingProf = await PractitionerProfile.create({
             user: user._id,
-            handle: handle.toLowerCase(),
-            credentials: "Verified Practitioner",
-            bio: "Welcome to my official practice booking page.",
-            specialties: ["Holistic Care", "Wellness Coaching"],
-            languages: ["English"],
+            handle: cleanParam || `${user.firstName?.toLowerCase() || 'practitioner'}`,
+            credentials: user.credentials || "Verified Practitioner",
+            bio: user.bio || "Welcome to my official practice booking page.",
+            specialties: user.specialties?.length ? user.specialties : ["Holistic Care", "Wellness Coaching"],
+            languages: user.languages?.length ? user.languages : ["English"],
             verified: true,
           })
         } else {
-          existingProf.handle = handle.toLowerCase()
+          existingProf.handle = cleanParam
           await existingProf.save()
         }
         profile = await PractitionerProfile.findById(existingProf._id).populate({
           path: "user",
-          select: "firstName lastName email image accountType",
+          select: "firstName lastName email image accountType credentials bio specialties languages",
         })
       }
     }
@@ -203,10 +213,10 @@ exports.getPractitionerByHandle = async (req, res) => {
     const RatingAndReview = require("../models/RatingandReview")
 
     const userOffers = await Offer.find({
-      $or: [{ practitioner: profile.user._id }, { practitioner: profile._id }],
+      $or: [{ practitioner: profile.user?._id || profile.user }, { practitioner: profile._id }],
     }).lean()
 
-    const reviews = await RatingAndReview.find({ practitioner: profile.user._id })
+    const reviews = await RatingAndReview.find({ practitioner: profile.user?._id || profile.user })
       .populate("user", "firstName lastName image")
       .lean()
 
@@ -235,7 +245,28 @@ exports.getPractitionerDashboard = async (req, res) => {
     const CircleCohort = require("../models/CircleCohort")
     const CheckIn = require("../models/CheckIn")
     const ClientConnection = require("../models/ClientConnection")
-    const profile = await PractitionerProfile.findOne({ user: userId })
+
+    let profile = await PractitionerProfile.findOne({ user: userId }).populate({
+      path: "user",
+      select: "firstName lastName email image accountType credentials bio specialties languages",
+    })
+
+    if (!profile) {
+      profile = await PractitionerProfile.create({
+        user: userId,
+        handle: `practitioner-${userId.toString().slice(-4)}`,
+        credentials: "Verified Practitioner",
+        bio: "Welcome to my official practice booking page.",
+        specialties: ["Holistic Care", "Wellness Coaching"],
+        languages: ["English"],
+        verified: true,
+      })
+      profile = await PractitionerProfile.findById(profile._id).populate({
+        path: "user",
+        select: "firstName lastName email image accountType credentials bio specialties languages",
+      })
+    }
+
     const bookings = await Booking.find({ practitioner: userId }).populate("client", "firstName lastName email")
     const payouts = await Payout.find({ practitioner: userId }).sort({ createdAt: -1 })
     const circles = await CircleCohort.find({ practitioner: userId }).sort({ createdAt: -1 })
@@ -243,12 +274,10 @@ exports.getPractitionerDashboard = async (req, res) => {
     const totalEarnings = bookings.reduce((sum, b) => sum + (b.netPayout || b.amount * 0.92), 0)
     const activeClientsCount = new Set(bookings.map((b) => b.client?._id?.toString())).size
 
-    // Compute real circle fill rate from actual enrollment data
     const totalSeats = circles.reduce((s, c) => s + (c.maxCapacity || 0), 0)
     const filledSeats = circles.reduce((s, c) => s + (c.enrolledCount || 0), 0)
     const circleFillRate = totalSeats > 0 ? `${Math.round((filledSeats / totalSeats) * 100)}%` : "0%"
 
-    // Compute real avg wellbeing from connected client check-ins
     const connections = await ClientConnection.find({ practitioner: userId, status: { $in: ["approved", "active"] } })
     const clientIds = connections.map((c) => c.client)
     const checkIns = await CheckIn.find({ client: { $in: clientIds } })
@@ -267,6 +296,7 @@ exports.getPractitionerDashboard = async (req, res) => {
         commissionPercentage: profile?.planCommission || 8,
         circles,
       },
+      practitioner: profile,
       circles,
       bookings,
       payouts,
@@ -645,5 +675,66 @@ exports.updateBankDetails = async (req, res) => {
     })
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// ── Update Full Practitioner Profile & Public Link Details ──
+exports.updatePractitionerProfile = async (req, res) => {
+  try {
+    const userId = req.user.id
+    const {
+      handle,
+      credentials,
+      bio,
+      specialties,
+      languages,
+      sessionRate,
+      bankAccountName,
+      bankAccountNumber,
+      bankIfscCode,
+    } = req.body
+
+    let profile = await PractitionerProfile.findOne({ user: userId })
+    if (!profile) {
+      profile = await PractitionerProfile.create({ user: userId })
+    }
+
+    if (handle) profile.handle = handle.toLowerCase().trim().replace(/[^a-z0-9-]/gi, '-')
+    if (credentials !== undefined) profile.credentials = credentials
+    if (bio !== undefined) profile.bio = bio
+    if (Array.isArray(specialties)) profile.specialties = specialties
+    if (Array.isArray(languages)) profile.languages = languages
+    if (sessionRate !== undefined) profile.sessionRate = Number(sessionRate)
+    if (bankAccountName !== undefined) profile.bankAccountName = bankAccountName
+    if (bankAccountNumber !== undefined) profile.bankAccountNumber = bankAccountNumber
+    if (bankIfscCode !== undefined) profile.bankIfscCode = bankIfscCode
+
+    await profile.save()
+
+    // Sync to User document
+    const userUpdate = {}
+    if (credentials !== undefined) userUpdate.credentials = credentials
+    if (bio !== undefined) userUpdate.bio = bio
+    if (Array.isArray(specialties)) userUpdate.specialties = specialties
+    if (Array.isArray(languages)) userUpdate.languages = languages
+
+    if (Object.keys(userUpdate).length > 0) {
+      await User.findByIdAndUpdate(userId, userUpdate)
+    }
+
+    const updatedProfile = await PractitionerProfile.findOne({ user: userId }).populate("user", "firstName lastName email image")
+
+    return res.status(200).json({
+      success: true,
+      message: "Practitioner profile updated successfully",
+      profile: updatedProfile,
+    })
+  } catch (error) {
+    console.error("Update Practitioner Profile Error:", error)
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update practitioner profile",
+      error: error.message,
+    })
   }
 }

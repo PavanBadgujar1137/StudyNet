@@ -11,6 +11,7 @@ const {
   getConnectedClients,
   getBankDetails,
   updateBankDetails,
+  updatePractitionerProfile,
 } = require("../controllers/practitioner")
 const { auth, isPractitioner } = require("../middleware/auth")
 
@@ -31,5 +32,6 @@ router.get("/connected-clients", auth, isPractitioner, getConnectedClients)
 // Bank & Payout details for Admin salary transfers
 router.get("/bank-details", auth, isPractitioner, getBankDetails)
 router.put("/bank-details", auth, isPractitioner, updateBankDetails)
+router.put("/profile", auth, isPractitioner, updatePractitionerProfile)
 
 module.exports = router

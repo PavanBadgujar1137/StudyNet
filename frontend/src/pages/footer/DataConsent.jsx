@@ -1,5 +1,5 @@
-import React from 'react'
 import { OHFooter, OHEyebrow } from '../../components/openhand'
+import { LEGAL_FLAGS } from '../../config/productConfig'
 import { 
   FiShield, 
   FiUserCheck, 
@@ -28,22 +28,22 @@ export function DataConsent() {
           <OHEyebrow>Data &amp; Consent Policy</OHEyebrow>
           
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-[#0F172A] tracking-tight my-4 leading-tight">
-            Consent isn't a checkbox. <br className="hidden sm:inline" />
-            <span className="text-[#2563EB]">Here's how we treat it that way.</span>
+            Data &amp; Consent Policy
           </h1>
+
+          {!LEGAL_FLAGS.dataConsent && (
+            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs sm:text-sm leading-relaxed max-w-3xl mx-auto my-4 text-left flex items-center gap-3">
+              <span className="text-xl shrink-0">⚖️</span>
+              <div>
+                <strong className="font-bold block text-amber-950">Pending Legal Counsel Review</strong>
+                This Data &amp; Consent Policy is pending formal review by qualified legal counsel.
+              </div>
+            </div>
+          )}
 
           <p className="text-[#475569] text-base sm:text-lg max-w-4xl mx-auto font-medium leading-[1.65] mb-6">
             Most platforms bury consent inside a Privacy Policy no one reads. Given the nature of the work Open Hand supports — where confidentiality, informed consent, and boundaries are fundamental — we've given consent its dedicated policy.
           </p>
-
-          {/* Legal Disclaimer Banner */}
-          <div className="p-5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs sm:text-sm leading-[1.65] text-left flex items-start gap-3 shadow-sm max-w-4xl mx-auto">
-            <span className="text-xl shrink-0">⚖️</span>
-            <div>
-              <strong className="font-bold block text-amber-950">Legal Review Template Notice</strong>
-              Content below is a content template only and is not formal legal advice. Passages marked with <span className="px-2 py-0.5 rounded bg-amber-100 border border-amber-300 font-bold">⚖️</span> require qualified legal counsel review before publishing.
-            </div>
-          </div>
         </div>
       </header>
 
@@ -90,12 +90,14 @@ export function DataConsent() {
           </div>
 
           {/* Consent from learners */}
-          <div id="consent-clients" className="p-8 sm:p-10 rounded-3xl bg-white border border-amber-300 shadow-sm space-y-4 font-medium">
+          <div id="consent-clients" className={`p-8 sm:p-10 rounded-3xl bg-white border ${!LEGAL_FLAGS.dataConsent ? 'border-amber-300' : 'border-slate-200'} shadow-sm space-y-4 font-medium`}>
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] tracking-tight flex items-center gap-2">
                 <FiShield className="text-amber-600" /> Consent from learners
               </h2>
-              <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold border border-amber-300 shrink-0">⚖️ Legal Review Required</span>
+              {!LEGAL_FLAGS.dataConsent && (
+                <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold border border-amber-300 shrink-0">⚖️ Legal Review Required</span>
+              )}
             </div>
             <p>Practitioners are responsible for obtaining valid informed consent from learners prior to logging personal notes or data.</p>
           </div>
@@ -123,12 +125,14 @@ export function DataConsent() {
           </div>
 
           {/* Data deletion */}
-          <div id="deletion" className="p-8 sm:p-10 rounded-3xl bg-white border border-amber-300 shadow-sm space-y-4 font-medium">
+          <div id="deletion" className={`p-8 sm:p-10 rounded-3xl bg-white border ${!LEGAL_FLAGS.dataConsent ? 'border-amber-300' : 'border-slate-200'} shadow-sm space-y-4 font-medium`}>
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] tracking-tight flex items-center gap-2">
                 <FiTrash2 className="text-red-600" /> Data deletion
               </h2>
-              <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold border border-amber-300 shrink-0">⚖️ Legal Review Required</span>
+              {!LEGAL_FLAGS.dataConsent && (
+                <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold border border-amber-300 shrink-0">⚖️ Legal Review Required</span>
+              )}
             </div>
             <p>Account deletion removes user data following a 30-day recovery grace period.</p>
           </div>
@@ -144,7 +148,7 @@ export function DataConsent() {
             <h2 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] tracking-tight flex items-center gap-2">
               <FiMail className="text-[#2563EB]" /> Contact
             </h2>
-            <p>Consent inquiries: <strong className="text-[#2563EB]">connect@zwiebelai.in</strong></p>
+            <p>Consent inquiries: <strong className="text-[#2563EB]">support@openhand.live</strong></p>
           </div>
 
         </div>

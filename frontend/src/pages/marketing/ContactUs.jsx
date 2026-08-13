@@ -22,8 +22,8 @@ export function ContactUs() {
     workType: 'Life or executive coaching',
     message: '',
   })
+  const [selectedDesk, setSelectedDesk] = useState('setup')
   const [selectedTopic, setSelectedTopic] = useState(null)
-  const [selectedFounder, setSelectedFounder] = useState('either')
   const [openFaq, setOpenFaq] = useState([0])
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -40,7 +40,7 @@ export function ContactUs() {
         "We'll tell you honestly if we're wrong for you",
         'No slide decks or forced sales demos',
       ],
-      founderHint: 'Best with Assistant of Dr. Anamika',
+      founderHint: 'Best with Practice Setup Desk',
     },
     {
       id: 'migration',
@@ -53,7 +53,7 @@ export function ContactUs() {
         'Your existing learner records moved smoothly',
         'Nothing goes live until you explicitly approve',
       ],
-      founderHint: 'Best with Assistant of Dr. Rajendra Patil',
+      founderHint: 'Best with Tech & Ethics Desk',
     },
     {
       id: 'org',
@@ -77,7 +77,7 @@ export function ContactUs() {
     },
     {
       q: 'Is my learner data safe if I move here?',
-      a: 'Learner records are end-to-end encrypted, access-controlled strictly per practitioner, and never used to train external public models. Bring this up on your call — Rajendra will walk you through exactly where data resides and what you can delete.',
+      a: 'Learner records are end-to-end encrypted, access-controlled strictly per practitioner, and never used to train external public models. Bring this up on your call — our technical team will walk you through exactly where data resides and what you can delete.',
     },
     {
       q: 'What if I already use TagMango, Topmate or my own site?',
@@ -126,14 +126,14 @@ export function ContactUs() {
     try {
       const selectedTopicObj = selectedTopic !== null ? topics[selectedTopic] : null
       const topicTitle = selectedTopicObj ? selectedTopicObj.title : 'General Conversation'
-      const founderPrefText =
-        selectedFounder === 'anamika'
-          ? 'Dr. Anamika'
-          : selectedFounder === 'rajendra'
-          ? 'Dr. Rajendra Patil'
-          : 'Either Founder'
+      const deskPrefText =
+        selectedDesk === 'setup'
+          ? 'Practice Setup Desk'
+          : selectedDesk === 'tech'
+          ? 'Tech & Ethics Desk'
+          : 'Organizations & EAP Desk'
 
-      const fullMessage = `[Founder Preference: ${founderPrefText}] [Focus Topic: ${topicTitle}]\n${formData.message}`
+      const fullMessage = `[Desk Preference: ${deskPrefText}] [Focus Topic: ${topicTitle}]\n${formData.message}`
 
       const res = await apiConnector('POST', '/api/v1/reach/contact', {
         name: formData.name,
@@ -187,11 +187,11 @@ export function ContactUs() {
             <span>Contact Us — Response within 24 hours guaranteed</span>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 my-4">
+          <h1 className="text-2xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 my-4 text-center whitespace-nowrap w-full mx-auto">
             Contact <span className="talk-grad-text">OpenHand Team.</span>
           </h1>
           <p className="sub text-slate-600 text-base sm:text-lg max-w-2xl mx-auto font-medium leading-relaxed mb-8">
-            Have questions about OpenHand? Connect directly with the assistant of Dr. Anamika or the assistant of Dr. Rajendra Patil for personalized practice guidance, platform setup, or enterprise inquiries.
+            Have questions about OpenHand? Connect directly with our Practice Setup Desk or Tech &amp; Ethics Desk for personalized practice guidance, platform setup, or enterprise inquiries.
           </p>
 
           {/* Key Assurance Stats */}
@@ -225,70 +225,70 @@ export function ContactUs() {
           <div className="talk-sec-head">
             <span className="talk-section-tag">Executive Contact Desks</span>
             <h2>Who would you like to reach out to?</h2>
-            <p>Connect with the Assistant of Dr. Anamika or the Assistant of Dr. Rajendra Patil based on your specific practice needs.</p>
+            <p>Connect with our specialized Practice Setup Desk or Tech &amp; Ethics Desk based on your specific practice needs.</p>
           </div>
 
           <div className="talk-founders-container">
-            <div className="talk-founders grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="talk-founders grid grid-cols-1 md:grid-cols-3 gap-6">
 
-              {/* Assistant of Dr. Anamika Card */}
+              {/* Practice Setup Desk Card */}
               <div
-                className={`talk-fcard ${selectedFounder === 'anamika' ? 'active-founder' : ''}`}
-                onClick={() => setSelectedFounder('anamika')}
+                className={`talk-fcard ${selectedDesk === 'setup' ? 'active-founder' : ''}`}
+                onClick={() => setSelectedDesk('setup')}
               >
-                <div className="fcard-badge">
-                  <FiClock className="fcard-ic" /> Executive Desk
-                </div>
-                <div className="fcard-top">
-                  <div className="av">AN</div>
-                  <div>
-                    <h3>Assistant of Dr. Anamika</h3>
-                    <div className="role">Co-Founder &amp; Practice Lead Desk</div>
+                <div className="fcard-header">
+                  <div className="av">PS</div>
+                  <div className="fcard-badge">
+                    <FiClock className="fcard-ic" /> Practice Desk
                   </div>
                 </div>
+                <div className="fcard-title-block mb-3">
+                  <h3>Practice Setup Desk</h3>
+                  <div className="role">Practice &amp; Offer Architecture</div>
+                </div>
                 <p>
-                  Contact the assistant of Dr. Anamika for cohort architecture, offer design, pricing models, practice setup, and practitioner onboarding support.
+                  Contact our Practice Setup Desk for Circle architecture, offer design, pricing models, practice setup, and practitioner onboarding support.
                 </p>
                 <div className="talk-tags">
-                  <span>Cohort Architecture</span>
+                  <span>Circle Architecture</span>
                   <span>Pricing &amp; Offers</span>
                   <span>Practitioner Setup</span>
                 </div>
                 <button
                   type="button"
-                  className={`fcard-btn ${selectedFounder === 'anamika' ? 'selected' : ''}`}
+                  className={`fcard-btn ${selectedDesk === 'setup' ? 'selected' : ''}`}
                   onClick={(e) => {
                     e.stopPropagation()
-                    setSelectedFounder('anamika')
+                    setSelectedDesk('setup')
                   }}
                 >
-                  {selectedFounder === 'anamika' ? (
+                  {selectedDesk === 'setup' ? (
                     <>
-                      <FiCheck /> Contacting Assistant of Dr. Anamika
+                      <FiCheck /> Contacting Practice Setup Desk
                     </>
                   ) : (
-                    'Contact Assistant of Dr. Anamika'
+                    'Contact Practice Setup Desk'
                   )}
                 </button>
               </div>
 
-              {/* Assistant of Dr. Rajendra Patil Card */}
+              {/* Tech & Ethics Desk Card */}
               <div
-                className={`talk-fcard ${selectedFounder === 'rajendra' ? 'active-founder' : ''}`}
-                onClick={() => setSelectedFounder('rajendra')}
+                className={`talk-fcard ${selectedDesk === 'tech' ? 'active-founder' : ''}`}
+                onClick={() => setSelectedDesk('tech')}
               >
-                <div className="fcard-badge">
-                  <FiClock className="fcard-ic" /> Executive Desk
-                </div>
-                <div className="fcard-top">
-                  <div className="av">RP</div>
-                  <div>
-                    <h3>Assistant of Dr. Rajendra Patil</h3>
-                    <div className="role">Co-Founder &amp; Tech/Ethics Desk</div>
+                <div className="fcard-header">
+                  <div className="av">TE</div>
+                  <div className="fcard-badge">
+                    <FiClock className="fcard-ic" /> Platform Desk
                   </div>
                 </div>
+                <div className="fcard-title-block mb-3">
+                  <h3>Tech &amp; Ethics Desk</h3>
+                  <div className="role">Confidentiality &amp; Platform Architecture</div>
+                </div>
                 <p>
-                  Contact the assistant of Dr. Rajendra Patil for technical platform integration, data confidentiality, AURA AI ethics, and enterprise organizational pilots.
+                  Contact our Tech &amp; Ethics Desk for technical platform integration, data confidentiality, AURA AI ethics, and caseload migration.
                 </p>
                 <div className="talk-tags">
                   <span>Data Confidentiality</span>
@@ -297,21 +297,63 @@ export function ContactUs() {
                 </div>
                 <button
                   type="button"
-                  className={`fcard-btn ${selectedFounder === 'rajendra' ? 'selected' : ''}`}
+                  className={`fcard-btn ${selectedDesk === 'tech' ? 'selected' : ''}`}
                   onClick={(e) => {
                     e.stopPropagation()
-                    setSelectedFounder('rajendra')
+                    setSelectedDesk('tech')
                   }}
                 >
-                  {selectedFounder === 'rajendra' ? (
+                  {selectedDesk === 'tech' ? (
                     <>
-                      <FiCheck /> Contacting Assistant of Dr. Rajendra Patil
+                      <FiCheck /> Contacting Tech &amp; Ethics Desk
                     </>
                   ) : (
-                    'Contact Assistant of Dr. Rajendra Patil'
+                    'Contact Tech &amp; Ethics Desk'
                   )}
                 </button>
               </div>
+
+              {/* Organizations Desk Card */}
+              <div
+                className={`talk-fcard ${selectedDesk === 'org' ? 'active-founder' : ''}`}
+                onClick={() => setSelectedDesk('org')}
+              >
+                <div className="fcard-header">
+                  <div className="av">OD</div>
+                  <div className="fcard-badge">
+                    <FiClock className="fcard-ic" /> Enterprise Desk
+                  </div>
+                </div>
+                <div className="fcard-title-block mb-3">
+                  <h3>Organizations Desk</h3>
+                  <div className="role">B2B EAP &amp; Corporate Wellbeing</div>
+                </div>
+                <p>
+                  Contact our Organizations Desk for team Circle pilots, per-seat B2B billing, HR confidentiality contracts, and enterprise SSO integration.
+                </p>
+                <div className="talk-tags">
+                  <span>B2B EAP Circles</span>
+                  <span>HR Confidentiality</span>
+                  <span>Enterprise Pilots</span>
+                </div>
+                <button
+                  type="button"
+                  className={`fcard-btn ${selectedDesk === 'org' ? 'selected' : ''}`}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setSelectedDesk('org')
+                  }}
+                >
+                  {selectedDesk === 'org' ? (
+                    <>
+                      <FiCheck /> Contacting Organizations Desk
+                    </>
+                  ) : (
+                    'Contact Organizations Desk'
+                  )}
+                </button>
+              </div>
+
             </div>
           </div>
         </div>
@@ -436,13 +478,13 @@ export function ContactUs() {
                         <strong>{formData.email}</strong>
                       </div>
                       <div className="ok-item">
-                        <span>Founder Preference:</span>
+                        <span>Desk Preference:</span>
                         <strong>
-                          {selectedFounder === 'anamika'
-                            ? 'Assistant of Dr. Anamika'
-                            : selectedFounder === 'rajendra'
-                            ? 'Assistant of Dr. Rajendra Patil'
-                            : 'General Executive Desk'}
+                          {selectedDesk === 'setup'
+                            ? 'Practice Setup Desk'
+                            : selectedDesk === 'tech'
+                            ? 'Tech & Ethics Desk'
+                            : 'Organizations & EAP Desk'}
                         </strong>
                       </div>
                       {selectedTopic !== null && (
@@ -481,24 +523,25 @@ export function ContactUs() {
                       <div className="founder-tabs grid grid-cols-1 sm:grid-cols-3 gap-2">
                         <button
                           type="button"
-                          className={`ftab ${selectedFounder === 'anamika' ? 'active' : ''}`}
-                          onClick={() => setSelectedFounder('anamika')}
+                          className={`ftab ${selectedDesk === 'setup' ? 'active' : ''}`}
+                          onClick={() => setSelectedDesk('setup')}
                         >
-                          Assistant of Dr. Anamika
+                          Practice Setup
                         </button>
                         <button
                           type="button"
-                          className={`ftab ${selectedFounder === 'rajendra' ? 'active' : ''}`}
-                          onClick={() => setSelectedFounder('rajendra')}
+                          className={`ftab ${selectedDesk === 'tech' ? 'active' : ''}`}
+                          onClick={() => setSelectedDesk('tech')}
                         >
-                          Assistant of Dr. Rajendra
+                          Tech &amp; Ethics
                         </button>
                         <button
                           type="button"
-                          className={`ftab ${selectedFounder === 'either' ? 'active' : ''}`}
-                          onClick={() => setSelectedFounder('either')}
-                        >
-                          General Desk
+                          className={`ftab ${selectedDesk === 'org' ? 'active' : ''}`}
+                          onClick={() => setSelectedDesk('org')}
+
+>
+                          Organizations &amp; EAP
                         </button>
                       </div>
                     </div>
@@ -509,7 +552,7 @@ export function ContactUs() {
                         <input
                           id="name"
                           type="text"
-                          placeholder="Dr. Anamika"
+                          placeholder="Enter your name"
                           value={formData.name}
                           onChange={handleChange}
                           required
@@ -546,7 +589,7 @@ export function ContactUs() {
                       <textarea
                         id="message"
                         rows="3"
-                        placeholder="e.g. I run two cohorts a year and see about eight 1:1 learners. Mostly curious about learner data confidentiality."
+                        placeholder="e.g. I run two Circles a year and see about eight 1:1 learners. Mostly curious about learner data confidentiality."
                         value={formData.message}
                         onChange={handleChange}
                       />

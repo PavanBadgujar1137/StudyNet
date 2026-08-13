@@ -1,17 +1,17 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { OHFooter, OHEyebrow } from '../../components/openhand'
-import { 
-  FiMessageSquare, 
-  FiMail, 
-  FiUsers, 
-  FiClock, 
-  FiCheckSquare, 
-  FiAlertCircle, 
-  FiArrowRight, 
-  FiCheck,
+import {
+  FiMessageSquare,
+  FiMail,
+  FiAlertCircle,
   FiPhoneCall,
   FiX,
+  FiCheck,
+  FiUsers,
+  FiArrowRight,
+  FiClock,
+  FiCheckSquare,
   FiHeadphones
 } from 'react-icons/fi'
 
@@ -35,7 +35,7 @@ export function HelpSupport() {
     {
       title: 'Email Support Desk',
       speed: 'Within 1 Business Day',
-      desc: 'Write to support@openhand.com for account management, billing, or complex setup questions.',
+      desc: 'Write to support@openhand.live for account management, billing, or complex setup questions.',
       icon: FiMail,
       ctaText: 'Send Email',
       action: () => setEmailModal(true)
@@ -76,39 +76,38 @@ export function HelpSupport() {
       {/* Modern Hero Section */}
       <header className="relative bg-white border-b border-slate-200/80 py-10 sm:py-14 overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:20px_20px] opacity-40 pointer-events-none" />
-        
+
         <div className="relative max-w-[1440px] mx-auto px-4 md:px-8">
-          <div className="max-w-4xl mx-auto text-center">
+          <div className="max-w-5xl mx-auto flex flex-col items-center justify-center text-center">
             <OHEyebrow>Practitioner Support Desk</OHEyebrow>
-            
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-[#0F172A] tracking-tight my-4 leading-tight">
-              Real human support, <br className="hidden sm:inline" />
-              <span className="text-[#2563EB]">whenever you or your learners need it.</span>
+
+            <h1 className="text-center text-[clamp(20px,4.2vw,52px)] leading-tight max-w-full mx-auto my-4 font-black tracking-tight text-[#0F172A]">
+              <span className="block whitespace-nowrap">Real human support,</span>
+              <span className="text-[#2563EB] block whitespace-nowrap">whenever you or your learners need it.</span>
             </h1>
 
             <p className="text-[#475569] text-base sm:text-lg max-w-3xl mx-auto font-medium leading-[1.65] mb-8">
               We built Open Hand for practitioners whose work depends on presence. When something breaks — a video call won't connect, a payment fails, or a learner can't log in — you don't have time for chatbot loops.
             </p>
 
-            {/* Action Buttons */}
-            <div className="flex flex-wrap justify-center gap-3">
-              <button 
+            <div className="flex flex-wrap items-center justify-center gap-3.5 my-6">
+              <button
                 onClick={() => setChatOpen(true)}
-                className="px-6 py-3.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white font-bold text-sm sm:text-base shadow-sm flex items-center gap-2 transition"
+                className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white font-bold text-sm sm:text-base shadow-md transition-all hover:scale-[1.02]"
               >
-                <FiMessageSquare /> Live Chat Support
+                <FiMessageSquare className="text-lg" /> Live Chat Support
               </button>
-              <button 
+              <button
                 onClick={() => setEmailModal(true)}
-                className="px-6 py-3.5 rounded-xl bg-white hover:bg-slate-100 text-[#0F172A] font-bold text-sm sm:text-base border border-slate-200 flex items-center gap-2 transition shadow-sm"
+                className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white font-bold text-sm sm:text-base shadow-md transition-all hover:scale-[1.02]"
               >
-                <FiMail className="text-[#2563EB]" /> Email Support Desk
+                <FiMail className="text-lg" /> Email Support Desk
               </button>
-              <button 
+              <button
                 onClick={() => setEmergencyModal(true)}
-                className="px-6 py-3.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 font-bold text-sm sm:text-base border border-red-200 flex items-center gap-2 transition shadow-sm"
+                className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white font-bold text-sm sm:text-base shadow-md transition-all hover:scale-[1.02]"
               >
-                <FiAlertCircle className="text-red-600" /> Crisis &amp; Helplines
+                <FiAlertCircle className="text-lg" /> Crisis &amp; Helplines
               </button>
             </div>
           </div>
@@ -131,7 +130,7 @@ export function HelpSupport() {
           {reachChannels.map((ch, idx) => {
             const Icon = ch.icon
             return (
-              <div 
+              <div
                 key={idx}
                 className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between group hover:-translate-y-1"
               >
@@ -152,7 +151,7 @@ export function HelpSupport() {
 
                 <div className="mt-6 pt-4 border-t border-slate-100">
                   {ch.to ? (
-                    <Link 
+                    <Link
                       to={ch.to}
                       className="w-full py-3 rounded-xl bg-white hover:bg-slate-100 text-[#0F172A] border border-slate-200 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-sm"
                     >
@@ -186,7 +185,7 @@ export function HelpSupport() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {responseTimes.map((rt, idx) => (
-              <div 
+              <div
                 key={idx}
                 className="p-6 rounded-2xl bg-[#F8FAFC] border border-slate-200 flex flex-col justify-between gap-3"
               >
@@ -217,13 +216,13 @@ export function HelpSupport() {
       {emergencyModal && (
         <div className="fixed inset-0 z-[1000] bg-[#0F172A]/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="p-8 rounded-3xl bg-white border border-slate-200 max-w-lg w-full relative shadow-2xl">
-            <button 
+            <button
               onClick={() => setEmergencyModal(false)}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl font-bold p-2 cursor-pointer"
             >
               <FiX />
             </button>
-            
+
             <div className="w-12 h-12 rounded-2xl bg-red-50 border border-red-200 flex items-center justify-center text-red-600 text-2xl font-bold mb-4">
               <FiPhoneCall />
             </div>
@@ -250,7 +249,7 @@ export function HelpSupport() {
               </div>
             </div>
 
-            <button 
+            <button
               onClick={() => setEmergencyModal(false)}
               className="w-full mt-6 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#0F172A] font-bold text-sm transition"
             >
@@ -275,7 +274,7 @@ export function HelpSupport() {
                 </p>
               </div>
             </div>
-            <button 
+            <button
               onClick={() => setChatOpen(false)}
               className="text-slate-300 hover:text-white p-1 text-lg cursor-pointer"
             >
@@ -290,8 +289,8 @@ export function HelpSupport() {
           </div>
 
           <div className="p-3 bg-white border-t border-slate-200 flex items-center gap-2">
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="Type your message here..."
               className="w-full px-3 py-2 rounded-xl bg-[#F8FAFC] border border-slate-200 text-xs text-[#0F172A] focus:outline-none focus:border-blue-600"
             />
@@ -306,7 +305,7 @@ export function HelpSupport() {
       {emailModal && (
         <div className="fixed inset-0 z-[1000] bg-[#0F172A]/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="p-8 rounded-3xl bg-white border border-slate-200 max-w-md w-full relative shadow-2xl">
-            <button 
+            <button
               onClick={() => setEmailModal(false)}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl font-bold p-2 cursor-pointer"
             >
@@ -321,7 +320,7 @@ export function HelpSupport() {
             <form onSubmit={handleEmailSubmit} className="mt-5 space-y-4 text-xs sm:text-sm">
               <div>
                 <label className="block text-slate-700 font-bold mb-1">Subject</label>
-                <input 
+                <input
                   type="text"
                   value={emailSubject}
                   onChange={(e) => setEmailSubject(e.target.value)}
@@ -333,7 +332,7 @@ export function HelpSupport() {
 
               <div>
                 <label className="block text-slate-700 font-bold mb-1">Message</label>
-                <textarea 
+                <textarea
                   rows={4}
                   value={emailMsg}
                   onChange={(e) => setEmailMsg(e.target.value)}
@@ -343,7 +342,7 @@ export function HelpSupport() {
                 />
               </div>
 
-              <button 
+              <button
                 type="submit"
                 className="w-full py-3 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white font-bold transition shadow"
               >

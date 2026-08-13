@@ -447,7 +447,7 @@ export function Practitioners({ onUpdate, setActiveTab }) {
                                 {off.title}
                               </span>
                               <span style={{ fontSize: '11px', color: '#64748B' }}>
-                                {off.type === 'circle' ? 'Group Circle' : '1:1 Session'} • {off.durationMinutes || 50} mins
+                                {off.type === 'circle' ? 'Circle' : '1:1 Session'} • {off.durationMinutes || 50} mins
                               </span>
                             </div>
 

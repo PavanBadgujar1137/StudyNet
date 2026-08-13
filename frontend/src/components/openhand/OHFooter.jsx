@@ -21,7 +21,7 @@ const LINKS = [
       { label: 'Practitioner journey', to: '/practitioner-journey' },
       { label: 'Find a practitioner', to: '/find-a-practitioner' },
       { label: 'Pricing',             to: '/pricing' },
-      { label: 'AURA AI',           to: '/aura', badge: 'AI' },
+      { label: 'AURA',                 to: '/aura', badge: 'AI' },
       { label: 'Learner journey',   to: '/learner-journey' },
     ]
   },

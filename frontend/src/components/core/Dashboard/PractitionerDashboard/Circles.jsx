@@ -17,7 +17,7 @@ export function Circles({ telemetryData, onUpdate, setActiveSection }) {
   // Create state
   const [name, setName] = useState('')
   const [topic, setTopic] = useState('')
-  const [maxCapacity, setMaxCapacity] = useState(10)
+  const [maxCapacity, setMaxCapacity] = useState(8)
 
   // Edit state
   const [editName, setEditName] = useState('')
@@ -45,7 +45,7 @@ export function Circles({ telemetryData, onUpdate, setActiveSection }) {
   const handleCreateCircle = async (e) => {
     e.preventDefault()
     if (!name) {
-      toast.error('Circle cohort name is required.')
+      toast.error('Circle name is required.')
       return
     }
 
@@ -59,7 +59,7 @@ export function Circles({ telemetryData, onUpdate, setActiveSection }) {
       )
 
       if (res?.data?.success) {
-        toast.success('Circle cohort created & synced to Community Chat!')
+        toast.success('Circle created & synced to Community Chat!')
         setShowCreateModal(false)
         setName('')
         setTopic('')
@@ -70,7 +70,7 @@ export function Circles({ telemetryData, onUpdate, setActiveSection }) {
       }
     } catch (err) {
       console.error('Create circle error:', err)
-      const errMsg = err?.response?.data?.message || err?.data?.message || 'Failed to create circle cohort.'
+      const errMsg = err?.response?.data?.message || err?.data?.message || 'Failed to create Circle.'
       toast.error(errMsg)
     } finally {
       setSubmitting(false)
@@ -87,7 +87,7 @@ export function Circles({ telemetryData, onUpdate, setActiveSection }) {
   const handleSaveCircleEdit = async (e) => {
     e.preventDefault()
     if (!editName) {
-      toast.error('Circle cohort name is required.')
+      toast.error('Circle name is required.')
       return
     }
 
@@ -101,7 +101,7 @@ export function Circles({ telemetryData, onUpdate, setActiveSection }) {
       )
 
       if (res?.data?.success) {
-        toast.success('Circle cohort updated successfully!')
+        toast.success('Circle updated successfully!')
         setEditingCircle(null)
         loadCircles()
         if (onUpdate) onUpdate()
@@ -110,7 +110,7 @@ export function Circles({ telemetryData, onUpdate, setActiveSection }) {
       }
     } catch (err) {
       console.error('Update circle error:', err)
-      const errMsg = err?.response?.data?.message || err?.data?.message || 'Failed to update circle cohort.'
+      const errMsg = err?.response?.data?.message || err?.data?.message || 'Failed to update Circle.'
       toast.error(errMsg)
     } finally {
       setSubmitting(false)
@@ -129,7 +129,7 @@ export function Circles({ telemetryData, onUpdate, setActiveSection }) {
       )
 
       if (res?.data?.success) {
-        toast.success('Circle cohort deleted successfully!')
+        toast.success('Circle deleted successfully!')
         setDeletingCircle(null)
         loadCircles()
         if (onUpdate) onUpdate()
@@ -138,7 +138,7 @@ export function Circles({ telemetryData, onUpdate, setActiveSection }) {
       }
     } catch (err) {
       console.error('Delete circle error:', err)
-      toast.error('Failed to delete circle cohort.')
+      toast.error('Failed to delete Circle.')
     } finally {
       setDeletingId(null)
     }
@@ -164,10 +164,10 @@ export function Circles({ telemetryData, onUpdate, setActiveSection }) {
             Dashboard / Circles
           </div>
           <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#0F172A', margin: 0 }}>
-            Circles &amp; Group Cohorts Manager
+            Circles Manager
           </h1>
           <p style={{ color: '#64748B', fontSize: '14px', margin: '4px 0 0 0' }}>
-            {circlesList.length} circle cohort(s) active.
+            {circlesList.length} Circle(s) active.
           </p>
         </div>
 
@@ -217,7 +217,7 @@ export function Circles({ telemetryData, onUpdate, setActiveSection }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <FiUsers size={18} style={{ color: '#2563EB' }} />
               <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 800, color: '#0F172A' }}>
-                Active / Filling Cohorts ({activeCircles.length})
+                Active / Filling Circles ({activeCircles.length})
               </h3>
             </div>
             <span
@@ -262,7 +262,7 @@ export function Circles({ telemetryData, onUpdate, setActiveSection }) {
                     </div>
 
                     <p style={{ margin: 0, fontSize: '13px', color: '#475569', lineHeight: 1.45 }}>
-                      {c.topic || 'Group peer support and mental wellbeing circle cohort.'}
+                      {c.topic || 'Group peer support and mental wellbeing Circle.'}
                     </p>
 
                     <div
@@ -353,7 +353,7 @@ export function Circles({ telemetryData, onUpdate, setActiveSection }) {
             </div>
           ) : (
             <div style={{ textAlign: 'center', padding: '30px 10px', color: '#64748B', fontSize: '13.5px' }}>
-              No active circle cohorts currently filling.
+              No active Circles currently filling.
             </div>
           )}
         </div>
@@ -386,7 +386,7 @@ export function Circles({ telemetryData, onUpdate, setActiveSection }) {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: '#0F172A' }}>
-                Open New Circle Group Cohort
+                Open New Circle
               </h3>
               <button
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B' }}
@@ -399,7 +399,7 @@ export function Circles({ telemetryData, onUpdate, setActiveSection }) {
             <form onSubmit={handleCreateCircle}>
               <div style={{ marginBottom: '14px' }}>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
-                  Circle Cohort Name *
+                  Circle Name *
                 </label>
                 <input
                   type="text"
@@ -438,12 +438,14 @@ export function Circles({ telemetryData, onUpdate, setActiveSection }) {
                 />
               </div>
 
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
-                  Max Member Capacity
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                  Max Member Capacity (Capped at 8)
                 </label>
                 <input
                   type="number"
+                  min={1}
+                  max={8}
                   value={maxCapacity}
                   onChange={(e) => setMaxCapacity(e.target.value)}
                   style={{
@@ -454,6 +456,19 @@ export function Circles({ telemetryData, onUpdate, setActiveSection }) {
                     fontSize: '13.5px',
                   }}
                 />
+                <span style={{ fontSize: '11px', color: '#64748B', display: 'block', marginTop: '4px' }}>
+                  Standard containers are capped at 8 seats to maintain intimacy &amp; safety.
+                </span>
+              </div>
+
+              {/* B2B EAP Mode Badge & Contract */}
+              <div style={{ background: '#F8FAFC', padding: '12px', borderRadius: '10px', border: '1px solid #E2E8F0', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 800, color: '#2563EB' }}>
+                  🏢 B2B Org / EAP Mode Active
+                </div>
+                <p style={{ margin: '4px 0 0', fontSize: '11.5px', color: '#475569', leading: '1.4' }}>
+                  HR gets aggregate participation rates &amp; theme clusters. HR NEVER sees individual names, transcripts, or notes.
+                </p>
               </div>
 
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
@@ -485,7 +500,7 @@ export function Circles({ telemetryData, onUpdate, setActiveSection }) {
                     cursor: 'pointer',
                   }}
                 >
-                  {submitting ? 'Publishing...' : 'Publish Circle Cohort'}
+                  {submitting ? 'Publishing...' : 'Publish Circle'}
                 </button>
               </div>
             </form>
@@ -519,7 +534,7 @@ export function Circles({ telemetryData, onUpdate, setActiveSection }) {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: '#0F172A' }}>
-                Edit Circle Group Cohort
+                Edit Circle
               </h3>
               <button
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B' }}
@@ -532,7 +547,7 @@ export function Circles({ telemetryData, onUpdate, setActiveSection }) {
             <form onSubmit={handleSaveCircleEdit}>
               <div style={{ marginBottom: '14px' }}>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
-                  Circle Cohort Name *
+                  Circle Name *
                 </label>
                 <input
                   type="text"
@@ -666,10 +681,10 @@ export function Circles({ telemetryData, onUpdate, setActiveSection }) {
             </div>
 
             <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', margin: '0 0 8px 0' }}>
-              Delete Circle Cohort?
+              Delete Circle?
             </h3>
             <p style={{ fontSize: '14px', color: '#64748B', lineHeight: 1.5, margin: '0 0 24px 0' }}>
-              Are you sure you want to delete <strong style={{ color: '#0F172A' }}>"{deletingCircle.name}"</strong>? This will permanently remove the cohort and its group chat history.
+              Are you sure you want to delete <strong style={{ color: '#0F172A' }}>"{deletingCircle.name}"</strong>? This will permanently remove the Circle and its group chat history.
             </p>
 
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>

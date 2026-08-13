@@ -161,7 +161,7 @@ export default function CommunityChatHub({ defaultPractitionerId = null }) {
       if (circleId) {
         success = await sendGroupMessage(token, circleId, textToSend)
       } else {
-        toast.error("Please join or select a circle cohort first!")
+        toast.error("Please join or select a Circle first!")
       }
     } else if (activeTab === "direct") {
       if (selectedContact?._id) {
@@ -287,7 +287,7 @@ export default function CommunityChatHub({ defaultPractitionerId = null }) {
               <span># practitioner-circle</span>
             </div>
             <span style={{ fontSize: "9px", padding: "2px 5px", borderRadius: "4px", background: activeTab === "circle" ? "rgba(255,255,255,0.2)" : "#E2E8F0", color: activeTab === "circle" ? "#FFF" : "#64748B" }}>
-              {userCircles.length} Cohort(s)
+              {userCircles.length} Circle(s)
             </span>
           </button>
 
@@ -381,7 +381,7 @@ export default function CommunityChatHub({ defaultPractitionerId = null }) {
                   <div style={{ padding: "16px", textTransform: "none", fontSize: "12px", color: "#64748B", textAlign: "center", background: "#FFFFFF", borderRadius: "8px", border: "1px solid #E2E8F0" }}>
                     {isPractitioner
                       ? "No circles created yet. Click 'Open a new circle' in Circles section to start!"
-                      : "You haven't joined any circles yet. Click 'Join Circle Cohort' on the My Circle tab!"}
+                      : "You haven't joined any circles yet. Click 'Join this Circle' on the My Circle tab!"}
                   </div>
                 )}
               </div>
@@ -514,7 +514,7 @@ export default function CommunityChatHub({ defaultPractitionerId = null }) {
             <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 800, color: "#0F172A", display: "flex", alignItems: "center", gap: "6px" }}>
               {activeTab === "global" && <>🌐 # global-lounge</>}
               {activeTab === "circle" && (
-                <>👥 {selectedCircle ? selectedCircle.name : "Practitioner Circle Cohort"}</>
+                <>👥 {selectedCircle ? selectedCircle.name : "Practitioner Circle"}</>
               )}
               {activeTab === "direct" && (
                 <>💬 1:1 Direct Chat: {selectedContact ? `${selectedContact.firstName} ${selectedContact.lastName || ""}` : "Select Contact"}</>
@@ -522,7 +522,7 @@ export default function CommunityChatHub({ defaultPractitionerId = null }) {
             </h3>
             <span style={{ fontSize: "11.5px", color: "#64748B" }}>
               {activeTab === "global" && "Open community lounge for all registered clients and verified practitioners."}
-              {activeTab === "circle" && (selectedCircle?.topic || "Confidential group chat cohort for circle members.")}
+              {activeTab === "circle" && (selectedCircle?.topic || "Confidential group chat for Circle members.")}
               {activeTab === "direct" && (selectedContact?.email || "1-on-1 private messaging channel.")}
             </span>
           </div>
@@ -607,7 +607,7 @@ export default function CommunityChatHub({ defaultPractitionerId = null }) {
               activeTab === "global"
                 ? "Send a message to global lounge..."
                 : activeTab === "circle"
-                ? `Message ${selectedCircle?.name || "circle cohort"}...`
+                ? `Message ${selectedCircle?.name || "this Circle"}...`
                 : `Message ${selectedContact ? selectedContact.firstName : "contact"}...`
             }
             value={inputText}
