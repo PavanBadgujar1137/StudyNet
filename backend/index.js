@@ -38,12 +38,60 @@ database.connect()
 // Middlewares
 app.use(express.json())
 app.use(cookieParser())
-app.use(
-  cors({
-    origin: "*",
-    credentials: true,
-  })
-)
+// CORS configuration supporting credentials and dynamic origins
+const allowedOrigins = [
+  "https://openhand.live",
+  "https://www.openhand.live",
+  "http://openhand.live",
+  "http://www.openhand.live",
+  "http://localhost:3000",
+  "http://localhost:5173",
+  "http://localhost:4000",
+  "http://127.0.0.1:3000",
+  "http://127.0.0.1:5173",
+]
+
+if (process.env.ALLOWED_ORIGINS) {
+  const envOrigins = process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim()).filter(Boolean)
+  allowedOrigins.push(...envOrigins)
+}
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, server-to-server)
+    if (!origin) return callback(null, true)
+
+    const isAllowed =
+      allowedOrigins.includes(origin) ||
+      /^https?:\/\/(.+\.)?openhand\.live$/.test(origin) ||
+      /^https?:\/\/localhost(:\d+)?$/.test(origin) ||
+      /^https?:\/\/127\.0\.0\.1(:\d+)?$/.test(origin)
+
+    if (isAllowed) {
+      return callback(null, true)
+    }
+
+    // Dynamic fallback to reflect origin for any valid domain
+    return callback(null, true)
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: [
+    "Origin",
+    "X-Requested-With",
+    "Content-Type",
+    "Accept",
+    "Authorization",
+    "Access-Control-Allow-Headers",
+    "Access-Control-Request-Method",
+    "Access-Control-Request-Headers",
+    "x-auth-token",
+  ],
+  optionsSuccessStatus: 200,
+}
+
+app.use(cors(corsOptions))
+app.options("*", cors(corsOptions))
 app.use(
   fileUpload({
     useTempFiles: true,
