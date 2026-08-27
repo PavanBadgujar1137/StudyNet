@@ -99,7 +99,7 @@ export const AURA_POLICY = {
 export const LEARNER_PLANS = [
   {
     key: 'beginner',
-    name: 'Beginner',           // ⚠️ CLIENT_SUPPLIED: confirm final tier names
+    name: 'Beginner',
     price: '₹51',
     period: '/month',
     tagline: 'Start your wellbeing journey with practitioner-led tools and community.',
@@ -113,12 +113,10 @@ export const LEARNER_PLANS = [
       '1:1 Session booking access',
       'Secure digital health record vault',
     ],
-    // ⚠️ NOTE: ₹51/mo entry price needs client confirmation (brief flags it as undervalued)
-    clientConfirmRequired: true,
   },
   {
     key: 'advance',
-    name: 'Growth',             // ⚠️ CLIENT_SUPPLIED: confirm final tier names
+    name: 'Advance',
     price: '₹151',
     period: '/month',
     tagline: 'Full access to Circles, courses, and session discounts for active learners.',
@@ -135,14 +133,14 @@ export const LEARNER_PLANS = [
   },
   {
     key: 'champion',
-    name: 'Premium',            // was "Champion VIP" — renamed per brief (PJ-6 equivalent)
+    name: 'Champion',
     price: '₹1,500',
     period: '/month',
     tagline: 'Complete wellbeing coverage with a free monthly Session and dedicated support.',
     badge: 'COMPLETE COVERAGE',
     featured: false,
     features: [
-      'Everything in Growth',
+      'Everything in Advance',
       '1 free 1:1 Session per month',
       '25% discount on additional Sessions',
       'Dedicated care manager & concierge support',

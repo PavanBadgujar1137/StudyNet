@@ -440,12 +440,11 @@ export function Circles({ telemetryData, onUpdate, setActiveSection }) {
 
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
-                  Max Member Capacity (Capped at 8)
+                  Max Member Capacity (Decided by Practitioner)
                 </label>
                 <input
                   type="number"
                   min={1}
-                  max={8}
                   value={maxCapacity}
                   onChange={(e) => setMaxCapacity(e.target.value)}
                   style={{
@@ -457,7 +456,7 @@ export function Circles({ telemetryData, onUpdate, setActiveSection }) {
                   }}
                 />
                 <span style={{ fontSize: '11px', color: '#64748B', display: 'block', marginTop: '4px' }}>
-                  Standard containers are capped at 8 seats to maintain intimacy &amp; safety.
+                  Capacity is set by practitioner — enter any custom seat limit for this circle.
                 </span>
               </div>
 

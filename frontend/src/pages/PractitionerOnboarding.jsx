@@ -378,7 +378,7 @@ export function PractitionerOnboarding({ embedded = false, telemetryData, onUpda
                 <label htmlFor="offerType">Offer format</label>
                 <select id="offerType" name="offerType" value={formData.offerType} onChange={handleChange}>
                   <option value="session">1:1 Session (Paid per booking)</option>
-                  <option value="circle">Circle (live, capped at 8 seats)</option>
+                  <option value="circle">Circle (live, practitioner-custom capacity)</option>
                   <option value="program">Program (Self-paced video modules)</option>
                 </select>
               </div>

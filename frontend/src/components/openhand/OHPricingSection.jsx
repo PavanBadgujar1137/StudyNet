@@ -163,11 +163,11 @@ export default function OHPricingSection({ defaultRole = "learner", title, subti
   const learnerPlans = [
     {
       key: "beginner",
-      name: "Explore Plan",
-      price: "₹299",
+      name: "Beginner Plan",
+      price: "₹51",
       period: "/month",
       tagline: "Essential membership for individuals starting their mental health & wellbeing journey.",
-      badge: "EXPLORE MEMBERSHIP",
+      badge: "BEGINNER MEMBERSHIP",
       featured: false,
       features: [
         "Access to core free practitioner courses & library",
@@ -180,14 +180,14 @@ export default function OHPricingSection({ defaultRole = "learner", title, subti
     },
     {
       key: "advance",
-      name: "Committed Plan",
-      price: "₹799",
+      name: "Advance Plan",
+      price: "₹151",
       period: "/month",
       tagline: "For active wellness seekers wanting full access to courses, circles, and session discounts.",
       badge: "MOST POPULAR LEARNER CHOICE",
       featured: true,
       features: [
-        "Everything in Explore Plan",
+        "Everything in Beginner Plan",
         "Unlimited access to ALL free practitioner courses",
         "Unlimited access to live Circles",
         "15% discount on all 1:1 practitioner sessions",
@@ -197,14 +197,14 @@ export default function OHPricingSection({ defaultRole = "learner", title, subti
     },
     {
       key: "champion",
-      name: "Held Plan",
-      price: "₹2,499",
+      name: "Champion Plan",
+      price: "₹1,500",
       period: "/month",
       tagline: "Complete wellbeing coverage with a free monthly Session and dedicated support.",
-      badge: "COMPLETE COVERAGE",
+      badge: "CHAMPION MEMBERSHIP",
       featured: false,
       features: [
-        "Everything in Committed",
+        "Everything in Advance Plan",
         "1 free 1:1 Session per month",
         "25% discount on additional Sessions",
         "Dedicated care manager & concierge support",

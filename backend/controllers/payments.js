@@ -38,7 +38,7 @@ exports.createSubscriptionOrder = async (req, res) => {
     const planNames = {
       beginner: "Beginner Plan",
       advance: "Advance Plan",
-      champion: "Champion VIP Plan",
+      champion: "Champion Plan",
       starter: "Starter Plan",
       growth: "Growth Plan",
       practice: "Practice Plan",
@@ -95,7 +95,7 @@ exports.verifySubscriptionPayment = async (req, res) => {
     }
 
     const planPrices = { beginner: 51, advance: 151, champion: 1500, starter: 999, growth: 2999, practice: 5999, master: 5999 }
-    const planNames = { beginner: "Beginner Plan", advance: "Advance Plan", champion: "Champion VIP Plan", starter: "Starter Plan", growth: "Growth Plan", practice: "Practice Plan", master: "Master VIP Plan" }
+    const planNames = { beginner: "Beginner Plan", advance: "Advance Plan", champion: "Champion Plan", starter: "Starter Plan", growth: "Growth Plan", practice: "Practice Plan", master: "Master VIP Plan" }
     const amount = planPrices[planKey] || 0
 
     // Deactivate any existing active subscription for this client

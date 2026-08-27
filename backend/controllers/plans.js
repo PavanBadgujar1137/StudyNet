@@ -37,7 +37,7 @@ const DEFAULT_PLANS = [
   },
   {
     planKey: "champion",
-    name: "Champion VIP Plan",
+    name: "Champion Plan",
     tagline: "Complete wellbeing coverage with dedicated care, free monthly session, and VIP perks.",
     monthlyFee: 1500,
     commissionPercentage: 0,

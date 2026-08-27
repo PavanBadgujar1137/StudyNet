@@ -229,7 +229,7 @@ function ClientsTab() {
                     <>
                       <option value="beginner">Beginner Plan (₹51/mo)</option>
                       <option value="advance">Advance Plan (₹151/mo)</option>
-                      <option value="champion">Premium Plan (₹1,500/mo)</option>
+                      <option value="champion">Champion Plan (₹1,500/mo)</option>
                     </>
                   )}
                   <option value="none">No Active Plan (Trial Expired)</option>
@@ -381,7 +381,7 @@ function CoursesTab() {
                   <option value="">Free Access (No subscription needed)</option>
                   <option value="beginner">Beginner Plan &amp; above (₹51/mo)</option>
                   <option value="advance">Advance Plan &amp; above (₹151/mo)</option>
-                  <option value="champion">Premium Plan (₹1,500/mo)</option>
+                  <option value="champion">Champion Plan (₹1,500/mo)</option>
                 </select>
                 <p style={{ margin: '4px 0 0', color: '#94A3B8', fontSize: 11 }}>
                   Clients must have an active subscription or trial matching this tier to access videos.
@@ -444,7 +444,7 @@ function CoursesTab() {
             )},
             { key: 'requiredPlan', label: 'Assigned Subscription Plan', render: r => r.requiredPlan ? (
               <span style={{ padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: '#F3E8FF', color: '#7E22CE', border: '1px solid #E9D5FF' }}>
-                {r.requiredPlan === 'beginner' ? 'Beginner Plan (₹51)' : r.requiredPlan === 'advance' ? 'Growth Plan (₹151)' : r.requiredPlan === 'champion' ? 'Premium Plan (₹1,500)' : `${r.requiredPlan} Plan`}
+                {r.requiredPlan === 'beginner' ? 'Beginner Plan (₹51)' : r.requiredPlan === 'advance' ? 'Advance Plan (₹151)' : r.requiredPlan === 'champion' ? 'Champion Plan (₹1,500)' : `${r.requiredPlan} Plan`}
               </span>
             ) : (
               <span style={{ padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: '#DCFCE7', color: '#166534', border: '1px solid #BBF7D0' }}>

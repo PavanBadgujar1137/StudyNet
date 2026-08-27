@@ -661,7 +661,7 @@ exports.updateClientPlan = async (req, res) => {
         const planNameMap = {
           beginner: "Beginner Plan",
           advance: "Advance Plan",
-          champion: "Champion VIP Plan",
+          champion: "Champion Plan",
           starter: "Starter Plan",
           growth: "Growth Plan",
           practice: "Practice Plan",
