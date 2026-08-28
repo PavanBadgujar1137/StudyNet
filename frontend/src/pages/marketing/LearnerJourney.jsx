@@ -107,8 +107,13 @@ const COPILOT_FEATURES = [
   },
 ]
 
+import { IntakeModal } from '../../components/openhand'
+import { useNavigate } from 'react-router-dom'
+
 export function LearnerJourney() {
+  const navigate = useNavigate()
   const [activeStages, setActiveStages] = useState({})
+  const [previewIntakeOpen, setPreviewIntakeOpen] = useState(false)
   const progRef = useRef(null)
 
   // Stage visibility observer
@@ -161,6 +166,34 @@ export function LearnerJourney() {
       }
     }
   }, [])
+
+  const handleStageAction = (num) => {
+    switch (num) {
+      case '01':
+        navigate('/find-a-practitioner')
+        break
+      case '02':
+        setPreviewIntakeOpen(true)
+        break
+      case '03':
+        navigate('/dashboard?tab=room')
+        break
+      case '04':
+        navigate('/dashboard?tab=clients')
+        break
+      case '05':
+        navigate('/dashboard?tab=circles')
+        break
+      case '06':
+        navigate('/dashboard?tab=dash')
+        break
+      case '07':
+        navigate('/pricing')
+        break
+      default:
+        break
+    }
+  }
 
   return (
     <div className="oh-journey-page relative min-h-screen">
@@ -238,6 +271,18 @@ export function LearnerJourney() {
                       <FiTrendingUp className="oh-journey__earn-icon" />
                       <span>{s.earn}</span>
                     </div>
+                    <button
+                      onClick={() => handleStageAction(s.num)}
+                      className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-teal-400 hover:text-teal-300 transition-colors bg-teal-500/10 border border-teal-500/20 px-3 py-1.5 rounded-lg cursor-pointer"
+                    >
+                      {s.num === '01' && 'Try Booking Link →'}
+                      {s.num === '02' && 'Preview 6-Question Intake →'}
+                      {s.num === '03' && 'Launch Session Co-Pilot →'}
+                      {s.num === '04' && 'View Reflection Prompts →'}
+                      {s.num === '05' && 'Explore Circles →'}
+                      {s.num === '06' && 'View Progress Milestones →'}
+                      {s.num === '07' && 'Explore Plans →'}
+                    </button>
                   </div>
                 ) : (
                   <div className="oh-journey__spacer" />
@@ -264,6 +309,18 @@ export function LearnerJourney() {
                       <FiTrendingUp className="oh-journey__earn-icon" />
                       <span>{s.earn}</span>
                     </div>
+                    <button
+                      onClick={() => handleStageAction(s.num)}
+                      className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-teal-400 hover:text-teal-300 transition-colors bg-teal-500/10 border border-teal-500/20 px-3 py-1.5 rounded-lg cursor-pointer"
+                    >
+                      {s.num === '01' && 'Try Booking Link →'}
+                      {s.num === '02' && 'Preview 6-Question Intake →'}
+                      {s.num === '03' && 'Launch Session Co-Pilot →'}
+                      {s.num === '04' && 'View Reflection Prompts →'}
+                      {s.num === '05' && 'Explore Circles →'}
+                      {s.num === '06' && 'View Progress Milestones →'}
+                      {s.num === '07' && 'Explore Plans →'}
+                    </button>
                   </div>
                 ) : (
                   <div className="oh-journey__spacer" />
@@ -392,6 +449,13 @@ export function LearnerJourney() {
           </div>
         </div>
       </section>
+
+      {/* Stage 02 — Intake Preview Modal */}
+      <IntakeModal
+        open={previewIntakeOpen}
+        onClose={() => setPreviewIntakeOpen(false)}
+        practitionerName="Dr. Sarah M."
+      />
 
       <OHFooter />
     </div>

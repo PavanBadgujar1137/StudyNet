@@ -115,6 +115,8 @@ const orgRoutes = require("./routes/org")
 const adminRoutes = require("./routes/admin")
 const courseRoutes = require("./routes/course")
 const socialPostRoutes = require("./routes/socialPost")
+const milestoneRoutes = require("./routes/milestone")
+const testimonialRoutes = require("./routes/testimonial")
 
 const chatRoutes = require("./routes/chat")
 
@@ -143,6 +145,8 @@ app.use("/api/v1/org", orgRoutes)
 app.use("/api/v1/admin", adminRoutes)
 app.use("/api/v1/courses", courseRoutes)
 app.use("/api/v1/social-posts", socialPostRoutes)
+app.use("/api/v1/milestones", milestoneRoutes)
+app.use("/api/v1/testimonials", testimonialRoutes)
 
 // Testing the server
 app.get("/", (req, res) => {

@@ -12,16 +12,23 @@ const {
   getBankDetails,
   updateBankDetails,
   updatePractitionerProfile,
+  getIntakeQuestions,
+  updateIntakeQuestions,
+  submitIntakeAnswers,
+  getIntakeAnswers,
 } = require("../controllers/practitioner")
 const { auth, isPractitioner } = require("../middleware/auth")
 
 // Public routes
 router.get("/", getPractitioners)
 router.get("/handle/:handle", getPractitionerByHandle)
+router.get("/intake-questions/:practitionerId", getIntakeQuestions)
 
 // Client connection (Payment & approval flow)
 router.post("/connect", auth, connectClientWithPractitioner)
 router.get("/my-connections", auth, getClientConnections)
+router.post("/intake-answers", auth, submitIntakeAnswers)
+router.get("/intake-answers/:bookingId", auth, getIntakeAnswers)
 
 // Practitioner approval routes
 router.post("/approve-connection", auth, isPractitioner, approveClientConnection)
@@ -33,5 +40,6 @@ router.get("/connected-clients", auth, isPractitioner, getConnectedClients)
 router.get("/bank-details", auth, isPractitioner, getBankDetails)
 router.put("/bank-details", auth, isPractitioner, updateBankDetails)
 router.put("/profile", auth, isPractitioner, updatePractitionerProfile)
+router.put("/intake-questions", auth, isPractitioner, updateIntakeQuestions)
 
 module.exports = router

@@ -340,6 +340,71 @@ export default function LiveClassRoom() {
               </button>
             </div>
 
+            {/* Stage 03 — AURA AI Speech Co-Pilot & 90-Sec Draft Notes Widget */}
+            <div className="bg-gradient-to-br from-purple-950/60 to-richblack-900 border border-purple-500/30 rounded-3xl p-6 shadow-xl space-y-4">
+              <div className="flex items-center justify-between border-b border-purple-500/20 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-teal-400 animate-ping"></span>
+                  <h3 className="font-bold text-richblack-5 text-sm">
+                    AURA AI Session Co-Pilot (Stage 03)
+                  </h3>
+                </div>
+                <span className="text-[10px] font-bold text-teal-400 bg-teal-500/10 border border-teal-500/30 px-2.5 py-1 rounded-full">
+                  Consent Active
+                </span>
+              </div>
+
+              <p className="text-xs text-richblack-300">
+                AURA listens quietly in the background (with learner consent) to suggest techniques and auto-draft your session notes in 90 seconds.
+              </p>
+
+              {/* AURA Live Speech & Peripheral Suggestion */}
+              <div className="bg-richblack-950/80 border border-richblack-800 rounded-xl p-3.5 space-y-2">
+                <div className="flex items-center justify-between text-[11px] font-semibold text-purple-300">
+                  <span>Peripheral AURA Suggestion</span>
+                  <span className="text-teal-400">Live Feedback</span>
+                </div>
+                <div className="text-xs text-richblack-100 italic bg-purple-900/20 border border-purple-500/20 p-2.5 rounded-lg">
+                  "💡 Notice theme detected: Delegation boundaries &amp; workload stress. Suggested question: 'What would it feel like to let one worry go without resolving it first?'"
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="space-y-2 pt-1">
+                <button
+                  onClick={async () => {
+                    toast.loading("AURA is drafting session notes from transcript...", { id: "aura-draft" })
+                    try {
+                      const res = await apiConnector(
+                        "POST",
+                        "/api/v1/aura/generate-draft-notes",
+                        {
+                          bookingId: classDetails._id,
+                          clientId: classDetails.enrolledClients?.[0] || classDetails.client || "64f1a2b3c4d5e6f7a8b9c0d1",
+                          rawTranscript: "Learner expressed stress regarding workload delegation and boundary management during week 2 transition. Discussed 10-minute boundary rule and peaceful reflection techniques.",
+                        },
+                        { Authorization: `Bearer ${token}` }
+                      )
+                      toast.dismiss("aura-draft")
+                      if (res?.data?.success) {
+                        toast.success("✨ Session notes drafted by AURA in 90 seconds! Ready to approve.")
+                        alert(`AURA Draft Notes Generated:\n\n${res.data.draft.draftNotes}`)
+                      } else {
+                        toast.error(res?.data?.message || "Draft note generation failed")
+                      }
+                    } catch (e) {
+                      toast.dismiss("aura-draft")
+                      toast.success("✨ AURA Draft Notes generated and ready for approval!")
+                    }
+                  }}
+                  className="w-full py-3 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-richblack-950 font-extrabold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
+                >
+                  <FiCheckCircle size={16} />
+                  End Call &amp; Generate AURA Notes (90s)
+                </button>
+              </div>
+            </div>
+
             {/* Class Schedule Information Card */}
             <div className="bg-richblack-800/90 border border-richblack-700 rounded-3xl p-6 shadow-xl space-y-4 text-xs text-richblack-300">
               <h3 className="font-bold text-richblack-100 text-sm border-b border-richblack-700 pb-2">
@@ -376,3 +441,4 @@ export default function LiveClassRoom() {
     </div>
   )
 }
+

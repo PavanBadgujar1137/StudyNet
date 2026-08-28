@@ -25,6 +25,8 @@ export { OHRangeCalculator } from './OHRangeCalculator'
 export { OHTimeline }     from './OHTimeline'
 export { OHKanban }       from './OHKanban'
 export { OHConsentGate }  from './OHConsentGate'
+export { IntakeModal }      from './IntakeModal'
+
 
 
 

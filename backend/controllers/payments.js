@@ -693,6 +693,20 @@ async function _createInvoiceAndAdminLog({
       bookingId: booking._id,
       status: "received",
     })
+
+    // Create Payout Record (Stage 01: T+2 Bank Settlement Log)
+    if (practitionerPortion > 0) {
+      await Payout.create({
+        practitioner: practitionerId,
+        amount: grossAmount,
+        commissionDeducted: grossAmount - practitionerPortion,
+        netAmount: practitionerPortion,
+        status: "processing",
+        settledAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days settlement
+        payoutMethod: "bank_transfer",
+        bookingsCount: 1,
+      })
+    }
   } catch (err) {
     console.error("_createInvoiceAndAdminLog error:", err)
   }

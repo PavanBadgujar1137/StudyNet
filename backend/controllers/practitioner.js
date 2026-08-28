@@ -738,3 +738,106 @@ exports.updatePractitionerProfile = async (req, res) => {
     })
   }
 }
+
+// ── Get Practitioner Intake Questions (Stage 02) ──
+exports.getIntakeQuestions = async (req, res) => {
+  try {
+    const { practitionerId } = req.params
+    const profile = await PractitionerProfile.findOne({ user: practitionerId })
+
+    const defaultQuestions = [
+      "What brought you to this session today?",
+      "What have you tried so far to address this?",
+      "What is your primary goal for our work together?",
+      "How would you rate your current stress or burnout level (1-10)?",
+      "Are there specific topics or boundaries you want to focus on?",
+      "What outcome would make this journey a success for you in 6 weeks?",
+    ]
+
+    const questions = profile?.intakeQuestions?.length ? profile.intakeQuestions : defaultQuestions
+
+    return res.status(200).json({
+      success: true,
+      questions,
+    })
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// ── Update Practitioner Intake Questions ──
+exports.updateIntakeQuestions = async (req, res) => {
+  try {
+    const userId = req.user.id
+    const { questions } = req.body
+
+    if (!Array.isArray(questions) || questions.length === 0) {
+      return res.status(400).json({ success: false, message: "Questions array is required" })
+    }
+
+    let profile = await PractitionerProfile.findOne({ user: userId })
+    if (!profile) {
+      profile = await PractitionerProfile.create({ user: userId })
+    }
+
+    profile.intakeQuestions = questions.slice(0, 6)
+    await profile.save()
+
+    return res.status(200).json({
+      success: true,
+      message: "Intake questions updated successfully",
+      questions: profile.intakeQuestions,
+    })
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// ── Submit Intake Answers for a Booking (Learner side) ──
+exports.submitIntakeAnswers = async (req, res) => {
+  try {
+    const { bookingId, answers } = req.body
+
+    if (!bookingId || !Array.isArray(answers)) {
+      return res.status(400).json({ success: false, message: "bookingId and answers array are required" })
+    }
+
+    const booking = await Booking.findById(bookingId)
+    if (!booking) {
+      return res.status(404).json({ success: false, message: "Booking not found" })
+    }
+
+    booking.intakeAnswers = answers
+    await booking.save()
+
+    return res.status(200).json({
+      success: true,
+      message: "Intake answers submitted successfully",
+      intakeAnswers: booking.intakeAnswers,
+    })
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// ── Get Intake Answers for a Booking ──
+exports.getIntakeAnswers = async (req, res) => {
+  try {
+    const { bookingId } = req.params
+
+    const booking = await Booking.findById(bookingId).populate("client", "firstName lastName email image")
+    if (!booking) {
+      return res.status(404).json({ success: false, message: "Booking not found" })
+    }
+
+    return res.status(200).json({
+      success: true,
+      intakeAnswers: booking.intakeAnswers || [],
+      client: booking.client,
+      status: booking.status,
+    })
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+

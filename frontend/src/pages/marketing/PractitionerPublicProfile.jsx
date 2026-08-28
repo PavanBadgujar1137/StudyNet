@@ -10,6 +10,8 @@ import { toast } from 'react-hot-toast'
 import { apiConnector } from '../../services/apiConnector'
 import OHFooter from '../../components/openhand/OHFooter'
 
+import { IntakeModal } from '../../components/openhand'
+
 export function PractitionerPublicProfile() {
   const { handle } = useParams()
   const navigate = useNavigate()
@@ -17,6 +19,11 @@ export function PractitionerPublicProfile() {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [connectingOfferId, setConnectingOfferId] = useState(null)
+
+  // Stage 02 — Intake Modal State
+  const [showIntakeModal, setShowIntakeModal] = useState(false)
+  const [selectedOffer, setSelectedOffer] = useState(null)
+  const [pendingIntakeAnswers, setPendingIntakeAnswers] = useState([])
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -49,17 +56,36 @@ export function PractitionerPublicProfile() {
     })
   }
 
-  const handleBookOffer = async (offer) => {
+  // Stage 02: First trigger intake modal
+  const handleBookOffer = (offer) => {
+    const token = localStorage.getItem('token')
+      ? JSON.parse(localStorage.getItem('token'))
+      : null
+
+    if (!token) {
+      toast.error('Please log in to book a session.')
+      navigate('/login')
+      return
+    }
+
+    setSelectedOffer(offer)
+    setShowIntakeModal(true)
+  }
+
+  // Triggered after 6-question intake is submitted
+  const handleIntakeSubmitted = async (formattedAnswers) => {
+    setPendingIntakeAnswers(formattedAnswers)
+    setShowIntakeModal(false)
+    if (selectedOffer) {
+      await proceedToPayment(selectedOffer, formattedAnswers)
+    }
+  }
+
+  const proceedToPayment = async (offer, intakeAnswers) => {
     try {
       const token = localStorage.getItem('token')
         ? JSON.parse(localStorage.getItem('token'))
         : null
-
-      if (!token) {
-        toast.error('Please log in to book a session.')
-        navigate('/login')
-        return
-      }
 
       setConnectingOfferId(offer._id)
       const isLoaded = await loadRazorpaySDK()
@@ -87,7 +113,7 @@ export function PractitionerPublicProfile() {
         return
       }
 
-      const { order, key } = orderRes.data
+      const { order, key, bookingId } = orderRes.data
 
       const options = {
         key: key || 'rzp_test_TDhFSRuAl18Gcb',
@@ -98,7 +124,20 @@ export function PractitionerPublicProfile() {
         order_id: order.id,
         theme: { color: '#2563EB' },
         handler: async (response) => {
-          toast.success('🎉 Booking confirmed! Practitioner notified.')
+          // Save intake answers to booking upon payment completion
+          if (bookingId && intakeAnswers?.length) {
+            try {
+              await apiConnector(
+                'POST',
+                '/api/v1/practitioner/intake-answers',
+                { bookingId, answers: intakeAnswers },
+                { Authorization: `Bearer ${token}` }
+              )
+            } catch (err) {
+              console.warn('Failed to attach intake answers to booking:', err)
+            }
+          }
+          toast.success('🎉 Booking confirmed & Intake saved! Practitioner notified.')
           setConnectingOfferId(null)
         },
         modal: {
@@ -400,6 +439,15 @@ export function PractitionerPublicProfile() {
         )}
 
       </div>
+
+      {/* Pre-Session 6-Question Intake Modal (Stage 02) */}
+      <IntakeModal
+        open={showIntakeModal}
+        onClose={() => setShowIntakeModal(false)}
+        practitionerName={practitionerName}
+        questions={profile.intakeQuestions || []}
+        onSubmit={handleIntakeSubmitted}
+      />
 
       <OHFooter />
     </div>

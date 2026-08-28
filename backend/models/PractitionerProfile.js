@@ -35,7 +35,18 @@ const practitionerProfileSchema = new mongoose.Schema(
     bankAccountNumber: { type: String, trim: true },
     bankIfscCode: { type: String, trim: true, uppercase: true },
     bankName: { type: String, trim: true },
-    upiId: { type: String, trim: true },
+    // Intake Questionnaire Customization (Stage 02)
+    intakeQuestions: {
+      type: [String],
+      default: [
+        "What brought you to this session today?",
+        "What have you tried so far to address this?",
+        "What is your primary goal for our work together?",
+        "How would you rate your current stress or burnout level (1-10)?",
+        "Are there specific topics or boundaries you want to focus on?",
+        "What outcome would make this journey a success for you in 6 weeks?",
+      ],
+    },
   },
   { timestamps: true }
 )

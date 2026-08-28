@@ -45,6 +45,14 @@ const bookingSchema = new mongoose.Schema(
       default: "unsettled",
     },
     settledAt: { type: Date },
+
+    // Pre-Session Intake Answers (Stage 02)
+    intakeAnswers: [
+      {
+        question: { type: String },
+        answer: { type: String },
+      },
+    ],
   },
   { timestamps: true }
 )
