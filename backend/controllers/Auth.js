@@ -8,6 +8,8 @@ const { passwordUpdated } = require("../mail/templates/passwordUpdate")
 const Profile = require("../models/Profile")
 require("dotenv").config()
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 // Signup Controller for Registering USers
 
 exports.signup = async (req, res) => {
@@ -37,6 +39,16 @@ exports.signup = async (req, res) => {
         message: "All Fields are required",
       })
     }
+
+    const cleanEmail = String(email).trim().toLowerCase()
+
+    if (!EMAIL_REGEX.test(cleanEmail)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a valid email address format (e.g., name@domain.com)",
+      })
+    }
+
     // Check if password and confirm password match
     if (password !== confirmPassword) {
       return res.status(400).json({
@@ -47,7 +59,9 @@ exports.signup = async (req, res) => {
     }
 
     // Check if user already exists
-    const existingUser = await User.findOne({ email })
+    const existingUser = await User.findOne({
+      email: { $regex: new RegExp("^" + cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "$", "i") },
+    })
     if (existingUser) {
       return res.status(400).json({
         success: false,
@@ -56,7 +70,7 @@ exports.signup = async (req, res) => {
     }
 
     // Find the most recent OTP for the email
-    const response = await OTP.find({ email }).sort({ createdAt: -1 }).limit(1)
+    const response = await OTP.find({ email: cleanEmail }).sort({ createdAt: -1 }).limit(1)
     console.log(response)
     if (response.length === 0) {
       // OTP not found for the email
@@ -93,7 +107,7 @@ exports.signup = async (req, res) => {
     const user = await User.create({
       firstName,
       lastName,
-      email,
+      email: cleanEmail,
       contactNumber,
       password: hashedPassword,
       accountType: accountType,
@@ -161,11 +175,15 @@ exports.login = async (req, res) => {
       })
     }
 
+    const cleanEmail = String(email).trim().toLowerCase()
+
     // Find user with provided email
-    let user = await User.findOne({ email }).populate("additionalDetails")
+    let user = await User.findOne({
+      email: { $regex: new RegExp("^" + cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "$", "i") },
+    }).populate("additionalDetails")
 
     // Auto-create default admin account on first login attempt if missing
-    if (!user && email.toLowerCase() === "admin@openhand.com") {
+    if (!user && cleanEmail === "admin@openhand.com") {
       const Profile = require("../models/Profile")
       const hashedPassword = await bcrypt.hash("AdminPassword123!", 10)
       const profile = await Profile.create({ gender: null, dateOfBirth: null, about: "Platform Administrator", contactNumber: null })
@@ -347,17 +365,19 @@ exports.sendotp = async (req, res) => {
   try {
     const { email } = req.body
 
-    if (!email || typeof email !== "string" || !email.trim()) {
+    const cleanEmail = String(email || "").trim().toLowerCase()
+
+    if (!cleanEmail || !EMAIL_REGEX.test(cleanEmail)) {
       return res.status(400).json({
         success: false,
-        message: "Valid email address is required",
+        message: "Please enter a valid email address format (e.g., name@domain.com)",
       })
     }
 
-    const cleanEmail = email.trim().toLowerCase()
-
-    // Check if user is already present with provided email
-    const checkUserPresent = await User.findOne({ email: cleanEmail })
+    // Check if user is already present with provided email (case-insensitive)
+    const checkUserPresent = await User.findOne({
+      email: { $regex: new RegExp("^" + cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "$", "i") },
+    })
 
     // If user found with provided email
     if (checkUserPresent) {

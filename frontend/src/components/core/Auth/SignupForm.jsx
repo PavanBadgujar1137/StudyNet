@@ -40,7 +40,6 @@ function SignupForm() {
     }
     dispatch(setSignupData({ ...formData, accountType }))
     dispatch(sendOtp(formData.email, navigate))
-    setFormData({ firstName: "", lastName: "", email: "", password: "", confirmPassword: "" })
   }
 
   const roles = [
