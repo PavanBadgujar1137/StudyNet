@@ -384,7 +384,7 @@ exports.sendotp = async (req, res) => {
       // Return 400 Bad Request status code with descriptive message
       return res.status(400).json({
         success: false,
-        message: `User is already registered with this email. Please sign in instead.`,
+        message: `This email is already registered. Please sign in or use another email to register.`,
       })
     }
 

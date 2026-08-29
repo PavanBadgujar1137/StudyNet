@@ -76,14 +76,17 @@ export function sendOtp(email, navigate) {
 
       toast.success(response.data.message || "OTP Sent Successfully", { id: toastId })
       if (navigate) navigate("/verify-email")
+      return true
     } catch (error) {
       console.log("SENDOTP API ERROR............", error)
+      const serverMessage = error?.response?.data?.message || error?.response?.data?.error
       const errorMsg =
-        error?.response?.data?.message ||
-        error?.response?.data?.error ||
-        error?.message ||
-        "Could Not Send OTP"
-      toast.error(errorMsg, { id: toastId })
+        serverMessage ||
+        (error?.message && !error.message.includes("AxiosError") && !error.message.includes("status code")
+          ? error.message
+          : "This email is already registered. Please sign in or use another email to register.")
+      toast.error(errorMsg, { id: toastId, duration: 6000 })
+      return false
     } finally {
       dispatch(setLoading(false))
     }
