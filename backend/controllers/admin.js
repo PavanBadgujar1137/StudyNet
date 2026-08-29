@@ -169,22 +169,43 @@ exports.getAllClients = async (req, res) => {
           ]),
         ])
 
-        const hasActiveSub = !!subscription && new Date(subscription.endDate) > now
+        const hasSubscriptionRecord = !!subscription && new Date(subscription.endDate) > now
         const isPractitioner = client.accountType === "Practitioner" || client.accountType === "Instructor"
         const isLearner = !isPractitioner
         const trialDays = isLearner ? 7 : 14
         const trialStartedAt = client.createdAt || client.trialStartedAt || now
         const calculatedExpiresAt = new Date(new Date(trialStartedAt).getTime() + trialDays * 24 * 60 * 60 * 1000)
-        const trialExpiresAt = isLearner ? calculatedExpiresAt : (client.trialExpiresAt || calculatedExpiresAt)
+        const trialExpiresAt = client.trialExpiresAt || calculatedExpiresAt
 
-        const msRemaining = trialExpiresAt.getTime() - now.getTime()
+        const userPlanKey = (client.activePlan || subscription?.planKey || "").toLowerCase()
+        const isDirectPlanActive = ["starter", "growth", "master", "beginner", "advance", "champion"].includes(userPlanKey)
+        const isLifetime = trialExpiresAt && new Date(trialExpiresAt).getFullYear() > 2050
+
+        const hasActiveSub = hasSubscriptionRecord || isDirectPlanActive || isLifetime
+
+        const msRemaining = new Date(trialExpiresAt).getTime() - now.getTime()
         const isTrialActive = !hasActiveSub && msRemaining > 0
         const trialDaysRemaining = isTrialActive
           ? Math.min(trialDays, Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24))))
           : 0
 
+        const PLAN_LABELS = {
+          starter: "Starter Plan",
+          growth: "Growth Plan",
+          master: "Master VIP",
+          beginner: "Beginner Plan",
+          advance: "Advance Plan",
+          champion: "Champion Plan",
+        }
+
         let planDisplayStatus = "Trial Expired"
-        if (hasActiveSub) {
+        if (isLifetime && isDirectPlanActive) {
+          planDisplayStatus = `${PLAN_LABELS[userPlanKey] || userPlanKey} (Lifetime)`
+        } else if (isLifetime) {
+          planDisplayStatus = "Lifetime Access"
+        } else if (isDirectPlanActive) {
+          planDisplayStatus = `${PLAN_LABELS[userPlanKey] || userPlanKey} (Active)`
+        } else if (hasSubscriptionRecord) {
           planDisplayStatus = `Subscribed (${subscription.planName || subscription.planKey})`
         } else if (isTrialActive) {
           planDisplayStatus = `${isLearner ? "7-Day" : "14-Day"} Trial (${trialDaysRemaining}d left)`
@@ -264,19 +285,40 @@ exports.getAllPractitioners = async (req, res) => {
         const sessionSales = sessionSalesAgg[0]?.total || 0
         const grossGenerated = courseSales + sessionSales
 
-        const hasActiveSub = !!subscription && new Date(subscription.endDate) > now
+        const hasSubscriptionRecord = !!subscription && new Date(subscription.endDate) > now
         const trialDays = 14
         const trialStartedAt = pract.createdAt || pract.trialStartedAt || now
         const trialExpiresAt = pract.trialExpiresAt || new Date(new Date(trialStartedAt).getTime() + trialDays * 24 * 60 * 60 * 1000)
 
-        const msRemaining = trialExpiresAt.getTime() - now.getTime()
+        const userPlanKey = (pract.activePlan || subscription?.planKey || "").toLowerCase()
+        const isDirectPlanActive = ["starter", "growth", "master", "beginner", "advance", "champion"].includes(userPlanKey)
+        const isLifetime = trialExpiresAt && new Date(trialExpiresAt).getFullYear() > 2050
+
+        const hasActiveSub = hasSubscriptionRecord || isDirectPlanActive || isLifetime
+
+        const msRemaining = new Date(trialExpiresAt).getTime() - now.getTime()
         const isTrialActive = !hasActiveSub && msRemaining > 0
         const trialDaysRemaining = isTrialActive
           ? Math.min(trialDays, Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24))))
           : 0
 
+        const PLAN_LABELS = {
+          starter: "Starter Plan",
+          growth: "Growth Plan",
+          master: "Master VIP",
+          beginner: "Beginner Plan",
+          advance: "Advance Plan",
+          champion: "Champion Plan",
+        }
+
         let planDisplayStatus = "Trial Expired"
-        if (hasActiveSub) {
+        if (isLifetime && isDirectPlanActive) {
+          planDisplayStatus = `${PLAN_LABELS[userPlanKey] || userPlanKey} (Lifetime)`
+        } else if (isLifetime) {
+          planDisplayStatus = "Lifetime Access"
+        } else if (isDirectPlanActive) {
+          planDisplayStatus = `${PLAN_LABELS[userPlanKey] || userPlanKey} (Active)`
+        } else if (hasSubscriptionRecord) {
           planDisplayStatus = `Subscribed (${subscription.planName || subscription.planKey})`
         } else if (isTrialActive) {
           planDisplayStatus = `14-Day Trial (${trialDaysRemaining}d left)`

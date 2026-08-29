@@ -6,12 +6,14 @@ import {
   FiLock, 
   FiCheckCircle, 
   FiMail, 
-  FiTrash2
+  FiTrash2,
+  FiZap
 } from "react-icons/fi"
 import ChangeProfilePicture from "./ChangeProfilePicture"
 import DeleteAccount from "./DeleteAccount"
 import EditProfile from "./EditProfile"
 import UpdatePassword from "./UpdatePassword"
+import MySubscription from "./MySubscription"
 
 export default function Settings() {
   const { user } = useSelector((state) => state.profile)
@@ -121,6 +123,29 @@ export default function Settings() {
           </button>
 
           <button
+            onClick={() => setActiveSubTab("subscription")}
+            style={{
+              background: activeSubTab === "subscription" ? "rgba(255, 255, 255, 0.1)" : "transparent",
+              color: activeSubTab === "subscription" ? "#818CF8" : "#94A3B8",
+              borderBottom: activeSubTab === "subscription" ? "3px solid #818CF8" : "3px solid transparent",
+              padding: "14px 18px",
+              fontWeight: 700,
+              fontSize: "13px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              borderTop: "none",
+              borderLeft: "none",
+              borderRight: "none",
+              whiteSpace: "nowrap",
+              transition: "all 0.15s ease"
+            }}
+          >
+            <FiZap style={{ fontSize: '15px', color: '#F59E0B' }} /> My Subscription &amp; Billing
+          </button>
+
+          <button
             onClick={() => setActiveSubTab("security")}
             style={{
               background: activeSubTab === "security" ? "rgba(255, 255, 255, 0.1)" : "transparent",
@@ -172,6 +197,7 @@ export default function Settings() {
       <div>
         {activeSubTab === "profile" && <EditProfile />}
         {activeSubTab === "picture" && <ChangeProfilePicture />}
+        {activeSubTab === "subscription" && <MySubscription />}
         {activeSubTab === "security" && <UpdatePassword />}
         {activeSubTab === "danger" && <DeleteAccount />}
       </div>
