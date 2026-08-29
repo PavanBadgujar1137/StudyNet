@@ -8,7 +8,7 @@ import {
   FiClock,
   FiCreditCard,
   FiArrowRight,
-  FiShieldCheck,
+  FiShield,
   FiAward
 } from "react-icons/fi"
 
@@ -342,7 +342,7 @@ export default function MySubscription() {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <FiShieldCheck style={{ color: "#1D4ED8", fontSize: "20px" }} />
+            <FiShield style={{ color: "#1D4ED8", fontSize: "20px" }} />
             <div>
               <div style={{ color: "#1E40AF", fontWeight: 700, fontSize: "14px" }}>Need more features or team access?</div>
               <div style={{ color: "#3B82F6", fontSize: "12px" }}>Compare all plans and switch anytime instantly.</div>
