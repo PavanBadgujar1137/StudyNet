@@ -347,45 +347,59 @@ exports.sendotp = async (req, res) => {
   try {
     const { email } = req.body
 
-    // Check if user is already present
-    // Find user with provided email
-    const checkUserPresent = await User.findOne({ email })
-    // to be used in case of signup
-
-    // If user found with provided email
-    if (checkUserPresent) {
-      // Return 401 Unauthorized status code with error message
-      return res.status(401).json({
+    if (!email || typeof email !== "string" || !email.trim()) {
+      return res.status(400).json({
         success: false,
-        message: `User is Already Registered`,
+        message: "Valid email address is required",
       })
     }
 
-    var otp = otpGenerator.generate(6, {
+    const cleanEmail = email.trim().toLowerCase()
+
+    // Check if user is already present with provided email
+    const checkUserPresent = await User.findOne({ email: cleanEmail })
+
+    // If user found with provided email
+    if (checkUserPresent) {
+      // Return 400 Bad Request status code with descriptive message
+      return res.status(400).json({
+        success: false,
+        message: `User is already registered with this email. Please sign in instead.`,
+      })
+    }
+
+    let otp = otpGenerator.generate(6, {
       upperCaseAlphabets: false,
       lowerCaseAlphabets: false,
       specialChars: false,
     })
-    const result = await OTP.findOne({ otp: otp })
+    let result = await OTP.findOne({ otp: otp })
     console.log("Result is Generate OTP Func")
     console.log("OTP", otp)
     console.log("Result", result)
     while (result) {
       otp = otpGenerator.generate(6, {
         upperCaseAlphabets: false,
+        lowerCaseAlphabets: false,
+        specialChars: false,
       })
+      result = await OTP.findOne({ otp: otp })
     }
-    const otpPayload = { email, otp }
+    const otpPayload = { email: cleanEmail, otp }
     const otpBody = await OTP.create(otpPayload)
     console.log("OTP Body", otpBody)
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: `OTP Sent Successfully`,
       otp,
     })
   } catch (error) {
-    console.log(error.message)
-    return res.status(500).json({ success: false, error: error.message })
+    console.error("sendotp error:", error.message)
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to send OTP",
+      error: error.message,
+    })
   }
 }
 

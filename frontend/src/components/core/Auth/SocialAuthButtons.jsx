@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from "react"
+import React, { useEffect, useCallback, useRef } from "react"
 import { FcGoogle } from "react-icons/fc"
 import { FaLinkedin } from "react-icons/fa"
 import { useDispatch } from "react-redux"
@@ -24,6 +24,7 @@ function decodeJwt(token) {
 function SocialAuthButtons({ accountType = "Client", mode = "login" }) {
   const dispatch = useDispatch()
   const navigate = useNavigate()
+  const initializedRef = useRef(false)
 
   const googleClientId =
     process.env.REACT_APP_GOOGLE_CLIENT_ID ||
@@ -49,21 +50,26 @@ function SocialAuthButtons({ accountType = "Client", mode = "login" }) {
     [dispatch, navigate, accountType]
   )
 
+  const handleSocialSuccessRef = useRef(handleSocialSuccess)
+  useEffect(() => {
+    handleSocialSuccessRef.current = handleSocialSuccess
+  }, [handleSocialSuccess])
+
   // Listen for OAuth postMessage callbacks from popup windows
   useEffect(() => {
     const handleMessage = (event) => {
       if (event.data && event.data.type === "SOCIAL_AUTH_SUCCESS") {
         const { provider, data } = event.data
-        handleSocialSuccess(provider, data)
+        handleSocialSuccessRef.current(provider, data)
       }
     }
     window.addEventListener("message", handleMessage)
     return () => window.removeEventListener("message", handleMessage)
-  }, [handleSocialSuccess])
+  }, [])
 
-  // Initialize Google Identity Services (GSI) One-Tap / Prompt if available
+  // Initialize Google Identity Services (GSI) One-Tap / Prompt if available (only once)
   useEffect(() => {
-    if (window.google?.accounts?.id && googleClientId) {
+    if (window.google?.accounts?.id && googleClientId && !initializedRef.current) {
       try {
         window.google.accounts.id.initialize({
           client_id: googleClientId,
@@ -71,7 +77,7 @@ function SocialAuthButtons({ accountType = "Client", mode = "login" }) {
             if (response.credential) {
               const payload = decodeJwt(response.credential)
               if (payload && payload.email) {
-                handleSocialSuccess("google", {
+                handleSocialSuccessRef.current("google", {
                   email: payload.email,
                   firstName: payload.given_name || payload.name || payload.email.split("@")[0],
                   lastName: payload.family_name || "",
@@ -81,11 +87,12 @@ function SocialAuthButtons({ accountType = "Client", mode = "login" }) {
             }
           },
         })
+        initializedRef.current = true
       } catch (err) {
         console.warn("Google GSI init warning:", err)
       }
     }
-  }, [googleClientId, handleSocialSuccess])
+  }, [googleClientId])
 
   const handleGoogleSignIn = () => {
     // 1. If Google GSI SDK is available, trigger native Google prompt

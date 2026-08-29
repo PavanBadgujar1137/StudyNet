@@ -71,14 +71,18 @@ export function sendOtp(email, navigate) {
       console.log("SENDOTP API RESPONSE............", response)
 
       if (!response?.data?.success) {
-        throw new Error(response?.data?.message || "Could not send OTP")
+        throw new Error(response?.data?.message || response?.data?.error || "Could not send OTP")
       }
 
       toast.success(response.data.message || "OTP Sent Successfully", { id: toastId })
       if (navigate) navigate("/verify-email")
     } catch (error) {
       console.log("SENDOTP API ERROR............", error)
-      const errorMsg = error?.response?.data?.message || error?.message || "Could Not Send OTP"
+      const errorMsg =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        "Could Not Send OTP"
       toast.error(errorMsg, { id: toastId })
     } finally {
       dispatch(setLoading(false))
