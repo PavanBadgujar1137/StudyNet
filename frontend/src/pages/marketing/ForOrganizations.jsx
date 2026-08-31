@@ -1,8 +1,95 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { OHFooter } from '../../components/openhand'
+import { OHFooter, OHNeverDoSection } from '../../components/openhand'
+import {
+  FiChevronLeft,
+  FiChevronRight,
+  FiCheckCircle,
+  FiCalendar,
+  FiArrowRight
+} from 'react-icons/fi'
+
+
+const EIGHT_WEEK_STEPS = [
+  {
+    weekNum: 1,
+    badge: 'Week 1',
+    title: 'Scope & Theme Alignment',
+    subtitle: 'Pick one team and one specific focus theme',
+    desc: 'Align leadership on the target pilot team (e.g. Engineering or Customer Care) and select an initial focus topic like burnout recovery or managing rapid change.',
+    activity: 'Team scoping call · Capped at 8 seats · Employee interest survey sent out.',
+  },
+  {
+    weekNum: 2,
+    badge: 'Week 2',
+    title: 'Vetted Practitioner Matching',
+    badgeText: 'Week 2',
+    subtitle: 'Match with a certified guide or bring your own',
+    desc: 'We match your circle with a specialized, accredited practitioner from our panel or onboard your organization’s existing wellness facilitator onto OpenHand.',
+    activity: 'Practitioner profile delivered · Circle curriculum approved · Infrastructure ready.',
+  },
+  {
+    weekNum: 3,
+    badge: 'Week 3',
+    title: 'Private Opt-In & Anonymous Onboarding',
+    subtitle: 'Confidential employee opt-in container',
+    desc: 'Team members receive voluntary invitations. Names and individual check-in responses are strictly confidential and never shared with management or HR.',
+    activity: '100% Voluntary opt-in · Names never sent to HR · Confidential welcome kit.',
+  },
+  {
+    weekNum: 4,
+    badge: 'Week 4',
+    title: 'Circle Session 1: Foundation & Space',
+    subtitle: 'First live group session & pod kickoff',
+    desc: 'The 8-person circle holds its inaugural live video session led by the practitioner, establishing shared group norms and initial reflection goals.',
+    activity: 'Live 60-min container · Peer pod activated · Pre-session intention check-in.',
+  },
+  {
+    weekNum: 5,
+    badge: 'Week 5',
+    title: 'Circle Session 2 & 3: Deepening Focus',
+    subtitle: 'Mid-pilot engagement & reflection nudges',
+    desc: 'Midway through the pilot, participants engage in weekly live sessions accompanied by gentle 2-minute asynchronous check-ins between calls.',
+    activity: '2 Live sessions completed · Asynchronous check-in retention: 88% active rate.',
+  },
+  {
+    weekNum: 6,
+    badge: 'Week 6',
+    title: 'Circle Session 4: Workplace Integration',
+    subtitle: 'Translating insights into daily team habits',
+    desc: 'Focus shifts toward practical workplace boundaries, workload communication, and peer support strategies tested in real team settings.',
+    activity: 'Practical boundary toolkit shared · Peer pod check-in · Practitioner guidance.',
+  },
+  {
+    weekNum: 7,
+    badge: 'Week 7',
+    title: 'Circle Session 5: Longitudinal Progress',
+    subtitle: 'Peer pod accountability & individual growth',
+    desc: 'Participants review their longitudinal progress timeline, noting personal shifts in stress resilience and team communication.',
+    activity: 'Progress timeline unlocked · 1:1 escalation pathway introduced for interested peers.',
+  },
+  {
+    weekNum: 8,
+    badge: 'Week 8',
+    title: 'Circle Session 6 & Executive Review',
+    subtitle: 'Final circle session & aggregate outcome report',
+    desc: 'The circle concludes with a celebration of progress. HR receives an aggregate-only impact report measuring participation and theme clusters.',
+    activity: 'Final session completed · Anonymous aggregate report · Option to renew or walk away.',
+  },
+]
 
 export function ForOrganizations() {
+  const [activeWeekIndex, setActiveWeekIndex] = useState(0)
+
+  const handlePrevWeek = () => {
+    setActiveWeekIndex((prev) => (prev > 0 ? prev - 1 : EIGHT_WEEK_STEPS.length - 1))
+  }
+
+  const handleNextWeek = () => {
+    setActiveWeekIndex((prev) => (prev < EIGHT_WEEK_STEPS.length - 1 ? prev + 1 : 0))
+  }
+
+  const currentStep = EIGHT_WEEK_STEPS[activeWeekIndex]
 
   return (
     <div className="org-page relative min-h-screen">
@@ -149,102 +236,119 @@ export function ForOrganizations() {
         </div>
       </section>
 
-      {/* Section 2: Rollout Flow SVG Diagram */}
-      <section className="org-sec" id="how">
+      {/* Section 2: Interactive 8-Week Timeline Stepper (Items 2 & 4) */}
+      <section className="org-sec bg-slate-950/60 py-12 border-y border-slate-800" id="how">
         <div className="oh-wrap">
-          <div className="org-sec-head">
-            <h2>A pilot runs in eight weeks</h2>
-            <p>One team first. If it doesn't move anything, you've lost eight weeks and one invoice — not a year-long contract.</p>
+          <div className="org-sec-head text-center mb-8">
+            <span className="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20 mb-2">
+              Structured Rollout
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white">A pilot runs in eight weeks</h2>
+            <p className="text-slate-300 max-w-2xl mx-auto text-base">
+              One team first. If it doesn't move anything, you've lost eight weeks and one invoice — not a year-long contract.
+            </p>
           </div>
-          <div className="org-flow">
-            <svg
-              className="org-flowsvg"
-              viewBox="0 0 1000 250"
-              role="img"
-              aria-label="Eight week pilot rollout flow from scoping to review"
-            >
-              <defs>
-                <linearGradient id="fg" x1="0" y1="0" x2="1000" y2="0">
-                  <stop offset="0" stopColor="#1F5FE0" />
-                  <stop offset="0.5" stopColor="#4733C9" />
-                  <stop offset="1" stopColor="#8A2BE0" />
-                </linearGradient>
-                <marker
-                  id="ar"
-                  viewBox="0 0 10 10"
-                  refX="9"
-                  refY="5"
-                  markerWidth="7"
-                  markerHeight="7"
-                  orient="auto"
+
+          {/* Interactive Week Circle Badges & Controls Header */}
+          <div className="relative rounded-2xl bg-slate-900 border border-slate-800 p-6 sm:p-8 shadow-2xl mb-6">
+            
+            <div className="flex items-center justify-between gap-4 mb-6 pb-6 border-b border-slate-800 flex-wrap sm:flex-nowrap">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-sky-400">Interactive Timeline Stepper</span>
+                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                  <FiCalendar className="text-sky-400" /> Week-by-Week Pilot Roadmap
+                </h3>
+              </div>
+
+              {/* Prev / Next Arrow Navigation Controls */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handlePrevWeek}
+                  className="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center transition-colors border border-slate-700"
+                  title="Previous Week"
+                  aria-label="Previous Week"
                 >
-                  <path
-                    d="M1 1L9 5L1 9"
-                    fill="none"
-                    stroke="#8A2BE0"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </marker>
-              </defs>
-              <line
-                x1="70"
-                y1="120"
-                x2="930"
-                y2="120"
-                stroke="url(#fg)"
-                strokeWidth="3"
-                strokeLinecap="round"
-                markerEnd="url(#ar)"
-                opacity="0.85"
-              />
+                  <FiChevronLeft className="w-5 h-5" />
+                </button>
+                <span className="text-xs font-bold text-slate-300 px-2 min-w-[70px] text-center">
+                  Week {activeWeekIndex + 1} of 8
+                </span>
+                <button
+                  onClick={handleNextWeek}
+                  className="w-10 h-10 rounded-xl bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center transition-colors shadow-lg shadow-blue-600/30"
+                  title="Next Week (Navigates through Week 8)"
+                  aria-label="Next Week"
+                >
+                  <FiChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
 
-              <g>
-                <circle cx="90" cy="120" r="26" fill="#fff" stroke="#1F5FE0" strokeWidth="2.5" />
-                <text x="90" y="126" textAnchor="middle" className="ttl" fontSize="14" fill="#1F5FE0">1</text>
-                <text x="90" y="70" textAnchor="middle" className="wk" fontSize="10.5">WEEK 0</text>
-                <text x="90" y="176" textAnchor="middle" className="ttl" fontSize="13.5">Scope</text>
-                <text x="90" y="196" textAnchor="middle" className="sub" fontSize="11.5">Pick one team</text>
-                <text x="90" y="212" textAnchor="middle" className="sub" fontSize="11.5">and one theme</text>
-              </g>
+            {/* Horizontal Week Circles Selector (Week 1 to Week 8) */}
+            <div className="grid grid-cols-4 sm:grid-cols-8 gap-2 mb-8">
+              {EIGHT_WEEK_STEPS.map((step, idx) => {
+                const isActive = activeWeekIndex === idx
+                return (
+                  <button
+                    key={step.weekNum}
+                    onClick={() => setActiveWeekIndex(idx)}
+                    className={`flex flex-col items-center p-3 rounded-xl transition-all border text-center ${
+                      isActive
+                        ? 'bg-sky-400 text-slate-950 font-bold border-sky-300 shadow-lg shadow-sky-400/30 scale-105'
+                        : 'bg-slate-800/80 text-slate-300 hover:bg-slate-800 border-slate-700/60'
+                    }`}
+                  >
+                    <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-extrabold mb-1 ${
+                      isActive ? 'bg-slate-950 text-sky-400' : 'bg-slate-900 text-slate-300'
+                    }`}>
+                      {step.weekNum}
+                    </span>
+                    <span className="text-[11px] font-semibold tracking-tight whitespace-nowrap">
+                      Week {step.weekNum}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
 
-              <g>
-                <circle cx="258" cy="120" r="26" fill="#fff" stroke="#3352D6" strokeWidth="2.5" />
-                <text x="258" y="126" textAnchor="middle" className="ttl" fontSize="14" fill="#3352D6">2</text>
-                <text x="258" y="70" textAnchor="middle" className="wk" fontSize="10.5">WEEK 1</text>
-                <text x="258" y="176" textAnchor="middle" className="ttl" fontSize="13.5">Match</text>
-                <text x="258" y="196" textAnchor="middle" className="sub" fontSize="11.5">Practitioner from our</text>
-                <text x="258" y="212" textAnchor="middle" className="sub" fontSize="11.5">panel, or bring yours</text>
-              </g>
+            {/* Active Week Activity Card Detail Box */}
+            <div className="rounded-xl bg-slate-950/80 border border-slate-800 p-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                <div>
+                  <span className="inline-block px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-sky-500/20 text-sky-300 border border-sky-500/30 mb-2">
+                    {currentStep.badge} — Milestone Phase
+                  </span>
+                  <h3 className="text-2xl font-bold text-white tracking-tight">{currentStep.title}</h3>
+                  <p className="text-sm font-medium text-slate-300 mt-1">{currentStep.subtitle}</p>
+                </div>
+                <Link
+                  to="/contact-us"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-500 text-white transition-colors shrink-0 shadow-md"
+                >
+                  Request Week {currentStep.weekNum} Pilot <FiArrowRight />
+                </Link>
+              </div>
 
-              <g>
-                <circle cx="426" cy="120" r="26" fill="#fff" stroke="#4733C9" strokeWidth="2.5" />
-                <text x="426" y="126" textAnchor="middle" className="ttl" fontSize="14" fill="#4733C9">3</text>
-                <text x="426" y="70" textAnchor="middle" className="wk" fontSize="10.5">WEEK 2</text>
-                <text x="426" y="176" textAnchor="middle" className="ttl" fontSize="13.5">Invite</text>
-                <text x="426" y="196" textAnchor="middle" className="sub" fontSize="11.5">Opt-in, capped at 8,</text>
-                <text x="426" y="212" textAnchor="middle" className="sub" fontSize="11.5">names never sent to HR</text>
-              </g>
+              <p className="text-slate-300 text-sm leading-relaxed mb-4">
+                {currentStep.desc}
+              </p>
 
-              <g>
-                <circle cx="594" cy="120" r="26" fill="#fff" stroke="#6B33D2" strokeWidth="2.5" />
-                <text x="594" y="126" textAnchor="middle" className="ttl" fontSize="14" fill="#6B33D2">4</text>
-                <text x="594" y="70" textAnchor="middle" className="wk" fontSize="10.5">WEEKS 3–8</text>
-                <text x="594" y="176" textAnchor="middle" className="ttl" fontSize="13.5">Run the circle</text>
-                <text x="594" y="196" textAnchor="middle" className="sub" fontSize="11.5">Six weekly sessions</text>
-                <text x="594" y="212" textAnchor="middle" className="sub" fontSize="11.5">plus check-ins between</text>
-              </g>
+              {/* ITEM 4 FIX: Week wise activity text highlighted in light blue with HIGH-CONTRAST DARK NAVY TEXT */}
+              <div className="rounded-xl p-4 bg-[#E0F2FE] border border-[#38BDF8] shadow-sm">
+                <div className="flex items-start gap-2.5">
+                  <FiCheckCircle className="w-5 h-5 text-[#0369A1] shrink-0 mt-0.5" />
+                  <div>
+                    <span className="text-xs font-extrabold uppercase tracking-wider text-[#0369A1] block mb-0.5">
+                      Week Activity &amp; Deliverable Output:
+                    </span>
+                    <p className="text-[#0F172A] font-bold text-sm sm:text-base leading-snug">
+                      {currentStep.activity}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-              <g>
-                <circle cx="762" cy="120" r="26" fill="#fff" stroke="#8A2BE0" strokeWidth="2.5" />
-                <text x="762" y="126" textAnchor="middle" className="ttl" fontSize="14" fill="#8A2BE0">5</text>
-                <text x="762" y="70" textAnchor="middle" className="wk" fontSize="10.5">WEEK 9</text>
-                <text x="762" y="176" textAnchor="middle" className="ttl" fontSize="13.5">Review</text>
-                <text x="762" y="196" textAnchor="middle" className="sub" fontSize="11.5">Aggregate-only report,</text>
-                <text x="762" y="212" textAnchor="middle" className="sub" fontSize="11.5">renew or walk away</text>
-              </g>
-            </svg>
           </div>
         </div>
       </section>
@@ -390,112 +494,47 @@ export function ForOrganizations() {
         </div>
       </section>
 
-      {/* Section 5: Marketplace Loop Flywheel SVG Diagram */}
-      <section className="org-sec">
-        <div className="oh-wrap">
-          <div className="org-loop">
-            <h2>Why this is better for the practitioners too</h2>
-            <p>
-              Corporate circles aren't a side business bolted onto a coaching platform. They're the engine that makes the whole thing work — because they hand our practitioners paid, filled work they'd otherwise have to go find themselves.
-            </p>
-            <svg
-              className="org-loopsvg"
-              viewBox="0 0 940 300"
-              role="img"
-              aria-label="Circular flywheel diagram showing companies funding circles, practitioners earning, learners continuing, and the directory attracting more practitioners"
-            >
-              <defs>
-                <linearGradient id="fg2" x1="408" y1="88" x2="532" y2="212">
-                  <stop offset="0" stopColor="#1F5FE0" />
-                  <stop offset="1" stopColor="#8A2BE0" />
-                </linearGradient>
-                <marker
-                  id="ar2"
-                  viewBox="0 0 10 10"
-                  refX="8"
-                  refY="5"
-                  markerWidth="7"
-                  markerHeight="7"
-                  orient="auto"
-                >
-                  <path
-                    d="M1 1L9 5L1 9"
-                    fill="none"
-                    stroke="#9BB4FF"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </marker>
-              </defs>
-
-              <path d="M250 60 H690" stroke="#9BB4FF" strokeWidth="2" opacity="0.5" markerEnd="url(#ar2)" fill="none" />
-              <path d="M810 105 V195" stroke="#9BB4FF" strokeWidth="2" opacity="0.5" markerEnd="url(#ar2)" fill="none" />
-              <path d="M690 240 H250" stroke="#9BB4FF" strokeWidth="2" opacity="0.5" markerEnd="url(#ar2)" fill="none" />
-              <path d="M130 195 V105" stroke="#9BB4FF" strokeWidth="2" opacity="0.5" markerEnd="url(#ar2)" fill="none" />
-
-              <g>
-                <rect x="30" y="28" width="200" height="76" rx="14" fill="rgba(255,255,255,.07)" stroke="rgba(255,255,255,.16)" />
-                <text x="130" y="58" textAnchor="middle" className="lt">Companies buy circles</text>
-                <text x="130" y="80" textAnchor="middle">Higher contract value</text>
-              </g>
-
-              <g>
-                <rect x="710" y="28" width="200" height="76" rx="14" fill="rgba(255,255,255,.07)" stroke="rgba(255,255,255,.16)" />
-                <text x="810" y="58" textAnchor="middle" className="lt">Practitioners get paid work</text>
-                <text x="810" y="80" textAnchor="middle">Filled seats, no marketing</text>
-              </g>
-
-              <g>
-                <rect x="710" y="196" width="200" height="76" rx="14" fill="rgba(255,255,255,.07)" stroke="rgba(255,255,255,.16)" />
-                <text x="810" y="226" textAnchor="middle" className="lt">Employees continue privately</text>
-                <text x="810" y="248" textAnchor="middle">1:1 and memberships</text>
-              </g>
-
-              <g>
-                <rect x="30" y="196" width="200" height="76" rx="14" fill="rgba(255,255,255,.07)" stroke="rgba(255,255,255,.16)" />
-                <text x="130" y="226" textAnchor="middle" className="lt">Directory gets deeper</text>
-                <text x="130" y="248" textAnchor="middle">Better practitioners join</text>
-              </g>
-
-              <g>
-                <circle cx="470" cy="150" r="62" fill="none" stroke="url(#fg2)" strokeWidth="2.5" />
-                <text x="470" y="145" textAnchor="middle" className="lt" fontSize="15">OpenHand</text>
-                <text x="470" y="166" textAnchor="middle" fontSize="11.5">takes a cut of each</text>
-              </g>
-            </svg>
-          </div>
-        </div>
-      </section>
-
-      {/* Section 6: Confidentiality (HR Sees vs Never Sees) */}
+      {/* Section 5: Confidentiality & Uniform Never Do Section (Item 5) */}
       <section className="org-sec">
         <div className="oh-wrap">
           <div className="org-sec-head">
             <h2>What HR sees, and what HR never sees</h2>
             <p>This distinction is the entire reason people participate. We put it in the contract.</p>
           </div>
-          <div className="org-conf grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <div className="box see">
-              <h3>You do see</h3>
-              <ul>
-                <li>How many seats were taken up</li>
-                <li>Completion rate across the circle</li>
-                <li>Themes raised, clustered and anonymised</li>
-                <li>Aggregate wellbeing direction over time</li>
-                <li>Whether people escalated to 1:1 (count only)</li>
+          <div className="org-conf grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+            <div className="box see rounded-2xl p-6 sm:p-8 bg-slate-900 border border-slate-800">
+              <h3 className="text-xl font-bold text-white mb-4">You do see</h3>
+              <ul className="space-y-3">
+                <li className="flex items-center gap-2 text-sm text-slate-200">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" /> How many seats were taken up
+                </li>
+                <li className="flex items-center gap-2 text-sm text-slate-200">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" /> Completion rate across the circle
+                </li>
+                <li className="flex items-center gap-2 text-sm text-slate-200">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" /> Themes raised, clustered and anonymised
+                </li>
+                <li className="flex items-center gap-2 text-sm text-slate-200">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" /> Aggregate wellbeing direction over time
+                </li>
+                <li className="flex items-center gap-2 text-sm text-slate-200">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" /> Whether people escalated to 1:1 (count only)
+                </li>
               </ul>
             </div>
-            <div className="box never">
-              <h3>You never see</h3>
-              <ul>
-                <li>Who joined which circle</li>
-                <li>Anything an individual said</li>
-                <li>Session recordings or transcripts</li>
-                <li>Individual check-in responses</li>
-                <li>Who escalated to private sessions</li>
-              </ul>
-            </div>
+
+            {/* ITEM 5: Uniform OHNeverDoSection component */}
+            <OHNeverDoSection
+              title="What HR never sees"
+              subtitle="Strict employee privacy limits hardcoded into OpenHand contracts:"
+              items={[
+                "Who joined which circle or attended specific weekly calls.",
+                "Anything an individual employee said during group sessions.",
+                "Session video recordings, chat logs, or transcription records.",
+                "Individual daily reflection check-in responses.",
+                "Who escalated to private 1:1 sessions with practitioners."
+              ]}
+            />
           </div>
         </div>
       </section>

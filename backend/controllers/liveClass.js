@@ -30,7 +30,16 @@ exports.scheduleLiveClass = async (req, res) => {
       })
     }
 
+    // ITEM 18 FIX: Prevent backdated meeting creation
+    if (new Date(scheduledStart) < new Date(Date.now() - 5 * 60 * 1000)) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot schedule a backdated meeting. Please choose a future date and time.",
+      })
+    }
+
     const start = new Date(scheduledStart)
+
     const end = new Date(scheduledEnd)
     const durationMinutes = Math.max(15, Math.round((end.getTime() - start.getTime()) / 60000))
 

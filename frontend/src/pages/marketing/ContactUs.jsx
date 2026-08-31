@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { OHFooter } from '../../components/openhand'
+
 import { apiConnector } from '../../services/apiConnector'
 import toast from 'react-hot-toast'
 import {
@@ -12,7 +13,9 @@ import {
   FiShield,
   FiCheckCircle,
   FiZap,
-  FiSend
+  FiSend,
+  FiMail,
+  FiPhoneCall
 } from 'react-icons/fi'
 
 export function ContactUs() {
@@ -24,9 +27,11 @@ export function ContactUs() {
   })
   const [selectedDesk, setSelectedDesk] = useState('setup')
   const [selectedTopic, setSelectedTopic] = useState(null)
-  const [openFaq, setOpenFaq] = useState([0])
+  // ITEM 10 FIX: Single active accordion state matching Questions Practitioners Ask & AURA
+  const [activeFaq, setActiveFaq] = useState(0)
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [directActionModal, setDirectActionModal] = useState(null) // setup | tech | org
 
   const topics = [
     {
@@ -93,6 +98,7 @@ export function ContactUs() {
     setFormData((prev) => ({ ...prev, [e.target.id]: e.target.value }))
   }
 
+  // ITEM 8 FIX: Sync selected topic with both workType AND desk preference
   const handleSelectTopic = (index) => {
     setSelectedTopic(index)
     const topic = topics[index]
@@ -101,6 +107,15 @@ export function ContactUs() {
         ...prev,
         workType: topic.workTypeValue,
       }))
+      
+      // Dynamically set matching desk focus!
+      if (topic.id === 'fit') {
+        setSelectedDesk('setup')
+      } else if (topic.id === 'migration') {
+        setSelectedDesk('tech')
+      } else if (topic.id === 'org') {
+        setSelectedDesk('org')
+      }
     }
     // Scroll smoothly to form
     const bookElem = document.getElementById('book')
@@ -109,10 +124,9 @@ export function ContactUs() {
     }
   }
 
+  // ITEM 10 FIX: Single open accordion behavior
   const toggleFaq = (index) => {
-    setOpenFaq((prev) =>
-      prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]
-    )
+    setActiveFaq((prev) => (prev === index ? null : index))
   }
 
   const handleSubmit = async (e) => {
@@ -143,7 +157,6 @@ export function ContactUs() {
         meetingType: 'Requested Call',
       })
 
-      // Also log to Admin Panel OrgConversation if this is an org inquiry
       const isOrgInquiry =
         formData.workType === 'Organisational / employee wellbeing' ||
         (selectedTopicObj?.id === 'org')
@@ -178,6 +191,63 @@ export function ContactUs() {
 
   return (
     <div className="talk-page relative min-h-screen">
+
+      {/* Direct Desk Action Modal (ITEM 7 FIX) */}
+      {directActionModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
+          <div className="relative w-full max-w-md rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl p-6 text-left">
+            <button
+              onClick={() => setDirectActionModal(null)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white"
+            >
+              ✕
+            </button>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                {directActionModal === 'setup' ? <FiMessageSquare /> : directActionModal === 'tech' ? <FiMail /> : <FiPhoneCall />}
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">
+                  {directActionModal === 'setup' ? 'Practice Setup Desk Options' : directActionModal === 'tech' ? 'Tech & Ethics Desk Options' : 'Organizations Desk Line'}
+                </h3>
+                <span className="text-xs text-slate-400">Direct Communication Channel</span>
+              </div>
+            </div>
+            <p className="text-xs text-slate-300 mb-4 leading-relaxed">
+              {directActionModal === 'setup'
+                ? 'Connect instantly with practice architects for circle pricing and onboarding guidance.'
+                : directActionModal === 'tech'
+                ? 'Direct line for HIPAA/GDPR data security, AURA consent ethics, and caseload migration.'
+                : 'Direct line for enterprise pilot scoping, HR confidentiality agreements, and seat billing.'}
+            </p>
+            <div className="space-y-2.5">
+              <a
+                href={
+                  directActionModal === 'setup'
+                    ? 'mailto:setup@openhand.in?subject=Practice%20Setup%20Desk%20Inquiry'
+                    : directActionModal === 'tech'
+                    ? 'mailto:tech-ethics@openhand.in?subject=Tech%20%26%20Ethics%20Security%20Inquiry'
+                    : 'mailto:enterprise@openhand.in?subject=Organizations%20Pilot%20Inquiry'
+                }
+                className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors"
+              >
+                <FiMail /> Send Direct Email (Open Mailbox)
+              </a>
+              <button
+                onClick={() => {
+                  setSelectedDesk(directActionModal)
+                  setDirectActionModal(null)
+                  const bookElem = document.getElementById('book')
+                  if (bookElem) bookElem.scrollIntoView({ behavior: 'smooth' })
+                }}
+                className="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs flex items-center justify-center gap-2 transition-colors border border-slate-700"
+              >
+                <FiSend /> Fill Booking Form
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Hero */}
       <header className="talk-hero">
@@ -219,7 +289,7 @@ export function ContactUs() {
         </div>
       </header>
 
-      {/* Executive Contact Desks Section */}
+      {/* Executive Contact Desks Section (ITEM 7 FIX) */}
       <section className="talk-sec">
         <div className="oh-wrap">
           <div className="talk-sec-head">
@@ -254,22 +324,28 @@ export function ContactUs() {
                   <span>Pricing &amp; Offers</span>
                   <span>Practitioner Setup</span>
                 </div>
-                <button
-                  type="button"
-                  className={`fcard-btn ${selectedDesk === 'setup' ? 'selected' : ''}`}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setSelectedDesk('setup')
-                  }}
-                >
-                  {selectedDesk === 'setup' ? (
-                    <>
-                      <FiCheck /> Contacting Practice Setup Desk
-                    </>
-                  ) : (
-                    'Contact Practice Setup Desk'
-                  )}
-                </button>
+                <div className="flex flex-col gap-2 mt-4">
+                  <button
+                    type="button"
+                    className={`fcard-btn ${selectedDesk === 'setup' ? 'selected' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setSelectedDesk('setup')
+                    }}
+                  >
+                    {selectedDesk === 'setup' ? <><FiCheck /> Practice Setup Selected</> : 'Select Practice Setup Desk'}
+                  </button>
+                  <button
+                    type="button"
+                    className="py-2 px-3 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-blue-300 transition-colors flex items-center justify-center gap-1.5"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setDirectActionModal('setup')
+                    }}
+                  >
+                    <FiMail /> Open Direct Setup Options
+                  </button>
+                </div>
               </div>
 
               {/* Tech & Ethics Desk Card */}
@@ -295,22 +371,28 @@ export function ContactUs() {
                   <span>Ethical AI AURA</span>
                   <span>Caseload Migration</span>
                 </div>
-                <button
-                  type="button"
-                  className={`fcard-btn ${selectedDesk === 'tech' ? 'selected' : ''}`}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setSelectedDesk('tech')
-                  }}
-                >
-                  {selectedDesk === 'tech' ? (
-                    <>
-                      <FiCheck /> Contacting Tech &amp; Ethics Desk
-                    </>
-                  ) : (
-                    'Contact Tech &amp; Ethics Desk'
-                  )}
-                </button>
+                <div className="flex flex-col gap-2 mt-4">
+                  <button
+                    type="button"
+                    className={`fcard-btn ${selectedDesk === 'tech' ? 'selected' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setSelectedDesk('tech')
+                    }}
+                  >
+                    {selectedDesk === 'tech' ? <><FiCheck /> Tech &amp; Ethics Selected</> : 'Select Tech &amp; Ethics Desk'}
+                  </button>
+                  <button
+                    type="button"
+                    className="py-2 px-3 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-blue-300 transition-colors flex items-center justify-center gap-1.5"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setDirectActionModal('tech')
+                    }}
+                  >
+                    <FiMail /> Open Direct Security Mailbox
+                  </button>
+                </div>
               </div>
 
               {/* Organizations Desk Card */}
@@ -336,22 +418,28 @@ export function ContactUs() {
                   <span>HR Confidentiality</span>
                   <span>Enterprise Pilots</span>
                 </div>
-                <button
-                  type="button"
-                  className={`fcard-btn ${selectedDesk === 'org' ? 'selected' : ''}`}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setSelectedDesk('org')
-                  }}
-                >
-                  {selectedDesk === 'org' ? (
-                    <>
-                      <FiCheck /> Contacting Organizations Desk
-                    </>
-                  ) : (
-                    'Contact Organizations Desk'
-                  )}
-                </button>
+                <div className="flex flex-col gap-2 mt-4">
+                  <button
+                    type="button"
+                    className={`fcard-btn ${selectedDesk === 'org' ? 'selected' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setSelectedDesk('org')
+                    }}
+                  >
+                    {selectedDesk === 'org' ? <><FiCheck /> Organizations Selected</> : 'Select Organizations Desk'}
+                  </button>
+                  <button
+                    type="button"
+                    className="py-2 px-3 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-blue-300 transition-colors flex items-center justify-center gap-1.5"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setDirectActionModal('org')
+                    }}
+                  >
+                    <FiPhoneCall /> Open Enterprise Line Options
+                  </button>
+                </div>
               </div>
 
             </div>
@@ -359,7 +447,7 @@ export function ContactUs() {
         </div>
       </section>
 
-      {/* Three Conversations Section */}
+      {/* Three Conversations Section (ITEM 8 FIX) */}
       <section className="talk-sec">
         <div className="oh-wrap">
           <div className="talk-sec-head">
@@ -464,22 +552,23 @@ export function ContactUs() {
 
               <div className="form-fields-col">
                 {submitted ? (
-                  <div className="talk-ok-card">
-                    <div className="ok-icon-wrap">
-                      <FiCheckCircle className="ok-check" />
+                  /* ITEM 9 FIX: Highlighted Submit Another Request Button */
+                  <div className="talk-ok-card p-8 rounded-2xl bg-slate-900 border border-emerald-500/30 text-center">
+                    <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mx-auto mb-4">
+                      <FiCheckCircle className="w-8 h-8" />
                     </div>
-                    <h3>Contact request sent!</h3>
-                    <p>
-                      Thanks, <strong>{formData.name.split(' ')[0]}</strong>. We have received your request.
+                    <h3 className="text-2xl font-extrabold text-white mb-2">Contact request sent!</h3>
+                    <p className="text-slate-300 text-sm mb-6">
+                      Thanks, <strong className="text-white">{formData.name.split(' ')[0]}</strong>. We have received your request.
                     </p>
-                    <div className="ok-details">
-<div className="ok-item">
-                        <span>Reply Email:</span>
-                        <strong>{formData.email}</strong>
+                    <div className="bg-slate-950 p-4 rounded-xl text-xs space-y-2 mb-6 text-left border border-slate-800">
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Reply Email:</span>
+                        <strong className="text-slate-200">{formData.email}</strong>
                       </div>
-                      <div className="ok-item">
-                        <span>Desk Preference:</span>
-                        <strong>
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Desk Preference:</span>
+                        <strong className="text-slate-200">
                           {selectedDesk === 'setup'
                             ? 'Practice Setup Desk'
                             : selectedDesk === 'tech'
@@ -488,19 +577,15 @@ export function ContactUs() {
                         </strong>
                       </div>
                       {selectedTopic !== null && (
-                        <div className="ok-item">
-                          <span>Focus Topic:</span>
-                          <strong>{topics[selectedTopic].title}</strong>
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Focus Topic:</span>
+                          <strong className="text-slate-200">{topics[selectedTopic].title}</strong>
                         </div>
                       )}
                     </div>
-                    <p className="ok-subtext">
-                      We will review your context and reply with 2–3 time slots within one working day.
-                    </p>
                     <button
                       type="button"
-                      className="talk-btn-ghost"
-                      style={{ marginTop: '16px', width: '100%' }}
+                      className="w-full py-3.5 px-6 rounded-xl font-bold text-sm bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2"
                       onClick={() => {
                         setSubmitted(false)
                         setFormData({
@@ -512,7 +597,7 @@ export function ContactUs() {
                         setSelectedTopic(null)
                       }}
                     >
-                      Submit Another Request
+                      Submit Another Request <FiSend />
                     </button>
                   </div>
                 ) : (
@@ -539,8 +624,7 @@ export function ContactUs() {
                           type="button"
                           className={`ftab ${selectedDesk === 'org' ? 'active' : ''}`}
                           onClick={() => setSelectedDesk('org')}
-
->
+                        >
                           Organizations &amp; EAP
                         </button>
                       </div>
@@ -619,7 +703,7 @@ export function ContactUs() {
         </div>
       </section>
 
-      {/* FAQ Accordion Section */}
+      {/* FAQ Accordion Section (ITEM 10 FIX) */}
       <section className="talk-sec">
         <div className="oh-wrap">
           <div className="talk-sec-head">
@@ -628,23 +712,27 @@ export function ContactUs() {
             <p>Common questions practitioners have before scheduling a founder call.</p>
           </div>
 
-          <div className="talk-faq">
+          <div className="talk-faq space-y-4">
             {faqs.map((faq, idx) => {
-              const isOpen = openFaq.includes(idx)
+              const isOpen = activeFaq === idx
               return (
                 <div
                   key={idx}
-                  className={`talk-q-card ${isOpen ? 'open' : ''}`}
+                  className={`talk-q-card rounded-2xl p-5 transition-all cursor-pointer border ${
+                    isOpen
+                      ? 'bg-slate-900 border-blue-500/50 shadow-lg shadow-blue-500/10'
+                      : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+                  }`}
                   onClick={() => toggleFaq(idx)}
                 >
-                  <div className="talk-q-head">
-                    <h3>{faq.q}</h3>
-                    <span className="talk-q-toggle">
-                      <FiChevronDown className={`chevron-icon ${isOpen ? 'rotate' : ''}`} />
+                  <div className="talk-q-head flex items-center justify-between gap-4">
+                    <h3 className="text-base font-bold text-white">{faq.q}</h3>
+                    <span className="talk-q-toggle text-slate-400 shrink-0">
+                      <FiChevronDown className={`w-5 h-5 transition-transform ${isOpen ? 'rotate-180 text-blue-400' : ''}`} />
                     </span>
                   </div>
                   {isOpen && (
-                    <div className="talk-q-body">
+                    <div className="talk-q-body mt-3 pt-3 border-t border-slate-800 text-sm text-slate-300 leading-relaxed">
                       <p>{faq.a}</p>
                     </div>
                   )}

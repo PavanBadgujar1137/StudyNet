@@ -8,6 +8,8 @@ import {
 import toast from "react-hot-toast"
 
 import { joinClass, leaveClass, startClass, endClass } from "../services/operations/liveClassAPI"
+import { apiConnector } from "../services/apiConnector"
+
 
 export default function LiveClassRoom() {
   const { classId } = useParams()

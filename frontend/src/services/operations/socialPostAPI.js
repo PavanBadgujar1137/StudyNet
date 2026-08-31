@@ -33,6 +33,29 @@ export const createSocialPost = async (formData, token) => {
   }
 }
 
+// Update an existing social post (Draft / Scheduled / Active)
+export const updateSocialPost = async (postId, formData, token) => {
+  const toastId = toast.loading("Updating social post...")
+  try {
+    const response = await apiConnector("PUT", `/api/v1/social-posts/update/${postId}`, formData, {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": formData instanceof FormData ? "multipart/form-data" : "application/json",
+    })
+
+    if (!response?.data?.success) {
+      throw new Error(response?.data?.message || "Failed to update post")
+    }
+
+    toast.success("Social post updated successfully!", { id: toastId })
+    return response.data.post
+  } catch (error) {
+    console.error("updateSocialPost error:", error)
+    toast.error(error?.response?.data?.message || error?.message || "Error updating post", { id: toastId })
+    return null
+  }
+}
+
+
 // Fetch all practitioner posts
 export const fetchPractitionerPosts = async (token) => {
   try {

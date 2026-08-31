@@ -1,12 +1,5 @@
-/**
- * OpenHand — Consent Gate
- * AURA consent UI — explicit, revocable mid-session, logged to ConsentLog.
- * Per aura.html always/never rails:
- *   - Nothing records without live, revocable consent
- *   - Consent displayed prominently during session
- *   - Any revocation stops recording immediately
- */
 import React, { useState } from 'react'
+import OHConsentModal from './OHConsentModal'
 
 const CONSENT_TYPES = {
   copilot_notes: {
@@ -32,8 +25,15 @@ export function OHConsentGate({
   className = '',
 }) {
   const [loading, setLoading] = useState(null)
+  const [modalState, setModalState] = useState({ isOpen: false, type: null, isActive: false })
 
-  const handleToggle = async (type, isActive) => {
+  const handleOpenModal = (type, isActive) => {
+    setModalState({ isOpen: true, type, isActive })
+  }
+
+  const handleConfirmModal = async () => {
+    const { type, isActive } = modalState
+    if (!type) return
     setLoading(type)
     try {
       if (isActive) {
@@ -43,11 +43,33 @@ export function OHConsentGate({
       }
     } finally {
       setLoading(null)
+      setModalState({ isOpen: false, type: null, isActive: false })
     }
   }
 
+  const selectedTypeInfo = modalState.type ? CONSENT_TYPES[modalState.type] : null
+
   return (
     <div className={['oh-consent', className].filter(Boolean).join(' ')}>
+      {/* Centered Screen Consent Modal (Item 6) */}
+      {modalState.isOpen && selectedTypeInfo && (
+        <OHConsentModal
+          isOpen={modalState.isOpen}
+          onClose={() => setModalState({ isOpen: false, type: null, isActive: false })}
+          onConfirm={handleConfirmModal}
+          loading={loading === modalState.type}
+          title={modalState.isActive ? `Revoke ${selectedTypeInfo.label}?` : `Grant ${selectedTypeInfo.label}?`}
+          subtitle={`This consent setting applies strictly to session with ${clientName}.`}
+          confirmText={modalState.isActive ? "Yes, Revoke Consent" : "Yes, Grant Consent"}
+          type={modalState.isActive ? "warning" : "consent"}
+          items={[
+            selectedTypeInfo.description,
+            "Consent can be revoked at any time mid-session.",
+            "Recordings & insights are end-to-end encrypted and never used for public training."
+          ]}
+        />
+      )}
+
       <div className="oh-consent__header">
         <div className="oh-consent__icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -81,7 +103,7 @@ export function OHConsentGate({
               </div>
               <button
                 className={['oh-consent__toggle', isActive ? 'oh-consent__toggle--on' : ''].filter(Boolean).join(' ')}
-                onClick={() => handleToggle(type, isActive)}
+                onClick={() => handleOpenModal(type, isActive)}
                 disabled={isLoading}
                 aria-pressed={isActive}
                 aria-label={`${isActive ? 'Revoke' : 'Grant'} consent for ${info.label}`}
@@ -93,7 +115,7 @@ export function OHConsentGate({
         })}
       </div>
 
-      {/* Hard rules (from aura.html always/never rails) */}
+      {/* Hard rules */}
       <div className="oh-consent__rules">
         <p className="oh-consent__rules-title">Always / never</p>
         <ul>

@@ -34,9 +34,10 @@ const courseSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["draft", "published"],
+      enum: ["draft", "ready_for_publish", "published"],
       default: "draft",
     },
+
 
     // Subscription plan required to access (null = free, or "starter"/"growth"/"practice")
     requiredPlan: {

@@ -71,6 +71,8 @@ function App() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
 
+  const location = useLocation()
+
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
     if (storedToken) {
@@ -86,6 +88,21 @@ function App() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Item 1: Prevent back navigation from exiting main page '/'
+  useEffect(() => {
+    if (location.pathname === '/') {
+      window.history.pushState(null, '', window.location.href)
+      const handlePopState = () => {
+        window.history.pushState(null, '', window.location.href)
+      }
+      window.addEventListener('popstate', handlePopState)
+      return () => {
+        window.removeEventListener('popstate', handlePopState)
+      }
+    }
+  }, [location.pathname])
+
 
   return (
     <div className="flex min-h-screen w-full flex-col overflow-x-hidden bg-richblack-900 font-inter">

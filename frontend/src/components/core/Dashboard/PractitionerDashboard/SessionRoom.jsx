@@ -48,17 +48,26 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
       return
     }
 
-    setSubmitting(true)
     const startDate = new Date(scheduledStart)
+    const now = new Date()
+
+    // ITEM 18 FIX: Prevent backdated meeting creation
+    if (startDate < new Date(now.getTime() - 5 * 60 * 1000)) {
+      toast.error('Cannot schedule a backdated meeting. Please choose a future date and time.')
+      return
+    }
+
+    setSubmitting(true)
     const endDate = new Date(startDate.getTime() + Number(durationMinutes) * 60 * 1000)
 
     const payload = {
-      title,
-      description,
+      title: title.slice(0, 100),
+      description: description.slice(0, 500),
       scheduledStart: startDate.toISOString(),
       scheduledEnd: endDate.toISOString(),
       streamProvider: 'zoom',
     }
+
 
     const result = await scheduleLiveClass(token, payload)
     setSubmitting(false)
@@ -471,11 +480,13 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
-                    Start Date &amp; Time *
+                  <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                    <span>Start Date &amp; Time *</span>
+                    <span style={{ fontSize: '11px', color: '#64748B', fontWeight: 500 }}>Future Date Only</span>
                   </label>
                   <input
                     type="datetime-local"
+                    min={new Date().toISOString().slice(0, 16)}
                     value={scheduledStart}
                     onChange={(e) => setScheduledStart(e.target.value)}
                     required
@@ -488,6 +499,7 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
                     }}
                   />
                 </div>
+
 
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>

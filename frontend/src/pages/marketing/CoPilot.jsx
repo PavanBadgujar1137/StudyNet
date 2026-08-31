@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { OHFooter } from '../../components/openhand'
+import { OHFooter, OHNeverDoSection } from '../../components/openhand'
 import { 
+
   FiChevronDown, 
   FiHelpCircle 
 } from 'react-icons/fi'
@@ -297,16 +298,18 @@ export function CoPilot() {
                   <li>Logs everything it did, for you to export or delete</li>
                 </ul>
               </div>
-              <div className="copilot-rail never">
-                <h3>It never</h3>
-                <ul>
-                  <li>Speaks to your learner, or appears on their screen</li>
-                  <li>Diagnoses, or suggests medication</li>
-                  <li>Sends a message on your behalf without approval</li>
-                  <li>Records without live, revocable consent</li>
-                  <li>Feeds your session content to external model training</li>
-                </ul>
-              </div>
+              <OHNeverDoSection
+                title="What AURA will never do"
+                subtitle="Ethical boundaries hardcoded into our engine:"
+                items={[
+                  "Speaks to your learner or appears on their screen.",
+                  "Diagnoses, prescribes medication, or replaces clinical judgement.",
+                  "Sends a message on your behalf without your explicit approval.",
+                  "Records session audio without live, revocable consent.",
+                  "Feeds your session content or notes to external model training."
+                ]}
+              />
+
             </div>
           </div>
         </div>

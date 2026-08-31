@@ -1,15 +1,18 @@
 import React, { useEffect, useState, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   OHFooter,
   OHButton,
   OHEyebrow,
   OHPricingSection,
+  IntakeModal,
 } from '../../components/openhand'
 import { 
   FiShield, 
   FiTrendingUp,
   FiLock
 } from 'react-icons/fi'
+
 
 const STAGES = [
   {
@@ -106,9 +109,6 @@ const COPILOT_FEATURES = [
     desc: 'Session notes, the next set of reflection prompts, and a suggested plan for next time — drafted the moment you hang up. You edit and approve. Nothing sends without you.',
   },
 ]
-
-import { IntakeModal } from '../../components/openhand'
-import { useNavigate } from 'react-router-dom'
 
 export function LearnerJourney() {
   const navigate = useNavigate()

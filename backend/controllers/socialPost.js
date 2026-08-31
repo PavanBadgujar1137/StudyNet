@@ -87,6 +87,70 @@ exports.createPost = async (req, res) => {
   }
 }
 
+// ITEM 15 FIX: Update Post (Draft / Scheduled / Active)
+exports.updatePost = async (req, res) => {
+  try {
+    const { postId } = req.params
+    const practitionerId = req.user.id
+    const { title, caption, mediaUrl: rawMediaUrl, platforms: rawPlatforms, status, scheduledAt } = req.body
+
+    const post = await SocialPost.findOne({ _id: postId, practitioner: practitionerId })
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: "Post not found or unauthorized",
+      })
+    }
+
+    if (title !== undefined) post.title = title
+    if (caption !== undefined) post.caption = caption
+
+    if (rawPlatforms) {
+      let platforms = []
+      if (typeof rawPlatforms === "string") {
+        try {
+          platforms = JSON.parse(rawPlatforms)
+        } catch (e) {
+          platforms = [rawPlatforms]
+        }
+      } else if (Array.isArray(rawPlatforms)) {
+        platforms = rawPlatforms
+      }
+      if (platforms.length) post.platforms = platforms
+    }
+
+    let mediaUrl = rawMediaUrl !== undefined ? rawMediaUrl : post.mediaUrl
+    if (req.files && req.files.mediaFile) {
+      const uploadDetails = await uploadImageToCloudinary(
+        req.files.mediaFile,
+        process.env.FOLDER_NAME || "openhand_social_posts"
+      )
+      mediaUrl = uploadDetails.secure_url
+    }
+    post.mediaUrl = mediaUrl
+
+    if (status) post.status = status
+    if (scheduledAt !== undefined) post.scheduledAt = scheduledAt ? new Date(scheduledAt) : null
+    if (post.status === "published" && !post.publishedAt) post.publishedAt = new Date()
+
+    post.webShareIntents = generateShareIntents(post.caption, post.mediaUrl)
+    await post.save()
+
+    return res.status(200).json({
+      success: true,
+      message: "Social post updated successfully",
+      post,
+    })
+  } catch (error) {
+    console.error("Error in updatePost:", error)
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update social post",
+      error: error.message,
+    })
+  }
+}
+
 // 2. Get Practitioner Posts
 exports.getPractitionerPosts = async (req, res) => {
   try {

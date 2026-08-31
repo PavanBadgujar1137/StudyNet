@@ -12,11 +12,53 @@ exports.submitCheckIn = async (req, res) => {
       })
     }
 
+    const parsedSleepScore =
+      sleepScore !== undefined && sleepScore !== null && sleepScore !== ""
+        ? Number(sleepScore)
+        : 7
+
+    if (isNaN(parsedSleepScore) || parsedSleepScore < 0 || parsedSleepScore > 10) {
+      return res.status(400).json({
+        success: false,
+        message: "Sleep score must be a number between 0 and 10",
+      })
+    }
+
+    // ITEM 13 FIX: Check if check-in exists for today to update instead of creating duplicate entry
+    const startOfDay = new Date()
+    startOfDay.setHours(0, 0, 0, 0)
+    const endOfDay = new Date()
+    endOfDay.setHours(23, 59, 59, 999)
+
+    let existingCheckIn = await CheckIn.findOne({
+      client: userId,
+      createdAt: { $gte: startOfDay, $lte: endOfDay },
+    })
+
+    if (existingCheckIn) {
+      existingCheckIn.mood = mood
+      existingCheckIn.sleepScore = parsedSleepScore
+      existingCheckIn.note = note !== undefined ? note : existingCheckIn.note
+      existingCheckIn.isPrivate = isPrivate !== undefined ? Boolean(isPrivate) : existingCheckIn.isPrivate
+      if (practitionerId) existingCheckIn.practitioner = practitionerId
+      await existingCheckIn.save()
+
+      return res.status(200).json({
+        success: true,
+        message: "Today's check-in updated successfully",
+        checkIn: existingCheckIn,
+        updated: true,
+        privacyNotice: existingCheckIn.isPrivate
+          ? "Only you can see this reflection."
+          : "Only you and your practitioner can see this.",
+      })
+    }
+
     const checkIn = await CheckIn.create({
       client: userId,
       practitioner: practitionerId || undefined,
       mood,
-      sleepScore: sleepScore ? Number(sleepScore) : 7,
+      sleepScore: parsedSleepScore,
       note: note || "",
       isPrivate: Boolean(isPrivate),
     })
@@ -25,6 +67,7 @@ exports.submitCheckIn = async (req, res) => {
       success: true,
       message: "Check-in logged successfully",
       checkIn,
+      updated: false,
       privacyNotice: isPrivate
         ? "Only you can see this reflection."
         : "Only you and your practitioner can see this.",

@@ -207,7 +207,13 @@ export function FindAPractitioner() {
     }
   }
 
-  const hasActiveFilters = searchQuery || needFilter !== 'all' || fmtFilter !== 'all' || langFilter !== 'all'
+  const hasActiveFilters = Boolean(
+    searchQuery ||
+    needFilter !== 'all' ||
+    fmtFilter !== 'all' ||
+    langFilter !== 'all' ||
+    sortBy !== 'featured'
+  )
 
   const resetAllFilters = () => {
     setSearchQuery('')
@@ -217,6 +223,7 @@ export function FindAPractitioner() {
     setSortBy('featured')
     setPage(1)
   }
+
 
   return (
     <div className="oh-dir-page relative min-h-screen">

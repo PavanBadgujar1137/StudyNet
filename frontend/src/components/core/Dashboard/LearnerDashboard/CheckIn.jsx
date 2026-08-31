@@ -10,7 +10,8 @@ export function CheckIn({ clientName = 'Student', practitionerName = 'your instr
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
-  const instructorTitle = practitionerName ? (practitionerName.includes('Instructor') ? practitionerName : `Dr. ${practitionerName}`) : 'your instructor'
+  
+  const instructorTitle = practitionerName ? (practitionerName.includes('Instructor') ? practitionerName : practitionerName) : 'your instructor'
 
   const moods = [
     { key: 'low', label: 'Heavy', symbol: '◯' },
@@ -26,9 +27,25 @@ export function CheckIn({ clientName = 'Student', practitionerName = 'your instr
     month: 'long',
   })
 
+  const checkIns = dashboardData?.checkIns || []
+
+  // Check if check-in exists for today (ITEM 13)
+  const todayDateStr = new Date().toDateString()
+  const todayCheckIn = checkIns.find(
+    (c) => new Date(c.createdAt).toDateString() === todayDateStr
+  )
+
   const handleSave = async (e) => {
     e.preventDefault()
     if (!token) return
+
+    // ITEM 11 FIX: Numeric range validation for sleep score (0 to 10)
+    const numericSleep = Number(sleepScore)
+    if (isNaN(numericSleep) || numericSleep < 0 || numericSleep > 10) {
+      toast.error('Sleep score must be between 0 and 10.')
+      return
+    }
+
     setSaving(true)
 
     try {
@@ -37,8 +54,8 @@ export function CheckIn({ clientName = 'Student', practitionerName = 'your instr
         '/api/v1/checkins',
         {
           mood: selectedMood,
-          sleepScore,
-          note,
+          sleepScore: numericSleep,
+          note: note.slice(0, 500),
           isPrivate: false,
         },
         { Authorization: `Bearer ${token}` }
@@ -46,20 +63,36 @@ export function CheckIn({ clientName = 'Student', practitionerName = 'your instr
 
       if (response?.data?.success) {
         setIsSaved(true)
-        toast.success(response.data.message || 'Check-in logged successfully!')
+        toast.success(response.data.message || 'Check-in saved successfully!')
         if (onCheckInSuccess) onCheckInSuccess()
       } else {
         toast.error(response?.data?.message || 'Failed to log check-in')
       }
     } catch (err) {
       console.error('Checkin submit error:', err)
-      toast.error('Could not save check-in')
+      toast.error(err?.response?.data?.message || 'Could not save check-in')
     } finally {
       setSaving(false)
     }
   }
 
-  const checkIns = dashboardData?.checkIns || []
+  // ITEM 12 FIX: Explicit form reset for logging another check-in
+  const handleLogAnother = () => {
+    setIsSaved(false)
+    setNote('')
+    setSleepScore(7)
+    setSelectedMood('steady')
+  }
+
+  // Edit today's check-in prefill
+  const handleEditToday = () => {
+    if (todayCheckIn) {
+      setSelectedMood(todayCheckIn.mood || 'steady')
+      setSleepScore(todayCheckIn.sleepScore !== undefined ? todayCheckIn.sleepScore : 7)
+      setNote(todayCheckIn.note || '')
+      setIsSaved(false)
+    }
+  }
 
   return (
     <div id="checkin">
@@ -71,7 +104,14 @@ export function CheckIn({ clientName = 'Student', practitionerName = 'your instr
 
       {!isSaved ? (
         <div className="ci" id="ciForm">
-          <h2>{todayStr}</h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h2>{todayStr}</h2>
+            {todayCheckIn && (
+              <span style={{ fontSize: '12px', background: '#DBEAFE', color: '#1E40AF', padding: '4px 10px', borderRadius: '12px', fontWeight: 700 }}>
+                Updating Today's Check-in
+              </span>
+            )}
+          </div>
           <p className="sub">There's no right answer here, and nothing you pick is a problem.</p>
 
           <div className="fld">
@@ -92,7 +132,7 @@ export function CheckIn({ clientName = 'Student', practitionerName = 'your instr
           </div>
 
           <div className="fld">
-            <label>How much did sleep help this week?</label>
+            <label>How much did sleep help this week? ({sleepScore} / 10)</label>
             <input
               type="range"
               id="sl"
@@ -102,24 +142,30 @@ export function CheckIn({ clientName = 'Student', practitionerName = 'your instr
               onChange={(e) => setSleepScore(Number(e.target.value))}
             />
             <div className="rng">
-              <span>Not at all</span>
+              <span>Not at all (0)</span>
               <span id="slv">{sleepScore} / 10</span>
-              <span>Completely</span>
+              <span>Completely (10)</span>
             </div>
           </div>
 
+          {/* ITEM 12 & 17 FIX: Clear label, placeholder & character counter */}
           <div className="fld">
-            <label>Anything you want to put down? (Optional)</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+              <label htmlFor="nt" style={{ margin: 0 }}>Anything you want to note or update for this check-in? (Optional)</label>
+              <span style={{ fontSize: '11px', color: '#64748B', fontWeight: 600 }}>{note.length} / 500</span>
+            </div>
             <textarea
               id="nt"
               value={note}
+              maxLength={500}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="How are you feeling today?"
+              placeholder="Share any thoughts, feelings, or notes for your practitioner..."
+              rows={3}
             />
           </div>
 
           <button className="go" id="save" onClick={handleSave} disabled={saving}>
-            {saving ? 'Saving...' : "Save today's check-in"}
+            {saving ? 'Saving...' : todayCheckIn ? "Update today's check-in" : "Save today's check-in"}
           </button>
           <p className="privacy">Only you and {practitionerName} can see this. It is never shared with your employer, your circle, or anyone else.</p>
         </div>
@@ -127,34 +173,48 @@ export function CheckIn({ clientName = 'Student', practitionerName = 'your instr
         <div className="done-msg" id="ciDone" style={{ display: 'block' }}>
           <b>Saved to database. Thanks, {clientName}.</b>
           Your check-in has been logged in real-time.
-          <div style={{ marginTop: '18px' }}>
-            <button className="btn" onClick={() => setIsSaved(false)}>
-              Log another check-in
+          <div style={{ marginTop: '18px', display: 'flex', gap: '10px' }}>
+            <button className="btn" onClick={handleLogAnother}>
+              Log another check-in / Reset
+            </button>
+            <button className="btn" style={{ background: '#3B82F6', color: '#fff' }} onClick={handleEditToday}>
+              Edit today's check-in
             </button>
           </div>
         </div>
       )}
 
       <div className="card" style={{ marginTop: '22px' }}>
-        <div className="sechd">
+        <div className="sechd" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h3>Your check-in log history ({checkIns.length} recorded)</h3>
           <span style={{ fontSize: '13px', color: 'var(--muted)' }}>Yours only</span>
         </div>
 
         {checkIns.length > 0 ? (
           <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {checkIns.slice(0, 5).map((c) => (
-              <div key={c._id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', background: '#F8FAFC', borderRadius: '10px', border: '1px solid #E2E8F0', fontSize: '13px' }}>
-                <div>
-                  <b style={{ textTransform: 'capitalize', color: '#0F172A' }}>{c.mood} Mood</b>
-                  {c.note && <p style={{ fontSize: '12px', color: '#64748B', margin: '2px 0 0 0' }}>"{c.note}"</p>}
+            {checkIns.slice(0, 5).map((c) => {
+              const isToday = new Date(c.createdAt).toDateString() === todayDateStr
+              return (
+                <div key={c._id} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 14px', background: isToday ? '#EFF6FF' : '#F8FAFC', borderRadius: '10px', border: isToday ? '1px solid #BFDBFE' : '1px solid #E2E8F0', fontSize: '13px' }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <b style={{ textTransform: 'capitalize', color: '#0F172A' }}>{c.mood} Mood</b>
+                      {isToday && <span style={{ fontSize: '10px', background: '#3B82F6', color: '#fff', padding: '2px 6px', borderRadius: '8px', fontWeight: 700 }}>Today</span>}
+                    </div>
+                    {c.note && <p style={{ fontSize: '12px', color: '#475569', margin: '4px 0 0 0' }}>"{c.note}"</p>}
+                  </div>
+                  <div style={{ textAlign: 'right', fontSize: '11px', color: '#64748B', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
+                    <span style={{ fontWeight: 600 }}>Sleep: {c.sleepScore}/10</span>
+                    <div>{new Date(c.createdAt).toLocaleDateString()}</div>
+                    {isToday && (
+                      <button onClick={handleEditToday} style={{ marginTop: '4px', fontSize: '11px', background: 'none', border: 'none', color: '#2563EB', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}>
+                        Edit
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div style={{ textAlign: 'right', fontSize: '11px', color: '#94A3B8' }}>
-                  <span>Sleep: {c.sleepScore}/10</span>
-                  <div>{new Date(c.createdAt).toLocaleDateString()}</div>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         ) : (
           <p className="note">No past check-ins recorded yet. Log your first check-in above!</p>

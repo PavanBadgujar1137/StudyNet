@@ -27,6 +27,7 @@ import {
 import { toast } from 'react-hot-toast'
 import {
   createSocialPost,
+  updateSocialPost,
   fetchPractitionerPosts,
   publishSocialPostNow,
   deleteSocialPost,
@@ -38,11 +39,18 @@ export function SocialPostStudio() {
   const { token } = useSelector((state) => state.auth)
   const { user } = useSelector((state) => state.profile)
 
-  const practitionerName = user ? `Dr. ${user.firstName || ''} ${user.lastName || ''}`.trim() : 'Practitioner'
+  // ITEM 16 FIX: Dynamic practitioner title addressing (no hardcoded Dr. for every practitioner)
+  const practitionerTitle = user?.title || (user?.accountType === 'Practitioner' ? 'Guide' : '')
+  const practitionerName = user
+    ? `${practitionerTitle ? `${practitionerTitle} ` : ''}${user.firstName || ''} ${user.lastName || ''}`.trim()
+    : 'Practitioner'
   const defaultHandle = user?.firstName ? `${user.firstName.toLowerCase()}_${user.lastName?.toLowerCase() || ''}` : 'practitioner'
 
   // Studio Mode Navigation: 'canvas' | 'calendar' | 'feed' | 'channels' | 'analytics'
   const [activeTab, setActiveTab] = useState('canvas')
+  // ITEM 15 FIX: Editing draft post state
+  const [editingPostId, setEditingPostId] = useState(null)
+
 
   // Real DB Posts & Accounts State
   const [posts, setPosts] = useState([])
@@ -256,10 +264,16 @@ export function SocialPostStudio() {
       formData.append('mediaUrl', gradientPresetUrls[cardTheme] || gradientPresetUrls.emerald)
     }
 
-    const created = await createSocialPost(formData, token)
+    let successPost = null
+    if (editingPostId) {
+      successPost = await updateSocialPost(editingPostId, formData, token)
+    } else {
+      successPost = await createSocialPost(formData, token)
+    }
     setSubmitting(false)
 
-    if (created) {
+    if (successPost) {
+      setEditingPostId(null)
       setTitle('')
       setCaption('')
       setMediaUrl('')
@@ -270,6 +284,22 @@ export function SocialPostStudio() {
       setActiveTab('feed')
     }
   }
+
+  // ITEM 15 FIX: Load draft post into canvas for editing
+  const handleEditPost = (post) => {
+    setEditingPostId(post._id)
+    setTitle(post.title || '')
+    setCaption(post.caption || '')
+    setMediaUrl(post.mediaUrl || '')
+    setSelectedPlatforms(post.platforms || [])
+    setPostStatus(post.status || 'draft')
+    if (post.scheduledAt) {
+      setScheduledAt(new Date(post.scheduledAt).toISOString().slice(0, 16))
+    }
+    setActiveTab('canvas')
+    toast.success('Loaded post draft for editing in Studio Canvas!')
+  }
+
 
   // Publish Post Now
   const handlePublishNow = async (postId) => {
@@ -1425,18 +1455,28 @@ export function SocialPostStudio() {
                       </h4>
                     </div>
 
-                    <button
-                      onClick={() => {
-                        if (window.confirm('Are you sure you want to delete this post?')) {
-                          handleDeletePost(post._id)
-                        }
-                      }}
-                      style={{ background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
-                      title="Delete Post"
-                    >
-                      <FiTrash2 fontSize={14} /> Delete
-                    </button>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <button
+                        onClick={() => handleEditPost(post)}
+                        style={{ background: '#EFF6FF', color: '#2563EB', border: '1px solid #BFDBFE', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                        title="Edit Draft Post"
+                      >
+                        Edit Draft
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (window.confirm('Are you sure you want to delete this post?')) {
+                            handleDeletePost(post._id)
+                          }
+                        }}
+                        style={{ background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                        title="Delete Post"
+                      >
+                        <FiTrash2 fontSize={14} /> Delete
+                      </button>
+                    </div>
                   </div>
+
 
                   {/* Caption preview snippet */}
                   <div style={{ fontSize: '13.5px', color: '#334155', lineHeight: '1.5', background: '#F8FAFC', padding: '12px 14px', borderRadius: '12px', maxHeight: '100px', overflow: 'hidden', whiteSpace: 'pre-line' }}>
