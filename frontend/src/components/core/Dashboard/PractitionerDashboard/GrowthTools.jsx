@@ -13,21 +13,109 @@ import {
   FiMail,
   FiExternalLink
 } from 'react-icons/fi'
+import { apiConnector } from '../../../../services/apiConnector'
 import { toast } from 'react-hot-toast'
 
 export function GrowthTools({ telemetryData, setActiveSection }) {
   const { user } = useSelector((state) => state.profile)
+  const { token } = useSelector((state) => state.auth)
 
   const [copiedLink, setCopiedLink] = useState(false)
   const [showQrModal, setShowQrModal] = useState(false)
   const [showReviewModal, setShowReviewModal] = useState(false)
   const [clientEmail, setClientEmail] = useState('')
+  const [sendingReview, setSendingReview] = useState(false)
   const [featuredReviews, setFeaturedReviews] = useState({})
+
+  const practitioner = telemetryData?.practitioner || telemetryData?.data?.practitioner || user || {}
+
+  // ITEM 27 FIX: Inline Specialties & Languages Editing State
+  const [editingSpecLang, setEditingSpecLang] = useState(false)
+  const [specialties, setSpecialties] = useState(
+    practitioner.specialties?.length ? practitioner.specialties : ['Holistic Care', 'Wellness Coaching']
+  )
+  const [languages, setLanguages] = useState(
+    practitioner.languages?.length ? practitioner.languages : ['English', 'Hindi']
+  )
+  const [newSpecInput, setNewSpecInput] = useState('')
+  const [newLangInput, setNewLangInput] = useState('')
+  const [savingSpecLang, setSavingSpecLang] = useState(false)
+
+  const handleSaveSpecLang = async () => {
+    setSavingSpecLang(true)
+    try {
+      const res = await apiConnector('PUT', '/api/v1/practitioners/profile', {
+        specialties,
+        languages,
+      }, { Authorization: `Bearer ${token}` })
+
+      if (res?.data?.success) {
+        toast.success('Specialties & Languages updated on your profile!')
+        setEditingSpecLang(false)
+      } else {
+        toast.error(res?.data?.message || 'Failed to update profile')
+      }
+    } catch (err) {
+      toast.error('Could not update specialties')
+    } finally {
+      setSavingSpecLang(false)
+    }
+  }
+
+  const addSpecialtyTag = () => {
+    if (newSpecInput.trim() && !specialties.includes(newSpecInput.trim())) {
+      setSpecialties([...specialties, newSpecInput.trim()])
+      setNewSpecInput('')
+    }
+  }
+
+  const removeSpecialtyTag = (tag) => {
+    setSpecialties(specialties.filter((s) => s !== tag))
+  }
+
+  const addLanguageTag = () => {
+    if (newLangInput.trim() && !languages.includes(newLangInput.trim())) {
+      setLanguages([...languages, newLangInput.trim()])
+      setNewLangInput('')
+    }
+  }
+
+  const removeLanguageTag = (lang) => {
+    setLanguages(languages.filter((l) => l !== lang))
+  }
+
+  // ITEM 28 & 34 FIX: Send Real Review Invitation Email
+  const handleSendReviewRequest = async (e) => {
+    e.preventDefault()
+    if (!clientEmail.trim()) {
+      toast.error('Please enter a valid client email address')
+      return
+    }
+
+    setSendingReview(true)
+    try {
+      const res = await apiConnector('POST', '/api/v1/practitioners/request-review', {
+        clientEmail: clientEmail.trim(),
+      }, { Authorization: `Bearer ${token}` })
+
+      if (res?.data?.success) {
+        toast.success(res.data.message || `Review invitation sent to ${clientEmail}!`)
+        setClientEmail('')
+        setShowReviewModal(false)
+      } else {
+        toast.error(res?.data?.message || 'Failed to send review email')
+      }
+    } catch (err) {
+      console.error('Send review email error:', err)
+      toast.error(err?.response?.data?.message || 'Could not send review email')
+    } finally {
+      setSendingReview(false)
+    }
+  }
 
   const savedOnboarding = typeof window !== 'undefined' ? localStorage.getItem('oh_onboarding_data') : null
   const parsedSaved = savedOnboarding ? JSON.parse(savedOnboarding) : null
 
-  const practitioner = telemetryData?.practitioner || telemetryData?.data?.practitioner || user || {}
   const firstName = practitioner.user?.firstName || practitioner.firstName || user?.firstName || ''
   const lastName = practitioner.user?.lastName || practitioner.lastName || user?.lastName || ''
   
@@ -59,17 +147,6 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
     setTimeout(() => setCopiedLink(false), 2500)
   }
 
-  // Send Review Request Email
-  const handleSendReviewRequest = (e) => {
-    e.preventDefault()
-    if (!clientEmail) {
-      toast.error('Please enter a client email address')
-      return
-    }
-    toast.success(`Review invitation sent to ${clientEmail}!`)
-    setClientEmail('')
-    setShowReviewModal(false)
-  }
 
   // Toggle Featured Review State
   const toggleFeature = (id) => {
@@ -335,6 +412,99 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
             </div>
           </div>
 
+          {/* ITEM 27 FIX: Inline Specialties & Languages Editor Card */}
+          <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0F172A', margin: 0 }}>Specialties &amp; Languages</h3>
+                <p style={{ fontSize: '12px', color: '#64748B', margin: '2px 0 0 0' }}>Manage tags displayed on your public booking profile</p>
+              </div>
+              <button
+                onClick={() => setEditingSpecLang(!editingSpecLang)}
+                style={{ background: editingSpecLang ? '#F1F5F9' : '#EFF6FF', color: editingSpecLang ? '#475569' : '#2563EB', border: 'none', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+              >
+                {editingSpecLang ? 'Close' : '✏️ Edit Specialties'}
+              </button>
+            </div>
+
+            {/* View Mode Tag Chips */}
+            {!editingSpecLang ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', display: 'block', marginBottom: '6px' }}>Specialties:</span>
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    {specialties.map((s, i) => (
+                      <span key={i} style={{ background: '#EEF2FF', color: '#3730A3', padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 600 }}>{s}</span>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', display: 'block', marginBottom: '6px' }}>Languages Spoken:</span>
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    {languages.map((l, i) => (
+                      <span key={i} style={{ background: '#F0FDF4', color: '#166534', padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 600 }}>{l}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* Edit Mode Form */
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', background: '#F8FAFC', padding: '16px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '6px' }}>Specialties</label>
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                    {specialties.map((s) => (
+                      <span key={s} style={{ background: '#EEF2FF', color: '#3730A3', padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        {s}
+                        <button type="button" onClick={() => removeSpecialtyTag(s)} style={{ background: 'none', border: 'none', color: '#4338CA', cursor: 'pointer', padding: 0, fontWeight: 800 }}>✕</button>
+                      </span>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input
+                      type="text"
+                      placeholder="Add specialty (e.g. Anxiety Management)"
+                      value={newSpecInput}
+                      onChange={(e) => setNewSpecInput(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSpecialtyTag() } }}
+                      style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '13px' }}
+                    />
+                    <button type="button" onClick={addSpecialtyTag} style={{ background: '#3B82F6', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>+ Add</button>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '6px' }}>Languages Spoken</label>
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                    {languages.map((l) => (
+                      <span key={l} style={{ background: '#F0FDF4', color: '#166534', padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        {l}
+                        <button type="button" onClick={() => removeLanguageTag(l)} style={{ background: 'none', border: 'none', color: '#15803D', cursor: 'pointer', padding: 0, fontWeight: 800 }}>✕</button>
+                      </span>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input
+                      type="text"
+                      placeholder="Add language (e.g. Spanish, French)"
+                      value={newLangInput}
+                      onChange={(e) => setNewLangInput(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addLanguageTag() } }}
+                      style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '13px' }}
+                    />
+                    <button type="button" onClick={addLanguageTag} style={{ background: '#10B981', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>+ Add</button>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' }}>
+                  <button type="button" onClick={() => setEditingSpecLang(false)} style={{ background: '#F1F5F9', color: '#475569', border: 'none', padding: '8px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                  <button type="button" onClick={handleSaveSpecLang} disabled={savingSpecLang} style={{ background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)', color: '#fff', border: 'none', padding: '8px 18px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>{savingSpecLang ? 'Saving...' : 'Save Profile Tags'}</button>
+                </div>
+              </div>
+            )}
+          </div>
+
+
           {/* Testimonials Card */}
           <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -471,12 +641,14 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
                 </button>
                 <button
                   type="submit"
-                  style={{ background: '#10B981', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  disabled={sendingReview}
+                  style={{ background: sendingReview ? '#94A3B8' : '#10B981', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: 700, cursor: sendingReview ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
-                  <FiSend /> Send Review Invitation
+                  <FiSend /> {sendingReview ? 'Sending Email...' : 'Send Review Invitation'}
                 </button>
               </div>
             </form>
+
           </div>
         </div>
       )}

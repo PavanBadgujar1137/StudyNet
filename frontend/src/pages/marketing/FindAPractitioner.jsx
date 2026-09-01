@@ -335,12 +335,20 @@ export function FindAPractitioner() {
                   </select>
                 </div>
 
-                {/* Clear Filters Link */}
-                {hasActiveFilters && (
-                  <button onClick={resetAllFilters} className="dir-clear-all-btn" title="Reset all filters">
-                    Reset
-                  </button>
-                )}
+                {/* Reset Filter Button (ITEM 3 FIX: Always enabled when price sort or filters are active) */}
+                <button
+                  type="button"
+                  onClick={resetAllFilters}
+                  disabled={!hasActiveFilters}
+                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border ${
+                    hasActiveFilters
+                      ? 'bg-red-500/10 text-red-400 border-red-500/30 hover:bg-red-500/20 cursor-pointer shadow-sm'
+                      : 'bg-slate-800/40 text-slate-500 border-slate-800 cursor-not-allowed opacity-60'
+                  }`}
+                  title={hasActiveFilters ? 'Reset price and all active search filters' : 'No filters currently active'}
+                >
+                  ↺ Reset Filters
+                </button>
               </div>
             </div>
 
@@ -493,9 +501,10 @@ export function FindAPractitioner() {
                         >
                           {connectingId === (p._id || p.id) ? 'Connecting...' : '🤝 Connect Free'}
                         </button>
-                        <OHButton href={`/practice/handle/${p.handle || ''}`} className="flex-1 p-book-btn">
+                        <OHButton href={`/practitioner/${p.handle || p._id || ''}`} className="flex-1 p-book-btn">
                           View Profile →
                         </OHButton>
+
                       </div>
                     </article>
                   )

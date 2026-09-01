@@ -277,8 +277,16 @@ function EditCourseModal({ course, onClose, onSuccess }) {
           {!form.isFree && (
             <div>
               <label style={{ display: 'block', fontSize: 12, color: '#64748B', marginBottom: 4, fontWeight: 600 }}>Price (₹)</label>
-              <input type="number" min="0" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
-                style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #E2E8F0', borderRadius: 10, fontSize: 14, color: '#1E293B', outline: 'none', boxSizing: 'border-box' }} />
+              <input
+                type="number"
+                min="0"
+                max="999999"
+                step="0.01"
+                value={form.price}
+                onChange={e => setForm(f => ({ ...f, price: e.target.value.slice(0, 8) }))}
+                placeholder="e.g. 1499.00"
+                style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #E2E8F0', borderRadius: 10, fontSize: 14, color: '#1E293B', outline: 'none', boxSizing: 'border-box' }}
+              />
             </div>
           )}
 

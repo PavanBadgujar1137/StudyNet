@@ -146,7 +146,8 @@ export function MyOffers({ telemetryData, onUpdate }) {
     setTagsInput(preset.tags)
     setDescription(preset.description)
     setStatus('published')
-    toast.success(`Preset "${preset.label}" applied! Customize any field below.`)
+    toast.success(`Preset "${preset.label}" applied! ✨ Please review & personalize text to avoid generic AI language.`, { duration: 5000 })
+
   }
 
 
@@ -233,8 +234,17 @@ export function MyOffers({ telemetryData, onUpdate }) {
     }
   }
 
-  const handleDeleteOffer = async (offerId) => {
-    if (!window.confirm('Are you sure you want to delete this offer?')) return
+  const handleDeleteOffer = async (offer) => {
+    const offerId = typeof offer === 'object' ? offer._id : offer
+    const targetOffer = offersList.find((o) => o._id === offerId)
+
+    // ITEM 24 FIX: Restrict deleting live active offers
+    if (targetOffer && targetOffer.status === 'published') {
+      toast.error('Live published offers cannot be deleted directly. Please unpublish to DRAFT status first before deleting.', { duration: 5000 })
+      return
+    }
+
+    if (!window.confirm('Are you sure you want to delete this draft offer?')) return
     setDeletingId(offerId)
     try {
       const res = await apiConnector('DELETE', `/api/v1/offers/${offerId}`, null, {
@@ -748,13 +758,17 @@ export function MyOffers({ telemetryData, onUpdate }) {
 
               {/* Title */}
               <div>
-                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
-                  Offer Title *
-                </label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <label style={{ margin: 0, fontSize: '12.5px', fontWeight: 700, color: '#334155' }}>
+                    Offer Title *
+                  </label>
+                  <span style={{ fontSize: '11px', color: '#64748B' }}>{title.length}/100</span>
+                </div>
                 <input
                   type="text"
                   placeholder="e.g. 1:1 Anxiety & Stress Relief Session"
                   value={title}
+                  maxLength={100}
                   onChange={(e) => setTitle(e.target.value)}
                   style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #CBD5E1', fontSize: '14px', outline: 'none' }}
                   required
@@ -771,10 +785,12 @@ export function MyOffers({ telemetryData, onUpdate }) {
                     type="number"
                     placeholder="e.g. 2500"
                     value={price}
-                    onChange={(e) => setPrice(e.target.value)}
+                    onChange={(e) => setPrice(e.target.value.slice(0, 8))}
                     style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #CBD5E1', fontSize: '14px', outline: 'none' }}
                     required
                     min={0}
+                    max={999999}
+                    step="0.01"
                   />
                 </div>
 

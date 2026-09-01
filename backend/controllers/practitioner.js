@@ -841,3 +841,62 @@ exports.getIntakeAnswers = async (req, res) => {
   }
 }
 
+// ── ITEM 28 & 34 FIX: Send Real Client Review Request Email ──
+exports.requestClientReview = async (req, res) => {
+  try {
+    const practitionerId = req.user.id
+    const { clientEmail, clientName } = req.body
+
+    if (!clientEmail) {
+      return res.status(400).json({ success: false, message: "Client email is required" })
+    }
+
+    const practitionerUser = await User.findById(practitionerId)
+    const practitionerProfile = await PractitionerProfile.findOne({ user: practitionerId })
+
+    const pName = practitionerUser
+      ? `${practitionerUser.firstName || "Practitioner"} ${practitionerUser.lastName || ""}`.trim()
+      : "Your OpenHand Practitioner"
+
+    const domain = process.env.PUBLIC_DOMAIN || "https://openhand.live"
+    const handle = practitionerProfile?.handle || practitionerUser?.firstName?.toLowerCase() || "guide"
+    const reviewUrl = `${domain}/practitioner/${handle}?action=review`
+
+    const emailTitle = `Share your feedback for ${pName} on OpenHand`
+    const emailBody = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #F8FAFC; border-radius: 16px; border: 1px solid #E2E8F0;">
+        <h2 style="color: #0F172A; margin-top: 0;">How was your experience with ${pName}?</h2>
+        <p style="color: #475569; font-size: 15px; line-height: 1.6;">
+          Hi ${clientName || "there"},
+        </p>
+        <p style="color: #475569; font-size: 15px; line-height: 1.6;">
+          ${pName} would love to hear your thoughts and reflections on your recent session. Your verified feedback helps guide other learners on their journey.
+        </p>
+        <div style="margin: 28px 0; text-align: center;">
+          <a href="${reviewUrl}" style="background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 12px; font-weight: 700; font-size: 15px; display: inline-block;">
+            Leave a Client Review →
+          </a>
+        </div>
+        <p style="color: #94A3B8; font-size: 12px; text-align: center;">
+          Sent securely via OpenHand Guidance Platform • <a href="${domain}" style="color: #2563EB;">openhand.live</a>
+        </p>
+      </div>
+    `
+
+    await mailSender(clientEmail, emailTitle, emailBody)
+
+    return res.status(200).json({
+      success: true,
+      message: `Review invitation email sent successfully to ${clientEmail}`,
+    })
+  } catch (error) {
+    console.error("requestClientReview error:", error)
+    return res.status(500).json({
+      success: false,
+      message: "Failed to send review invitation email",
+      error: error.message,
+    })
+  }
+}
+
+

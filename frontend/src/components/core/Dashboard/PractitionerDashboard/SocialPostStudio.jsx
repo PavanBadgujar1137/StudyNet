@@ -334,7 +334,9 @@ export function SocialPostStudio() {
 
     setTitle(generatedTitle)
     setCaption(generatedCaption)
+    toast.success('✨ AI prompt template generated! Please review and personalize wording to reflect your authentic voice.', { duration: 5000 })
   }
+
 
   // Add Hashtag helper
   const addHashtag = (tag) => {

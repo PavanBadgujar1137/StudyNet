@@ -89,12 +89,13 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Item 1: Prevent back navigation from exiting main page '/'
+  // Item 1: Handle back navigation gracefully on main page '/'
   useEffect(() => {
     if (location.pathname === '/') {
-      window.history.pushState(null, '', window.location.href)
       const handlePopState = () => {
-        window.history.pushState(null, '', window.location.href)
+        if (window.location.pathname === '/') {
+          window.history.pushState(null, '', window.location.href)
+        }
       }
       window.addEventListener('popstate', handlePopState)
       return () => {
@@ -117,6 +118,9 @@ function App() {
         <Route path="/find-a-practitioner" element={<FindAPractitioner />} />
         <Route path="/practitioner/:handle" element={<PractitionerPublicProfile />} />
         <Route path="/practitioners/:handle" element={<PractitionerPublicProfile />} />
+        <Route path="/practice/handle/:handle" element={<PractitionerPublicProfile />} />
+        <Route path="/practitioner/handle/:handle" element={<PractitionerPublicProfile />} />
+
         <Route path="/co-pilot" element={<CoPilot />} />
         <Route path="/aura" element={<CoPilot />} />
         <Route path="/client-journey" element={<LearnerJourney />} />

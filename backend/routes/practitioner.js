@@ -16,6 +16,7 @@ const {
   updateIntakeQuestions,
   submitIntakeAnswers,
   getIntakeAnswers,
+  requestClientReview,
 } = require("../controllers/practitioner")
 const { auth, isPractitioner } = require("../middleware/auth")
 
@@ -32,7 +33,9 @@ router.get("/intake-answers/:bookingId", auth, getIntakeAnswers)
 
 // Practitioner approval routes
 router.post("/approve-connection", auth, isPractitioner, approveClientConnection)
+router.post("/request-review", auth, isPractitioner, requestClientReview)
 router.get("/dashboard", auth, isPractitioner, getPractitionerDashboard)
+
 router.get("/payouts", auth, isPractitioner, getPayoutsAndInvoices)
 router.get("/connected-clients", auth, isPractitioner, getConnectedClients)
 

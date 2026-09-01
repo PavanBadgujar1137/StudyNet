@@ -97,9 +97,18 @@ exports.deleteCourse = async (req, res) => {
       return res.status(404).json({ success: false, message: "Course not found or not authorized" })
     }
 
+    // ITEM 23 FIX: Published courses cannot be deleted directly
+    if (course.status === "published") {
+      return res.status(400).json({
+        success: false,
+        message: "Published courses cannot be deleted directly while live. Please unpublish the course to draft mode first, notify enrolled learners, and handle refund processing if applicable.",
+      })
+    }
+
     // Remove all videos in this course
     await CourseVideo.deleteMany({ course: id })
     await Course.findByIdAndDelete(id)
+
 
     return res.status(200).json({ success: true, message: "Course deleted" })
   } catch (error) {

@@ -140,14 +140,24 @@ exports.deleteOffer = async (req, res) => {
     const { offerId } = req.params
     const userId = req.user.id
 
-    const offer = await Offer.findOneAndDelete({ _id: offerId, practitioner: userId })
-
-    if (!offer) {
+    const existingOffer = await Offer.findOne({ _id: offerId, practitioner: userId })
+    if (!existingOffer) {
       return res.status(404).json({
         success: false,
         message: "Offer not found or unauthorized",
       })
     }
+
+    // ITEM 24 FIX: Live published offers must be marked as draft before deletion
+    if (existingOffer.status === "published") {
+      return res.status(400).json({
+        success: false,
+        message: "Live published offers cannot be deleted directly. Please unpublish the offer to DRAFT status first.",
+      })
+    }
+
+    await Offer.findByIdAndDelete(offerId)
+
 
     // Recalculate profile rate & formats
     const remainingOffers = await Offer.find({ practitioner: userId, status: "published" })

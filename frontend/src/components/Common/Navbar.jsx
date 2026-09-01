@@ -10,7 +10,9 @@ import ProfileDropdown from "../core/Auth/ProfileDropdown"
 
 function Navbar() {
   const { token } = useSelector((state) => state.auth)
+  const { user } = useSelector((state) => state.profile)
   const location = useLocation()
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const matchRoute = (route) => {
@@ -48,28 +50,38 @@ function Navbar() {
         {/* Center: Navigation Links (Desktop) */}
         <nav className="hidden lg:block">
           <ul className="flex items-center gap-x-4 xl:gap-x-6 text-slate-700 font-semibold text-xs xl:text-sm whitespace-nowrap">
-            {NavbarLinks.map((link, index) => (
-              <li key={index}>
-                <Link to={link?.path} className="relative py-2 block group min-h-[44px] flex items-center">
-                  <p
-                    className={`${
-                      matchRoute(link?.path)
-                        ? "text-royal-blue font-bold"
-                        : "text-slate-700 hover:text-royal-blue"
-                    } transition-colors duration-200`}
+            {NavbarLinks.map((link, index) => {
+              const isFindPractitioner = link?.path === '/find-a-practitioner'
+              const shouldOpenNewTab = isFindPractitioner && token && user?.accountType === 'Practitioner'
+              return (
+                <li key={index}>
+                  <Link
+                    to={link?.path}
+                    target={shouldOpenNewTab ? '_blank' : '_self'}
+                    rel={shouldOpenNewTab ? 'noopener noreferrer' : undefined}
+                    className="relative py-2 block group min-h-[44px] flex items-center"
                   >
-                    {link.title}
-                  </p>
-                  <span 
-                    className={`absolute bottom-0 left-0 h-[2.5px] rounded-full bg-gradient-to-r from-royal-blue to-violet transition-all duration-300 ${
-                      matchRoute(link?.path) ? "w-full shadow-sm shadow-royal-blue/50" : "w-0 group-hover:w-full"
-                    }`}
-                  />
-                </Link>
-              </li>
-            ))}
+                    <p
+                      className={`${
+                        matchRoute(link?.path)
+                          ? "text-royal-blue font-bold"
+                          : "text-slate-700 hover:text-royal-blue"
+                      } transition-colors duration-200`}
+                    >
+                      {link.title}
+                    </p>
+                    <span 
+                      className={`absolute bottom-0 left-0 h-[2.5px] rounded-full bg-gradient-to-r from-royal-blue to-violet transition-all duration-300 ${
+                        matchRoute(link?.path) ? "w-full shadow-sm shadow-royal-blue/50" : "w-0 group-hover:w-full"
+                      }`}
+                    />
+                  </Link>
+                </li>
+              )
+            })}
           </ul>
         </nav>
+
 
         {/* Right Side: Login, Signup & Profile Icon */}
         <div className="flex items-center gap-x-3">

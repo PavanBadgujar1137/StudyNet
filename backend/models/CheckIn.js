@@ -13,10 +13,10 @@ const checkInSchema = new mongoose.Schema(
     },
     mood: {
       type: String,
-      enum: ["peaceful", "challenged", "energetic", "low", "anxious"],
+      enum: ["peaceful", "challenged", "energetic", "low", "anxious", "steady"],
       required: true,
     },
-    sleepScore: { type: Number, min: 1, max: 10 },
+    sleepScore: { type: Number, min: 0, max: 10 },
     note: { type: String },
     isPrivate: { type: Boolean, default: false },
   },

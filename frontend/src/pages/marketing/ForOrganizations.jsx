@@ -291,20 +291,21 @@ export function ForOrganizations() {
                 return (
                   <button
                     key={step.weekNum}
+                    type="button"
                     onClick={() => setActiveWeekIndex(idx)}
-                    className={`flex flex-col items-center p-3 rounded-xl transition-all border text-center ${
+                    className={`flex flex-col items-center p-3 rounded-xl transition-all border text-center cursor-pointer ${
                       isActive
-                        ? 'bg-sky-400 text-slate-950 font-bold border-sky-300 shadow-lg shadow-sky-400/30 scale-105'
+                        ? 'bg-sky-400 text-slate-950 font-bold border-sky-300 shadow-lg shadow-sky-400/30 scale-105 z-10'
                         : 'bg-slate-800/80 text-slate-300 hover:bg-slate-800 border-slate-700/60'
                     }`}
                   >
-                    <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-extrabold mb-1 ${
-                      isActive ? 'bg-slate-950 text-sky-400' : 'bg-slate-900 text-slate-300'
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider mb-1 opacity-90">
+                      Week {step.weekNum}
+                    </span>
+                    <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black ${
+                      isActive ? 'bg-slate-950 text-sky-400' : 'bg-slate-900 text-slate-200'
                     }`}>
                       {step.weekNum}
-                    </span>
-                    <span className="text-[11px] font-semibold tracking-tight whitespace-nowrap">
-                      Week {step.weekNum}
                     </span>
                   </button>
                 )
@@ -312,7 +313,7 @@ export function ForOrganizations() {
             </div>
 
             {/* Active Week Activity Card Detail Box */}
-            <div className="rounded-xl bg-slate-950/80 border border-slate-800 p-6">
+            <div className="rounded-xl bg-slate-950/90 border border-slate-800 p-6">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                 <div>
                   <span className="inline-block px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-sky-500/20 text-sky-300 border border-sky-500/30 mb-2">
@@ -333,15 +334,15 @@ export function ForOrganizations() {
                 {currentStep.desc}
               </p>
 
-              {/* ITEM 4 FIX: Week wise activity text highlighted in light blue with HIGH-CONTRAST DARK NAVY TEXT */}
-              <div className="rounded-xl p-4 bg-[#E0F2FE] border border-[#38BDF8] shadow-sm">
+              {/* ITEM 4 FIX: High-Contrast Dark Text for Light Blue Activity Box */}
+              <div className="rounded-xl p-4 bg-sky-100 border border-sky-300 shadow-md">
                 <div className="flex items-start gap-2.5">
-                  <FiCheckCircle className="w-5 h-5 text-[#0369A1] shrink-0 mt-0.5" />
+                  <FiCheckCircle className="w-5 h-5 text-sky-800 shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-xs font-extrabold uppercase tracking-wider text-[#0369A1] block mb-0.5">
+                    <span className="text-xs font-extrabold uppercase tracking-wider text-sky-900 block mb-0.5">
                       Week Activity &amp; Deliverable Output:
                     </span>
-                    <p className="text-[#0F172A] font-bold text-sm sm:text-base leading-snug">
+                    <p className="text-slate-950 font-extrabold text-sm sm:text-base leading-snug">
                       {currentStep.activity}
                     </p>
                   </div>
