@@ -236,27 +236,27 @@ export function ForOrganizations() {
         </div>
       </section>
 
-      {/* Section 2: Interactive 8-Week Timeline Stepper (Items 2 & 4) */}
-      <section className="org-sec bg-slate-950/60 py-12 border-y border-slate-800" id="how">
+      {/* Section 2: Interactive 8-Week Timeline Stepper */}
+      <section className="org-sec bg-slate-50 py-12 border-y border-slate-200" id="how">
         <div className="oh-wrap">
           <div className="org-sec-head text-center mb-8">
-            <span className="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20 mb-2">
+            <span className="inline-block px-3.5 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-blue-100 text-blue-900 border border-blue-300 mb-2">
               Structured Rollout
             </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white">A pilot runs in eight weeks</h2>
-            <p className="text-slate-300 max-w-2xl mx-auto text-base">
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-950">A pilot runs in eight weeks</h2>
+            <p className="text-slate-700 font-bold max-w-2xl mx-auto text-base">
               One team first. If it doesn't move anything, you've lost eight weeks and one invoice — not a year-long contract.
             </p>
           </div>
 
           {/* Interactive Week Circle Badges & Controls Header */}
-          <div className="relative rounded-2xl bg-slate-900 border border-slate-800 p-6 sm:p-8 shadow-2xl mb-6">
+          <div className="relative rounded-2xl bg-white border border-slate-200 p-6 sm:p-8 shadow-xl mb-6">
             
-            <div className="flex items-center justify-between gap-4 mb-6 pb-6 border-b border-slate-800 flex-wrap sm:flex-nowrap">
+            <div className="flex items-center justify-between gap-4 mb-6 pb-6 border-b border-slate-200 flex-wrap sm:flex-nowrap">
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-sky-400">Interactive Timeline Stepper</span>
-                <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                  <FiCalendar className="text-sky-400" /> Week-by-Week Pilot Roadmap
+                <span className="text-xs font-black uppercase tracking-wider text-blue-700 block mb-1">Interactive Timeline Stepper</span>
+                <h3 className="text-xl sm:text-2xl font-black text-slate-950 flex items-center gap-2">
+                  <FiCalendar className="text-blue-600" /> Week-by-Week Pilot Roadmap
                 </h3>
               </div>
 
@@ -264,18 +264,18 @@ export function ForOrganizations() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={handlePrevWeek}
-                  className="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center transition-colors border border-slate-700"
+                  className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-900 flex items-center justify-center transition-colors border border-slate-300 font-extrabold"
                   title="Previous Week"
                   aria-label="Previous Week"
                 >
                   <FiChevronLeft className="w-5 h-5" />
                 </button>
-                <span className="text-xs font-bold text-slate-300 px-2 min-w-[70px] text-center">
+                <span className="text-xs font-black text-slate-950 px-2 min-w-[70px] text-center">
                   Week {activeWeekIndex + 1} of 8
                 </span>
                 <button
                   onClick={handleNextWeek}
-                  className="w-10 h-10 rounded-xl bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center transition-colors shadow-lg shadow-blue-600/30"
+                  className="w-10 h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors shadow-md font-extrabold"
                   title="Next Week (Navigates through Week 8)"
                   aria-label="Next Week"
                 >
@@ -295,15 +295,15 @@ export function ForOrganizations() {
                     onClick={() => setActiveWeekIndex(idx)}
                     className={`flex flex-col items-center p-3 rounded-xl transition-all border text-center cursor-pointer ${
                       isActive
-                        ? 'bg-sky-400 text-slate-950 font-bold border-sky-300 shadow-lg shadow-sky-400/30 scale-105 z-10'
-                        : 'bg-slate-800/80 text-slate-300 hover:bg-slate-800 border-slate-700/60'
+                        ? 'bg-blue-600 text-white font-extrabold border-blue-700 shadow-md scale-105 z-10'
+                        : 'bg-slate-100 text-slate-900 hover:bg-slate-200 border-slate-200 font-extrabold'
                     }`}
                   >
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider mb-1 opacity-90">
+                    <span className={`text-[10px] font-black uppercase tracking-wider mb-1 ${isActive ? 'text-white' : 'text-slate-700'}`}>
                       Week {step.weekNum}
                     </span>
                     <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black ${
-                      isActive ? 'bg-slate-950 text-sky-400' : 'bg-slate-900 text-slate-200'
+                      isActive ? 'bg-white text-blue-700' : 'bg-slate-200 text-slate-950'
                     }`}>
                       {step.weekNum}
                     </span>
@@ -313,36 +313,36 @@ export function ForOrganizations() {
             </div>
 
             {/* Active Week Activity Card Detail Box */}
-            <div className="rounded-xl bg-slate-950/90 border border-slate-800 p-6">
+            <div className="rounded-xl bg-slate-50 border border-slate-200 p-6 shadow-sm">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                 <div>
-                  <span className="inline-block px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-sky-500/20 text-sky-300 border border-sky-500/30 mb-2">
+                  <span className="inline-block px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-blue-100 text-blue-900 border border-blue-300 mb-2">
                     {currentStep.badge} — Milestone Phase
                   </span>
-                  <h3 className="text-2xl font-bold text-white tracking-tight">{currentStep.title}</h3>
-                  <p className="text-sm font-medium text-slate-300 mt-1">{currentStep.subtitle}</p>
+                  <h3 className="text-2xl font-black text-slate-950 tracking-tight">{currentStep.title}</h3>
+                  <p className="text-sm font-bold text-slate-700 mt-1">{currentStep.subtitle}</p>
                 </div>
                 <Link
                   to="/contact-us"
-                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-500 text-white transition-colors shrink-0 shadow-md"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-700 text-white transition-colors shrink-0 shadow-md"
                 >
                   Request Week {currentStep.weekNum} Pilot <FiArrowRight />
                 </Link>
               </div>
 
-              <p className="text-slate-300 text-sm leading-relaxed mb-4">
+              <p className="text-slate-800 font-semibold text-sm leading-relaxed mb-4">
                 {currentStep.desc}
               </p>
 
-              {/* ITEM 4 FIX: High-Contrast Dark Text for Light Blue Activity Box */}
-              <div className="rounded-xl p-4 bg-sky-100 border border-sky-300 shadow-md">
+              {/* High-Contrast Dark Text Deliverable Output Box */}
+              <div className="rounded-xl p-4 bg-blue-50 border border-blue-200 shadow-sm">
                 <div className="flex items-start gap-2.5">
-                  <FiCheckCircle className="w-5 h-5 text-sky-800 shrink-0 mt-0.5" />
+                  <FiCheckCircle className="w-5 h-5 text-blue-700 shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-xs font-extrabold uppercase tracking-wider text-sky-900 block mb-0.5">
+                    <span className="text-xs font-black uppercase tracking-wider text-blue-950 block mb-0.5">
                       Week Activity &amp; Deliverable Output:
                     </span>
-                    <p className="text-slate-950 font-extrabold text-sm sm:text-base leading-snug">
+                    <p className="text-slate-950 font-black text-sm sm:text-base leading-snug">
                       {currentStep.activity}
                     </p>
                   </div>
@@ -495,39 +495,40 @@ export function ForOrganizations() {
         </div>
       </section>
 
-      {/* Section 5: Confidentiality & Uniform Never Do Section (Item 5) */}
-      <section className="org-sec">
+      {/* Section 5: Confidentiality & Uniform Never Do Section */}
+      <section className="org-sec bg-white py-12 border-b border-slate-200">
         <div className="oh-wrap">
           <div className="org-sec-head">
-            <h2>What HR sees, and what HR never sees</h2>
-            <p>This distinction is the entire reason people participate. We put it in the contract.</p>
+            <h2 className="text-slate-950 font-black">What HR sees, and what HR never sees</h2>
+            <p className="text-slate-700 font-bold">This distinction is the entire reason people participate. We put it in the contract.</p>
           </div>
           <div className="org-conf grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-            <div className="box see rounded-2xl p-6 sm:p-8 bg-slate-900 border border-slate-800">
-              <h3 className="text-xl font-bold text-white mb-4">You do see</h3>
-              <ul className="space-y-3">
-                <li className="flex items-center gap-2 text-sm text-slate-200">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400" /> How many seats were taken up
+            <div className="box see rounded-2xl p-6 sm:p-8 bg-white border border-slate-200 shadow-xl">
+              <h3 className="text-xl font-black text-slate-950 mb-4">You do see</h3>
+              <ul className="space-y-3.5">
+                <li className="flex items-center gap-3 text-sm text-slate-950 font-bold">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" /> How many seats were taken up
                 </li>
-                <li className="flex items-center gap-2 text-sm text-slate-200">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400" /> Completion rate across the circle
+                <li className="flex items-center gap-3 text-sm text-slate-950 font-bold">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" /> Completion rate across the circle
                 </li>
-                <li className="flex items-center gap-2 text-sm text-slate-200">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400" /> Themes raised, clustered and anonymised
+                <li className="flex items-center gap-3 text-sm text-slate-950 font-bold">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" /> Themes raised, clustered and anonymised
                 </li>
-                <li className="flex items-center gap-2 text-sm text-slate-200">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400" /> Aggregate wellbeing direction over time
+                <li className="flex items-center gap-3 text-sm text-slate-950 font-bold">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" /> Aggregate wellbeing direction over time
                 </li>
-                <li className="flex items-center gap-2 text-sm text-slate-200">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400" /> Whether people escalated to 1:1 (count only)
+                <li className="flex items-center gap-3 text-sm text-slate-950 font-bold">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" /> Whether people escalated to 1:1 (count only)
                 </li>
               </ul>
             </div>
 
-            {/* ITEM 5: Uniform OHNeverDoSection component */}
+            {/* Uniform OHNeverDoSection component */}
             <OHNeverDoSection
               title="What HR never sees"
               subtitle="Strict employee privacy limits hardcoded into OpenHand contracts:"
+              variant="light"
               items={[
                 "Who joined which circle or attended specific weekly calls.",
                 "Anything an individual employee said during group sessions.",

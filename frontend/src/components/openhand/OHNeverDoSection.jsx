@@ -11,25 +11,44 @@ export function OHNeverDoSection({
     "Never sells learner data or trains public AI models on private session records.",
     "Never sends direct automated messages to learners without practitioner approval."
   ],
+  variant = "light", // "light" | "dark"
   className = ""
 }) {
+  const isDark = variant === "dark"
+
   return (
-    <div className={`oh-never-do-card relative rounded-2xl p-6 sm:p-8 bg-slate-900/90 border border-red-500/30 shadow-2xl backdrop-blur-md ${className}`}>
+    <div
+      className={`oh-never-do-card relative rounded-2xl p-6 sm:p-8 transition-all ${
+        isDark
+          ? 'bg-slate-900 border border-red-500/30 text-white shadow-2xl'
+          : 'bg-white border border-slate-200 text-slate-900 shadow-xl'
+      } ${className}`}
+    >
       {/* Header Badge */}
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400">
+        <div
+          className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+            isDark ? 'bg-red-500/10 border border-red-500/30 text-red-400' : 'bg-red-50 border border-red-200 text-red-600'
+          }`}
+        >
           <FiShield className="w-5 h-5" />
         </div>
         <div>
-          <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-red-500/10 text-red-400 border border-red-500/20 mb-1">
+          <span
+            className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider ${
+              isDark ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-red-100 text-red-900 border border-red-200'
+            } mb-1`}
+          >
             Strict Ethical Standard
           </span>
-          <h3 className="text-xl font-bold text-white tracking-tight">{title}</h3>
+          <h3 className={`text-xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-950'}`}>
+            {title}
+          </h3>
         </div>
       </div>
 
       {subtitle && (
-        <p className="text-slate-300 text-sm mb-6 leading-relaxed">
+        <p className={`text-sm mb-6 leading-relaxed font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
           {subtitle}
         </p>
       )}
@@ -37,9 +56,9 @@ export function OHNeverDoSection({
       {/* Never List */}
       <ul className="space-y-3.5">
         {items.map((item, idx) => (
-          <li key={idx} className="flex items-start gap-3 text-sm text-slate-200 leading-snug">
-            <FiXCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-            <span className="font-medium">{item}</span>
+          <li key={idx} className={`flex items-start gap-3 text-sm leading-snug font-bold ${isDark ? 'text-slate-200' : 'text-slate-950'}`}>
+            <FiXCircle className={`w-4.5 h-4.5 shrink-0 mt-0.5 ${isDark ? 'text-red-400' : 'text-red-600'}`} />
+            <span className="font-bold">{item}</span>
           </li>
         ))}
       </ul>
