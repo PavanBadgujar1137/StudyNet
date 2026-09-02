@@ -23,7 +23,6 @@ export function PractitionerPublicProfile() {
   // Stage 02 — Intake Modal State
   const [showIntakeModal, setShowIntakeModal] = useState(false)
   const [selectedOffer, setSelectedOffer] = useState(null)
-  const [pendingIntakeAnswers, setPendingIntakeAnswers] = useState([])
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -74,7 +73,6 @@ export function PractitionerPublicProfile() {
 
   // Triggered after 6-question intake is submitted
   const handleIntakeSubmitted = async (formattedAnswers) => {
-    setPendingIntakeAnswers(formattedAnswers)
     setShowIntakeModal(false)
     if (selectedOffer) {
       await proceedToPayment(selectedOffer, formattedAnswers)

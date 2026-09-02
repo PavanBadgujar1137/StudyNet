@@ -1,6 +1,6 @@
-# StudyNet (OpenHand Practice & Education Platform) 🚀
+# OpenHand Practice & Education Platform 🚀
 
-**StudyNet** (also operating as **OpenHand Practice Platform**) is a modern, enterprise-ready educational LMS and practice-space management platform. Built using the **MERN Stack** (MongoDB, Express.js, React 18, Node.js), it pairs real-time Socket.io communication, an AI Co-Pilot engine (Aura), Cloudinary media delivery, and Razorpay financial infrastructure into a unified experience for students, practitioners, organizations, and platform administrators.
+**OpenHand** is a modern, enterprise-ready educational LMS and practice-space management platform. Built using the **MERN Stack** (MongoDB, Express.js, React 18, Node.js), it pairs real-time Socket.io communication, an AI Co-Pilot engine (Aura), Cloudinary media delivery, and Razorpay financial infrastructure into a unified experience for students, practitioners, organizations, and platform administrators.
 
 ---
 
@@ -231,7 +231,7 @@ StudyNet/
 
 ## 📄 License & Maintainers
 
-Maintained as part of the **StudyNet / OpenHand** suite. Distributed under the ISC License.
+Maintained as part of the **OpenHand** platform suite. Distributed under the ISC License.
 ./frontend
    ```
 2. Install dependency files:

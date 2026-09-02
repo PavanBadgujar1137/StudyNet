@@ -26,13 +26,8 @@ function SocialAuthButtons({ accountType = "Client", mode = "login" }) {
   const navigate = useNavigate()
   const initializedRef = useRef(false)
 
-  const googleClientId =
-    process.env.REACT_APP_GOOGLE_CLIENT_ID ||
-    "655462982262-utviqnfkli8nvefabcvdbu3ajb8qcibo.apps.googleusercontent.com"
-
-  const linkedinClientId =
-    process.env.REACT_APP_LINKEDIN_CLIENT_ID ||
-    "78xxxxxxxxx"
+  const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID
+  const linkedinClientId = process.env.REACT_APP_LINKEDIN_CLIENT_ID
 
   const handleSocialSuccess = useCallback(
     (provider, data) => {

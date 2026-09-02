@@ -24,8 +24,6 @@ import {
   FiSmartphone,
   FiLayers,
   FiCopy,
-  FiExternalLink,
-  FiCheck,
   FiShare,
   FiMessageCircle
 } from 'react-icons/fi'

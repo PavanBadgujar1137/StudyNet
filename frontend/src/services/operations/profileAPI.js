@@ -29,8 +29,8 @@ export function getUserDetails(token, navigate) {
     } catch (error) {
       console.log("GET_USER_DETAILS API ERROR............", error)
       if (error?.response?.status === 401 || error?.response?.status === 403) {
-        dispatch(logout(navigate))
-        toast.error("Session expired. Please log in again.")
+        dispatch(logout(navigate, false))
+        toast.error("Session expired. Please log in again.", { id: "session-expired-toast" })
       }
     }
     dispatch(setLoading(false))

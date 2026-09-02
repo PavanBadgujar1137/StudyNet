@@ -26,7 +26,7 @@ export function IntakeModal({ open, onClose, practitionerName, questions = [], o
       setCurrentStep(0)
       setCompleted(false)
     }
-  }, [open, questions])
+  }, [open, questions, activeQuestions.length])
 
   const handleAnswerChange = (text) => {
     const newAnswers = [...answers]
