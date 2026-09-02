@@ -22,7 +22,12 @@ import {
   FiSearch,
   FiZap,
   FiSmartphone,
-  FiLayers
+  FiLayers,
+  FiCopy,
+  FiExternalLink,
+  FiCheck,
+  FiShare,
+  FiMessageCircle
 } from 'react-icons/fi'
 import { toast } from 'react-hot-toast'
 import {
@@ -33,6 +38,7 @@ import {
   deleteSocialPost,
   fetchSocialAccounts,
   toggleSocialAccount,
+  trackPostShare,
 } from '../../../../services/operations/socialPostAPI'
 
 export function SocialPostStudio() {
@@ -81,6 +87,68 @@ export function SocialPostStudio() {
   const [scheduledAt, setScheduledAt] = useState('')
   const [previewPlatform, setPreviewPlatform] = useState('instagram')
   const [submitting, setSubmitting] = useState(false)
+
+  // Share Launchpad Modal State
+  const [shareModalPost, setShareModalPost] = useState(null)
+
+  const handleCopyText = (text, label = 'Content') => {
+    if (!text) return
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text)
+        .then(() => toast.success(`${label} copied to clipboard!`))
+        .catch(() => fallbackCopyText(text, label))
+    } else {
+      fallbackCopyText(text, label)
+    }
+  }
+
+  const fallbackCopyText = (text, label) => {
+    try {
+      const textarea = document.createElement('textarea')
+      textarea.value = text
+      textarea.style.position = 'fixed'
+      textarea.style.opacity = '0'
+      document.body.appendChild(textarea)
+      textarea.focus()
+      textarea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textarea)
+      toast.success(`${label} copied to clipboard!`)
+    } catch (e) {
+      toast.error(`Failed to copy ${label}`)
+    }
+  }
+
+  const handleNativeShare = async (post) => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: post.title || 'Social Post',
+          text: post.caption,
+          url: post.mediaUrl || window.location.href,
+        })
+        if (post?._id) {
+          await trackPostShare(post._id, token)
+          loadPosts()
+        }
+        toast.success('Shared successfully via system share!')
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('Error sharing:', err)
+        }
+      }
+    } else {
+      toast.error('Native system share is not supported on this device/browser.')
+    }
+  }
+
+  const handleIntentClick = async (post, intentUrl) => {
+    if (post && post._id) {
+      await trackPostShare(post._id, token)
+      loadPosts()
+    }
+    window.open(intentUrl, '_blank', 'noopener,noreferrer')
+  }
 
   // Gradient Quote Card, Aspect Ratio & Manual Crop State
   const [useGradientCard, setUseGradientCard] = useState(false)
@@ -282,6 +350,9 @@ export function SocialPostStudio() {
       setUseGradientCard(false)
       loadPosts()
       setActiveTab('feed')
+      if (successPost.status === 'published') {
+        setShareModalPost(successPost)
+      }
     }
   }
 
@@ -304,7 +375,10 @@ export function SocialPostStudio() {
   // Publish Post Now
   const handlePublishNow = async (postId) => {
     const updated = await publishSocialPostNow(postId, token)
-    if (updated) loadPosts()
+    if (updated) {
+      loadPosts()
+      setShareModalPost(updated)
+    }
   }
 
   // Delete Post
@@ -1492,53 +1566,109 @@ export function SocialPostStudio() {
                     </div>
                   )}
 
-                  {/* Web Share Direct Intents */}
+                  {/* Web Share Direct Intents & Action Launchpad */}
                   <div style={{ borderTop: '1px solid #F1F5F9', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase' }}>
-                      Direct Share Intents:
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase' }}>
+                        1-Click Social Broadcast:
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShareModalPost(post)}
+                        style={{
+                          background: '#EFF6FF',
+                          color: '#1D4ED8',
+                          border: '1px solid #BFDBFE',
+                          padding: '4px 10px',
+                          borderRadius: '8px',
+                          fontSize: '11.5px',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '5px'
+                        }}
+                      >
+                        <FiShare2 fontSize={13} /> Launchpad Modal
+                      </button>
                     </div>
                     
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                       {post.webShareIntents?.twitter && (
-                        <a
-                          href={post.webShareIntents.twitter}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ background: '#000000', color: '#ffffff', padding: '8px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 800, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}
+                        <button
+                          type="button"
+                          onClick={() => handleIntentClick(post, post.webShareIntents.twitter)}
+                          style={{ background: '#000000', color: '#ffffff', border: 'none', padding: '8px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
                         >
                           <FiTwitter /> Tweet
-                        </a>
+                        </button>
                       )}
 
                       {post.webShareIntents?.linkedin && (
-                        <a
-                          href={post.webShareIntents.linkedin}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ background: '#0A66C2', color: '#ffffff', padding: '8px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 800, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}
+                        <button
+                          type="button"
+                          onClick={() => handleIntentClick(post, post.webShareIntents.linkedin)}
+                          style={{ background: '#0A66C2', color: '#ffffff', border: 'none', padding: '8px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
                         >
-                          <FiLinkedin /> Share LinkedIn
-                        </a>
+                          <FiLinkedin /> LinkedIn
+                        </button>
                       )}
 
                       {post.webShareIntents?.facebook && (
-                        <a
-                          href={post.webShareIntents.facebook}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ background: '#1877F2', color: '#ffffff', padding: '8px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 800, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}
+                        <button
+                          type="button"
+                          onClick={() => handleIntentClick(post, post.webShareIntents.facebook)}
+                          style={{ background: '#1877F2', color: '#ffffff', border: 'none', padding: '8px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
                         >
-                          <FiFacebook /> Share FB
-                        </a>
+                          <FiFacebook /> FB Share
+                        </button>
+                      )}
+
+                      {post.webShareIntents?.whatsapp && (
+                        <button
+                          type="button"
+                          onClick={() => handleIntentClick(post, post.webShareIntents.whatsapp)}
+                          style={{ background: '#25D366', color: '#ffffff', border: 'none', padding: '8px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                        >
+                          <FiMessageCircle /> WhatsApp
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => handleNativeShare(post)}
+                        style={{ background: '#475569', color: '#ffffff', border: 'none', padding: '8px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                      >
+                        <FiShare /> OS Share
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyText(post.caption, 'Post Caption')}
+                        style={{ flex: 1, background: '#F8FAFC', border: '1px solid #CBD5E1', color: '#475569', padding: '6px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
+                      >
+                        <FiCopy fontSize={13} /> Copy Caption
+                      </button>
+                      {post.mediaUrl && (
+                        <button
+                          type="button"
+                          onClick={() => handleCopyText(post.mediaUrl, 'Media URL')}
+                          style={{ flex: 1, background: '#F8FAFC', border: '1px solid #CBD5E1', color: '#475569', padding: '6px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
+                        >
+                          <FiLink fontSize={13} /> Copy Media URL
+                        </button>
                       )}
                     </div>
 
                     {post.status !== 'published' && (
                       <button
+                        type="button"
                         onClick={() => handlePublishNow(post._id)}
                         style={{ marginTop: '6px', background: '#10B981', color: '#fff', border: 'none', padding: '10px 18px', borderRadius: '10px', fontSize: '13.5px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                       >
-                        <FiSend /> Broadcast Now
+                        <FiSend /> Broadcast &amp; Publish Now
                       </button>
                     )}
                   </div>
@@ -1655,6 +1785,189 @@ export function SocialPostStudio() {
                 })}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* -------------------------------------------------------------------------- */}
+      {/* 🚀 INSTANT BROADCAST SHARE LAUNCHPAD MODAL */}
+      {/* -------------------------------------------------------------------------- */}
+      {shareModalPost && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(6px)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+        >
+          <div
+            style={{
+              background: '#ffffff',
+              borderRadius: '24px',
+              maxWidth: '560px',
+              width: '100%',
+              padding: '28px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px',
+              position: 'relative',
+              animation: 'fadeIn 0.2s ease-out'
+            }}
+          >
+            {/* Close Modal Button */}
+            <button
+              type="button"
+              onClick={() => setShareModalPost(null)}
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                background: '#F1F5F9',
+                border: 'none',
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: '#64748B',
+                fontSize: '18px'
+              }}
+            >
+              <FiX />
+            </button>
+
+            {/* Modal Header */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)' }}>
+                <FiSend />
+              </div>
+              <div>
+                <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                  Post Ready to Broadcast!
+                </h3>
+                <p style={{ fontSize: '13.5px', color: '#64748B', margin: '2px 0 0 0' }}>
+                  Launch pre-formatted updates across your active social channels.
+                </p>
+              </div>
+            </div>
+
+            {/* Post Snippet Card */}
+            <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '16px', display: 'flex', gap: '14px', alignItems: 'center' }}>
+              {shareModalPost.mediaUrl ? (
+                <img src={shareModalPost.mediaUrl} alt="Post preview" style={{ width: '70px', height: '70px', borderRadius: '10px', objectFit: 'cover', flexShrink: 0 }} />
+              ) : (
+                <div style={{ width: '70px', height: '70px', borderRadius: '10px', background: '#EFF6FF', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>
+                  <FiShare2 />
+                </div>
+              )}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 800, fontSize: '14.5px', color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {shareModalPost.title || 'Social Broadcast'}
+                </div>
+                <div style={{ fontSize: '12.5px', color: '#475569', marginTop: '4px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                  {shareModalPost.caption}
+                </div>
+              </div>
+            </div>
+
+            {/* 1-Click Launchpad Buttons Grid */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ fontSize: '12px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Select Channel to Launch &amp; Post:
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
+                {shareModalPost.webShareIntents?.twitter && (
+                  <button
+                    type="button"
+                    onClick={() => handleIntentClick(shareModalPost, shareModalPost.webShareIntents.twitter)}
+                    style={{ background: '#000000', color: '#ffffff', border: 'none', padding: '12px 16px', borderRadius: '12px', fontWeight: 800, fontSize: '13.5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+                  >
+                    <FiTwitter fontSize={18} /> Post on 𝕏 (Twitter)
+                  </button>
+                )}
+
+                {shareModalPost.webShareIntents?.linkedin && (
+                  <button
+                    type="button"
+                    onClick={() => handleIntentClick(shareModalPost, shareModalPost.webShareIntents.linkedin)}
+                    style={{ background: '#0A66C2', color: '#ffffff', border: 'none', padding: '12px 16px', borderRadius: '12px', fontWeight: 800, fontSize: '13.5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 4px 12px rgba(10, 102, 194, 0.2)' }}
+                  >
+                    <FiLinkedin fontSize={18} /> Share on LinkedIn
+                  </button>
+                )}
+
+                {shareModalPost.webShareIntents?.facebook && (
+                  <button
+                    type="button"
+                    onClick={() => handleIntentClick(shareModalPost, shareModalPost.webShareIntents.facebook)}
+                    style={{ background: '#1877F2', color: '#ffffff', border: 'none', padding: '12px 16px', borderRadius: '12px', fontWeight: 800, fontSize: '13.5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 4px 12px rgba(24, 119, 242, 0.2)' }}
+                  >
+                    <FiFacebook fontSize={18} /> Post on Facebook
+                  </button>
+                )}
+
+                {shareModalPost.webShareIntents?.whatsapp && (
+                  <button
+                    type="button"
+                    onClick={() => handleIntentClick(shareModalPost, shareModalPost.webShareIntents.whatsapp)}
+                    style={{ background: '#25D366', color: '#ffffff', border: 'none', padding: '12px 16px', borderRadius: '12px', fontWeight: 800, fontSize: '13.5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 4px 12px rgba(37, 211, 102, 0.2)' }}
+                  >
+                    <FiMessageCircle fontSize={18} /> Share on WhatsApp
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleCopyText(shareModalPost.caption, 'Caption')
+                    window.open('https://www.instagram.com', '_blank', 'noopener,noreferrer')
+                  }}
+                  style={{ background: 'linear-gradient(45deg, #F09433, #DC2743, #BC1888)', color: '#ffffff', border: 'none', padding: '12px 16px', borderRadius: '12px', fontWeight: 800, fontSize: '13.5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 4px 12px rgba(220, 39, 67, 0.2)' }}
+                >
+                  <FiInstagram fontSize={18} /> Copy &amp; Open Instagram
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleNativeShare(shareModalPost)}
+                  style={{ background: '#334155', color: '#ffffff', border: 'none', padding: '12px 16px', borderRadius: '12px', fontWeight: 800, fontSize: '13.5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}
+                >
+                  <FiShare fontSize={18} /> System Native Share
+                </button>
+              </div>
+            </div>
+
+            {/* Bottom Copy Actions & Dismiss */}
+            <div style={{ borderTop: '1px solid #F1F5F9', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <button
+                type="button"
+                onClick={() => handleCopyText(shareModalPost.caption, 'Post Caption')}
+                style={{ background: '#F1F5F9', color: '#334155', border: '1px solid #CBD5E1', padding: '8px 14px', borderRadius: '10px', fontSize: '12.5px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <FiCopy /> Copy Caption
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShareModalPost(null)}
+                style={{ background: '#2563EB', color: '#ffffff', border: 'none', padding: '8px 20px', borderRadius: '10px', fontSize: '13px', fontWeight: 800, cursor: 'pointer' }}
+              >
+                Done
+              </button>
+            </div>
           </div>
         </div>
       )}

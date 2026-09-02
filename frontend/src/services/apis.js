@@ -78,6 +78,7 @@ export const socialPostEndpoints = {
   DELETE_POST_API: BASE_URL + "/social-posts",  // + "/:postId"
   GET_ACCOUNTS_API: BASE_URL + "/social-posts/accounts",
   TOGGLE_ACCOUNT_API: BASE_URL + "/social-posts/accounts/toggle",
+  TRACK_SHARE_API: BASE_URL + "/social-posts", // + "/:postId/track-share"
 }
 
 // SOCKET BASE URL (for Socket.io client)

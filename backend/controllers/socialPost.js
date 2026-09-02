@@ -4,7 +4,7 @@ const { uploadImageToCloudinary } = require("../utils/imageUploader")
 
 // Helper function to build web share intents
 const generateShareIntents = (caption, mediaUrl) => {
-  const encodedText = encodeURIComponent(caption)
+  const encodedText = encodeURIComponent(caption || "")
   const domain = process.env.PUBLIC_DOMAIN || "https://openhand.live"
   const encodedUrl = encodeURIComponent(mediaUrl || domain)
 
@@ -285,7 +285,7 @@ exports.toggleSocialAccountConnection = async (req, res) => {
           })
         }
         account.isConnected = true
-        if (handle) account.handle = handle
+        if (handle) account.handle = handle.startsWith("@") ? handle : `@${handle}`
         if (accountName) account.accountName = accountName
         account.connectedAt = new Date()
       } else {
@@ -323,3 +323,37 @@ exports.toggleSocialAccountConnection = async (req, res) => {
     })
   }
 }
+
+// 7. Track Share Event
+exports.trackShare = async (req, res) => {
+  try {
+    const { postId } = req.params
+    const practitionerId = req.user.id
+
+    const post = await SocialPost.findOne({ _id: postId, practitioner: practitionerId })
+
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: "Post not found or unauthorized",
+      })
+    }
+
+    post.metrics.shares += 1
+    await post.save()
+
+    return res.status(200).json({
+      success: true,
+      message: "Share tracked successfully",
+      shares: post.metrics.shares,
+    })
+  } catch (error) {
+    console.error("Error in trackShare:", error)
+    return res.status(500).json({
+      success: false,
+      message: "Failed to track share",
+      error: error.message,
+    })
+  }
+}
+

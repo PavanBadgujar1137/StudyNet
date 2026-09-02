@@ -244,7 +244,7 @@ export function TermsOfService() {
             <h2 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] tracking-tight flex items-center gap-2">
               <FiMail className="text-[#2563EB]" /> 12. Contact
             </h2>
-            <p>Legal inquiries: <strong className="text-[#2563EB]">legal@openhand.live</strong></p>
+            <p>Legal inquiries: <strong className="text-[#2563EB]">connect@openhand.live</strong></p>
           </div>
 
         </div>

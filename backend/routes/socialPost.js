@@ -8,6 +8,7 @@ const {
   deletePost,
   getSocialAccounts,
   toggleSocialAccountConnection,
+  trackShare,
 } = require("../controllers/socialPost")
 const { auth, isPractitioner } = require("../middleware/auth")
 
@@ -17,6 +18,7 @@ router.put("/:postId", auth, isPractitioner, updatePost)
 router.get("/mine", auth, isPractitioner, getPractitionerPosts)
 
 router.post("/:postId/publish", auth, isPractitioner, publishPostNow)
+router.post("/:postId/track-share", auth, isPractitioner, trackShare)
 router.delete("/:postId", auth, isPractitioner, deletePost)
 
 router.get("/accounts", auth, isPractitioner, getSocialAccounts)

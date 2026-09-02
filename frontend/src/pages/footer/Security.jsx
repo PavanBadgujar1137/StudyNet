@@ -133,7 +133,7 @@ export function Security() {
           {/* Responsible disclosure */}
           <div id="disclosure" className="p-8 sm:p-10 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4">
             <h2 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] tracking-tight">Responsible disclosure</h2>
-            <p>Security researchers can report findings to <a href="mailto:security@openhand.live" style={{ color: '#2563EB', fontWeight: 700 }}>security@openhand.live</a>.</p>
+            <p>Security researchers can report findings to <a href="mailto:connect@openhand.live" style={{ color: '#2563EB', fontWeight: 700 }}>connect@openhand.live</a>.</p>
           </div>
 
           {/* Security Contacts */}
@@ -141,8 +141,8 @@ export function Security() {
             <h2 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] tracking-tight flex items-center gap-2 mb-2">
               <FiMail className="text-[#2563EB]" /> Security Contacts
             </h2>
-            <p><strong className="text-[#0F172A]">Urgent incidents:</strong> <span className="text-red-600 font-mono font-bold">support@openhand.live</span></p>
-            <p><strong className="text-[#0F172A]">Security desk:</strong> <span className="text-[#2563EB] font-mono font-bold">security@openhand.live</span></p>
+            <p><strong className="text-[#0F172A]">Urgent incidents:</strong> <span className="text-red-600 font-mono font-bold">connect@openhand.live</span></p>
+            <p><strong className="text-[#0F172A]">Security desk:</strong> <span className="text-[#2563EB] font-mono font-bold">connect@openhand.live</span></p>
           </div>
 
         </div>

@@ -148,7 +148,7 @@ export function DataConsent() {
             <h2 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] tracking-tight flex items-center gap-2">
               <FiMail className="text-[#2563EB]" /> Contact
             </h2>
-            <p>Consent inquiries: <strong className="text-[#2563EB]">support@openhand.live</strong></p>
+            <p>Consent inquiries: <strong className="text-[#2563EB]">connect@openhand.live</strong></p>
           </div>
 
         </div>

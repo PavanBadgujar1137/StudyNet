@@ -18,11 +18,12 @@
 // CP-4: Contact Domain (enforced sitewide)
 // ─────────────────────────────────────────────
 export const CONTACT = {
-  support: 'support@openhand.live',
-  legal:   'legal@openhand.live',
-  security:'security@openhand.live',
-  privacy: 'support@openhand.live',
-  hello:   'hello@openhand.live',
+  connect: 'connect@openhand.live',
+  support: 'connect@openhand.live',
+  legal:   'connect@openhand.live',
+  security:'connect@openhand.live',
+  privacy: 'connect@openhand.live',
+  hello:   'connect@openhand.live',
 }
 
 // ─────────────────────────────────────────────

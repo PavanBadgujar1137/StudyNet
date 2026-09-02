@@ -274,7 +274,7 @@ export function PrivacyPolicy() {
               <li><strong className="text-[#0F172A]">Object / withdraw consent</strong> — stop us from processing your data on certain grounds</li>
               <li><strong className="text-[#0F172A]">Complain</strong> — to your data protection authority (in India, the Data Protection Board)</li>
             </ul>
-            <p className="text-xs sm:text-sm text-[#2563EB] font-bold">To exercise any of these rights, email <strong className="text-[#0F172A]">support@openhand.live</strong>. We respond within 15 days.</p>
+            <p className="text-xs sm:text-sm text-[#2563EB] font-bold">To exercise any of these rights, email <strong className="text-[#0F172A]">connect@openhand.live</strong>. We respond within 15 days.</p>
           </div>
 
           {/* Section 10: Retention */}
@@ -321,7 +321,7 @@ export function PrivacyPolicy() {
               )}
             </div>
 
-            <p className="font-medium">For anything privacy-related, email: <strong className="text-[#2563EB]">support@openhand.live</strong></p>
+            <p className="font-medium">For anything privacy-related, email: <strong className="text-[#2563EB]">connect@openhand.live</strong></p>
 
             {!LEGAL_FLAGS.privacyPolicy && (
               <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs sm:text-sm text-amber-900 font-medium">

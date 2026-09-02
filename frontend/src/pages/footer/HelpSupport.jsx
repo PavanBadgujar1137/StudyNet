@@ -35,7 +35,7 @@ export function HelpSupport() {
     {
       title: 'Email Support Desk',
       speed: 'Within 1 Business Day',
-      desc: 'Write to support@openhand.live for account management, billing, or complex setup questions.',
+      desc: 'Write to connect@openhand.live for account management, billing, or complex setup questions.',
       icon: FiMail,
       ctaText: 'Send Email',
       action: () => setEmailModal(true)

@@ -133,7 +133,7 @@ export function Documentation() {
         { title: 'Video/audio issues in sessions', snippet: 'Browser permission checks, camera/microphone diagnostics, and network troubleshooting.', details: 'Ensure browser permissions allow camera/microphone access (chrome://settings/content/camera).' },
         { title: 'Payment failures', snippet: 'Diagnosing declined cards, authentication errors, and retrying failed transactions.', details: 'Check card 3D Secure authentication status or retry via secondary payment gateway.' },
         { title: 'Learner can\'t log in', snippet: 'Password reset walkthroughs, magic link dispatching, and email verification checks.', details: 'Resend password reset emails or dispatch magic link directly from learner profile.' },
-        { title: 'Email not sending', snippet: 'Checking spam filters, updating whitelist settings, and verifying domain delivery status.', details: 'Ensure support@openhand.live is added to learner email contact list or check spam folder.' }
+        { title: 'Email not sending', snippet: 'Checking spam filters, updating whitelist settings, and verifying domain delivery status.', details: 'Ensure connect@openhand.live is added to learner email contact list or check spam folder.' }
       ]
     }
   ]

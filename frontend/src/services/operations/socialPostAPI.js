@@ -9,6 +9,7 @@ const {
   DELETE_POST_API,
   GET_ACCOUNTS_API,
   TOGGLE_ACCOUNT_API,
+  TRACK_SHARE_API,
 } = socialPostEndpoints
 
 // Create a new social post
@@ -154,3 +155,17 @@ export const toggleSocialAccount = async (data, token) => {
     return null
   }
 }
+
+// Track post share click event in DB
+export const trackPostShare = async (postId, token) => {
+  try {
+    const response = await apiConnector("POST", `${TRACK_SHARE_API}/${postId}/track-share`, null, {
+      Authorization: `Bearer ${token}`,
+    })
+    return response?.data?.success || false
+  } catch (error) {
+    console.error("trackPostShare error:", error)
+    return false
+  }
+}
+

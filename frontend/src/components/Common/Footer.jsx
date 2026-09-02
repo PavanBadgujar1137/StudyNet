@@ -147,10 +147,10 @@ const Footer = () => {
       {/* ── Bottom Bar ── */}
       <div className="oh-footer__bottom">
         <p className="oh-footer__copy">
-          © 2026 OpenHand. All rights reserved.
+          © 2026 OpenHand. All rights reserved. · <a href="mailto:connect@openhand.live" style={{ color: '#60A5FA', fontWeight: 700, textDecoration: 'none' }}>connect@openhand.live</a>
         </p>
         <p className="oh-footer__made">
-          Made with <FiHeart className="oh-footer__heart" /> for practitioners & clients worldwide
+          Made with <FiHeart className="oh-footer__heart" /> for practitioners &amp; clients worldwide
         </p>
         <p className="oh-footer__domain">openhand.live</p>
       </div>

@@ -11,7 +11,8 @@ import {
 import { 
   FiArrowUp, 
   FiGlobe, 
-  FiHeart 
+  FiHeart,
+  FiMail
 } from 'react-icons/fi'
 
 const LINKS = [
@@ -129,10 +130,15 @@ export function OHFooter() {
               </span>
             </div>
 
-            {/* Initiative Tag */}
+            {/* Initiative Tag & Email Contact */}
             <div className="flex items-center text-xs font-medium gap-1.5 mt-1" style={{ color: '#CBD5E1' }}>
               <FiGlobe style={{ color: '#60A5FA' }} />
               <span>A Magnificent Us initiative, built by <strong className="font-bold" style={{ color: '#60A5FA' }}>Zwiebel AI</strong>.</span>
+            </div>
+
+            <div className="flex items-center text-xs font-semibold gap-2 mt-1" style={{ color: '#E2E8F0' }}>
+              <FiMail style={{ color: '#60A5FA' }} />
+              <span>Contact: <a href="mailto:connect@openhand.live" className="hover:underline font-bold" style={{ color: '#60A5FA' }}>connect@openhand.live</a></span>
             </div>
 
             {/* Social Links */}
