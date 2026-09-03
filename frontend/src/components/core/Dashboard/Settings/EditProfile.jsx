@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { useForm } from "react-hook-form"
 import { useDispatch, useSelector } from "react-redux"
-import { FiUser, FiCalendar, FiPhone, FiInfo, FiCheck, FiCreditCard } from "react-icons/fi"
+import { FiUser, FiCalendar, FiPhone, FiInfo, FiCheck, FiCreditCard, FiChevronDown, FiSearch } from "react-icons/fi"
 import { updateProfile } from "../../../../services/operations/SettingsAPI"
 import { apiConnector } from "../../../../services/apiConnector"
+import { countryCodes } from "../../../../data/countryCodes"
 import toast from "react-hot-toast"
 
 const genders = ["Male", "Female", "Non-Binary", "Prefer not to say", "Other"]
@@ -13,6 +14,94 @@ export default function EditProfile() {
   const { token } = useSelector((state) => state.auth)
   const dispatch = useDispatch()
 
+  const parseInitialPhone = (contactStr) => {
+    if (!contactStr) return { code: "+91", number: "" }
+    const trimmed = String(contactStr).trim()
+    const matched = countryCodes.find((c) => trimmed.startsWith(c.code))
+    if (matched) {
+      const restDigits = trimmed.slice(matched.code.length).replace(/\D/g, "").slice(0, matched.digits)
+      return { code: matched.code, number: restDigits }
+    }
+    if (trimmed.startsWith("+")) {
+      const parts = trimmed.split(" ")
+      const codePart = parts[0]
+      const restDigits = parts.slice(1).join("").replace(/\D/g, "")
+      const knownCode = countryCodes.find((c) => c.code === codePart)
+      const digitsLimit = knownCode ? knownCode.digits : 10
+      return { code: knownCode ? codePart : "+91", number: restDigits.slice(0, digitsLimit) }
+    }
+    const digitsOnly = trimmed.replace(/\D/g, "").slice(0, 10)
+    return { code: "+91", number: digitsOnly }
+  }
+
+  const dropdownRef = useRef(null)
+  const initialPhoneData = parseInitialPhone(user?.additionalDetails?.contactNumber)
+  const [countryCode, setCountryCode] = useState(initialPhoneData.code)
+  const [phoneNumber, setPhoneNumber] = useState(initialPhoneData.number)
+  const [phoneError, setPhoneError] = useState("")
+  const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false)
+  const [countrySearch, setCountrySearch] = useState("")
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsCountryDropdownOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  useEffect(() => {
+    if (user?.additionalDetails?.contactNumber) {
+      const parsed = parseInitialPhone(user.additionalDetails.contactNumber)
+      setCountryCode(parsed.code)
+      setPhoneNumber(parsed.number)
+    }
+  }, [user])
+
+  const activeCountryObj = countryCodes.find((c) => c.code === countryCode) || countryCodes[0]
+
+  const filteredCountryCodes = countryCodes.filter((item) => {
+    const q = countrySearch.toLowerCase().trim()
+    if (!q) return true
+    return (
+      item.name.toLowerCase().includes(q) ||
+      item.code.toLowerCase().includes(q) ||
+      (item.country && item.country.toLowerCase().includes(q))
+    )
+  })
+
+  const handlePhoneChange = (e) => {
+    const rawVal = e.target.value
+    const digitsOnly = rawVal.replace(/\D/g, "")
+    const truncated = digitsOnly.slice(0, activeCountryObj.digits)
+    setPhoneNumber(truncated)
+
+    if (truncated.length === 0) {
+      setPhoneError("Please enter your Contact Number.")
+    } else if (truncated.length < activeCountryObj.digits) {
+      setPhoneError(`Contact number for ${activeCountryObj.name || activeCountryObj.country} must be exactly ${activeCountryObj.digits} digits.`)
+    } else {
+      setPhoneError("")
+    }
+  }
+
+  const handleCountryCodeChange = (newCode) => {
+    setCountryCode(newCode)
+    const newCountryObj = countryCodes.find((c) => c.code === newCode) || countryCodes[0]
+    const truncated = phoneNumber.slice(0, newCountryObj.digits)
+    setPhoneNumber(truncated)
+
+    if (truncated.length === 0) {
+      setPhoneError("Please enter your Contact Number.")
+    } else if (truncated.length < newCountryObj.digits) {
+      setPhoneError(`Contact number for ${newCountryObj.name || newCountryObj.country} must be exactly ${newCountryObj.digits} digits.`)
+    } else {
+      setPhoneError("")
+    }
+  }
+
   const {
     register,
     handleSubmit,
@@ -20,6 +109,20 @@ export default function EditProfile() {
   } = useForm()
 
   const submitProfileForm = async (data) => {
+    if (!phoneNumber) {
+      setPhoneError("Please enter your Contact Number.")
+      toast.error("Please enter your Contact Number.")
+      return
+    }
+    if (phoneNumber.length < activeCountryObj.digits) {
+      setPhoneError(`Contact number for ${activeCountryObj.name || activeCountryObj.country} must be exactly ${activeCountryObj.digits} digits.`)
+      toast.error(`Phone number must be exactly ${activeCountryObj.digits} digits for ${activeCountryObj.name || activeCountryObj.country}`)
+      return
+    }
+
+    setPhoneError("")
+    data.contactNumber = `${countryCode} ${phoneNumber}`
+
     try {
       dispatch(updateProfile(token, data))
     } catch (error) {
@@ -170,25 +273,102 @@ export default function EditProfile() {
             <label htmlFor="contactNumber" className={labelClass}>
               <FiPhone className="text-indigo-500" /> Contact Number
             </label>
-            <input
-              type="tel"
-              name="contactNumber"
-              id="contactNumber"
-              placeholder="Enter Contact Number"
-              className={inputClass}
-              {...register("contactNumber", {
-                required: {
-                  value: true,
-                  message: "Please enter your Contact Number.",
-                },
-                maxLength: { value: 12, message: "Invalid Contact Number" },
-                minLength: { value: 10, message: "Invalid Contact Number" },
-              })}
-              defaultValue={user?.additionalDetails?.contactNumber}
-            />
-            {errors.contactNumber && (
+            <div className="relative flex items-center rounded-xl border border-slate-200 bg-slate-50/60 focus-within:bg-white focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all">
+              
+              {/* Custom Searchable Country Code Selector Trigger */}
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsCountryDropdownOpen((prev) => !prev)}
+                  className="flex items-center gap-1.5 py-3 pl-3.5 pr-2.5 text-xs md:text-sm font-bold text-slate-800 border-r border-slate-200/80 hover:bg-slate-100/70 transition-colors cursor-pointer shrink-0"
+                >
+                  <span>{activeCountryObj.code}</span>
+                  <span className="max-w-[75px] md:max-w-[90px] truncate text-slate-600 font-semibold">{activeCountryObj.name}</span>
+                  <FiChevronDown className={`text-slate-400 transition-transform duration-200 ${isCountryDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {/* Popover Dropdown Menu (Opens Downwards below trigger) */}
+                {isCountryDropdownOpen && (
+                  <div className="absolute top-full left-0 mt-2 w-72 md:w-80 bg-white rounded-2xl border border-slate-200 shadow-2xl z-50 overflow-hidden flex flex-col animate-in fade-in slide-in-from-top-2 duration-150">
+                    
+                    {/* Search Input Box Inside Dropdown */}
+                    <div className="p-2.5 border-b border-slate-100 bg-slate-50/70 flex items-center gap-2">
+                      <FiSearch className="text-slate-400 ml-1 shrink-0" size={14} />
+                      <input
+                        type="text"
+                        autoFocus
+                        value={countrySearch}
+                        onChange={(e) => setCountrySearch(e.target.value)}
+                        placeholder="Search country or code (+91, UAE...)"
+                        className="w-full bg-transparent text-xs font-semibold text-slate-800 placeholder:text-slate-400 outline-none"
+                      />
+                      {countrySearch && (
+                        <button
+                          type="button"
+                          onClick={() => setCountrySearch("")}
+                          className="text-[10px] font-bold text-slate-400 hover:text-slate-600 px-1"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Scrollable Country Options List */}
+                    <div className="max-h-56 overflow-y-auto p-1.5 space-y-0.5">
+                      {filteredCountryCodes.length > 0 ? (
+                        filteredCountryCodes.map((item, idx) => {
+                          const isSelected = item.code === countryCode
+                          return (
+                            <button
+                              key={`${item.code}-${idx}`}
+                              type="button"
+                              onClick={() => {
+                                handleCountryCodeChange(item.code)
+                                setIsCountryDropdownOpen(false)
+                                setCountrySearch("")
+                              }}
+                              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-xs font-semibold transition-all ${
+                                isSelected
+                                  ? "bg-indigo-50 text-indigo-700 font-bold"
+                                  : "text-slate-700 hover:bg-slate-50"
+                              }`}
+                            >
+                              <span className="font-bold text-slate-900 w-11 shrink-0 text-xs">{item.code}</span>
+                              <span className="text-slate-800 font-semibold truncate">{item.name}</span>
+                            </button>
+                          )
+                        })
+                      ) : (
+                        <div className="p-4 text-center text-xs text-slate-400 font-medium">
+                          No matching country found
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Phone Input Field */}
+              <input
+                type="tel"
+                name="contactNumber"
+                id="contactNumber"
+                value={phoneNumber}
+                maxLength={activeCountryObj.digits}
+                onChange={handlePhoneChange}
+                placeholder="Enter contact number"
+                className="w-full bg-transparent px-4 py-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none"
+              />
+            </div>
+
+            {/* Helper / Error Line */}
+            {phoneError ? (
               <span className="text-[11px] font-semibold text-rose-500">
-                {errors.contactNumber.message}
+                {phoneError}
+              </span>
+            ) : (
+              <span className="text-[11px] font-medium text-slate-400">
+                Country Code: <b className="text-slate-600">{activeCountryObj.code} ({activeCountryObj.name})</b>
               </span>
             )}
           </div>
