@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useSelector } from 'react-redux'
 import { OHFooter, OHNeverDoSection } from '../../components/openhand'
 import { 
 
@@ -37,6 +38,21 @@ const FAQ_ITEMS = [
 
 export function CoPilot() {
   const [openFaqIndex, setOpenFaqIndex] = useState(0)
+  const navigate = useNavigate()
+  const { token } = useSelector((state) => state.auth)
+  const { user } = useSelector((state) => state.profile)
+
+  const handleTrySession = (e) => {
+    if (token && user) {
+      e.preventDefault()
+      const isPractitioner = user?.accountType === 'Practitioner' || user?.accountType === 'Instructor'
+      if (isPractitioner) {
+        navigate('/practice/dashboard')
+      } else {
+        navigate('/app/journey')
+      }
+    }
+  }
 
   const toggleFaq = (idx) => {
     setOpenFaqIndex(openFaqIndex === idx ? null : idx)
@@ -59,7 +75,7 @@ export function CoPilot() {
                 So don't. AURA listens alongside you — with your learner's explicit consent — and hands you the next question, the technique that fits, and the thread you'd otherwise have missed. Your learner never sees a word of it.
               </p>
               <div className="copilot-cta-row flex flex-col sm:flex-row gap-3">
-                <Link to="/signup" className="copilot-btn">Try it in a session</Link>
+                <Link to="/signup" onClick={handleTrySession} className="copilot-btn">Try it in a session</Link>
                 <a href="#how" className="copilot-btn-ghost">See how it works →</a>
               </div>
             </div>
@@ -460,7 +476,7 @@ export function CoPilot() {
           <h2>Start with the notes. Add the panel when you trust it.</h2>
           <p>Post-session drafting is on the free plan. You never have to switch on anything you're not ready for.</p>
           <div className="copilot-cta-row">
-            <Link to="/signup" className="copilot-btn">Start your free practice space</Link>
+            <Link to="/signup" onClick={handleTrySession} className="copilot-btn">Start your free practice space</Link>
             <Link to="/contact-us" className="copilot-btn-ghost">Ask us the hard questions →</Link>
           </div>
         </div>

@@ -16,6 +16,7 @@ import { apiConnector } from '../../../../services/apiConnector'
 
 export function Practitioners({ onUpdate, setActiveTab }) {
   const { token } = useSelector((state) => state.auth)
+  const { user } = useSelector((state) => state.profile)
 
   const [practitioners, setPractitioners] = useState([])
   const [connections, setConnections] = useState([])
@@ -205,8 +206,9 @@ export function Practitioners({ onUpdate, setActiveTab }) {
           }
         },
         prefill: {
-          name: '',
-          email: '',
+          name: user ? `${user.firstName} ${user.lastName}`.trim() : '',
+          email: user?.email || '',
+          contact: (user?.additionalDetails?.contactNumber && user.additionalDetails.contactNumber !== 'null' && user.additionalDetails.contactNumber !== 'undefined') ? String(user.additionalDetails.contactNumber).trim() : '',
         },
         theme: {
           color: '#1F5FE0',

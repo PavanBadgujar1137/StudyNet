@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useSelector } from 'react-redux'
 import {
   OHFooter,
   OHButton,
@@ -45,6 +46,8 @@ const SORT_OPTIONS = [
 ]
 
 export function FindAPractitioner() {
+  const { token } = useSelector((state) => state.auth)
+  const { user } = useSelector((state) => state.profile)
   const [practitioners, setPractitioners] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -86,7 +89,7 @@ export function FindAPractitioner() {
       const orderRes = await apiConnector('POST', '/api/v1/payment/create-practitioner-order', {
         practitionerId: pId,
         amount,
-      })
+      }, { Authorization: token ? `Bearer ${token}` : undefined })
 
       if (!orderRes?.data?.success) {
         toast.error(orderRes?.data?.message || 'Please log in as a Learner to connect with practitioners.')
@@ -103,6 +106,11 @@ export function FindAPractitioner() {
         name: 'OpenHand Practice Platform',
         description: `Counseling Fee for ${pName}`,
         order_id: order.id,
+        prefill: {
+          name: user ? `${user.firstName} ${user.lastName}`.trim() : '',
+          email: user?.email || '',
+          contact: (user?.additionalDetails?.contactNumber && user.additionalDetails.contactNumber !== 'null' && user.additionalDetails.contactNumber !== 'undefined') ? String(user.additionalDetails.contactNumber).trim() : '',
+        },
         handler: async function (response) {
           try {
             const res = await apiConnector('POST', '/api/v1/practitioners/connect', {

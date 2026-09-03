@@ -91,8 +91,9 @@ export default function OHPricingSection({ defaultRole = "learner", title, subti
         description: `Subscription: ${planName}`,
         order_id: order.id,
         prefill: {
-          name: user ? `${user.firstName} ${user.lastName}` : "",
+          name: user ? `${user.firstName} ${user.lastName}`.trim() : "",
           email: user?.email || "",
+          contact: (user?.additionalDetails?.contactNumber && user.additionalDetails.contactNumber !== 'null' && user.additionalDetails.contactNumber !== 'undefined') ? String(user.additionalDetails.contactNumber).trim() : "",
         },
         theme: {
           color: "#1F5FE0",

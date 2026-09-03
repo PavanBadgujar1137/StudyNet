@@ -67,7 +67,22 @@ function KpiCard({ icon, label, value, subLabel, color = '#3B82F6', trend }) {
 }
 
 // ─── Data Table ───────────────────────────────────────────────────────────────
-function DataTable({ columns, data, loading, emptyMessage = "No records found" }) {
+function DataTable({
+  columns,
+  data,
+  loading,
+  emptyMessage = "No records found",
+  pageSize = 10,
+  page: externalPage,
+  totalItems: externalTotalItems,
+  onPageChange: externalOnPageChange
+}) {
+  const [internalPage, setInternalPage] = useState(1)
+
+  useEffect(() => {
+    setInternalPage(1)
+  }, [data?.length])
+
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 48, color: '#94A3B8' }}>
@@ -83,33 +98,125 @@ function DataTable({ columns, data, loading, emptyMessage = "No records found" }
       </div>
     )
   }
+
+  const isServerPaginated = typeof externalOnPageChange === 'function'
+  const currentPage = isServerPaginated ? (externalPage || 1) : internalPage
+  const totalItems = isServerPaginated ? (externalTotalItems || data.length) : data.length
+  const totalPages = Math.ceil(totalItems / pageSize) || 1
+
+  const displayData = isServerPaginated
+    ? data
+    : data.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+
+  const startIndex = totalItems > 0 ? (currentPage - 1) * pageSize + 1 : 0
+  const endIndex = Math.min(currentPage * pageSize, totalItems)
+
+  const handlePageChange = (newPage) => {
+    if (newPage < 1 || newPage > totalPages) return
+    if (isServerPaginated) {
+      externalOnPageChange(newPage)
+    } else {
+      setInternalPage(newPage)
+    }
+  }
+
   return (
-    <div style={{ overflowX: 'auto' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-        <thead>
-          <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
-            {columns.map(col => (
-              <th key={col.key} style={{ padding: '12px 16px', textAlign: 'left', color: '#64748B', fontWeight: 700, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.8, whiteSpace: 'nowrap' }}>
-                {col.label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((row, i) => (
-            <tr key={row._id || i} style={{ borderBottom: '1px solid #F1F5F9', transition: 'background 0.15s' }}
-              onMouseEnter={e => e.currentTarget.style.background = '#F8FAFC'}
-              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-            >
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+          <thead>
+            <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
               {columns.map(col => (
-                <td key={col.key} style={{ padding: '12px 16px', color: '#334155', whiteSpace: col.wrap ? 'normal' : 'nowrap' }}>
-                  {col.render ? col.render(row) : (row[col.key] ?? '—')}
-                </td>
+                <th key={col.key} style={{ padding: '12px 16px', textAlign: 'left', color: '#64748B', fontWeight: 700, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.8, whiteSpace: 'nowrap' }}>
+                  {col.label}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {displayData.map((row, i) => (
+              <tr key={row._id || i} style={{ borderBottom: '1px solid #F1F5F9', transition: 'background 0.15s' }}
+                onMouseEnter={e => e.currentTarget.style.background = '#F8FAFC'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >
+                {columns.map(col => (
+                  <td key={col.key} style={{ padding: '12px 16px', color: '#334155', whiteSpace: col.wrap ? 'normal' : 'nowrap' }}>
+                    {col.render ? col.render(row) : (row[col.key] ?? '—')}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '14px 20px', borderTop: '1px solid #F1F5F9', background: '#FFFFFF',
+          fontSize: 13, color: '#64748B', flexWrap: 'wrap', gap: 12
+        }}>
+          <div>
+            Showing <b style={{ color: '#0F172A' }}>{startIndex}</b> to <b style={{ color: '#0F172A' }}>{endIndex}</b> of <b style={{ color: '#0F172A' }}>{totalItems}</b> entries
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <button
+              disabled={currentPage <= 1}
+              onClick={() => handlePageChange(currentPage - 1)}
+              style={{
+                padding: '6px 14px', borderRadius: 8, border: '1px solid #CBD5E1',
+                background: currentPage <= 1 ? '#F8FAFC' : '#FFFFFF',
+                color: currentPage <= 1 ? '#CBD5E1' : '#334155',
+                cursor: currentPage <= 1 ? 'not-allowed' : 'pointer', fontWeight: 600, fontSize: 12,
+                transition: 'all 0.15s'
+              }}
+            >
+              Previous
+            </button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+              .map((p, idx, arr) => {
+                const prevPage = arr[idx - 1]
+                const showEllipsis = prevPage && p - prevPage > 1
+                return (
+                  <React.Fragment key={p}>
+                    {showEllipsis && <span style={{ padding: '0 4px', color: '#94A3B8' }}>...</span>}
+                    <button
+                      onClick={() => handlePageChange(p)}
+                      style={{
+                        width: 32, height: 32, borderRadius: 8,
+                        border: p === currentPage ? 'none' : '1px solid #CBD5E1',
+                        background: p === currentPage ? 'linear-gradient(135deg, #1F5FE0, #8A2BE0)' : '#FFFFFF',
+                        color: p === currentPage ? '#FFFFFF' : '#334155',
+                        fontWeight: p === currentPage ? 700 : 600, fontSize: 12, cursor: 'pointer',
+                        boxShadow: p === currentPage ? '0 2px 6px rgba(31,95,224,0.3)' : 'none'
+                      }}
+                    >
+                      {p}
+                    </button>
+                  </React.Fragment>
+                )
+              })
+            }
+
+            <button
+              disabled={currentPage >= totalPages}
+              onClick={() => handlePageChange(currentPage + 1)}
+              style={{
+                padding: '6px 14px', borderRadius: 8, border: '1px solid #CBD5E1',
+                background: currentPage >= totalPages ? '#F8FAFC' : '#FFFFFF',
+                color: currentPage >= totalPages ? '#CBD5E1' : '#334155',
+                cursor: currentPage >= totalPages ? 'not-allowed' : 'pointer', fontWeight: 600, fontSize: 12,
+                transition: 'all 0.15s'
+              }}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -1205,7 +1312,7 @@ export default function AdminApp() {
   useEffect(() => { loadStats() }, [loadStats])
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#F8FAFC', fontFamily: "'Inter', sans-serif" }}>
+    <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', background: '#F8FAFC', fontFamily: "'Inter', sans-serif" }}>
       <style>{`
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         * { box-sizing: border-box; }
@@ -1214,13 +1321,13 @@ export default function AdminApp() {
         ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
       `}</style>
 
-      {/* Sidebar */}
+      {/* Fixed Unscrollable Sidebar */}
       <aside style={{
         width: 260, flexShrink: 0, background: '#FFFFFF', borderRight: '1px solid #E2E8F0',
-        display: 'flex', flexDirection: 'column', position: 'sticky', top: 0, height: '100vh', overflowY: 'auto',
+        display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', zIndex: 100,
       }}>
         {/* Brand */}
-        <div style={{ padding: '24px 20px 20px', borderBottom: '1px solid #F1F5F9' }}>
+        <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid #F1F5F9' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 38, height: 38, borderRadius: 10, background: 'linear-gradient(135deg, #1F5FE0, #8A2BE0)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 18, boxShadow: '0 4px 12px rgba(31,95,224,0.3)' }}>
               <FiShield />
@@ -1232,38 +1339,16 @@ export default function AdminApp() {
           </div>
         </div>
 
-        {/* Nav */}
-        <nav style={{ flex: 1, padding: '16px 12px' }}>
-          {TABS.map(tab => {
-            const isActive = activeTab === tab.id
-            return (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
-                display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 14px',
-                background: isActive ? 'linear-gradient(135deg, #1F5FE0, #8A2BE0)' : 'none',
-                border: 'none',
-                borderRadius: 10, color: isActive ? '#FFFFFF' : '#64748B',
-                cursor: 'pointer', fontSize: 13, fontWeight: isActive ? 700 : 500,
-                marginBottom: 4, textAlign: 'left', transition: 'all 0.15s',
-                boxShadow: isActive ? '0 4px 12px rgba(31,95,224,0.25)' : 'none',
-              }}
-                onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = '#F1F5F9'; e.currentTarget.style.color = '#0F172A' } }}
-                onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#64748B' } }}
-              >
-                <span style={{ fontSize: 16, color: isActive ? '#FFFFFF' : '#64748B' }}>{tab.icon}</span>
-                {tab.label}
-              </button>
-            )
-          })}
-        </nav>
-
-        {/* Admin user card */}
-        <div style={{ padding: '16px 20px', borderTop: '1px solid #F1F5F9', background: '#FAFAFA' }}>
+        {/* Super Admin User Profile Card (Moved to Top) */}
+        <div style={{ padding: '12px 16px', margin: '12px 12px 4px', borderRadius: 14, background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg, #1F5FE0, #8A2BE0)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 13, fontWeight: 700 }}>
-              {user?.firstName?.[0]}{user?.lastName?.[0]}
+            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, #1F5FE0, #8A2BE0)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 13, fontWeight: 700, flexShrink: 0, boxShadow: '0 2px 8px rgba(31,95,224,0.2)' }}>
+              {user?.firstName?.[0] || 'S'}{user?.lastName?.[0] || 'A'}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ color: '#0F172A', fontSize: 13, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.firstName} {user?.lastName}</div>
+              <div style={{ color: '#0F172A', fontSize: 13, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {user?.firstName || 'Super'} {user?.lastName || 'Admin'}
+              </div>
               <div style={{ color: '#166534', fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
                 Super Admin
@@ -1271,12 +1356,36 @@ export default function AdminApp() {
             </div>
           </div>
         </div>
+
+        {/* Nav */}
+        <nav style={{ flex: 1, padding: '10px 12px', overflowY: 'auto' }}>
+          {TABS.map(tab => {
+            const isActive = activeTab === tab.id
+            return (
+              <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
+                display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '9px 14px',
+                background: isActive ? 'linear-gradient(135deg, #1F5FE0, #8A2BE0)' : 'transparent',
+                border: 'none',
+                borderRadius: 10, color: isActive ? '#FFFFFF' : '#64748B',
+                cursor: 'pointer', fontSize: 13, fontWeight: isActive ? 700 : 500,
+                marginBottom: 3, textAlign: 'left', transition: 'all 0.15s',
+                boxShadow: isActive ? '0 4px 12px rgba(31,95,224,0.25)' : 'none',
+              }}
+                onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = '#F1F5F9'; e.currentTarget.style.color = '#0F172A' } }}
+                onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#64748B' } }}
+              >
+                <span style={{ fontSize: 16, color: isActive ? '#FFFFFF' : '#64748B' }}>{tab.icon}</span>
+                {tab.label}
+              </button>
+            )
+          })}
+        </nav>
       </aside>
 
-      {/* Main Content */}
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+      {/* Main Content Area (Scrolls independently) */}
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, height: '100vh', overflow: 'hidden' }}>
         {/* Top Bar */}
-        <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', padding: '16px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+        <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', padding: '16px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, zIndex: 90, boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
           <div>
             <div style={{ color: '#64748B', fontSize: 12, marginBottom: 2, textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600 }}>
               Admin / {TABS.find(t => t.id === activeTab)?.label}
@@ -1295,7 +1404,7 @@ export default function AdminApp() {
           </div>
         </div>
 
-        {/* Tab Content */}
+        {/* Tab Content (Scrolls vertically) */}
         <div style={{ flex: 1, padding: '28px 32px', overflowY: 'auto' }}>
           {activeTab === 'dashboard' && <DashboardTab stats={stats} recentPayments={recentPayments} loading={statsLoading} />}
           {activeTab === 'clients' && <ClientsTab />}

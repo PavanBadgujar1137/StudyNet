@@ -33,7 +33,7 @@ function Navbar() {
 
   return (
     <header className={`sticky top-0 z-[1000] w-full border-b border-white/40 bg-white/80 backdrop-blur-xl shadow-sm transition-all duration-300 ${isDashboardRoute ? "hidden lg:block" : ""}`}>
-      <div className="relative flex h-16 md:h-18 w-full items-center justify-between px-4 md:px-8 max-w-[1440px] mx-auto py-2">
+      <div className="relative flex h-16 md:h-18 w-full items-center justify-between pl-2 sm:pl-4 pr-4 md:pr-8 max-w-[1536px] mx-auto py-2">
         {/* Left Side: Logo */}
         <div className="flex items-center">
           <Link to="/" className="flex items-center gap-2.5 group transition-transform duration-200 hover:opacity-90">
@@ -49,7 +49,7 @@ function Navbar() {
 
         {/* Center: Navigation Links (Desktop) */}
         <nav className="hidden lg:block">
-          <ul className="flex items-center gap-x-4 xl:gap-x-6 text-slate-700 font-semibold text-xs xl:text-sm whitespace-nowrap">
+          <ul className="flex items-center gap-x-4 xl:gap-x-7 text-slate-900 font-bold text-sm xl:text-base whitespace-nowrap">
             {NavbarLinks.map((link, index) => {
               const isFindPractitioner = link?.path === '/find-a-practitioner'
               const shouldOpenNewTab = isFindPractitioner && token && user?.accountType === 'Practitioner'
@@ -64,8 +64,8 @@ function Navbar() {
                     <p
                       className={`${
                         matchRoute(link?.path)
-                          ? "text-royal-blue font-bold"
-                          : "text-slate-700 hover:text-royal-blue"
+                          ? "text-royal-blue font-extrabold"
+                          : "text-slate-900 font-bold hover:text-royal-blue"
                       } transition-colors duration-200`}
                     >
                       {link.title}
@@ -128,10 +128,10 @@ function Navbar() {
                     <Link
                       to={link?.path}
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className={`flex items-center px-4 py-3 rounded-xl text-base font-semibold transition-all duration-200 min-h-[44px] ${
+                      className={`flex items-center px-4 py-3 rounded-xl text-base font-bold transition-all duration-200 min-h-[44px] ${
                         matchRoute(link?.path)
-                          ? "bg-royal-blue/10 text-royal-blue font-bold"
-                          : "text-slate-700 hover:bg-slate-50 hover:text-royal-blue"
+                          ? "bg-royal-blue/10 text-royal-blue font-extrabold"
+                          : "text-slate-900 font-bold hover:bg-slate-50 hover:text-royal-blue"
                       }`}
                     >
                       {link.title}

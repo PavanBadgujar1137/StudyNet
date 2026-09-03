@@ -99,7 +99,7 @@ exports.signup = async (req, res) => {
       gender: null,
       dateOfBirth: null,
       about: null,
-      contactNumber: null,
+      contactNumber: contactNumber || "",
     })
     const now = new Date()
     const trialDays = (accountType === "Learner" || accountType === "Client") ? 7 : 14
@@ -110,7 +110,7 @@ exports.signup = async (req, res) => {
       firstName,
       lastName,
       email: cleanEmail,
-      contactNumber,
+      contactNumber: contactNumber || "",
       password: hashedPassword,
       accountType: accountType,
       approved: approved,

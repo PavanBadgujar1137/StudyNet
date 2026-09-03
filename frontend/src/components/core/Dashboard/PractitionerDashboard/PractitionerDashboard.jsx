@@ -123,7 +123,11 @@ export function PractitionerDashboard() {
         name: 'OpenHand Practitioner Platform',
         description: `Subscription: ${planName}`,
         order_id: order.id,
-        prefill: { name: practitionerName, email: user?.email },
+        prefill: {
+          name: practitionerName || '',
+          email: user?.email || '',
+          contact: (user?.additionalDetails?.contactNumber && user.additionalDetails.contactNumber !== 'null' && user.additionalDetails.contactNumber !== 'undefined') ? String(user.additionalDetails.contactNumber).trim() : '',
+        },
         theme: { color: '#1F5FE0' },
         handler: async (response) => {
           const vToast = toast.loading('Verifying Razorpay payment...')

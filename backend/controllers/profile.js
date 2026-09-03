@@ -199,7 +199,10 @@ exports.getClientDashboardData = async (req, res) => {
     const daysActive = Math.max(1, Math.floor((Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24)))
 
     // Check-ins
-    const checkIns = await CheckIn.find({ client: userId }).sort({ createdAt: -1 })
+    let checkIns = []
+    try {
+      checkIns = (await CheckIn.find({ client: userId }).sort({ createdAt: -1 })) || []
+    } catch (e) { checkIns = [] }
     const checkInCount = checkIns.length
     
     // Calculate streak
@@ -210,33 +213,50 @@ exports.getClientDashboardData = async (req, res) => {
     }
 
     // Reflections
-    const reflections = await ReflectionPrompt.find({ client: userId }).sort({ createdAt: -1 })
+    let reflections = []
+    try {
+      reflections = (await ReflectionPrompt.find({ client: userId }).sort({ createdAt: -1 })) || []
+    } catch (e) { reflections = [] }
 
     // Upcoming Zoom Live Classes
-    const upcomingClasses = await LiveClass.find({
-      status: { $in: ["scheduled", "live"] },
-    })
-      .populate("instructor", "firstName lastName image")
-      .sort({ scheduledStart: 1 })
-      .limit(10)
+    let upcomingClasses = []
+    try {
+      upcomingClasses = (await LiveClass.find({
+        status: { $in: ["scheduled", "live"] },
+      })
+        .populate("instructor", "firstName lastName image")
+        .sort({ scheduledStart: 1 })
+        .limit(10)) || []
+    } catch (e) { upcomingClasses = [] }
 
     // Circles
-    const CircleCohort = require("../models/CircleCohort")
-    const joinedCircles = await CircleCohort.find({ members: userId })
-      .populate("practitioner", "firstName lastName email image accountType credentials")
-      .lean()
+    let joinedCircles = []
+    try {
+      const CircleCohort = require("../models/CircleCohort")
+      joinedCircles = (await CircleCohort.find({ members: userId })
+        .populate("practitioner", "firstName lastName email image accountType credentials")
+        .lean()) || []
+    } catch (e) { joinedCircles = [] }
 
-    const memberships = await CircleMembership.find({
-      $or: [{ client: userId }, { user: userId }]
-    }).populate("cohort").lean()
+    let memberships = []
+    try {
+      memberships = (await CircleMembership.find({
+        $or: [{ client: userId }, { user: userId }]
+      }).populate("cohort").lean()) || []
+    } catch (e) { memberships = [] }
 
-    const conn = await ClientConnection.findOne({ client: userId, status: { $in: ["approved", "active"] } })
-      .populate("practitioner", "firstName lastName email image")
-      .lean()
+    let conn = null
+    try {
+      conn = await ClientConnection.findOne({ client: userId, status: { $in: ["approved", "active"] } })
+        .populate("practitioner", "firstName lastName email image")
+        .lean()
+    } catch (e) { conn = null }
 
     let activePractitioner = conn?.practitioner
     if (!activePractitioner && user.practitionerProfile) {
-      activePractitioner = await User.findById(user.practitionerProfile).select("firstName lastName email image").lean()
+      try {
+        activePractitioner = await User.findById(user.practitionerProfile).select("firstName lastName email image").lean()
+      } catch (e) {}
     }
 
     // Dynamic milestones computed from real user activity
@@ -247,8 +267,12 @@ exports.getClientDashboardData = async (req, res) => {
       { id: "circle_joined", label: joinedCircles.length ? `Joined ${joinedCircles.length} Circle(s)` : "Joined a circle", date: (joinedCircles.length || memberships.length) ? "Active" : "Not yet", achieved: (joinedCircles.length > 0 || memberships.length > 0) },
     ]
 
-    const activeSub = await Subscription.findOne({ client: userId, status: "active" }).sort({ createdAt: -1 }).lean()
-    const hasActiveSubscription = !!activeSub && new Date(activeSub.endDate) > new Date()
+    let activeSub = null
+    try {
+      activeSub = await Subscription.findOne({ client: userId, status: "active" }).sort({ createdAt: -1 }).lean()
+    } catch (e) { activeSub = null }
+
+    const hasActiveSubscription = !!activeSub && activeSub.endDate && new Date(activeSub.endDate) > new Date()
 
     const isLearner = user.accountType === "Learner" || user.accountType === "Client"
     const trialDays = isLearner ? 7 : 14
