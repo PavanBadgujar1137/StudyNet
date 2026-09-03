@@ -24,60 +24,65 @@ function LoginForm() {
 
   return (
     <div className="auth-inner-form">
-      <SocialAuthButtons mode="login" />
-
       <form onSubmit={handleOnSubmit} className="auth-field-list">
-      <div className="auth-field">
-        <label className="auth-label">
-          Email Address <sup>*</sup>
-        </label>
-        <input
-          required
-          type="email"
-          name="email"
-          value={email}
-          onChange={handleOnChange}
-          placeholder="you@example.com"
-          className="auth-input"
-        />
-      </div>
-
-      <div className="auth-field">
-        <label className="auth-label">
-          Password <sup>*</sup>
-        </label>
-        <div className="auth-input-wrap">
+        <div className="auth-field">
+          <label className="auth-label">
+            Email Address <sup>*</sup>
+          </label>
           <input
             required
-            type={showPassword ? "text" : "password"}
-            name="password"
-            value={password}
+            type="email"
+            name="email"
+            value={email}
             onChange={handleOnChange}
-            placeholder="••••••••"
+            placeholder="you@example.com"
             className="auth-input"
           />
-          <button
-            type="button"
-            className="auth-eye-btn"
-            onClick={() => setShowPassword((p) => !p)}
-            aria-label={showPassword ? "Hide password" : "Show password"}
-          >
-            {showPassword
-              ? <AiOutlineEyeInvisible fontSize={20} />
-              : <AiOutlineEye fontSize={20} />}
-          </button>
         </div>
-        <Link to="/forgot-password" className="auth-forgot">
-          Forgot password?
-        </Link>
-      </div>
 
-      <button type="submit" className="auth-submit-btn">
-        Sign In to OpenHand
-      </button>
-    </form>
-  </div>
-)
+        <div className="auth-field">
+          <label className="auth-label">
+            Password <sup>*</sup>
+          </label>
+          <div className="auth-input-wrap">
+            <input
+              required
+              type={showPassword ? "text" : "password"}
+              name="password"
+              value={password}
+              onChange={handleOnChange}
+              placeholder="••••••••"
+              className="auth-input"
+            />
+            <button
+              type="button"
+              className="auth-eye-btn"
+              onClick={() => setShowPassword((p) => !p)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword
+                ? <AiOutlineEyeInvisible fontSize={20} />
+                : <AiOutlineEye fontSize={20} />}
+            </button>
+          </div>
+          <Link to="/forgot-password" className="auth-forgot">
+            Forgot password?
+          </Link>
+        </div>
+
+        <button type="submit" className="auth-submit-btn">
+          Sign In to OpenHand →
+        </button>
+      </form>
+
+      <p className="auth-switch">
+        Don't have an account?{" "}
+        <Link to="/signup" className="auth-switch-link">Start free →</Link>
+      </p>
+
+      <SocialAuthButtons mode="login" />
+    </div>
+  )
 }
 
 export default LoginForm

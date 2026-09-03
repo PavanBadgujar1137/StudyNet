@@ -8,6 +8,7 @@ import {
 } from '../../components/openhand'
 import { apiConnector } from '../../services/apiConnector'
 import { toast } from 'react-hot-toast'
+import { formatPractitionerName } from '../../utils/formatName'
 
 const SPECIALTIES = [
   { value: 'all', label: 'All Guides' },
@@ -389,7 +390,7 @@ export function FindAPractitioner() {
                 {practitioners
                   .filter((p) => (p.offers && p.offers.length > 0) || (p.userOffers && p.userOffers.length > 0))
                   .map((p) => {
-                  const name = `${p.user?.firstName || ''} ${p.user?.lastName || ''}`.trim() || 'Practitioner'
+                  const name = formatPractitionerName(p.user || p, 'Practitioner')
                   const isVerified = p.verificationStatus === 'verified' || true
 
                   return (

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { 
   FiGrid, 
   FiTag, 
@@ -15,7 +16,9 @@ import {
   FiMessageSquare,
   FiBookOpen,
   FiShare2,
-  FiCheckSquare
+  FiCheckSquare,
+  FiLock,
+  FiLogOut
 } from 'react-icons/fi'
 import Overview from './Overview'
 import MyOffers from './MyOffers'
@@ -29,12 +32,17 @@ import SocialPostStudio from './SocialPostStudio'
 import Settings from '../Settings'
 import CommunityChatHub from '../CommunityChatHub'
 import { PractitionerOnboarding } from '../../../../pages/PractitionerOnboarding'
-import { useSearchParams } from 'react-router-dom'
+import OHPricingSection from '../../../openhand/OHPricingSection'
 import { toast } from 'react-hot-toast'
+import { logout } from '../../../../services/operations/authAPI'
 import { apiConnector } from '../../../../services/apiConnector'
 import { fetchPractitionerDashboardData } from '../../../../services/operations/dashboardAPI'
 
+import { formatPractitionerName } from '../../../../utils/formatName'
+
 export function PractitionerDashboard() {
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const activeSection = searchParams.get('tab') || 'dash'
 
@@ -52,18 +60,9 @@ export function PractitionerDashboard() {
   const { user } = useSelector((state) => state.profile)
   const { token } = useSelector((state) => state.auth)
 
-  // DASH-BUG fix: build name correctly — don't prefix "Dr." if firstName already
-  // contains a title (e.g. "Dr.", "Mr.", "Ms."). Prevent "Dr. dr chawhan".
+  const practitionerName = formatPractitionerName(user, 'Practitioner')
   const rawFirst = user?.firstName || ''
   const rawLast  = user?.lastName  || ''
-  const hasTitlePrefix = /^(dr\.?|mr\.?|ms\.?|mrs\.?|prof\.?)\s*/i.test(rawFirst.trim())
-  const practitionerName = user
-    ? hasTitlePrefix
-      ? `${rawFirst} ${rawLast}`.trim()
-      : rawFirst
-        ? `${rawFirst} ${rawLast}`.trim()
-        : 'Practitioner'
-    : 'Practitioner'
   const initials = `${rawFirst?.[0] || 'P'}${rawLast?.[0] || 'R'}`.toUpperCase()
 
   const fetchSubStatus = useCallback(async () => {
@@ -161,33 +160,39 @@ export function PractitionerDashboard() {
     }
   }
 
-  // 4.2 FREE TIER: isPractitionerSubscribed means they have a PAID plan.
-  // A practitioner with NO plan is on the free tier — they are NOT blocked.
-  // isTrialActive is only true when the server says so (not inferred from missing plan).
   const isPractitionerSubscribed = subStatus?.hasActiveSubscription || ['starter', 'growth', 'practice', 'master'].includes(user?.activePlan)
   const isTrialActive = subStatus?.isTrialActive === true  // only when server confirms a real trial
   const trialDaysRemaining = subStatus?.trialDaysRemaining ?? 0
-  // Free tier: any practitioner who is NOT on a paid plan gets the free tier (no block).
 
-  const practiceItems = [
-    { id: 'dash',      label: 'Practice Cockpit', icon: <FiGrid /> },  // 5.7: renamed from "Dashboard"
+  const isPractitionerExpired = Boolean(
+    subStatus &&
+    !subStatus.hasActiveSubscription &&
+    !subStatus.isTrialActive
+  )
+
+  const rawPracticeItems = [
+    { id: 'dash',      label: 'Practice Cockpit', icon: <FiGrid /> },
     { id: 'social',    label: 'Social Posts',     icon: <FiShare2 /> },
     { id: 'community', label: 'Community Hub',    icon: <FiMessageSquare /> },
-    { id: 'offers',    label: 'Offers',           icon: <FiTag /> },     // glossary: "Offers"
+    { id: 'offers',    label: 'Offers',           icon: <FiTag /> },
     { id: 'courses',   label: 'My Courses',       icon: <FiBookOpen /> },
-    { id: 'clients',   label: 'Learners',         icon: <FiUsers /> },   // glossary: "Learners"
-    { id: 'circles',   label: 'Circles',          icon: <FiCircle /> },  // glossary: "Circles"
+    { id: 'clients',   label: 'Learners',         icon: <FiUsers /> },
+    { id: 'circles',   label: 'Circles',          icon: <FiCircle /> },
   ]
 
-  const liveItems = [
+  const rawLiveItems = [
     { id: 'room', label: 'Session room', icon: <FiVideo />, badge: 'LIVE' },
   ]
 
-  const businessItems = [
+  const rawBusinessItems = [
     { id: 'setup',   label: 'Practice Setup Wizard', icon: <FiCheckSquare /> },
     { id: 'growth',  label: 'Growth tools',          icon: <FiTrendingUp /> },
-    { id: 'payouts', label: 'Payouts',               icon: <FiDollarSign /> }, // glossary: "Payouts"
+    { id: 'payouts', label: 'Payouts',               icon: <FiDollarSign /> },
   ]
+
+  const practiceItems = rawPracticeItems.map(i => isPractitionerExpired ? { ...i, badge: '🔒 Locked' } : i)
+  const liveItems     = rawLiveItems.map(i     => isPractitionerExpired ? { ...i, badge: '🔒 Locked' } : i)
+  const businessItems = rawBusinessItems.map(i => isPractitionerExpired ? { ...i, badge: '🔒 Locked' } : i)
 
   const accountItems = [
     { id: 'profile', label: 'Profile & Settings', icon: <FiUser /> },
@@ -435,48 +440,116 @@ export function PractitionerDashboard() {
 
         {/* View Content */}
         <div className="oh-view-body main">
+          {isPractitionerExpired && activeSection !== 'profile' ? (
+            <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '10px 0 40px' }}>
+              {/* Expired Lock Header Banner */}
+              <div style={{
+                background: 'linear-gradient(135deg, #0D1B3D 0%, #1E293B 100%)',
+                borderRadius: 24,
+                padding: '36px 32px',
+                color: '#FFFFFF',
+                boxShadow: '0 20px 40px rgba(13, 27, 61, 0.15)',
+                marginBottom: 32,
+                position: 'relative',
+                overflow: 'hidden'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20, position: 'relative', zIndex: 2 }}>
+                  <div style={{ maxWidth: '650px' }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(239, 68, 68, 0.2)', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#FCA5A5', padding: '6px 14px', borderRadius: 999, fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 16 }}>
+                      <FiLock size={14} />
+                      <span>Access Locked</span>
+                      <span>•</span>
+                      <span>Free Trial / Subscription Ended</span>
+                    </div>
+                    <h2 style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', margin: '0 0 12px', fontFamily: 'Poppins, sans-serif', lineHeight: 1.3 }}>
+                      Your Free Trial or Subscription Has Ended
+                    </h2>
+                    <p style={{ fontSize: 14, color: '#94A3B8', margin: 0, lineHeight: 1.6 }}>
+                      Your 14-day free trial or practitioner plan subscription has expired. All practice management tools, Zoom HD session hosting, course publishing, social post studio, practice setup builder, and learner management features are locked until a plan is chosen. Select a plan below to renew and unlock full access immediately.
+                    </p>
+                  </div>
 
-          {/* Active Section Views */}
-          {activeSection === 'dash' && (
-            <Overview 
-              practitionerName={practitionerName} 
-              setActiveSection={setActiveSection}
-              telemetryData={telemetryData}
-              loading={loading}
-            />
-          )}
-          {activeSection === 'community' && (
-            <CommunityChatHub />
-          )}
-          {activeSection === 'offers' && (
-            <MyOffers telemetryData={telemetryData} onUpdate={loadData} />
-          )}
-          {activeSection === 'courses' && (
-            <MyCourses />
-          )}
-          {activeSection === 'clients' && (
-            <MyLearners setActiveSection={setActiveSection} telemetryData={telemetryData} onUpdate={loadData} />
-          )}
-          {activeSection === 'circles' && (
-            <Circles telemetryData={telemetryData} onUpdate={loadData} setActiveSection={setActiveSection} />
-          )}
-          {activeSection === 'room' && (
-            <SessionRoom practitionerName={practitionerName} telemetryData={telemetryData} onUpdate={loadData} setActiveSection={setActiveSection} />
-          )}
-          {activeSection === 'payouts' && (
-            <PayoutsInvoices telemetryData={telemetryData} />
-          )}
-          {activeSection === 'growth' && (
-            <GrowthTools telemetryData={telemetryData} setActiveSection={setActiveSection} />
-          )}
-          {(activeSection === 'setup' || activeSection === 'onboarding') && (
-            <PractitionerOnboarding embedded={true} telemetryData={telemetryData} onUpdate={loadData} />
-          )}
-          {activeSection === 'social' && (
-            <SocialPostStudio />
-          )}
-          {activeSection === 'profile' && (
-            <Settings />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <button
+                      onClick={() => dispatch(logout(navigate))}
+                      style={{
+                        padding: '11px 20px',
+                        background: 'rgba(255,255,255,0.1)',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        borderRadius: 12,
+                        color: '#FFFFFF',
+                        fontWeight: 700,
+                        fontSize: 13,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 8,
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      <FiLogOut /> Sign Out
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Directly Embedded Pricing Panel */}
+              <div style={{ background: '#FFFFFF', borderRadius: 24, padding: '32px 24px', border: '1px solid #E2E8F0', boxShadow: '0 10px 30px rgba(0,0,0,0.04)' }}>
+                <OHPricingSection
+                  defaultRole="practitioner"
+                  hideRoleSwitcher={true}
+                  title="Choose a Practitioner Plan to Unlock Practice"
+                  subtitle="Instant Razorpay Checkout — Choose a plan to unlock all features"
+                  onSuccess={() => loadData()}
+                />
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Active Section Views */}
+              {activeSection === 'dash' && (
+                <Overview 
+                  practitionerName={practitionerName} 
+                  setActiveSection={setActiveSection}
+                  telemetryData={telemetryData}
+                  loading={loading}
+                />
+              )}
+              {activeSection === 'community' && (
+                <CommunityChatHub />
+              )}
+              {activeSection === 'offers' && (
+                <MyOffers telemetryData={telemetryData} onUpdate={loadData} />
+              )}
+              {activeSection === 'courses' && (
+                <MyCourses />
+              )}
+              {activeSection === 'clients' && (
+                <MyLearners setActiveSection={setActiveSection} telemetryData={telemetryData} onUpdate={loadData} />
+              )}
+              {activeSection === 'circles' && (
+                <Circles telemetryData={telemetryData} onUpdate={loadData} setActiveSection={setActiveSection} />
+              )}
+              {activeSection === 'room' && (
+                <SessionRoom practitionerName={practitionerName} telemetryData={telemetryData} onUpdate={loadData} setActiveSection={setActiveSection} />
+              )}
+              {activeSection === 'payouts' && (
+                <PayoutsInvoices telemetryData={telemetryData} />
+              )}
+              {activeSection === 'growth' && (
+                <GrowthTools telemetryData={telemetryData} setActiveSection={setActiveSection} />
+              )}
+              {(activeSection === 'setup' || activeSection === 'onboarding') && (
+                <PractitionerOnboarding embedded={true} telemetryData={telemetryData} onUpdate={loadData} />
+              )}
+              {activeSection === 'social' && (
+                <SocialPostStudio />
+              )}
+              {activeSection === 'profile' && (
+                <Settings />
+              )}
+            </>
           )}
         </div>
 

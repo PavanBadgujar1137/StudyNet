@@ -43,8 +43,29 @@ export default function EditProfile() {
           </div>
         </div>
 
-        {/* First & Last Name */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {/* Title, First & Last Name */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="title" className={labelClass}>
+              Title / Honorific
+            </label>
+            <select
+              name="title"
+              id="title"
+              className={inputClass}
+              {...register("title")}
+              defaultValue={user?.title || ""}
+            >
+              <option value="">None (Default)</option>
+              <option value="Dr.">Dr. (Doctor)</option>
+              <option value="Prof.">Prof. (Professor)</option>
+              <option value="Mr.">Mr.</option>
+              <option value="Ms.">Ms.</option>
+              <option value="Mrs.">Mrs.</option>
+              <option value="Mx.">Mx.</option>
+            </select>
+          </div>
+
           <div className="flex flex-col gap-2">
             <label htmlFor="firstName" className={labelClass}>
               First Name

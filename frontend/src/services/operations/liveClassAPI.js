@@ -80,20 +80,20 @@ export const endClass = async (token, classId) => {
   }
 }
 
-export const rescheduleClass = async (token, classId, scheduledStart, scheduledEnd) => {
-  const toastId = toast.loading("Rescheduling...")
+export const rescheduleClass = async (token, classId, payload) => {
+  const toastId = toast.loading("Updating class schedule...")
   try {
     const response = await apiConnector(
       "POST",
       `${RESCHEDULE_CLASS_API}/${classId}/reschedule`,
-      { scheduledStart, scheduledEnd },
+      typeof payload === 'object' ? payload : { scheduledStart: payload },
       { Authorization: `Bearer ${token}` }
     )
     if (!response?.data?.success) throw new Error(response?.data?.message)
-    toast.success("Class rescheduled. Students notified.", { id: toastId })
+    toast.success("Class schedule updated successfully!", { id: toastId })
     return response.data.data
   } catch (error) {
-    toast.error(error.message || "Failed to reschedule", { id: toastId })
+    toast.error(error?.response?.data?.message || error.message || "Failed to update schedule", { id: toastId })
     return null
   }
 }
@@ -157,7 +157,7 @@ export const joinClass = async (token, classId) => {
     }
     return response.data.data
   } catch (error) {
-    toast.error(error.message || "Failed to join class")
+    toast.error(error?.response?.data?.message || error.message || "Failed to join class")
     return null
   }
 }

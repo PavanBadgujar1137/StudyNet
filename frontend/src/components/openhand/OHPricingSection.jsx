@@ -6,7 +6,7 @@ import toast from "react-hot-toast"
 import OHEyebrow from "./OHEyebrow"
 import { apiConnector } from "../../services/apiConnector"
 
-export default function OHPricingSection({ defaultRole = "learner", title, subtitle, hideRoleSwitcher = false, isModal = false }) {
+export default function OHPricingSection({ defaultRole = "learner", title, subtitle, hideRoleSwitcher = false, isModal = false, onSuccess }) {
   const [activeTab, setActiveTab] = useState(defaultRole) // "learner" | "practitioner"
   const [payingPlan, setPayingPlan] = useState(null)
   const [subStatus, setSubStatus] = useState(null)
@@ -123,6 +123,9 @@ export default function OHPricingSection({ defaultRole = "learner", title, subti
               })
               if (subRes?.data?.success) {
                 setSubStatus(subRes.data)
+                if (onSuccess) onSuccess(subRes.data)
+              } else if (onSuccess) {
+                onSuccess()
               }
 
               // Redirect based on user role

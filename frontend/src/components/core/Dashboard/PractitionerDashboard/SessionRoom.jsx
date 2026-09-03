@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
-import { FiVideo, FiExternalLink, FiPlus, FiCopy, FiCheckCircle, FiX, FiCalendar, FiUser, FiClock, FiRefreshCw, FiBell } from 'react-icons/fi'
+import { FiVideo, FiExternalLink, FiPlus, FiCopy, FiCheckCircle, FiX, FiCalendar, FiUser, FiClock, FiRefreshCw, FiBell, FiEdit3 } from 'react-icons/fi'
 import toast from 'react-hot-toast'
-import { scheduleLiveClass, cancelClass } from '../../../../services/operations/liveClassAPI'
+import { scheduleLiveClass, cancelClass, rescheduleClass } from '../../../../services/operations/liveClassAPI'
 import { apiConnector } from '../../../../services/apiConnector'
 
 export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData, onUpdate }) {
@@ -14,8 +14,14 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
 
   const [coPilotOn, setCoPilotOn] = useState(true)
   const [showScheduleModal, setShowScheduleModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingClass, setEditingClass] = useState(null)
+  const [showCancelModal, setShowCancelModal] = useState(false)
+  const [cancellingClassId, setCancellingClassId] = useState(null)
+
   const [copiedId, setCopiedId] = useState(null)
   const [submitting, setSubmitting] = useState(false)
+  const [editSubmitting, setEditSubmitting] = useState(false)
 
   // Load practitioner's bookings — who will connect with me
   const loadBookings = useCallback(async () => {
@@ -38,6 +44,12 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
   const [description, setDescription] = useState('')
   const [scheduledStart, setScheduledStart] = useState('')
   const [durationMinutes, setDurationMinutes] = useState(60)
+
+  // Edit Form State
+  const [editTitle, setEditTitle] = useState('')
+  const [editDescription, setEditDescription] = useState('')
+  const [editScheduledStart, setEditScheduledStart] = useState('')
+  const [editDurationMinutes, setEditDurationMinutes] = useState(60)
 
   const upcomingClasses = telemetryData?.upcomingClasses || []
 
@@ -68,7 +80,6 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
       streamProvider: 'zoom',
     }
 
-
     const result = await scheduleLiveClass(token, payload)
     setSubmitting(false)
 
@@ -82,11 +93,53 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
     }
   }
 
-  const handleCancelSession = async (classId) => {
-    if (window.confirm('Are you sure you want to cancel this Zoom live class?')) {
-      const ok = await cancelClass(token, classId)
-      if (ok && onUpdate) onUpdate()
+  const handleOpenEditModal = (cls) => {
+    setEditingClass(cls)
+    setEditTitle(cls.title || '')
+    setEditDescription(cls.description || '')
+    const startIso = cls.scheduledStart ? new Date(cls.scheduledStart).toISOString().slice(0, 16) : ''
+    setEditScheduledStart(startIso)
+    const dur = (cls.scheduledEnd && cls.scheduledStart)
+      ? Math.max(15, Math.round((new Date(cls.scheduledEnd) - new Date(cls.scheduledStart)) / 60000))
+      : 60
+    setEditDurationMinutes(dur)
+    setShowEditModal(true)
+  }
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault()
+    if (!editTitle || !editScheduledStart || !editingClass) {
+      toast.error('Please provide session title and start date/time.')
+      return
     }
+    const startDate = new Date(editScheduledStart)
+    const endDate = new Date(startDate.getTime() + Number(editDurationMinutes) * 60 * 1000)
+    setEditSubmitting(true)
+    const res = await rescheduleClass(token, editingClass._id, {
+      title: editTitle.slice(0, 100),
+      description: editDescription.slice(0, 500),
+      scheduledStart: startDate.toISOString(),
+      scheduledEnd: endDate.toISOString(),
+    })
+    setEditSubmitting(false)
+    if (res) {
+      setShowEditModal(false)
+      setEditingClass(null)
+      if (onUpdate) onUpdate()
+    }
+  }
+
+  const handleOpenCancelModal = (classId) => {
+    setCancellingClassId(classId)
+    setShowCancelModal(true)
+  }
+
+  const confirmCancelSession = async () => {
+    if (!cancellingClassId) return
+    const ok = await cancelClass(token, cancellingClassId)
+    setShowCancelModal(false)
+    setCancellingClassId(null)
+    if (ok && onUpdate) onUpdate()
   }
 
   const handleCopyLink = (url, id) => {
@@ -337,6 +390,26 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
                 )}
 
                 <button
+                  onClick={() => handleOpenEditModal(cls)}
+                  style={{
+                    padding: '8px 14px',
+                    fontSize: '12px',
+                    background: '#F8FAFC',
+                    color: '#334155',
+                    border: '1px solid #CBD5E1',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontWeight: 600
+                  }}
+                  title="Edit Schedule"
+                >
+                  <FiEdit3 size={14} /> Edit
+                </button>
+
+                <button
                   className="btn"
                   style={{
                     padding: '8px 16px',
@@ -357,7 +430,7 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
                 </button>
 
                 <button
-                  onClick={() => handleCancelSession(cls._id)}
+                  onClick={() => handleOpenCancelModal(cls._id)}
                   style={{
                     padding: '8px 10px',
                     fontSize: '12px',
@@ -561,6 +634,207 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Schedule Modal */}
+      {showEditModal && editingClass && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(4px)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+          <div style={{ background: '#FFFFFF', borderRadius: '20px', width: '100%', maxWidth: '520px', border: '1px solid #E2E8F0', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)', padding: '28px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#F1F5F9', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <FiEdit3 size={18} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0F172A', margin: 0 }}>Edit Zoom Live Session</h3>
+                  <p style={{ fontSize: '12px', color: '#64748B', margin: 0 }}>Update meeting title, description, or start time.</p>
+                </div>
+              </div>
+              <button onClick={() => setShowEditModal(false)} style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer' }}>
+                <FiX size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleEditSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                  Session Title *
+                </label>
+                <input
+                  type="text"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  placeholder="e.g. Weekly Mindful Reflection & Group Coaching"
+                  required
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #CBD5E1', fontSize: '14px', color: '#0F172A' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                  Description / Agenda (Optional)
+                </label>
+                <textarea
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  placeholder="Brief agenda or instructions for learners..."
+                  rows={3}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #CBD5E1', fontSize: '13px', color: '#0F172A', resize: 'vertical' }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                    Scheduled Start *
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={editScheduledStart}
+                    onChange={(e) => setEditScheduledStart(e.target.value)}
+                    required
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', border: '1px solid #CBD5E1', fontSize: '13px', color: '#0F172A' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                    Duration
+                  </label>
+                  <select
+                    value={editDurationMinutes}
+                    onChange={(e) => setEditDurationMinutes(e.target.value)}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', border: '1px solid #CBD5E1', fontSize: '13px', color: '#0F172A', background: '#FFF' }}
+                  >
+                    <option value={30}>30 Minutes</option>
+                    <option value={45}>45 Minutes</option>
+                    <option value={60}>60 Minutes (1 hour)</option>
+                    <option value={90}>90 Minutes (1.5 hours)</option>
+                    <option value={120}>120 Minutes (2 hours)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '12px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  style={{ padding: '10px 18px', borderRadius: '10px', border: '1px solid #CBD5E1', background: '#F8FAFC', color: '#475569', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={editSubmitting}
+                  style={{ padding: '10px 22px', borderRadius: '10px', border: 'none', background: 'linear-gradient(135deg, #1F5FE0 0%, #8A2BE0 100%)', color: '#FFFFFF', fontSize: '13px', fontWeight: 700, cursor: 'pointer', opacity: editSubmitting ? 0.7 : 1 }}
+                >
+                  {editSubmitting ? 'Saving Changes...' : 'Save Schedule Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Class Confirmation Modal */}
+      {showCancelModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(6px)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+          }}
+          onClick={() => setShowCancelModal(false)}
+        >
+          <div
+            style={{
+              background: '#ffffff',
+              borderRadius: '24px',
+              padding: '32px 28px',
+              maxWidth: '440px',
+              width: '100%',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              border: '1px solid #E2E8F0',
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '16px',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Warning Icon Badge */}
+            <div
+              style={{
+                width: '60px',
+                height: '60px',
+                borderRadius: '50%',
+                background: '#FEE2E2',
+                color: '#DC2626',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(220, 38, 38, 0.15)',
+              }}
+            >
+              <FiX size={32} />
+            </div>
+
+            <div>
+              <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', margin: '0 0 8px 0' }}>
+                Cancel Zoom Live Class?
+              </h3>
+              <p style={{ fontSize: '13.5px', color: '#475569', margin: 0, lineHeight: '1.5' }}>
+                Are you sure you want to cancel this scheduled Zoom live class? This action will remove the session from your schedule.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', width: '100%', marginTop: '8px' }}>
+              <button
+                type="button"
+                onClick={() => setShowCancelModal(false)}
+                style={{
+                  flex: 1,
+                  background: '#F1F5F9',
+                  color: '#0F172A',
+                  border: '1px solid #CBD5E1',
+                  padding: '12px 18px',
+                  borderRadius: '12px',
+                  fontWeight: 700,
+                  fontSize: '13.5px',
+                  cursor: 'pointer',
+                }}
+              >
+                No, Keep Session
+              </button>
+
+              <button
+                type="button"
+                onClick={confirmCancelSession}
+                style={{
+                  flex: 1,
+                  background: 'linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  padding: '12px 18px',
+                  borderRadius: '12px',
+                  fontWeight: 800,
+                  fontSize: '13.5px',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 14px rgba(220, 38, 38, 0.35)',
+                }}
+              >
+                Yes, Cancel Class
+              </button>
+            </div>
           </div>
         </div>
       )}

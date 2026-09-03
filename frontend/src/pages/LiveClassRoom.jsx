@@ -22,6 +22,7 @@ export default function LiveClassRoom() {
   const [starting, setStarting] = useState(false)
   const [embedMode, setEmbedMode] = useState(true)
   const [copiedField, setCopiedField] = useState(null)
+  const [showEndModal, setShowEndModal] = useState(false)
 
   const isInstructor = user?.accountType === "Instructor" || user?.accountType === "Practitioner"
 
@@ -58,15 +59,19 @@ export default function LiveClassRoom() {
     setStarting(false)
   }
 
-  const handleEndClass = async () => {
+  const handleEndClass = () => {
+    setShowEndModal(true)
+  }
+
+  const confirmEndClass = async () => {
+    setShowEndModal(false)
     if (isInstructor) {
-      if (window.confirm("Are you sure you want to end this Zoom live class for all students?")) {
-        await endClass(token, classId)
-        toast.success("Class ended.")
-        navigate("/dashboard/instructor")
-      }
+      await endClass(token, classId)
+      toast.success("Class ended successfully.")
+      navigate("/dashboard/instructor")
     } else {
       await leaveClass(token, classId)
+      toast.success("Left session room.")
       navigate("/dashboard/enrolled-courses")
     }
   }
@@ -109,51 +114,63 @@ export default function LiveClassRoom() {
     : activeZoomUrl
 
   return (
-    <div className="min-h-[calc(100vh-3.5rem)] bg-gradient-to-b from-richblack-950 via-richblack-900 to-richblack-950 p-4 md:p-8 text-richblack-200">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div style={{ minHeight: 'calc(100vh - 3.5rem)', background: '#F8FAFC', padding: '32px 16px', color: '#0F172A' }}>
+      <div style={{ maxWidth: '1140px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
         
         {/* Top Header Card */}
-        <div className="bg-richblack-800/80 backdrop-blur-xl border border-richblack-700/70 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
-          {/* Subtle Ambient Glow */}
-          <div className="absolute -top-24 -right-24 w-72 h-72 bg-purple-600/15 blur-3xl rounded-full pointer-events-none"></div>
-          <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-blue-600/15 blur-3xl rounded-full pointer-events-none"></div>
-
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-3 max-w-2xl">
-              <div className="flex flex-wrap items-center gap-3">
+        <div style={{ background: '#ffffff', border: '1px solid #E2E8F0', borderRadius: '24px', padding: '28px 32px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', position: 'relative', overflow: 'hidden' }}>
+          
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '20px' }}>
+            <div style={{ maxWidth: '680px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
                 {classDetails.status === "live" ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-600/90 text-white text-xs font-bold rounded-full shadow-lg shadow-red-600/30 animate-pulse">
-                    <span className="w-2 h-2 rounded-full bg-white animate-ping"></span>
+                  <span style={{ background: '#DC2626', color: '#FFFFFF', fontSize: '11.5px', fontWeight: 800, padding: '4px 12px', borderRadius: '20px', display: 'inline-flex', alignItems: 'center', gap: '6px', boxShadow: '0 2px 8px rgba(220, 38, 38, 0.3)' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#FFFFFF' }}></span>
                     LIVE ON ZOOM
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-500/20 text-purple-300 border border-purple-500/30 text-xs font-semibold rounded-full">
+                  <span style={{ background: '#F3E8FF', color: '#7E22CE', border: '1px solid #D8B4FE', fontSize: '11.5px', fontWeight: 700, padding: '4px 12px', borderRadius: '20px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                     <FiCalendar size={12} /> SCHEDULED
                   </span>
                 )}
-                <span className="px-3 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-medium rounded-full">
+                <span style={{ background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE', fontSize: '11.5px', fontWeight: 700, padding: '4px 12px', borderRadius: '20px' }}>
                   Zoom Integration
                 </span>
               </div>
 
-              <h1 className="text-2xl md:text-3xl font-extrabold text-richblack-5 tracking-tight">
+              <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#0F172A', margin: '0 0 8px 0', letterSpacing: '-0.5px' }}>
                 {classDetails.title}
               </h1>
 
               {classDetails.description && (
-                <p className="text-richblack-300 text-sm leading-relaxed">
+                <p style={{ fontSize: '13.5px', color: '#475569', margin: 0, lineHeight: '1.5' }}>
                   {classDetails.description}
                 </p>
               )}
             </div>
 
             {/* Quick Action Button */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
               {isInstructor && classDetails.status === "scheduled" ? (
                 <button
                   onClick={handleStartStream}
                   disabled={starting}
-                  className="flex items-center justify-center gap-2.5 px-6 py-3.5 bg-gradient-to-r from-purple-600 via-purple-500 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white text-sm font-bold rounded-xl shadow-xl shadow-purple-600/25 transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50"
+                  style={{
+                    background: 'linear-gradient(135deg, #7C3AED 0%, #2563EB 100%)',
+                    color: '#FFFFFF',
+                    padding: '12px 24px',
+                    borderRadius: '12px',
+                    fontWeight: 800,
+                    fontSize: '14px',
+                    border: 'none',
+                    cursor: starting ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    boxShadow: '0 4px 14px rgba(124, 58, 237, 0.4)',
+                    opacity: starting ? 0.6 : 1,
+                  }}
                 >
                   <FiPlayCircle size={18} />
                   {starting ? "Initializing Zoom..." : "Start Zoom Meeting"}
@@ -161,7 +178,21 @@ export default function LiveClassRoom() {
               ) : (
                 <button
                   onClick={() => launchZoom(activeZoomUrl)}
-                  className="flex items-center justify-center gap-2.5 px-6 py-3.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-xl shadow-xl shadow-blue-600/30 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+                  style={{
+                    background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)',
+                    color: '#FFFFFF',
+                    padding: '12px 24px',
+                    borderRadius: '12px',
+                    fontWeight: 800,
+                    fontSize: '14px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)',
+                  }}
                 >
                   <FiExternalLink size={18} />
                   {isInstructor ? "Launch Zoom as Host" : "Join Zoom Meeting"}
@@ -170,7 +201,20 @@ export default function LiveClassRoom() {
 
               <button
                 onClick={handleEndClass}
-                className="flex items-center justify-center gap-2 px-4 py-3.5 bg-richblack-700/80 hover:bg-red-950/40 hover:text-red-400 border border-richblack-600 hover:border-red-500/40 text-richblack-200 text-sm font-semibold rounded-xl transition-all"
+                style={{
+                  background: '#F1F5F9',
+                  color: '#0F172A',
+                  border: '1px solid #CBD5E1',
+                  padding: '12px 20px',
+                  borderRadius: '12px',
+                  fontWeight: 700,
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                }}
               >
                 <FiPower size={16} />
                 {isInstructor ? "End Session" : "Leave"}
@@ -180,27 +224,27 @@ export default function LiveClassRoom() {
         </div>
 
         {/* Main Grid Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '24px', alignItems: 'start' }}>
           
           {/* Main Display Container */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-richblack-950 border border-richblack-800 rounded-3xl overflow-hidden shadow-xl min-h-[380px] flex flex-col justify-between relative">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', gridColumn: 'span 2' }}>
+            <div style={{ background: '#ffffff', border: '1px solid #E2E8F0', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', minHeight: '420px' }}>
               
               {/* Header inside screen */}
-              <div className="p-4 bg-richblack-900/90 border-b border-richblack-800 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-blue-600/20 text-blue-400 flex items-center justify-center">
+              <div style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#EFF6FF', color: '#2563EB', display: 'flex', alignItems: 'center', justifyCenter: 'center', fontSize: '16px' }}>
                     <FiVideo size={18} />
                   </div>
                   <div>
-                    <h3 className="text-xs font-bold text-richblack-5">Zoom Meeting Experience</h3>
-                    <p className="text-[10px] text-richblack-400">High-Definition Audio & Video Portal</p>
+                    <h3 style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A', margin: 0 }}>Zoom Meeting Experience</h3>
+                    <p style={{ fontSize: '11px', color: '#64748B', margin: 0 }}>High-Definition Audio &amp; Video Portal</p>
                   </div>
                 </div>
 
                 <button
                   onClick={() => setEmbedMode(!embedMode)}
-                  className="flex items-center gap-1.5 text-xs text-purple-400 hover:text-purple-300 px-3 py-1.5 rounded-lg bg-purple-500/10 border border-purple-500/20 transition-all"
+                  style={{ background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE', padding: '6px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
                   <FiTv size={14} />
                   {embedMode ? "Switch to Launch View" : "Embed Web Preview"}
@@ -208,35 +252,35 @@ export default function LiveClassRoom() {
               </div>
 
               {/* Screen Body */}
-              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-radial from-richblack-900 to-richblack-950 relative">
+              <div style={{ flex: 1, padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#F8FAFC', position: 'relative' }}>
                 {embedMode ? (
                   <iframe
                     src={zoomWebEmbedUrl}
                     title="Zoom In-Dashboard Video Call"
-                    className="w-full h-[560px] rounded-xl border border-richblack-800 shadow-2xl bg-black"
+                    style={{ width: '100%', height: '520px', borderRadius: '16px', border: '1px solid #E2E8F0', background: '#000000' }}
                     allow="camera; microphone; fullscreen; display-capture; autoplay"
                   />
                 ) : (
-                  <div className="max-w-md space-y-6 py-6">
-                    <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-blue-600/30 to-purple-600/30 border border-blue-500/30 flex items-center justify-center mx-auto shadow-2xl text-blue-400 animate-pulse">
-                      <FiVideo size={40} />
+                  <div style={{ maxWidth: '440px', textAlign: 'center', padding: '24px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '18px' }}>
+                    <div style={{ width: '72px', height: '72px', borderRadius: '24px', background: '#EFF6FF', color: '#2563EB', border: '1px solid #BFDBFE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px' }}>
+                      <FiVideo size={36} />
                     </div>
 
-                    <div className="space-y-2">
-                      <h3 className="text-xl font-bold text-richblack-5">
+                    <div>
+                      <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', margin: '0 0 6px 0' }}>
                         {classDetails.status === "live"
                           ? "Zoom Session Active"
                           : "Ready for Zoom Meeting"}
                       </h3>
-                      <p className="text-xs text-richblack-300 leading-relaxed">
+                      <p style={{ fontSize: '13px', color: '#475569', margin: 0, lineHeight: '1.5' }}>
                         Click below to launch the Zoom meeting application directly or access the room through your browser.
                       </p>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap', width: '100%' }}>
                       <button
                         onClick={() => launchZoom(activeZoomUrl)}
-                        className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
+                        style={{ background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)', color: '#FFFFFF', border: 'none', padding: '12px 22px', borderRadius: '12px', fontWeight: 800, fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)' }}
                       >
                         <FiExternalLink size={16} />
                         Open in Zoom App / Web
@@ -244,7 +288,7 @@ export default function LiveClassRoom() {
                       
                       <button
                         onClick={() => setEmbedMode(true)}
-                        className="px-6 py-3 bg-richblack-800 hover:bg-richblack-700 text-richblack-200 border border-richblack-700 font-semibold text-xs rounded-xl transition-all"
+                        style={{ background: '#FFFFFF', color: '#0F172A', border: '1px solid #CBD5E1', padding: '12px 20px', borderRadius: '12px', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}
                       >
                         Try Web Embed
                       </button>
@@ -254,9 +298,9 @@ export default function LiveClassRoom() {
               </div>
 
               {/* Bottom Footer Info */}
-              <div className="px-6 py-3.5 bg-richblack-900/60 border-t border-richblack-800/80 flex items-center justify-between text-xs text-richblack-400">
-                <span className="flex items-center gap-1.5">
-                  <FiShield size={14} className="text-emerald-400" />
+              <div style={{ padding: '12px 20px', background: '#F8FAFC', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#64748B' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#059669', fontWeight: 700 }}>
+                  <FiShield size={14} />
                   Encrypted Zoom Meeting
                 </span>
                 <span>OpenHand Video Integration</span>
@@ -265,69 +309,69 @@ export default function LiveClassRoom() {
           </div>
 
           {/* Right Sidebar - Meeting Details & Credentials */}
-          <div className="space-y-6">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             {/* Meeting Credentials Card */}
-            <div className="bg-richblack-800/90 border border-richblack-700 rounded-3xl p-6 shadow-xl space-y-5">
-              <h2 className="text-base font-bold text-richblack-5 flex items-center gap-2 border-b border-richblack-700 pb-3">
-                <FiVideo className="text-purple-400" size={18} />
+            <div style={{ background: '#ffffff', border: '1px solid #E2E8F0', borderRadius: '24px', padding: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <h2 style={{ fontSize: '16px', fontWeight: 800, color: '#0F172A', borderBottom: '1px solid #E2E8F0', paddingBottom: '12px', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FiVideo color="#7C3AED" size={18} />
                 Zoom Meeting Details
               </h2>
 
               {/* Meeting ID */}
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-semibold text-richblack-400 uppercase tracking-wider">
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 6px 0', display: 'block' }}>
                   Meeting ID
                 </label>
-                <div className="flex items-center justify-between bg-richblack-900 border border-richblack-700 rounded-xl px-3.5 py-2.5">
-                  <span className="font-mono text-sm text-richblack-100 font-semibold">
+                <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontFamily: 'monospace', fontSize: '14px', color: '#0F172A', fontWeight: 700 }}>
                     {classDetails.zoomMeetingId || "Generating..."}
                   </span>
                   <button
                     onClick={() => copyToClipboard(classDetails.zoomMeetingId, "Meeting ID")}
-                    className="p-1.5 text-richblack-400 hover:text-purple-400 transition-colors"
+                    style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', padding: '4px' }}
                     title="Copy Meeting ID"
                   >
-                    {copiedField === "Meeting ID" ? <FiCheckCircle className="text-emerald-400" size={16} /> : <FiCopy size={16} />}
+                    {copiedField === "Meeting ID" ? <FiCheckCircle color="#059669" size={16} /> : <FiCopy size={16} />}
                   </button>
                 </div>
               </div>
 
               {/* Passcode */}
               {classDetails.zoomPassword && (
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-semibold text-richblack-400 uppercase tracking-wider">
+                <div>
+                  <label style={{ fontSize: '11px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 6px 0', display: 'block' }}>
                     Passcode
                   </label>
-                  <div className="flex items-center justify-between bg-richblack-900 border border-richblack-700 rounded-xl px-3.5 py-2.5">
-                    <span className="font-mono text-sm text-richblack-100 font-semibold">
+                  <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontFamily: 'monospace', fontSize: '14px', color: '#0F172A', fontWeight: 700 }}>
                       {classDetails.zoomPassword}
                     </span>
                     <button
                       onClick={() => copyToClipboard(classDetails.zoomPassword, "Passcode")}
-                      className="p-1.5 text-richblack-400 hover:text-purple-400 transition-colors"
+                      style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', padding: '4px' }}
                       title="Copy Passcode"
                     >
-                      {copiedField === "Passcode" ? <FiCheckCircle className="text-emerald-400" size={16} /> : <FiCopy size={16} />}
+                      {copiedField === "Passcode" ? <FiCheckCircle color="#059669" size={16} /> : <FiCopy size={16} />}
                     </button>
                   </div>
                 </div>
               )}
 
               {/* Join Link Copy */}
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-semibold text-richblack-400 uppercase tracking-wider">
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 6px 0', display: 'block' }}>
                   Direct Join Link
                 </label>
-                <div className="flex items-center justify-between bg-richblack-900 border border-richblack-700 rounded-xl px-3.5 py-2.5 gap-2">
-                  <span className="font-mono text-xs text-richblack-300 truncate">
+                <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontFamily: 'monospace', fontSize: '12px', color: '#475569', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {classDetails.zoomJoinUrl || "No link available"}
                   </span>
                   <button
                     onClick={() => copyToClipboard(classDetails.zoomJoinUrl, "Join Link")}
-                    className="p-1.5 text-richblack-400 hover:text-purple-400 transition-colors flex-shrink-0"
+                    style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', padding: '4px', flexShrink: 0 }}
                     title="Copy Join Link"
                   >
-                    {copiedField === "Join Link" ? <FiCheckCircle className="text-emerald-400" size={16} /> : <FiCopy size={16} />}
+                    {copiedField === "Join Link" ? <FiCheckCircle color="#059669" size={16} /> : <FiCopy size={16} />}
                   </button>
                 </div>
               </div>
@@ -335,89 +379,117 @@ export default function LiveClassRoom() {
               {/* Launch Button */}
               <button
                 onClick={() => launchZoom(activeZoomUrl)}
-                className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
+                style={{
+                  width: '100%',
+                  background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  padding: '14px 20px',
+                  borderRadius: '12px',
+                  fontWeight: 800,
+                  fontSize: '13.5px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  boxShadow: '0 4px 14px rgba(15, 23, 42, 0.25)',
+                }}
               >
                 <FiExternalLink size={16} />
                 Open Zoom Session
               </button>
             </div>
 
-            {/* Stage 03 — AURA AI Speech Co-Pilot & 90-Sec Draft Notes Widget */}
-            <div className="bg-gradient-to-br from-purple-950/60 to-richblack-900 border border-purple-500/30 rounded-3xl p-6 shadow-xl space-y-4">
-              <div className="flex items-center justify-between border-b border-purple-500/20 pb-3">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-teal-400 animate-ping"></span>
-                  <h3 className="font-bold text-richblack-5 text-sm">
+            {/* Stage 03 — AURA AI Speech Co-Pilot Card */}
+            <div style={{ background: 'linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 100%)', border: '1px solid #BFDBFE', borderRadius: '24px', padding: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #DBEAFE', paddingBottom: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#0D9488' }}></span>
+                  <h3 style={{ fontSize: '14px', fontWeight: 800, color: '#0F172A', margin: 0 }}>
                     AURA AI Session Co-Pilot (Stage 03)
                   </h3>
                 </div>
-                <span className="text-[10px] font-bold text-teal-400 bg-teal-500/10 border border-teal-500/30 px-2.5 py-1 rounded-full">
+                <span style={{ fontSize: '10.5px', fontWeight: 800, color: '#0D9488', background: '#CCFBF1', border: '1px solid #99F6E4', padding: '2px 8px', borderRadius: '12px' }}>
                   Consent Active
                 </span>
               </div>
 
-              <p className="text-xs text-richblack-300">
+              <p style={{ fontSize: '12.5px', color: '#475569', margin: 0, lineHeight: '1.5' }}>
                 AURA listens quietly in the background (with learner consent) to suggest techniques and auto-draft your session notes in 90 seconds.
               </p>
 
               {/* AURA Live Speech & Peripheral Suggestion */}
-              <div className="bg-richblack-950/80 border border-richblack-800 rounded-xl p-3.5 space-y-2">
-                <div className="flex items-center justify-between text-[11px] font-semibold text-purple-300">
+              <div style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '12px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 700, color: '#6D28D9' }}>
                   <span>Peripheral AURA Suggestion</span>
-                  <span className="text-teal-400">Live Feedback</span>
+                  <span style={{ color: '#0D9488' }}>Live Feedback</span>
                 </div>
-                <div className="text-xs text-richblack-100 italic bg-purple-900/20 border border-purple-500/20 p-2.5 rounded-lg">
+                <div style={{ fontSize: '12px', color: '#334155', fontStyle: 'italic', background: '#F3E8FF', border: '1px solid #E9D5FF', padding: '10px', borderRadius: '8px', lineHeight: '1.4' }}>
                   "💡 Notice theme detected: Delegation boundaries &amp; workload stress. Suggested question: 'What would it feel like to let one worry go without resolving it first?'"
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="space-y-2 pt-1">
-                <button
-                  onClick={async () => {
-                    toast.loading("AURA is drafting session notes from transcript...", { id: "aura-draft" })
-                    try {
-                      const res = await apiConnector(
-                        "POST",
-                        "/api/v1/aura/generate-draft-notes",
-                        {
-                          bookingId: classDetails._id,
-                          clientId: classDetails.enrolledClients?.[0] || classDetails.client || "64f1a2b3c4d5e6f7a8b9c0d1",
-                          rawTranscript: "Learner expressed stress regarding workload delegation and boundary management during week 2 transition. Discussed 10-minute boundary rule and peaceful reflection techniques.",
-                        },
-                        { Authorization: `Bearer ${token}` }
-                      )
-                      toast.dismiss("aura-draft")
-                      if (res?.data?.success) {
-                        toast.success("✨ Session notes drafted by AURA in 90 seconds! Ready to approve.")
-                        alert(`AURA Draft Notes Generated:\n\n${res.data.draft.draftNotes}`)
-                      } else {
-                        toast.error(res?.data?.message || "Draft note generation failed")
-                      }
-                    } catch (e) {
-                      toast.dismiss("aura-draft")
-                      toast.success("✨ AURA Draft Notes generated and ready for approval!")
+              <button
+                onClick={async () => {
+                  toast.loading("AURA is drafting session notes from transcript...", { id: "aura-draft" })
+                  try {
+                    const res = await apiConnector(
+                      "POST",
+                      "/api/v1/aura/generate-draft-notes",
+                      {
+                        bookingId: classDetails._id,
+                        clientId: classDetails.enrolledClients?.[0] || classDetails.client || "64f1a2b3c4d5e6f7a8b9c0d1",
+                        rawTranscript: "Learner expressed stress regarding workload delegation and boundary management during week 2 transition. Discussed 10-minute boundary rule and peaceful reflection techniques.",
+                      },
+                      { Authorization: `Bearer ${token}` }
+                    )
+                    toast.dismiss("aura-draft")
+                    if (res?.data?.success) {
+                      toast.success("✨ Session notes drafted by AURA in 90 seconds! Ready to approve.")
+                      alert(`AURA Draft Notes Generated:\n\n${res.data.draft.draftNotes}`)
+                    } else {
+                      toast.error(res?.data?.message || "Draft note generation failed")
                     }
-                  }}
-                  className="w-full py-3 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-richblack-950 font-extrabold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
-                >
-                  <FiCheckCircle size={16} />
-                  End Call &amp; Generate AURA Notes (90s)
-                </button>
-              </div>
+                  } catch (e) {
+                    toast.dismiss("aura-draft")
+                    toast.success("✨ AURA Draft Notes generated and ready for approval!")
+                  }
+                }}
+                style={{
+                  width: '100%',
+                  background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  padding: '12px 18px',
+                  borderRadius: '12px',
+                  fontWeight: 800,
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  boxShadow: '0 4px 14px rgba(5, 150, 105, 0.3)',
+                }}
+              >
+                <FiCheckCircle size={16} />
+                End Call &amp; Generate AURA Notes (90s)
+              </button>
             </div>
 
             {/* Class Schedule Information Card */}
-            <div className="bg-richblack-800/90 border border-richblack-700 rounded-3xl p-6 shadow-xl space-y-4 text-xs text-richblack-300">
-              <h3 className="font-bold text-richblack-100 text-sm border-b border-richblack-700 pb-2">
+            <div style={{ background: '#ffffff', border: '1px solid #E2E8F0', borderRadius: '24px', padding: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '12.5px', color: '#475569' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: 800, color: '#0F172A', borderBottom: '1px solid #E2E8F0', paddingBottom: '8px', margin: 0 }}>
                 Session Guidelines
               </h3>
               
-              <div className="flex items-center gap-3">
-                <FiClock className="text-purple-400 flex-shrink-0" size={16} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <FiClock color="#7C3AED" size={16} style={{ flexShrink: 0 }} />
                 <span>
                   Starts:{" "}
-                  <strong className="text-richblack-100">
+                  <strong style={{ color: '#0F172A', fontWeight: 700 }}>
                     {classDetails.scheduledStart
                       ? new Date(classDetails.scheduledStart).toLocaleString()
                       : "Now"}
@@ -425,14 +497,14 @@ export default function LiveClassRoom() {
                 </span>
               </div>
 
-              <div className="flex items-center gap-3">
-                <FiUser className="text-purple-400 flex-shrink-0" size={16} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <FiUser color="#7C3AED" size={16} style={{ flexShrink: 0 }} />
                 <span>
-                  Host: <strong className="text-richblack-100">{isInstructor ? "You (Instructor)" : "Course Instructor"}</strong>
+                  Host: <strong style={{ color: '#0F172A', fontWeight: 700 }}>{isInstructor ? "You (Instructor)" : "Course Instructor"}</strong>
                 </span>
               </div>
 
-              <div className="pt-2 border-t border-richblack-700/60 text-[11px] text-richblack-400">
+              <div style={{ paddingTop: '8px', borderTop: '1px solid #F1F5F9', fontSize: '11.5px', color: '#64748B' }}>
                 Ensure you have the Zoom Client installed or grant permission to launch the Zoom web player when prompted.
               </div>
             </div>
@@ -440,6 +512,111 @@ export default function LiveClassRoom() {
 
         </div>
       </div>
+
+      {/* End Session Confirmation Modal */}
+      {showEndModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(8px)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+          }}
+          onClick={() => setShowEndModal(false)}
+        >
+          <div
+            style={{
+              background: '#ffffff',
+              borderRadius: '24px',
+              padding: '32px 28px',
+              maxWidth: '460px',
+              width: '100%',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              border: '1px solid #E2E8F0',
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '16px',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Warning Icon Badge */}
+            <div
+              style={{
+                width: '64px',
+                height: '64px',
+                borderRadius: '50%',
+                background: '#FEE2E2',
+                color: '#DC2626',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(220, 38, 38, 0.15)',
+              }}
+            >
+              <FiPower size={30} />
+            </div>
+
+            <div>
+              <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', margin: '0 0 8px 0' }}>
+                {isInstructor ? "End Zoom Live Session?" : "Leave Live Session?"}
+              </h3>
+              <p style={{ fontSize: '13.5px', color: '#475569', margin: 0, lineHeight: '1.5' }}>
+                {isInstructor
+                  ? "Are you sure you want to end this Zoom live class for all students? This will conclude the session room and log attendance."
+                  : "Are you sure you want to leave this session? You can rejoin anytime while the live class remains active."}
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', width: '100%', marginTop: '8px' }}>
+              <button
+                type="button"
+                onClick={() => setShowEndModal(false)}
+                style={{
+                  flex: 1,
+                  background: '#F1F5F9',
+                  color: '#0F172A',
+                  border: '1px solid #CBD5E1',
+                  padding: '12px 18px',
+                  borderRadius: '12px',
+                  fontWeight: 700,
+                  fontSize: '13.5px',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={confirmEndClass}
+                style={{
+                  flex: 1,
+                  background: 'linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  padding: '12px 18px',
+                  borderRadius: '12px',
+                  fontWeight: 800,
+                  fontSize: '13.5px',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 14px rgba(220, 38, 38, 0.35)',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                {isInstructor ? "Yes, End Session" : "Yes, Leave Class"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

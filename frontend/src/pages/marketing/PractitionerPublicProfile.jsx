@@ -11,6 +11,7 @@ import { apiConnector } from '../../services/apiConnector'
 import OHFooter from '../../components/openhand/OHFooter'
 
 import { IntakeModal } from '../../components/openhand'
+import { formatPractitionerName } from '../../utils/formatName'
 
 export function PractitionerPublicProfile() {
   const { handle } = useParams()
@@ -179,7 +180,7 @@ export function PractitionerPublicProfile() {
   }
 
   const user = profile.user || {}
-  const practitionerName = `Dr. ${user.firstName || 'Practitioner'} ${user.lastName || ''}`.trim()
+  const practitionerName = formatPractitionerName(user, 'Practitioner')
   const offers = profile.offers || profile.userOffers || []
   const reviews = profile.reviews || []
 

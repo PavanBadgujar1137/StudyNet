@@ -113,14 +113,23 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
     }
   }
 
-  const savedOnboarding = typeof window !== 'undefined' ? localStorage.getItem('oh_onboarding_data') : null
-  const parsedSaved = savedOnboarding ? JSON.parse(savedOnboarding) : null
+  const userId = practitioner.user?._id || practitioner.id || user?._id
+  const storageKeyData = userId ? `oh_onboarding_data_${userId}` : 'oh_onboarding_data'
+  const savedOnboarding = typeof window !== 'undefined' ? localStorage.getItem(storageKeyData) : null
+  let parsedSaved = null
+  try {
+    parsedSaved = savedOnboarding ? JSON.parse(savedOnboarding) : null
+  } catch (e) {}
+
+  const savedHandle = (parsedSaved?.handle && parsedSaved?.handle.toLowerCase() !== 'test') ? parsedSaved.handle : null
 
   const firstName = practitioner.user?.firstName || practitioner.firstName || user?.firstName || ''
   const lastName = practitioner.user?.lastName || practitioner.lastName || user?.lastName || ''
+  const nameSlug = (firstName || lastName) ? `${firstName}-${lastName}`.toLowerCase().trim().replace(/[^a-z0-9-]/gi, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') : ''
   
-  // Clean handle computation in real-time: check saved onboarding first, then practitioner profile, then user profile
-  const rawHandle = parsedSaved?.handle || practitioner.handle || user?.handle || (firstName ? `${firstName.toLowerCase().trim()}-${lastName.toLowerCase().trim()}` : 'practitioner')
+  const practHandle = (practitioner.handle && practitioner.handle.toLowerCase() !== 'test') ? practitioner.handle : null
+  const userHandle = (user?.handle && user?.handle.toLowerCase() !== 'test') ? user.handle : null
+  const rawHandle = practHandle || userHandle || savedHandle || nameSlug || 'practitioner'
   const cleanHandle = rawHandle
     .toLowerCase()
     .trim()
@@ -136,9 +145,10 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
 
   const bookingLink = `${currentOrigin}/practitioner/${cleanHandle}`
 
-  const reviews = telemetryData?.reviews || []
-  const activeClients = telemetryData?.stats?.activeClientsCount || 0
-  const rating = practitioner.rating ? `${practitioner.rating} ★` : 'N/A'
+  const reviews = telemetryData?.reviews || practitioner?.reviews || []
+  const activeClients = telemetryData?.stats?.activeClientsCount || telemetryData?.telemetry?.activeClientsCount || 0
+  const ratingVal = practitioner?.rating || telemetryData?.telemetry?.rating || telemetryData?.rating || (reviews.length > 0 ? (reviews.reduce((s, r) => s + Number(r.rating || 5), 0) / reviews.length).toFixed(1) : null)
+  const ratingDisplay = ratingVal ? `${ratingVal} ★` : 'No reviews yet'
   // Copy Booking Link
   const handleCopyLink = () => {
     navigator.clipboard.writeText(bookingLink)
@@ -277,8 +287,10 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
             <span style={{ color: '#64748B', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase' }}>Client Rating</span>
             <FiStar color="#F59E0B" fontSize={20} />
           </div>
-          <div style={{ fontSize: '24px', fontWeight: 800, color: '#0F172A', margin: '8px 0 4px 0' }}>{rating}</div>
-          <div style={{ fontSize: '12px', color: '#D97706', fontWeight: 600 }}>Based on {reviews.length} client reviews</div>
+          <div style={{ fontSize: ratingVal ? '24px' : '17px', fontWeight: 800, color: '#0F172A', margin: '8px 0 4px 0' }}>{ratingDisplay}</div>
+          <div style={{ fontSize: '12px', color: '#D97706', fontWeight: 600 }}>
+            {reviews.length > 0 ? `Based on ${reviews.length} client review${reviews.length === 1 ? '' : 's'}` : 'No client reviews submitted yet'}
+          </div>
         </div>
       </div>
 
@@ -533,7 +545,7 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
                             {'★'.repeat(rev.rating || 5)}
                           </span>
                           <span style={{ fontWeight: 700, fontSize: '13px', color: '#0F172A' }}>
-                            — {rev.user?.firstName ? `${rev.user.firstName} ${rev.user.lastName || ''}` : 'Verified Client'}
+                            — {rev.clientName || (rev.user?.firstName ? `${rev.user.firstName} ${rev.user.lastName || ''}`.trim() : 'Verified Client')}
                           </span>
                         </div>
 
@@ -554,8 +566,8 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
                         </button>
                       </div>
 
-                      <p style={{ margin: 0, fontSize: '13px', color: '#334155', lineHeight: '1.4', italic: 'true' }}>
-                        "{rev.review}"
+                      <p style={{ margin: 0, fontSize: '13px', color: '#334155', lineHeight: '1.4', fontStyle: 'italic' }}>
+                        "{rev.review || rev.content || 'Great experience working together.'}"
                       </p>
                     </div>
                   )

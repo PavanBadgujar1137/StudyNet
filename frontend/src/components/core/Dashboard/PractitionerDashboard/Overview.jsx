@@ -1,9 +1,14 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useSelector } from 'react-redux'
 import { FiVideo } from 'react-icons/fi'
 
 export function Overview({ practitionerName = 'Practitioner', setActiveSection, telemetryData, loading }) {
   const navigate = useNavigate()
+  const { user } = useSelector((state) => state.profile)
+
+  const storageKeyStep = user?._id ? `oh_onboarding_step_${user._id}` : 'oh_onboarding_step'
+  const savedStep = typeof window !== 'undefined' ? localStorage.getItem(storageKeyStep) : null
 
   const stats = telemetryData?.stats || {
     monthlyEarnings: 0,
@@ -48,7 +53,7 @@ export function Overview({ practitionerName = 'Practitioner', setActiveSection, 
       </div>
 
       {/* Page 9 Correction 3: Resume Onboarding Nudge */}
-      {localStorage.getItem('oh_onboarding_step') && (
+      {savedStep && (
         <div style={{
           background: 'linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%)',
           border: '1.5px solid #C7D2FE',
@@ -63,7 +68,7 @@ export function Overview({ practitionerName = 'Practitioner', setActiveSection, 
         }}>
           <div>
             <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', tracking: '0.05em', color: '#4F46E5', background: '#FFFFFF', padding: '3px 10px', borderRadius: '12px', display: 'inline-block', marginBottom: '4px' }}>
-              ⚡ Setup Incomplete — Step {localStorage.getItem('oh_onboarding_step')} of 4
+              ⚡ Setup Incomplete — Step {savedStep} of 4
             </span>
             <div style={{ fontWeight: 800, color: '#1E1B4B', fontSize: '15px' }}>
               Finish setting up your practice space

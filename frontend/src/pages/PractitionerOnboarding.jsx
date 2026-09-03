@@ -12,17 +12,37 @@ export function PractitionerOnboarding({ embedded = false, telemetryData, onUpda
   const { token } = useSelector((state) => state.auth)
   const { user } = useSelector((state) => state.profile)
 
+  const storageKeyData = user?._id ? `oh_onboarding_data_${user._id}` : 'oh_onboarding_data'
+  const storageKeyStep = user?._id ? `oh_onboarding_step_${user._id}` : 'oh_onboarding_step'
+
   const [step, setStep] = useState(() => {
-    const savedStep = localStorage.getItem('oh_onboarding_step')
+    const savedStep = localStorage.getItem(storageKeyStep)
     return savedStep ? parseInt(savedStep, 10) : 1
   })
 
   const [formData, setFormData] = useState(() => {
-    const savedData = localStorage.getItem('oh_onboarding_data')
+    const savedData = user?._id ? localStorage.getItem(storageKeyData) : null
     const existingP = telemetryData?.practitioner || {}
-    const defaultHandle = existingP.handle || user?.handle || ''
-    return savedData ? JSON.parse(savedData) : {
-      handle: defaultHandle,
+    const rawFirst = user?.firstName || ''
+    const rawLast  = user?.lastName || ''
+    const computedNameSlug = `${rawFirst}-${rawLast}`.toLowerCase().trim().replace(/[^a-z0-9-]/gi, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
+    const validServerHandle = (existingP.handle && existingP.handle.toLowerCase() !== 'test')
+      ? existingP.handle
+      : (user?.handle && user.handle.toLowerCase() !== 'test')
+      ? user.handle
+      : (computedNameSlug || '')
+
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData)
+        if (parsed.handle && parsed.handle.toLowerCase() !== 'test') {
+          return { ...parsed, handle: validServerHandle || parsed.handle }
+        }
+      } catch (e) {}
+    }
+
+    return {
+      handle: validServerHandle,
       credentials: existingP.credentials || user?.credentials || 'Holistic Practitioner',
       bio: existingP.bio || user?.bio || 'Welcome to my practice space! I offer personalized consultations and circles.',
       specialties: existingP.specialties?.length ? existingP.specialties : ['Holistic Care', 'Wellness Coaching'],
@@ -36,13 +56,59 @@ export function PractitionerOnboarding({ embedded = false, telemetryData, onUpda
     }
   })
 
+  // Sync server handle and user ground truth whenever telemetry or user changes
+  React.useEffect(() => {
+    if (!user) return
+
+    // Clear legacy un-scoped localStorage keys from previous sessions/users
+    if (user._id) {
+      const legacyData = localStorage.getItem('oh_onboarding_data')
+      if (legacyData) {
+        try {
+          const parsed = JSON.parse(legacyData)
+          if (parsed.handle?.toLowerCase() === 'test' || !parsed.handle) {
+            localStorage.removeItem('oh_onboarding_data')
+          }
+        } catch (e) {
+          localStorage.removeItem('oh_onboarding_data')
+        }
+      }
+    }
+
+    const existingP = telemetryData?.practitioner || {}
+    const rawFirst = user?.firstName || ''
+    const rawLast  = user?.lastName || ''
+    const computedNameSlug = `${rawFirst}-${rawLast}`.toLowerCase().trim().replace(/[^a-z0-9-]/gi, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
+    const validServerHandle = (existingP.handle && existingP.handle.toLowerCase() !== 'test')
+      ? existingP.handle
+      : (user?.handle && user.handle.toLowerCase() !== 'test')
+      ? user.handle
+      : (computedNameSlug || '')
+
+    setFormData((prev) => {
+      if (!prev.handle || prev.handle.toLowerCase() === 'test' || (validServerHandle && prev.handle !== validServerHandle)) {
+        const updated = {
+          ...prev,
+          handle: validServerHandle || prev.handle,
+          credentials: existingP.credentials || prev.credentials || 'Holistic Practitioner',
+          bio: existingP.bio || prev.bio || 'Welcome to my practice space!',
+          specialties: existingP.specialties?.length ? existingP.specialties : (prev.specialties || ['Holistic Care', 'Wellness Coaching']),
+          languages: existingP.languages?.length ? existingP.languages : (prev.languages || ['English', 'Hindi']),
+        }
+        if (user._id) localStorage.setItem(storageKeyData, JSON.stringify(updated))
+        return updated
+      }
+      return prev
+    })
+  }, [user, telemetryData, storageKeyData])
+
   const [customSpecialty, setCustomSpecialty] = useState('')
   const [customLanguage, setCustomLanguage] = useState('')
 
   const handleChange = (e) => {
     const updated = { ...formData, [e.target.name]: e.target.value }
     setFormData(updated)
-    localStorage.setItem('oh_onboarding_data', JSON.stringify(updated))
+    localStorage.setItem(storageKeyData, JSON.stringify(updated))
   }
 
   const toggleSpecialty = (spec) => {
@@ -52,7 +118,7 @@ export function PractitionerOnboarding({ embedded = false, telemetryData, onUpda
       : [...current, spec]
     const updatedData = { ...formData, specialties: updatedSpecs }
     setFormData(updatedData)
-    localStorage.setItem('oh_onboarding_data', JSON.stringify(updatedData))
+    localStorage.setItem(storageKeyData, JSON.stringify(updatedData))
   }
 
   const handleAddCustomSpecialty = () => {
@@ -63,7 +129,7 @@ export function PractitionerOnboarding({ embedded = false, telemetryData, onUpda
       const updatedSpecs = [...current, tag]
       const updatedData = { ...formData, specialties: updatedSpecs }
       setFormData(updatedData)
-      localStorage.setItem('oh_onboarding_data', JSON.stringify(updatedData))
+      localStorage.setItem(storageKeyData, JSON.stringify(updatedData))
     }
     setCustomSpecialty('')
   }
@@ -75,7 +141,7 @@ export function PractitionerOnboarding({ embedded = false, telemetryData, onUpda
       : [...current, lang]
     const updatedData = { ...formData, languages: updatedLangs }
     setFormData(updatedData)
-    localStorage.setItem('oh_onboarding_data', JSON.stringify(updatedData))
+    localStorage.setItem(storageKeyData, JSON.stringify(updatedData))
   }
 
   const handleAddCustomLanguage = () => {
@@ -86,7 +152,7 @@ export function PractitionerOnboarding({ embedded = false, telemetryData, onUpda
       const updatedLangs = [...current, tag]
       const updatedData = { ...formData, languages: updatedLangs }
       setFormData(updatedData)
-      localStorage.setItem('oh_onboarding_data', JSON.stringify(updatedData))
+      localStorage.setItem(storageKeyData, JSON.stringify(updatedData))
     }
     setCustomLanguage('')
   }
@@ -139,11 +205,13 @@ export function PractitionerOnboarding({ embedded = false, telemetryData, onUpda
     // Sync profile to backend on each step
     await syncProfileToBackend(formData)
 
-    if (step < 4) {
+    if (step < 3) {
       const nextStep = step + 1
       setStep(nextStep)
-      localStorage.setItem('oh_onboarding_step', nextStep.toString())
+      localStorage.setItem(storageKeyStep, nextStep.toString())
     } else {
+      localStorage.removeItem(storageKeyStep)
+      localStorage.removeItem(storageKeyData)
       localStorage.removeItem('oh_onboarding_step')
       localStorage.removeItem('oh_onboarding_data')
       toast.success("🎉 Practice space published! Profile & Specialties live on openhand.live.")
@@ -179,17 +247,16 @@ export function PractitionerOnboarding({ embedded = false, telemetryData, onUpda
           <div className="onboarding-header">
             <OHEyebrow>Practitioner Setup</OHEyebrow>
             <h1>Set up your practice space</h1>
-            <p className="sub">Four quick steps to launch your space on openhand.live</p>
+            <p className="sub">Three quick steps to launch your space on openhand.live</p>
           </div>
         )}
 
-        {/* 4-Step Ribbon Progress */}
-        <div className="ribbon-bar" role="progressbar" aria-valuenow={step} aria-valuemin="1" aria-valuemax="4" style={{ marginBottom: '24px' }}>
+        {/* 3-Step Ribbon Progress */}
+        <div className="ribbon-bar" role="progressbar" aria-valuenow={step} aria-valuemin="1" aria-valuemax="3" style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '24px' }}>
           {[
             { n: 1, label: 'Claim handle & Specialties', time: '~3 mins' },
             { n: 2, label: 'Add first offer', time: '~6 mins' },
-            { n: 3, label: 'Connect payout', time: '~5 mins' },
-            { n: 4, label: 'Share link', time: '~1 min' },
+            { n: 3, label: 'Share link', time: '~1 min' },
           ].map((s) => (
             <div key={s.n} className={`ribbon-step ${step >= s.n ? 'active' : ''}`}>
               <div className="step-circle">{s.n}</div>
@@ -232,29 +299,40 @@ export function PractitionerOnboarding({ embedded = false, telemetryData, onUpda
                   type="text"
                   value={formData.credentials}
                   onChange={handleChange}
-                  placeholder="e.g. Clinical Psychologist · 12 yrs experience"
+                  placeholder="e.g. M.D. Clinical Psychologist, Certified Mindfulness Coach"
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="bio">Bio description</label>
+                <label htmlFor="bio">About your practice &amp; approach</label>
                 <textarea
                   id="bio"
                   name="bio"
                   rows="3"
                   value={formData.bio}
                   onChange={handleChange}
-                  placeholder="Two or three sentences describing your practice, approach, and how you hold space..."
+                  placeholder="Briefly describe your specialization, therapeutic approach, or session goals..."
                 />
               </div>
 
-              {/* Specialties Selection */}
+              {/* Interactive Specialties Selection */}
               <div className="form-group" style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', fontWeight: 700, fontSize: '13.5px', color: '#334155', marginBottom: '8px' }}>
-                  Specialties (Displayed on your booking link)
+                <label style={{ display: 'block', fontWeight: 700, fontSize: '13.5px', marginBottom: '8px', color: '#1E293B' }}>
+                  Specialties &amp; Practice Focus Areas (Click to toggle)
                 </label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
-                  {['Holistic Care', 'Wellness Coaching', 'Anxiety & Stress', 'Relationships', 'Grief & Loss', 'Career & Burnout', 'Trauma & Recovery', 'Mindfulness', 'Parenting', 'Nutrition'].map((spec) => {
+                  {[
+                    'Holistic Care',
+                    'Wellness Coaching',
+                    'Mindfulness & Meditation',
+                    'Stress Management',
+                    'Cognitive Behavioral',
+                    'Anxiety & Mood Care',
+                    'Life Transitions',
+                    'Executive Performance',
+                    'Integrative Healing',
+                    'Relationship Counseling'
+                  ].map((spec) => {
                     const selected = (formData.specialties || ['Holistic Care', 'Wellness Coaching']).includes(spec)
                     return (
                       <button
@@ -282,7 +360,7 @@ export function PractitionerOnboarding({ embedded = false, telemetryData, onUpda
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <input
                     type="text"
-                    placeholder="Add custom specialty (e.g. Somatic Healing)..."
+                    placeholder="Add custom specialty (e.g. Somatic Therapy)..."
                     value={customSpecialty}
                     onChange={(e) => setCustomSpecialty(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddCustomSpecialty(); } }}
@@ -291,20 +369,20 @@ export function PractitionerOnboarding({ embedded = false, telemetryData, onUpda
                   <button
                     type="button"
                     onClick={handleAddCustomSpecialty}
-                    style={{ padding: '8px 16px', background: '#3B82F6', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}
+                    style={{ padding: '8px 16px', background: '#2563EB', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}
                   >
                     Add Specialty
                   </button>
                 </div>
               </div>
 
-              {/* Languages Spoken */}
+              {/* Interactive Languages Selection */}
               <div className="form-group" style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', fontWeight: 700, fontSize: '13.5px', color: '#334155', marginBottom: '8px' }}>
-                  Languages Spoken (Displayed on your booking link)
+                <label style={{ display: 'block', fontWeight: 700, fontSize: '13.5px', marginBottom: '8px', color: '#1E293B' }}>
+                  Languages Spoken in Consultations
                 </label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
-                  {['English', 'Hindi', 'Marathi', 'Tamil', 'Bengali', 'Gujarati', 'Kannada', 'Telugu', 'Malayalam', 'Punjabi'].map((lang) => {
+                  {['English', 'Hindi', 'Marathi', 'Gujarati', 'Bengali', 'Tamil', 'Telugu', 'Kannada', 'Malayalam', 'Punjabi'].map((lang) => {
                     const selected = (formData.languages || ['English', 'Hindi']).includes(lang)
                     return (
                       <button
@@ -345,21 +423,6 @@ export function PractitionerOnboarding({ embedded = false, telemetryData, onUpda
                   >
                     Add Language
                   </button>
-                </div>
-              </div>
-
-              {/* Live Profile Link Badge Preview */}
-              <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '16px', marginBottom: '24px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#64748B', display: 'block', marginBottom: '8px', letterSpacing: '0.5px' }}>
-                  👀 Live Profile Link Preview: {(typeof window !== 'undefined' ? window.location.origin : 'https://openhand.live')}/practitioner/{formData.handle || 'yourname'}
-                </span>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <div style={{ fontSize: '12.5px', fontWeight: 700, color: '#1E293B' }}>
-                    Specialties: {(formData.specialties || ['Holistic Care', 'Wellness Coaching']).join(' • ')}
-                  </div>
-                  <div style={{ fontSize: '12.5px', fontWeight: 700, color: '#1E293B' }}>
-                    Languages: {(formData.languages || ['English', 'Hindi']).join(' • ')}
-                  </div>
                 </div>
               </div>
 
@@ -411,62 +474,12 @@ export function PractitionerOnboarding({ embedded = false, telemetryData, onUpda
 
               <div className="btn-row">
                 <OHButton variant="ghost" onClick={() => setStep(1)}>← Back</OHButton>
-                <OHButton type="submit">Continue to Payouts →</OHButton>
+                <OHButton type="submit">Complete Setup &amp; View Link →</OHButton>
               </div>
             </form>
           )}
 
           {step === 3 && (
-            <form onSubmit={handleNext} className="step-body">
-              <h2>Step 3: Connect payout bank details</h2>
-              <p>Direct T+2 settlements to your bank via Razorpay &amp; Stripe. No platform wallets.</p>
-
-              <div className="form-group">
-                <label htmlFor="panNumber">PAN Card Number</label>
-                <input
-                  id="panNumber"
-                  name="panNumber"
-                  type="text"
-                  value={formData.panNumber}
-                  onChange={handleChange}
-                  placeholder="ABCDE1234F"
-                  style={{ textTransform: 'uppercase' }}
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="accountNumber">Bank Account Number</label>
-                <input
-                  id="accountNumber"
-                  name="accountNumber"
-                  type="password"
-                  value={formData.accountNumber}
-                  onChange={handleChange}
-                  placeholder="91823901823"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="ifsc">IFSC Code</label>
-                <input
-                  id="ifsc"
-                  name="ifsc"
-                  type="text"
-                  value={formData.ifsc}
-                  onChange={handleChange}
-                  placeholder="HDFC0001234"
-                  style={{ textTransform: 'uppercase' }}
-                />
-              </div>
-
-              <div className="btn-row">
-                <OHButton variant="ghost" onClick={() => setStep(2)}>← Back</OHButton>
-                <OHButton type="submit">Complete Setup →</OHButton>
-              </div>
-            </form>
-          )}
-
-          {step === 4 && (
             <div className="step-body finish-step">
               <h2>🎉 Your practice link is live!</h2>
               <p className="lead-link">

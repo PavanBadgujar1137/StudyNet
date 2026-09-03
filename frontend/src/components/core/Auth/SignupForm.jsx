@@ -2,7 +2,7 @@ import { useState } from "react"
 import { toast } from "react-hot-toast"
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai"
 import { useDispatch } from "react-redux"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { sendOtp } from "../../../services/operations/authAPI"
 import { setSignupData } from "../../../slices/authSlice"
 import { ACCOUNT_TYPE } from "../../../utils/constants"
@@ -16,6 +16,7 @@ function SignupForm() {
   const [accountType, setAccountType] = useState(ACCOUNT_TYPE.CLIENT)
 
   const [formData, setFormData] = useState({
+    title: "",
     firstName: "",
     lastName: "",
     email: "",
@@ -26,7 +27,7 @@ function SignupForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
-  const { firstName, lastName, email, password, confirmPassword } = formData
+  const { title, firstName, lastName, email, password, confirmPassword } = formData
 
   const handleOnChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
@@ -63,11 +64,27 @@ function SignupForm() {
         ))}
       </div>
 
-      <SocialAuthButtons accountType={accountType} mode="signup" />
-
       <form onSubmit={handleOnSubmit} className="auth-field-list">
-        {/* Name row */}
-        <div className="auth-name-row">
+        {/* Title & Name row */}
+        <div className="auth-name-title-row">
+          <div className="auth-field">
+            <label className="auth-label">Title</label>
+            <select
+              name="title"
+              value={title}
+              onChange={handleOnChange}
+              className="auth-input"
+              style={{ cursor: 'pointer' }}
+            >
+              <option value="">None</option>
+              <option value="Dr.">Dr.</option>
+              <option value="Prof.">Prof.</option>
+              <option value="Mr.">Mr.</option>
+              <option value="Ms.">Ms.</option>
+              <option value="Mrs.">Mrs.</option>
+              <option value="Mx.">Mx.</option>
+            </select>
+          </div>
           <div className="auth-field">
             <label className="auth-label">First Name <sup>*</sup></label>
             <input
@@ -146,12 +163,17 @@ function SignupForm() {
           </div>
         </div>
 
-
-
         <button type="submit" className="auth-submit-btn">
           Create Free Account →
         </button>
       </form>
+
+      <p className="auth-switch">
+        Already have an account?{" "}
+        <Link to="/login" className="auth-switch-link">Sign in →</Link>
+      </p>
+
+      <SocialAuthButtons accountType={accountType} mode="signup" />
     </div>
   )
 }

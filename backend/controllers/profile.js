@@ -22,6 +22,7 @@ const { convertSecondsToDuration } = require("../utils/secToDuration")
 exports.updateProfile = async (req, res) => {
   try {
     const {
+      title = "",
       firstName = "",
       lastName = "",
       dateOfBirth = "",
@@ -36,6 +37,7 @@ exports.updateProfile = async (req, res) => {
     const profile = await Profile.findById(userDetails.additionalDetails)
 
     const user = await User.findByIdAndUpdate(id, {
+      title,
       firstName,
       lastName,
     })
@@ -381,20 +383,68 @@ exports.getPractitionerDashboardData = async (req, res) => {
 
     // AURA session notes awaiting approval
     const pendingNotes = await SessionNoteDraft.find({ practitioner: userId, status: "draft" })
-    const reviews = await RatingAndReview.find().populate("user", "firstName lastName").sort({ _id: -1 }).limit(5).lean()
+    const Testimonial = require("../models/Testimonial")
+    const Course = require("../models/Course")
+
+    const practitionerCourses = await Course.find({ instructor: userId }).select("_id").lean()
+    const courseIds = practitionerCourses.map(c => c._id)
+
+    const testimonials = await Testimonial.find({ practitioner: userId, isApproved: true }).sort({ createdAt: -1 }).lean()
+    const courseReviews = await RatingAndReview.find({
+      $or: [
+        { practitioner: userId },
+        { course: { $in: courseIds } }
+      ]
+    }).populate("user", "firstName lastName image").sort({ createdAt: -1 }).lean()
+
+    const practitionerReviews = [
+      ...testimonials.map(t => ({
+        _id: t._id,
+        rating: t.rating || 5,
+        review: t.content,
+        clientName: t.clientName || "Verified Client",
+        createdAt: t.createdAt
+      })),
+      ...courseReviews.map(r => ({
+        _id: r._id,
+        rating: r.rating || 5,
+        review: r.review,
+        clientName: r.user ? `${r.user.firstName || ''} ${r.user.lastName || ''}`.trim() : "Verified Client",
+        createdAt: r.createdAt
+      }))
+    ]
+
+    const totalSum = practitionerReviews.reduce((sum, r) => sum + Number(r.rating || 5), 0)
+    const computedRating = practitionerReviews.length > 0 ? Number((totalSum / practitionerReviews.length).toFixed(1)) : null
+
+    const nameSlug = `${user?.firstName || ''}-${user?.lastName || ''}`
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9-]/gi, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '') || `practitioner-${userId.toString().slice(-4)}`
+
+    let currentHandle = profile?.handle
+    if (profile && (!currentHandle || currentHandle === 'Test')) {
+      currentHandle = nameSlug
+      profile.handle = nameSlug
+      await profile.save().catch(() => {})
+    }
 
     return res.status(200).json({
       success: true,
       data: {
         practitioner: {
           id: user?._id,
+          title: user?.title || "",
           name: user ? `${user.firstName} ${user.lastName}` : "Practitioner",
           firstName: user?.firstName || "Practitioner",
           lastName: user?.lastName || "",
           email: user?.email || "",
           image: user?.image || "",
           credentials: profile?.credentials || "Licensed Practitioner",
-          rating: profile?.rating || null,
+          handle: currentHandle || nameSlug,
+          rating: computedRating || profile?.rating || null,
         },
         stats: {
           monthlyEarnings: monthlyEarnings,
@@ -414,7 +464,7 @@ exports.getPractitionerDashboardData = async (req, res) => {
         invoices,
         clients: dynamicClients,
         pendingNotes,
-        reviews,
+        reviews: practitionerReviews,
       },
     })
 

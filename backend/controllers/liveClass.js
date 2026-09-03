@@ -350,21 +350,25 @@ exports.leaveClass = async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 exports.rescheduleClass = async (req, res) => {
   try {
-    const instructorId = req.user.id
+    const instructorId = req.user.id || req.user._id
     const { classId } = req.params
-    const { scheduledStart, scheduledEnd } = req.body
+    const { scheduledStart, scheduledEnd, title, description } = req.body
 
     const liveClass = await LiveClass.findById(classId)
     if (!liveClass) return res.status(404).json({ success: false, message: "Class not found." })
-    if (String(liveClass.instructor) !== String(instructorId)) {
+
+    const isOwner = String(liveClass.instructor) === String(instructorId) || req.user?.accountType === "Practitioner" || req.user?.accountType === "Instructor" || req.user?.accountType === "Admin"
+    if (!isOwner) {
       return res.status(403).json({ success: false, message: "Not authorized." })
     }
     if (liveClass.status === "live" || liveClass.status === "ended") {
       return res.status(400).json({ success: false, message: "Cannot reschedule a live or ended class." })
     }
 
-    liveClass.scheduledStart = new Date(scheduledStart)
-    liveClass.scheduledEnd = new Date(scheduledEnd)
+    if (scheduledStart) liveClass.scheduledStart = new Date(scheduledStart)
+    if (scheduledEnd) liveClass.scheduledEnd = new Date(scheduledEnd)
+    if (title) liveClass.title = title.slice(0, 100)
+    if (description !== undefined) liveClass.description = description.slice(0, 500)
     await liveClass.save()
 
     return res.status(200).json({ success: true, message: "Class rescheduled.", data: liveClass })
@@ -379,17 +383,20 @@ exports.rescheduleClass = async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 exports.cancelClass = async (req, res) => {
   try {
-    const instructorId = req.user.id
+    const instructorId = req.user.id || req.user._id
     const { classId } = req.params
 
     const liveClass = await LiveClass.findById(classId)
     if (!liveClass) return res.status(404).json({ success: false, message: "Class not found." })
-    if (String(liveClass.instructor) !== String(instructorId)) {
+
+    const isOwner = String(liveClass.instructor) === String(instructorId) || req.user?.accountType === "Practitioner" || req.user?.accountType === "Instructor" || req.user?.accountType === "Admin"
+    if (!isOwner) {
       return res.status(403).json({ success: false, message: "Not authorized." })
     }
 
     liveClass.status = "cancelled"
     await liveClass.save()
+    await LiveClass.findByIdAndDelete(classId)
 
     return res.status(200).json({ success: true, message: "Class cancelled." })
   } catch (error) {

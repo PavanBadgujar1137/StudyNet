@@ -147,6 +147,13 @@ exports.getPractitionerByHandle = async (req, res) => {
     const { handle } = req.params
     const cleanParam = (handle || "").toLowerCase().trim().replace(/[^a-z0-9-]/gi, '-')
 
+    if (!cleanParam || cleanParam === 'test') {
+      return res.status(404).json({
+        success: false,
+        message: "Practitioner profile not found.",
+      })
+    }
+
     let profile = await PractitionerProfile.findOne({
       $or: [
         { handle: cleanParam },
@@ -158,47 +165,48 @@ exports.getPractitionerByHandle = async (req, res) => {
     })
 
     if (!profile) {
-      // Search user by name slug or handle or first name
-      const nameParts = cleanParam.split("-")
-      const firstNameRegex = new RegExp(`^${nameParts[0]}$`, "i")
-      const lastNameRegex = nameParts.length > 1 ? new RegExp(`^${nameParts.slice(1).join(" ")}$`, "i") : null
+      // Search user by exact name slug (firstName-lastName)
+      const nameParts = cleanParam.split("-").filter(Boolean)
+      if (nameParts.length >= 1) {
+        const firstNameRegex = new RegExp(`^${nameParts[0]}$`, "i")
+        const lastNameRegex = nameParts.length > 1 ? new RegExp(`^${nameParts.slice(1).join(" ")}$`, "i") : null
 
-      const userQuery = { firstName: firstNameRegex }
-      if (lastNameRegex) userQuery.lastName = lastNameRegex
-
-      let user = await User.findOne(userQuery).select("firstName lastName email image accountType credentials bio specialties languages").lean()
-
-      if (!user) {
-        user = await User.findOne({
+        const userQuery = {
           accountType: { $in: ["Practitioner", "Instructor"] },
-          firstName: new RegExp(nameParts[0], "i"),
-        }).select("firstName lastName email image accountType credentials bio specialties languages").lean()
-      }
-
-      if (!user) {
-        user = await User.findOne({ accountType: { $in: ["Practitioner", "Instructor"] } }).select("firstName lastName email image accountType credentials bio specialties languages").lean()
-      }
-
-      if (user) {
-        let existingProf = await PractitionerProfile.findOne({ user: user._id })
-        if (!existingProf) {
-          existingProf = await PractitionerProfile.create({
-            user: user._id,
-            handle: cleanParam || `${user.firstName?.toLowerCase() || 'practitioner'}`,
-            credentials: user.credentials || "Verified Practitioner",
-            bio: user.bio || "Welcome to my official practice booking page.",
-            specialties: user.specialties?.length ? user.specialties : ["Holistic Care", "Wellness Coaching"],
-            languages: user.languages?.length ? user.languages : ["English"],
-            verified: true,
-          })
-        } else {
-          existingProf.handle = cleanParam
-          await existingProf.save()
+          firstName: firstNameRegex,
         }
-        profile = await PractitionerProfile.findById(existingProf._id).populate({
-          path: "user",
-          select: "firstName lastName email image accountType credentials bio specialties languages",
-        })
+        if (lastNameRegex) userQuery.lastName = lastNameRegex
+
+        let user = await User.findOne(userQuery).select("firstName lastName email image accountType credentials bio specialties languages").lean()
+
+        if (user) {
+          let existingProf = await PractitionerProfile.findOne({ user: user._id })
+          const userSlug = `${user.firstName || ''}-${user.lastName || ''}`
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9-]/gi, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '') || `practitioner-${user._id.toString().slice(-4)}`
+
+          if (!existingProf) {
+            existingProf = await PractitionerProfile.create({
+              user: user._id,
+              handle: userSlug,
+              credentials: user.credentials || "Verified Practitioner",
+              bio: user.bio || "Welcome to my official practice booking page.",
+              specialties: user.specialties?.length ? user.specialties : ["Holistic Care", "Wellness Coaching"],
+              languages: user.languages?.length ? user.languages : ["English"],
+              verified: true,
+            })
+          } else if (!existingProf.handle || existingProf.handle.toLowerCase() === 'test') {
+            existingProf.handle = userSlug
+            await existingProf.save()
+          }
+          profile = await PractitionerProfile.findById(existingProf._id).populate({
+            path: "user",
+            select: "firstName lastName email image accountType credentials bio specialties languages",
+          })
+        }
       }
     }
 
@@ -210,20 +218,52 @@ exports.getPractitionerByHandle = async (req, res) => {
     }
 
     const Offer = require("../models/Offer")
+    const Testimonial = require("../models/Testimonial")
     const RatingAndReview = require("../models/RatingandReview")
+    const Course = require("../models/Course")
+
+    const practUserId = profile.user?._id || profile.user
 
     const userOffers = await Offer.find({
-      $or: [{ practitioner: profile.user?._id || profile.user }, { practitioner: profile._id }],
+      $or: [{ practitioner: practUserId }, { practitioner: profile._id }],
     }).lean()
 
-    const reviews = await RatingAndReview.find({ practitioner: profile.user?._id || profile.user })
-      .populate("user", "firstName lastName image")
-      .lean()
+    const practitionerCourses = await Course.find({ instructor: practUserId }).select("_id").lean()
+    const courseIds = practitionerCourses.map(c => c._id)
+
+    const testimonials = await Testimonial.find({ practitioner: practUserId, isApproved: true }).sort({ createdAt: -1 }).lean()
+    const courseReviews = await RatingAndReview.find({
+      $or: [
+        { practitioner: practUserId },
+        { course: { $in: courseIds } }
+      ]
+    }).populate("user", "firstName lastName image").sort({ createdAt: -1 }).lean()
+
+    const practitionerReviews = [
+      ...testimonials.map(t => ({
+        _id: t._id,
+        rating: t.rating || 5,
+        review: t.content,
+        clientName: t.clientName || "Verified Client",
+        createdAt: t.createdAt
+      })),
+      ...courseReviews.map(r => ({
+        _id: r._id,
+        rating: r.rating || 5,
+        review: r.review,
+        clientName: r.user ? `${r.user.firstName || ''} ${r.user.lastName || ''}`.trim() : "Verified Client",
+        createdAt: r.createdAt
+      }))
+    ]
+
+    const totalSum = practitionerReviews.reduce((sum, r) => sum + Number(r.rating || 5), 0)
+    const computedRating = practitionerReviews.length > 0 ? Number((totalSum / practitionerReviews.length).toFixed(1)) : null
 
     const profileObj = profile.toObject()
     profileObj.offers = userOffers || []
     profileObj.userOffers = userOffers || []
-    profileObj.reviews = reviews || []
+    profileObj.reviews = practitionerReviews || []
+    profileObj.rating = computedRating
 
     return res.status(200).json({
       success: true,
@@ -251,10 +291,18 @@ exports.getPractitionerDashboard = async (req, res) => {
       select: "firstName lastName email image accountType credentials bio specialties languages",
     })
 
+    const userObj = profile?.user || await User.findById(userId).select("firstName lastName").lean()
+    const nameSlug = `${userObj?.firstName || ''}-${userObj?.lastName || ''}`
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9-]/gi, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '') || `practitioner-${userId.toString().slice(-4)}`
+
     if (!profile) {
       profile = await PractitionerProfile.create({
         user: userId,
-        handle: `practitioner-${userId.toString().slice(-4)}`,
+        handle: nameSlug,
         credentials: "Verified Practitioner",
         bio: "Welcome to my official practice booking page.",
         specialties: ["Holistic Care", "Wellness Coaching"],
@@ -265,6 +313,9 @@ exports.getPractitionerDashboard = async (req, res) => {
         path: "user",
         select: "firstName lastName email image accountType credentials bio specialties languages",
       })
+    } else if (!profile.handle || profile.handle === 'Test') {
+      profile.handle = nameSlug
+      await profile.save()
     }
 
     const bookings = await Booking.find({ practitioner: userId }).populate("client", "firstName lastName email")
@@ -285,6 +336,45 @@ exports.getPractitionerDashboard = async (req, res) => {
       ? Math.round(checkIns.reduce((s, c) => s + (c.score || c.wellbeing || 0), 0) / checkIns.length)
       : 0
 
+    const Testimonial = require("../models/Testimonial")
+    const RatingAndReview = require("../models/RatingandReview")
+    const Course = require("../models/Course")
+
+    const practitionerCourses = await Course.find({ instructor: userId }).select("_id").lean()
+    const courseIds = practitionerCourses.map(c => c._id)
+
+    const testimonials = await Testimonial.find({ practitioner: userId, isApproved: true }).sort({ createdAt: -1 }).lean()
+    const courseReviews = await RatingAndReview.find({
+      $or: [
+        { practitioner: userId },
+        { course: { $in: courseIds } }
+      ]
+    }).populate("user", "firstName lastName image").sort({ createdAt: -1 }).lean()
+
+    const practitionerReviews = [
+      ...testimonials.map(t => ({
+        _id: t._id,
+        rating: t.rating || 5,
+        review: t.content,
+        clientName: t.clientName || "Verified Client",
+        createdAt: t.createdAt
+      })),
+      ...courseReviews.map(r => ({
+        _id: r._id,
+        rating: r.rating || 5,
+        review: r.review,
+        clientName: r.user ? `${r.user.firstName || ''} ${r.user.lastName || ''}`.trim() : "Verified Client",
+        createdAt: r.createdAt
+      }))
+    ]
+
+    const totalSum = practitionerReviews.reduce((sum, r) => sum + Number(r.rating || 5), 0)
+    const computedRating = practitionerReviews.length > 0 ? Number((totalSum / practitionerReviews.length).toFixed(1)) : null
+
+    const profileObj = profile ? profile.toObject() : {}
+    profileObj.rating = computedRating
+    profileObj.reviews = practitionerReviews
+
     return res.status(200).json({
       success: true,
       telemetry: {
@@ -295,8 +385,11 @@ exports.getPractitionerDashboard = async (req, res) => {
         plan: profile?.plan || "starter",
         commissionPercentage: profile?.planCommission || 8,
         circles,
+        reviews: practitionerReviews,
+        rating: computedRating,
       },
-      practitioner: profile,
+      practitioner: profileObj,
+      reviews: practitionerReviews,
       circles,
       bookings,
       payouts,
@@ -695,11 +788,31 @@ exports.updatePractitionerProfile = async (req, res) => {
     } = req.body
 
     let profile = await PractitionerProfile.findOne({ user: userId })
+    const userObj = await User.findById(userId).select("firstName lastName").lean()
+    const nameSlug = `${userObj?.firstName || ''}-${userObj?.lastName || ''}`
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9-]/gi, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '') || `practitioner-${userId.toString().slice(-4)}`
+
     if (!profile) {
-      profile = await PractitionerProfile.create({ user: userId })
+      profile = await PractitionerProfile.create({ user: userId, handle: nameSlug })
     }
 
-    if (handle) profile.handle = handle.toLowerCase().trim().replace(/[^a-z0-9-]/gi, '-')
+    if (handle) {
+      let cleanHandle = handle.toLowerCase().trim().replace(/[^a-z0-9-]/gi, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
+      if (!cleanHandle || cleanHandle === 'test') {
+        cleanHandle = nameSlug
+      }
+      const existingOwner = await PractitionerProfile.findOne({ handle: cleanHandle, user: { $ne: userId } })
+      if (existingOwner) {
+        cleanHandle = `${cleanHandle}-${userId.toString().slice(-4)}`
+      }
+      profile.handle = cleanHandle
+    } else if (!profile.handle || profile.handle.toLowerCase() === 'test') {
+      profile.handle = nameSlug
+    }
     if (credentials !== undefined) profile.credentials = credentials
     if (bio !== undefined) profile.bio = bio
     if (Array.isArray(specialties)) profile.specialties = specialties

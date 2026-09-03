@@ -1,12 +1,14 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FiVideo } from 'react-icons/fi'
+import { formatPractitionerName } from '../../../../utils/formatName'
 
 export function SessionsResources({ practitionerName = 'your instructor', dashboardData }) {
   const navigate = useNavigate()
   const [selectedNotes, setSelectedNotes] = useState(null)
   const upcomingClasses = dashboardData?.upcomingClasses || []
-  const instructorTitle = practitionerName ? (practitionerName.includes('Instructor') ? practitionerName : `Dr. ${practitionerName}`) : 'your instructor'
+  const activePractitioner = dashboardData?.activePractitioner || dashboardData?.practitioner
+  const instructorTitle = formatPractitionerName(activePractitioner || practitionerName, 'your instructor')
 
   return (
     <div id="sessions">
@@ -23,18 +25,18 @@ export function SessionsResources({ practitionerName = 'your instructor', dashbo
 
         {upcomingClasses.length > 0 ? (
           upcomingClasses.map((cls) => (
-            <div key={cls._id} className="srow" style={{ alignItems: 'center' }}>
-              <div className="sdate">
+            <div key={cls._id} className="srow" style={{ alignItems: 'center', width: '100%', overflow: 'hidden' }}>
+              <div className="sdate" style={{ flexShrink: 0 }}>
                 <b>{new Date(cls.scheduledStart).getDate()}</b>
                 <span>{new Date(cls.scheduledStart).toLocaleString('default', { month: 'short' })}</span>
               </div>
-              <div className="info">
-                <b>{cls.title}</b>
-                <span>
+              <div className="info" style={{ flex: 1, minWidth: 0, overflow: 'hidden', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+                <b style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{cls.title}</b>
+                <span style={{ display: 'block', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                   Instructor: {cls.instructor?.firstName ? `Dr. ${cls.instructor.firstName} ${cls.instructor.lastName || ''}` : instructorTitle} · {new Date(cls.scheduledStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
-              <div className="go">
+              <div className="go" style={{ flexShrink: 0 }}>
                 <button
                   onClick={() => navigate(`/live/${cls._id}`)}
                   className="btn"

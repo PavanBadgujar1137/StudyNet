@@ -39,15 +39,13 @@ import {
   trackPostShare,
 } from '../../../../services/operations/socialPostAPI'
 
+import { formatPractitionerName } from '../../../../utils/formatName'
+
 export function SocialPostStudio() {
   const { token } = useSelector((state) => state.auth)
   const { user } = useSelector((state) => state.profile)
 
-  // ITEM 16 FIX: Dynamic practitioner title addressing (no hardcoded Dr. for every practitioner)
-  const practitionerTitle = user?.title || (user?.accountType === 'Practitioner' ? 'Guide' : '')
-  const practitionerName = user
-    ? `${practitionerTitle ? `${practitionerTitle} ` : ''}${user.firstName || ''} ${user.lastName || ''}`.trim()
-    : 'Practitioner'
+  const practitionerName = formatPractitionerName(user, 'Practitioner')
   const defaultHandle = user?.firstName ? `${user.firstName.toLowerCase()}_${user.lastName?.toLowerCase() || ''}` : 'practitioner'
 
   // Studio Mode Navigation: 'canvas' | 'calendar' | 'feed' | 'channels' | 'analytics'
@@ -1153,7 +1151,7 @@ export function SocialPostStudio() {
             
             <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', margin: 0 }}>iPhone 15 Social Simulator</h3>
+                <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', margin: 0 }}>Phone Social Simulator</h3>
                 <p style={{ fontSize: '13.5px', color: '#64748B', margin: '4px 0 0 0' }}>Pixel-perfect live native app simulation</p>
               </div>
 

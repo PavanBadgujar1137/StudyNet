@@ -105,21 +105,6 @@ function Template({ title, description1, description2, formType }) {
               <div className="auth-form-body">
                 {formType === "signup" ? <SignupForm /> : <LoginForm />}
               </div>
-
-              {/* Footer link */}
-              <p className="auth-switch">
-                {formType === "login" ? (
-                  <>
-                    Don't have an account?{" "}
-                    <Link to="/signup" className="auth-switch-link">Start free →</Link>
-                  </>
-                ) : (
-                  <>
-                    Already have an account?{" "}
-                    <Link to="/login" className="auth-switch-link">Sign in →</Link>
-                  </>
-                )}
-              </p>
             </div>
           </div>
         </div>

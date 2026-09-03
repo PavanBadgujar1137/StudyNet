@@ -4,6 +4,11 @@ const mongoose = require("mongoose")
 // Define the user schema using the Mongoose Schema constructor
 const userSchema = new mongoose.Schema(
   {
+    title: {
+      type: String,
+      default: "",
+      trim: true,
+    },
     // Define the name field with type String, required, and trimmed
     firstName: {
       type: String,
@@ -12,7 +17,7 @@ const userSchema = new mongoose.Schema(
     },
     lastName: {
       type: String,
-      required: true,
+      default: "",
       trim: true,
     },
     // Define the email field with type String, required, and trimmed

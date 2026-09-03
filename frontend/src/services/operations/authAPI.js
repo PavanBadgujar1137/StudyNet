@@ -251,6 +251,13 @@ export function logout(navigate, showToast = true) {
     dispatch(setUser(null))
     localStorage.removeItem("token")
     localStorage.removeItem("user")
+    try {
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith("oh_onboarding_")) {
+          localStorage.removeItem(key)
+        }
+      })
+    } catch (e) {}
     if (showToast) {
       toast.success("Logged Out")
     }

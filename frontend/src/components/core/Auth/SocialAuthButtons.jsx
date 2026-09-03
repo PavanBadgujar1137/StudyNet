@@ -159,6 +159,10 @@ function SocialAuthButtons({ accountType = "Client", mode = "login" }) {
 
   return (
     <>
+      <div className="auth-divider">
+        <span>OR CONNECT WITH SOCIAL</span>
+      </div>
+
       <div className="auth-social-buttons">
         <button
           type="button"
@@ -177,10 +181,6 @@ function SocialAuthButtons({ accountType = "Client", mode = "login" }) {
           <FaLinkedin size={20} color="#0A66C2" />
           <span>{mode === "signup" ? "Sign up with LinkedIn" : "Sign in with LinkedIn"}</span>
         </button>
-      </div>
-
-      <div className="auth-divider">
-        <span>OR CONTINUE WITH EMAIL</span>
       </div>
     </>
   )

@@ -719,6 +719,8 @@
   gap: 16px;
   padding: 16px 0;
   border-bottom: 1px solid var(--rule);
+  width: 100%;
+  overflow: hidden;
 }
 .client-app-shell .srow:last-child, .practitioner-app-layout .srow:last-child {
   border-bottom: 0;
@@ -744,17 +746,29 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
-.client-app-shell .srow .info b {
+.client-app-shell .srow .info, .practitioner-app-layout .srow .info {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+.client-app-shell .srow .info b, .practitioner-app-layout .srow .info b {
   font-size: 15px;
   display: block;
   color: var(--ink);
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
-.client-app-shell .srow .info span {
+.client-app-shell .srow .info span, .practitioner-app-layout .srow .info span {
   font-size: 13px;
   color: var(--muted);
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
-.client-app-shell .srow .go {
+.client-app-shell .srow .go, .practitioner-app-layout .srow .go {
   margin-left: auto;
+  flex-shrink: 0;
 }
 .client-app-shell .pill, .practitioner-app-layout .pill {
   font-size: 11px;

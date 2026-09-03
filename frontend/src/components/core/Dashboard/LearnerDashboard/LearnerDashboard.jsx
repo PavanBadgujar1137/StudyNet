@@ -13,7 +13,9 @@ import {
   FiZap,
   FiUserCheck,
   FiUser,
-  FiVideo
+  FiVideo,
+  FiLock,
+  FiLogOut
 } from 'react-icons/fi'
 import MyJourney from './MyJourney'
 import CheckIn from './CheckIn'
@@ -25,6 +27,7 @@ import Courses from './Courses'
 import Settings from '../Settings'
 import CommunityChatHub from '../CommunityChatHub'
 import { OHPricingModal } from '../../../openhand'
+import OHPricingSection from '../../../openhand/OHPricingSection'
 import { logout } from '../../../../services/operations/authAPI'
 import { apiConnector } from '../../../../services/apiConnector'
 import { fetchClientDashboardData } from '../../../../services/operations/dashboardAPI'
@@ -73,6 +76,12 @@ export function LearnerDashboard() {
     loadData()
   }, [loadData])
 
+  const isLearnerExpired = Boolean(
+    subStatus &&
+    !subStatus.hasActiveSubscription &&
+    !subStatus.isTrialActive
+  )
+
   const handleLogout = () => {
     dispatch(logout(navigate))
   }
@@ -81,7 +90,7 @@ export function LearnerDashboard() {
     loadData()
   }
 
-  const navItems = [
+  const rawNavItems = [
     {
       id: 'journey',
       label: 'My journey',
@@ -111,7 +120,7 @@ export function LearnerDashboard() {
       id: 'circle',
       label: 'My circle',
       icon: <FiUsers />,
-      badge: 'Circles',  // was 'Cohorts' — glossary fix
+      badge: 'Circles',
     },
     {
       id: 'community',
@@ -140,6 +149,13 @@ export function LearnerDashboard() {
       badge: null,
     },
   ]
+
+  const navItems = rawNavItems.map((item) => {
+    if (isLearnerExpired && item.id !== 'profile') {
+      return { ...item, badge: '🔒 Locked', hasDot: false }
+    }
+    return item
+  })
 
   return (
     <div className="client-app-shell oh-dashboard-layout">
@@ -306,58 +322,127 @@ export function LearnerDashboard() {
 
         {/* View Content */}
         <div className="oh-view-body">
-          {activeTab === 'journey' && (
-            <MyJourney
-              clientName={clientName}
-              practitionerName={practitionerFirstName}
-              dashboardData={dashboardData}
-              loading={loading}
-            />
-          )}
-          {activeTab === 'checkin' && (
-            <CheckIn
-              clientName={clientName}
-              practitionerName={practitionerFirstName}
-              dashboardData={dashboardData}
-              onCheckInSuccess={handleCheckInSuccess}
-            />
-          )}
-          {activeTab === 'practitioners' && (
-            <Practitioners
-              setActiveTab={setActiveTab}
-              dashboardData={dashboardData}
-              onUpdate={loadData}
-            />
-          )}
-          {activeTab === 'courses' && (
-            <Courses />
-          )}
-          {activeTab === 'circle' && (
-            <MyCircle
-              setActiveTab={setActiveTab}
-              clientName={clientName}
-              practitionerName={practitionerFirstName}
-              dashboardData={dashboardData}
-            />
-          )}
-          {activeTab === 'community' && (
-            <CommunityChatHub defaultPractitionerId={practitionerObj?._id} />
-          )}
-          {activeTab === 'sessions' && (
-            <SessionsResources
-              practitionerName={practitionerFirstName}
-              dashboardData={dashboardData}
-            />
-          )}
-          {activeTab === 'reflections' && (
-            <Reflections
-              practitionerName={practitionerFirstName}
-              dashboardData={dashboardData}
-              onReflectionUpdate={loadData}
-            />
-          )}
-          {activeTab === 'profile' && (
-            <Settings />
+          {isLearnerExpired && activeTab !== 'profile' ? (
+            <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '10px 0 40px' }}>
+              {/* Expired Lock Header Banner */}
+              <div style={{
+                background: 'linear-gradient(135deg, #0D1B3D 0%, #1E293B 100%)',
+                borderRadius: 24,
+                padding: '36px 32px',
+                color: '#FFFFFF',
+                boxShadow: '0 20px 40px rgba(13, 27, 61, 0.15)',
+                marginBottom: 32,
+                position: 'relative',
+                overflow: 'hidden'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20, position: 'relative', zIndex: 2 }}>
+                  <div style={{ maxWidth: '650px' }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(239, 68, 68, 0.2)', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#FCA5A5', padding: '6px 14px', borderRadius: 999, fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 16 }}>
+                      <FiLock size={14} />
+                      <span>Access Locked</span>
+                      <span>•</span>
+                      <span>Free Trial / Subscription Ended</span>
+                    </div>
+                    <h2 style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', margin: '0 0 12px', fontFamily: 'Poppins, sans-serif', lineHeight: 1.3 }}>
+                      Your Free Trial or Subscription Has Ended
+                    </h2>
+                    <p style={{ fontSize: 14, color: '#94A3B8', margin: 0, lineHeight: 1.6 }}>
+                      Your 7-day free trial or paid subscription has expired. All platform features (live Zoom sessions, course access, reflection journals, community circles, and daily check-ins) are locked until a plan is chosen. Select a plan below to renew and unlock full access immediately.
+                    </p>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <button
+                      onClick={handleLogout}
+                      style={{
+                        padding: '11px 20px',
+                        background: 'rgba(255,255,255,0.1)',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        borderRadius: 12,
+                        color: '#FFFFFF',
+                        fontWeight: 700,
+                        fontSize: 13,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 8,
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      <FiLogOut /> Sign Out
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Directly Embedded Pricing Panel */}
+              <div style={{ background: '#FFFFFF', borderRadius: 24, padding: '32px 24px', border: '1px solid #E2E8F0', boxShadow: '0 10px 30px rgba(0,0,0,0.04)' }}>
+                <OHPricingSection
+                  defaultRole="learner"
+                  hideRoleSwitcher={true}
+                  title="Choose a Learner Plan to Unlock Platform"
+                  subtitle="Instant Razorpay Checkout — Choose a plan to unlock all features"
+                  onSuccess={() => loadData()}
+                />
+              </div>
+            </div>
+          ) : (
+            <>
+              {activeTab === 'journey' && (
+                <MyJourney
+                  clientName={clientName}
+                  practitionerName={practitionerFirstName}
+                  dashboardData={dashboardData}
+                  loading={loading}
+                />
+              )}
+              {activeTab === 'checkin' && (
+                <CheckIn
+                  clientName={clientName}
+                  practitionerName={practitionerFirstName}
+                  dashboardData={dashboardData}
+                  onCheckInSuccess={handleCheckInSuccess}
+                />
+              )}
+              {activeTab === 'practitioners' && (
+                <Practitioners
+                  setActiveTab={setActiveTab}
+                  dashboardData={dashboardData}
+                  onUpdate={loadData}
+                />
+              )}
+              {activeTab === 'courses' && (
+                <Courses />
+              )}
+              {activeTab === 'circle' && (
+                <MyCircle
+                  setActiveTab={setActiveTab}
+                  clientName={clientName}
+                  practitionerName={practitionerFirstName}
+                  dashboardData={dashboardData}
+                />
+              )}
+              {activeTab === 'community' && (
+                <CommunityChatHub defaultPractitionerId={practitionerObj?._id} />
+              )}
+              {activeTab === 'sessions' && (
+                <SessionsResources
+                  practitionerName={practitionerFirstName}
+                  dashboardData={dashboardData}
+                />
+              )}
+              {activeTab === 'reflections' && (
+                <Reflections
+                  practitionerName={practitionerFirstName}
+                  dashboardData={dashboardData}
+                  onReflectionUpdate={loadData}
+                />
+              )}
+              {activeTab === 'profile' && (
+                <Settings />
+              )}
+            </>
           )}
         </div>
       </main>

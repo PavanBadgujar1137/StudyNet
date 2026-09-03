@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { useSelector } from 'react-redux'
 import { apiConnector } from '../../../../services/apiConnector'
 import toast from 'react-hot-toast'
+import { formatPractitionerName } from '../../../../utils/formatName'
 
 export function Reflections({ practitionerName, dashboardData, onReflectionUpdate }) {
   const { token } = useSelector((state) => state.auth)
@@ -10,15 +11,8 @@ export function Reflections({ practitionerName, dashboardData, onReflectionUpdat
   const [loading, setLoading] = useState(false)
 
   const activePractitioner = dashboardData?.activePractitioner || dashboardData?.practitioner
-  const displayName = activePractitioner
-    ? `${activePractitioner.firstName || ''} ${activePractitioner.lastName || ''}`.trim()
-    : (practitionerName && practitionerName !== 'your instructor' ? practitionerName : null)
-
-  const practitionerTitle = displayName
-    ? (displayName.startsWith('Dr.') ? displayName : `Dr. ${displayName}`)
-    : 'Practitioner Guide'
-
-  const avatarInitials = displayName ? displayName.slice(0, 2).toUpperCase() : 'PG'
+  const practitionerTitle = formatPractitionerName(activePractitioner || practitionerName, 'Practitioner Guide')
+  const avatarInitials = practitionerTitle ? practitionerTitle.slice(0, 2).toUpperCase() : 'PG'
 
   const fetchPrompts = useCallback(async () => {
     if (!token) return

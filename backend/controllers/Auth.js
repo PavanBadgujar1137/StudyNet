@@ -16,6 +16,7 @@ exports.signup = async (req, res) => {
   try {
     // Destructure fields from the request body
     const {
+      title,
       firstName,
       lastName,
       email,
@@ -105,6 +106,7 @@ exports.signup = async (req, res) => {
     const trialExpiresAt = new Date(now.getTime() + trialDays * 24 * 60 * 60 * 1000)
 
     const user = await User.create({
+      title: title || "",
       firstName,
       lastName,
       email: cleanEmail,
@@ -119,12 +121,20 @@ exports.signup = async (req, res) => {
       activePlan: "trial",
     })
 
-    // If Practitioner / Instructor, auto-create PractitionerProfile with bank payout details
+    // If Practitioner / Instructor, auto-create PractitionerProfile with bank payout details & default handle
     if (accountType === "Practitioner" || accountType === "Instructor") {
       const PractitionerProfile = require("../models/PractitionerProfile")
       const { bankAccountName, bankAccountNumber, bankIfscCode, bankName, upiId } = req.body
+      const nameSlug = `${firstName || ''}-${lastName || ''}`
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9-]/gi, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
+      const defaultHandle = nameSlug || `practitioner-${user._id.toString().slice(-4)}`
       await PractitionerProfile.create({
         user: user._id,
+        handle: defaultHandle,
         credentials: req.body.credentials || "",
         bio: req.body.bio || "",
         bankAccountName: bankAccountName || "",
@@ -277,8 +287,8 @@ exports.socialLogin = async (req, res) => {
       const Profile = require("../models/Profile")
       const PractitionerProfile = require("../models/PractitionerProfile")
 
-      const fName = firstName || emailLower.split("@")[0] || "User"
-      const lName = lastName || ""
+      const fName = String(firstName || emailLower.split("@")[0] || "User").trim()
+      const lName = String(lastName || "").trim()
       const dummyPassword = await bcrypt.hash(`social_${provider}_${Date.now()}`, 10)
 
       const profileDetails = await Profile.create({
@@ -288,9 +298,9 @@ exports.socialLogin = async (req, res) => {
         contactNumber: null,
       })
 
-      const userAccountType = ["Client", "Practitioner"].includes(accountType) ? accountType : "Client"
+      const userAccountType = ["Client", "Learner", "Practitioner", "Student", "Instructor"].includes(accountType) ? accountType : "Client"
       const now = new Date()
-      const trialDays = (userAccountType === "Learner" || userAccountType === "Client") ? 7 : 14
+      const trialDays = (userAccountType === "Learner" || userAccountType === "Client" || userAccountType === "Student") ? 7 : 14
       const trialExpiresAt = new Date(now.getTime() + trialDays * 24 * 60 * 60 * 1000)
 
       user = await User.create({
@@ -308,7 +318,7 @@ exports.socialLogin = async (req, res) => {
         activePlan: "trial",
       })
 
-      if (userAccountType === "Practitioner") {
+      if (userAccountType === "Practitioner" || userAccountType === "Instructor") {
         await PractitionerProfile.create({
           user: user._id,
           bio: "Verified practitioner registered via social login",
@@ -324,7 +334,7 @@ exports.socialLogin = async (req, res) => {
       }
 
       if (!user.trialExpiresAt) {
-        const trialDays = (user.accountType === "Learner" || user.accountType === "Client") ? 7 : 14
+        const trialDays = (user.accountType === "Learner" || user.accountType === "Client" || user.accountType === "Student") ? 7 : 14
         user.trialStartedAt = user.createdAt || new Date()
         user.trialExpiresAt = new Date(new Date(user.trialStartedAt).getTime() + trialDays * 24 * 60 * 60 * 1000)
         if (!user.activePlan || user.activePlan === "none") user.activePlan = "trial"
@@ -354,9 +364,12 @@ exports.socialLogin = async (req, res) => {
     })
   } catch (error) {
     console.error("socialLogin error:", error)
+    const userFriendlyMessage = error?.name === "ValidationError"
+      ? "Registration details incomplete. Please verify your account information and try again."
+      : "Social authentication failed. Please try signing in again."
     return res.status(500).json({
       success: false,
-      message: error.message || "Social authentication failed",
+      message: userFriendlyMessage,
     })
   }
 }
