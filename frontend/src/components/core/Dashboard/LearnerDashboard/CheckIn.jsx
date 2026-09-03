@@ -115,7 +115,7 @@ export function CheckIn({ clientName = 'Student', practitionerName = 'your instr
           <p className="sub">There's no right answer here, and nothing you pick is a problem.</p>
 
           <div className="fld">
-            <label>Which of these is closest?</label>
+            <label>Which of these is closest to how you are feeling?</label>
             <div className="moods">
               {moods.map((m) => (
                 <button
@@ -170,14 +170,61 @@ export function CheckIn({ clientName = 'Student', practitionerName = 'your instr
           <p className="privacy">Only you and {practitionerName} can see this. It is never shared with your employer, your circle, or anyone else.</p>
         </div>
       ) : (
-        <div className="done-msg" id="ciDone" style={{ display: 'block' }}>
-          <b>Saved to database. Thanks, {clientName}.</b>
-          Your check-in has been logged in real-time.
-          <div style={{ marginTop: '18px', display: 'flex', gap: '10px' }}>
-            <button className="btn" onClick={handleLogAnother}>
+        <div
+          className="done-msg"
+          id="ciDone"
+          style={{
+            display: 'block',
+            background: 'linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%)',
+            border: '1px solid #312E81',
+            borderRadius: '16px',
+            padding: '24px',
+            color: '#CBD5E1',
+            boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.2)'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+            <span style={{ fontSize: '20px' }}>✅</span>
+            <b style={{ color: '#FFFFFF', fontSize: '18px', margin: 0, fontWeight: 700 }}>
+              Saved to database. Thanks, {clientName}.
+            </b>
+          </div>
+          <p style={{ margin: '0 0 18px 30px', color: '#94A3B8', fontSize: '14px', lineHeight: '1.5' }}>
+            Your check-in has been logged in real-time.
+          </p>
+          <div style={{ marginTop: '16px', display: 'flex', gap: '12px', flexWrap: 'wrap', marginLeft: '30px' }}>
+            <button
+              className="btn"
+              onClick={handleLogAnother}
+              style={{
+                background: 'rgba(255, 255, 255, 0.1)',
+                color: '#FFFFFF',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                padding: '10px 18px',
+                borderRadius: '999px',
+                fontWeight: 600,
+                fontSize: '13px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
               Log another check-in / Reset
             </button>
-            <button className="btn" style={{ background: '#3B82F6', color: '#fff' }} onClick={handleEditToday}>
+            <button
+              className="btn"
+              onClick={handleEditToday}
+              style={{
+                background: '#6366F1',
+                color: '#FFFFFF',
+                border: 'none',
+                padding: '10px 18px',
+                borderRadius: '999px',
+                fontWeight: 600,
+                fontSize: '13px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
               Edit today's check-in
             </button>
           </div>

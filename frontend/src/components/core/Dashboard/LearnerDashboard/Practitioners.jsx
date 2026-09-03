@@ -4,6 +4,7 @@ import {
   FiCheckCircle,
   FiClock,
   FiSearch,
+  FiFilter,
   FiMessageSquare,
   FiCreditCard,
   FiShield,
@@ -225,21 +226,55 @@ export function Practitioners({ onUpdate, setActiveTab }) {
     const fullName = `${p.user?.firstName || p.firstName || ''} ${p.user?.lastName || p.lastName || ''}`.toLowerCase()
     const email = (p.user?.email || p.email || '').toLowerCase()
     const credentials = (p.credentials || '').toLowerCase()
-    const specialtiesStr = (p.specialties || []).join(' ').toLowerCase()
+    const bio = (p.bio || '').toLowerCase()
+    const specialtiesList = (p.specialties || []).map((s) => s.toLowerCase())
+    const specialtiesStr = specialtiesList.join(' ')
     const query = searchTerm.toLowerCase()
 
     const matchesSearch =
       fullName.includes(query) ||
       email.includes(query) ||
       credentials.includes(query) ||
+      bio.includes(query) ||
       specialtiesStr.includes(query)
 
-    if (selectedSpecialty === 'All') return matchesSearch
+    if (!matchesSearch) return false
 
-    const categoryQuery = selectedSpecialty.toLowerCase().split(' ')[0]
-    const matchesCategory = specialtiesStr.includes(categoryQuery)
-    return matchesSearch && matchesCategory
+    if (selectedSpecialty === 'All' || selectedSpecialty === 'All Specialties') return true
+
+    const categoryTarget = selectedSpecialty.toLowerCase()
+
+    // Precise category matching
+    const matchesCategory =
+      specialtiesList.some((s) => {
+        if (categoryTarget === 'cbt') return s.includes('cbt')
+        if (categoryTarget === 'mindfulness') return s.includes('mindfulness')
+        if (categoryTarget.includes('&')) {
+          const parts = categoryTarget.split('&').map((part) => part.trim())
+          return parts.some((part) => s.includes(part))
+        }
+        return s.includes(categoryTarget) || categoryTarget.includes(s)
+      }) ||
+      specialtiesStr.includes(categoryTarget.split(' ')[0])
+
+    return matchesCategory
   })
+
+  const specialtyCategories = [
+    'All Specialties',
+    'Anxiety & Stress',
+    'CBT',
+    'Mindfulness',
+    'Career & Burnout',
+    'Relationships',
+    'Trauma & Recovery',
+    'Grief & Loss',
+    'Holistic Care',
+    'Wellness Coaching',
+    'Parenting',
+    'Nutrition',
+    'Inner Child Healing',
+  ]
 
   return (
     <div id="practitioners" style={{ width: '100%' }}>
@@ -256,10 +291,10 @@ export function Practitioners({ onUpdate, setActiveTab }) {
         </p>
       </div>
 
-      {/* Search & Specialty Category Filter Controls */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginBottom: '24px', alignItems: 'center' }}>
+      {/* Search Bar & Specialty Dropdown Filter Controls */}
+      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '24px', alignItems: 'center' }}>
         <div style={{ position: 'relative', flex: 1, minWidth: '260px' }}>
-          <FiSearch style={{ position: 'absolute', left: '12px', top: '12px', color: '#94A3B8' }} size={16} />
+          <FiSearch style={{ position: 'absolute', left: '14px', top: '13px', color: '#94A3B8' }} size={16} />
           <input
             type="text"
             placeholder="Search practitioner by name, email, credentials, or specialty..."
@@ -267,38 +302,55 @@ export function Practitioners({ onUpdate, setActiveTab }) {
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
               width: '100%',
-              paddingLeft: '36px',
-              paddingRight: '12px',
-              paddingTop: '10px',
-              paddingBottom: '10px',
-              borderRadius: '10px',
+              paddingLeft: '40px',
+              paddingRight: '14px',
+              paddingTop: '11px',
+              paddingBottom: '11px',
+              borderRadius: '12px',
               border: '1px solid #CBD5E1',
-              fontSize: '13.5px',
+              fontSize: '14px',
               outline: 'none',
               background: '#FFFFFF',
+              color: '#0F172A',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
             }}
           />
         </div>
 
-        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-          {['All', 'Anxiety & Stress', 'Career & Burnout', 'Relationships', 'CBT & Mindfulness', 'Trauma & Grief'].map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setSelectedSpecialty(cat)}
-              style={{
-                padding: '8px 14px',
-                borderRadius: '20px',
-                fontSize: '12px',
-                fontWeight: 700,
-                cursor: 'pointer',
-                border: selectedSpecialty === cat ? 'none' : '1px solid #CBD5E1',
-                background: selectedSpecialty === cat ? '#2563EB' : '#FFFFFF',
-                color: selectedSpecialty === cat ? '#FFFFFF' : '#475569',
-              }}
-            >
-              {cat}
-            </button>
-          ))}
+        <div style={{ position: 'relative', minWidth: '230px' }}>
+          <FiFilter style={{ position: 'absolute', left: '14px', top: '13px', color: '#2563EB', pointerEvents: 'none' }} size={16} />
+          <select
+            value={selectedSpecialty}
+            onChange={(e) => setSelectedSpecialty(e.target.value)}
+            style={{
+              width: '100%',
+              paddingLeft: '40px',
+              paddingRight: '36px',
+              paddingTop: '11px',
+              paddingBottom: '11px',
+              borderRadius: '12px',
+              border: '1px solid #CBD5E1',
+              fontSize: '14px',
+              fontWeight: 600,
+              outline: 'none',
+              background: '#FFFFFF',
+              color: '#1E293B',
+              cursor: 'pointer',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+              appearance: 'none',
+              WebkitAppearance: 'none',
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748B'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'right 12px center',
+              backgroundSize: '16px 16px',
+            }}
+          >
+            {specialtyCategories.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -389,19 +441,25 @@ export function Practitioners({ onUpdate, setActiveTab }) {
                 {p.specialties && p.specialties.length > 0 && (
                   <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                     {p.specialties.map((spec, sIdx) => (
-                      <span
+                      <button
                         key={sIdx}
+                        type="button"
+                        onClick={() => setSelectedSpecialty(spec)}
+                        title={`Filter practitioners by ${spec}`}
                         style={{
-                          background: '#F1F5F9',
-                          color: '#475569',
+                          background: selectedSpecialty === spec ? '#DBEAFE' : '#F1F5F9',
+                          color: selectedSpecialty === spec ? '#1E40AF' : '#475569',
+                          border: selectedSpecialty === spec ? '1px solid #BFDBFE' : '1px solid transparent',
                           padding: '3px 8px',
                           borderRadius: '6px',
                           fontSize: '11px',
                           fontWeight: 700,
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
                         }}
                       >
                         {spec}
-                      </span>
+                      </button>
                     ))}
                   </div>
                 )}

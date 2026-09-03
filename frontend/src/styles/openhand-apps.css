@@ -562,19 +562,21 @@
   position: relative;
 }
 .client-app-shell .done-msg {
-  background: rgba(155, 180, 255, 0.10);
-  border: 1px solid rgba(155, 180, 255, 0.28);
+  background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%);
+  border: 1px solid #312E81;
   border-radius: 16px;
   padding: 24px;
-  color: #DDE0F2;
+  color: #CBD5E1;
   position: relative;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.25);
 }
 .client-app-shell .done-msg b {
-  color: #fff;
+  color: #FFFFFF;
   font-family: 'Outfit', sans-serif;
   font-size: 18px;
   display: block;
   margin-bottom: 8px;
+  font-weight: 700;
 }
 
 /* History Chart */
