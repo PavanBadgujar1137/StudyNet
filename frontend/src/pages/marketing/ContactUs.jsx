@@ -15,7 +15,8 @@ import {
   FiZap,
   FiSend,
   FiMail,
-  FiPhoneCall
+  FiPhoneCall,
+  FiX
 } from 'react-icons/fi'
 
 export function ContactUs() {
@@ -192,28 +193,36 @@ export function ContactUs() {
   return (
     <div className="talk-page relative min-h-screen">
 
-      {/* Direct Desk Action Modal (ITEM 7 FIX) */}
+      {/* Direct Desk Action Modal */}
       {directActionModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
-          <div className="relative w-full max-w-md rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl p-6 text-left">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-fadeIn">
+          <div
+            className="relative w-full max-w-md rounded-2xl bg-white border border-slate-200 shadow-2xl p-6 text-left"
+            style={{ background: '#FFFFFF', color: '#0F172A' }}
+          >
             <button
+              type="button"
               onClick={() => setDirectActionModal(null)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white"
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-800 transition-colors p-1"
             >
-              ✕
+              <FiX size={18} />
             </button>
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
-                {directActionModal === 'setup' ? <FiMessageSquare /> : directActionModal === 'tech' ? <FiMail /> : <FiPhoneCall />}
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
+                {directActionModal === 'setup' ? <FiMessageSquare size={18} /> : directActionModal === 'tech' ? <FiMail size={18} /> : <FiPhoneCall size={18} />}
               </div>
               <div>
-                <h3 className="text-lg font-bold text-white">
-                  {directActionModal === 'setup' ? 'Practice Setup Desk Options' : directActionModal === 'tech' ? 'Tech & Ethics Desk Options' : 'Organizations Desk Line'}
+                <h3 className="text-lg font-extrabold text-slate-900" style={{ color: '#0F172A', margin: 0, lineHeight: 1.3 }}>
+                  {directActionModal === 'setup'
+                    ? 'Practice Setup Desk Options'
+                    : directActionModal === 'tech'
+                    ? 'Tech & Ethics Desk Options'
+                    : 'Organizations Desk Line'}
                 </h3>
-                <span className="text-xs text-slate-400">Direct Communication Channel</span>
+                <span className="text-xs text-slate-500 font-medium">Direct Communication Channel</span>
               </div>
             </div>
-            <p className="text-xs text-slate-300 mb-4 leading-relaxed">
+            <p className="text-xs text-slate-600 mb-5 leading-relaxed">
               {directActionModal === 'setup'
                 ? 'Connect instantly with practice architects for circle pricing and onboarding guidance.'
                 : directActionModal === 'tech'
@@ -229,20 +238,21 @@ export function ContactUs() {
                     ? 'mailto:tech-ethics@openhand.in?subject=Tech%20%26%20Ethics%20Security%20Inquiry'
                     : 'mailto:enterprise@openhand.in?subject=Organizations%20Pilot%20Inquiry'
                 }
-                className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors"
+                className="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md"
               >
-                <FiMail /> Send Direct Email (Open Mailbox)
+                <FiMail size={14} /> Send Direct Email (Open Mailbox)
               </a>
               <button
+                type="button"
                 onClick={() => {
                   setSelectedDesk(directActionModal)
                   setDirectActionModal(null)
                   const bookElem = document.getElementById('book')
                   if (bookElem) bookElem.scrollIntoView({ behavior: 'smooth' })
                 }}
-                className="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs flex items-center justify-center gap-2 transition-colors border border-slate-700"
+                className="w-full py-3 px-4 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-800 font-semibold text-xs flex items-center justify-center gap-2 transition-all border border-slate-200"
               >
-                <FiSend /> Fill Booking Form
+                <FiSend size={14} /> Fill Booking Form
               </button>
             </div>
           </div>

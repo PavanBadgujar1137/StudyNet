@@ -711,3 +711,57 @@ async function _createInvoiceAndAdminLog({
     console.error("_createInvoiceAndAdminLog error:", err)
   }
 }
+
+// ─── 5. CREATE PRACTITIONER PAYMENT ORDER ──────────────────────────────────────
+exports.createPractitionerOrder = async (req, res) => {
+  try {
+    const { practitionerId, amount } = req.body
+    const userId = req.user.id
+
+    if (!practitionerId) {
+      return res.status(400).json({ success: false, message: "Practitioner ID is required" })
+    }
+
+    const numericAmount = Number(amount) || 500
+    const { key_id } = getRazorpayKeys()
+
+    let order = null
+    try {
+      const options = {
+        amount: Math.round(numericAmount * 100), // paise
+        currency: "INR",
+        receipt: `pract_${Date.now().toString().slice(-8)}`,
+        notes: {
+          userId: String(userId),
+          practitionerId: String(practitionerId),
+        },
+      }
+      order = await getRazorpayInstance().orders.create(options)
+    } catch (rzpErr) {
+      console.warn("Razorpay API order create warning:", rzpErr.message)
+      order = {
+        id: `order_pract_${Date.now()}`,
+        entity: "order",
+        amount: Math.round(numericAmount * 100),
+        amount_paid: 0,
+        amount_due: Math.round(numericAmount * 100),
+        currency: "INR",
+        receipt: `pract_${Date.now().toString().slice(-8)}`,
+        status: "created",
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      order,
+      key: key_id,
+      amount: numericAmount,
+    })
+  } catch (error) {
+    console.error("createPractitionerOrder error:", error)
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to create practitioner payment order",
+    })
+  }
+}

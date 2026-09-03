@@ -11,6 +11,7 @@ const {
   createCourseOrder,
   verifyCourseOrder,
   sendPaymentSuccessEmail,
+  createPractitionerOrder,
 } = require("../controllers/payments")
 const { auth, isInstructor } = require("../middleware/auth")
 
@@ -18,6 +19,9 @@ const { auth, isInstructor } = require("../middleware/auth")
 router.post("/subscription/create", auth, createSubscriptionOrder)
 router.post("/subscription/verify", auth, verifySubscriptionPayment)
 router.get("/subscription/mine", auth, getMySubscription)
+
+// ─── Direct Practitioner Selection & Order Creation ───────────────────────────
+router.post("/create-practitioner-order", auth, createPractitionerOrder)
 
 // ─── Paid Course Purchases ────────────────────────────────────────────────────
 router.post("/buy-course", auth, createCourseOrder)

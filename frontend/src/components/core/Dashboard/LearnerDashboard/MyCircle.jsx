@@ -9,7 +9,7 @@ import {
 import { apiConnector } from '../../../../services/apiConnector'
 import toast from 'react-hot-toast'
 
-export function MyCircle({ setActiveTab, clientName = 'Student', practitionerName = 'your instructor', dashboardData }) {
+export function MyCircle({ setActiveTab, clientName = 'Student', practitionerName = 'your instructor', dashboardData, onUpdate }) {
   const { token } = useSelector((state) => state.auth)
   const { user } = useSelector((state) => state.profile)
 
@@ -66,6 +66,7 @@ export function MyCircle({ setActiveTab, clientName = 'Student', practitionerNam
         toast.success(res.data.message || 'Successfully joined Circle!')
         setJoinedIds((prev) => [...prev, circleId])
         loadCircles()
+        if (onUpdate) onUpdate()
       } else {
         toast.error(res?.data?.message || 'Could not join circle.')
       }

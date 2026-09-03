@@ -1,9 +1,14 @@
 import React from 'react'
 
-export function MyJourney({ clientName = 'Student', practitionerName = 'your instructor', dashboardData, loading }) {
+export function MyJourney({ clientName = 'Student', practitionerName = 'your instructor', dashboardData, loading, setActiveTab }) {
   const checkInCount = dashboardData?.checkInCount || 0
   const streak = dashboardData?.streak || 0
   const milestones = dashboardData?.milestones || []
+
+  // Dynamic joined circles calculation
+  const rawJoinedCircles = dashboardData?.joinedCircles || dashboardData?.memberships || []
+  const joinedCirclesList = rawJoinedCircles.filter((c) => c && (c.cohort || c._id))
+  const hasJoinedCircle = joinedCirclesList.length > 0
 
   const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
   const todayDayName = new Date().toLocaleDateString('en-US', { weekday: 'long' })
@@ -77,11 +82,93 @@ export function MyJourney({ clientName = 'Student', practitionerName = 'your ins
           </div>
         </div>
 
-        <div className="step locked">
-          <div className="mark"><div className="ring">4</div><div className="when">Ongoing</div></div>
+        {/* Step 4: Circles (Dynamic based on whether learner joined any circles) */}
+        <div className={`step ${hasJoinedCircle ? 'done' : 'now'}`}>
+          <div className="mark">
+            <div className="ring">{hasJoinedCircle ? '✓' : '4'}</div>
+            <div className="when">{hasJoinedCircle ? `${joinedCirclesList.length} Joined` : 'Ongoing'}</div>
+          </div>
           <div className="bub">
-            <h3>Peer Support & Growth Circles</h3>
-            <p>Join Circles to share reflections, track milestones, and learn alongside peers.</p>
+            <h3>Peer Support &amp; Growth Circles</h3>
+            <p>
+              {hasJoinedCircle
+                ? `You have joined ${joinedCirclesList.length} peer growth circle(s). Connect with your circle members and practitioner.`
+                : 'Join Circles to share reflections, track milestones, and learn alongside peers.'}
+            </p>
+
+            {hasJoinedCircle ? (
+              <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {joinedCirclesList.map((item, idx) => {
+                  const circleObj = item.cohort || item
+                  return (
+                    <div
+                      key={circleObj._id || idx}
+                      style={{
+                        background: '#EFF6FF',
+                        border: '1px solid #BFDBFE',
+                        borderRadius: '12px',
+                        padding: '12px 14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '10px',
+                        flexWrap: 'wrap',
+                      }}
+                    >
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <span style={{ background: '#DCFCE7', color: '#15803D', fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '10px' }}>
+                            ✓ Joined &amp; Active
+                          </span>
+                          <b style={{ color: '#0F172A', fontSize: '14px' }}>{circleObj.name || circleObj.title || 'Growth Circle'}</b>
+                        </div>
+                        <span style={{ fontSize: '12px', color: '#64748B', display: 'block', marginTop: '3px' }}>
+                          {circleObj.subTitle || circleObj.topic || circleObj.description || 'Peer Support & Practitioner Circle'}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab && setActiveTab('circle')}
+                        style={{
+                          background: '#2563EB',
+                          color: '#FFFFFF',
+                          border: 'none',
+                          padding: '6px 14px',
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        View Circle →
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setActiveTab && setActiveTab('circle')}
+                style={{
+                  marginTop: '10px',
+                  background: '#2563EB',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  padding: '7px 16px',
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                Explore &amp; Join Circles →
+              </button>
+            )}
+
+            <span className="tagline">{hasJoinedCircle ? 'Enrolled Circles' : 'Growth Circles'}</span>
           </div>
         </div>
       </div>

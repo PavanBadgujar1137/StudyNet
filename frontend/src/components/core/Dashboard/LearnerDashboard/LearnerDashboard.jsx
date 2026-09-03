@@ -395,6 +395,7 @@ export function LearnerDashboard() {
                   practitionerName={practitionerFirstName}
                   dashboardData={dashboardData}
                   loading={loading}
+                  setActiveTab={setActiveTab}
                 />
               )}
               {activeTab === 'checkin' && (
@@ -421,6 +422,7 @@ export function LearnerDashboard() {
                   clientName={clientName}
                   practitionerName={practitionerFirstName}
                   dashboardData={dashboardData}
+                  onUpdate={loadData}
                 />
               )}
               {activeTab === 'community' && (

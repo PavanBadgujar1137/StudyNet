@@ -221,7 +221,14 @@ exports.getClientDashboardData = async (req, res) => {
       .limit(10)
 
     // Circles
-    const memberships = await CircleMembership.find({ user: userId }).populate("cohort")
+    const CircleCohort = require("../models/CircleCohort")
+    const joinedCircles = await CircleCohort.find({ members: userId })
+      .populate("practitioner", "firstName lastName email image accountType credentials")
+      .lean()
+
+    const memberships = await CircleMembership.find({
+      $or: [{ client: userId }, { user: userId }]
+    }).populate("cohort").lean()
 
     const conn = await ClientConnection.findOne({ client: userId, status: { $in: ["approved", "active"] } })
       .populate("practitioner", "firstName lastName email image")
@@ -237,7 +244,7 @@ exports.getClientDashboardData = async (req, res) => {
       { id: "joined", label: "Joined platform", date: new Date(createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" }), achieved: true },
       { id: "first_checkin", label: "First check-in", date: checkIns.length ? new Date(checkIns[checkIns.length - 1].createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "Not yet", achieved: checkIns.length > 0 },
       { id: "checkin_count", label: `${checkInCount} check-in(s) logged`, date: checkIns.length ? new Date(checkIns[0].createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "In progress", achieved: checkInCount >= 1 },
-      { id: "circle_joined", label: "Joined a circle", date: memberships.length ? "Active" : "Not yet", achieved: memberships.length > 0 },
+      { id: "circle_joined", label: joinedCircles.length ? `Joined ${joinedCircles.length} Circle(s)` : "Joined a circle", date: (joinedCircles.length || memberships.length) ? "Active" : "Not yet", achieved: (joinedCircles.length > 0 || memberships.length > 0) },
     ]
 
     const activeSub = await Subscription.findOne({ client: userId, status: "active" }).sort({ createdAt: -1 }).lean()
@@ -282,6 +289,7 @@ exports.getClientDashboardData = async (req, res) => {
         reflections,
         upcomingClasses,
         memberships,
+        joinedCircles,
         milestones,
         subscriptionStatus: {
           subscription: activeSub,
