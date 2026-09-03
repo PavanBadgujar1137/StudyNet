@@ -18,11 +18,15 @@ export function OHNeverDoSection({
 
   return (
     <div
-      className={`oh-never-do-card relative rounded-2xl p-6 sm:p-8 transition-all ${
+      className={`oh-never-do-card ${isDark ? 'oh-never-do-card--dark' : 'oh-never-do-card--light'} relative rounded-2xl p-6 sm:p-8 transition-all ${
         isDark
           ? 'bg-slate-900 border border-red-500/30 text-white shadow-2xl'
           : 'bg-white border border-slate-200 text-slate-900 shadow-xl'
       } ${className}`}
+      style={{
+        backgroundColor: isDark ? '#0F172A' : '#FFFFFF',
+        color: isDark ? '#F1F5F9' : '#0F172A'
+      }}
     >
       {/* Header Badge */}
       <div className="flex items-center gap-3 mb-4">
@@ -31,7 +35,7 @@ export function OHNeverDoSection({
             isDark ? 'bg-red-500/10 border border-red-500/30 text-red-400' : 'bg-red-50 border border-red-200 text-red-600'
           }`}
         >
-          <FiShield className="w-5 h-5" />
+          <FiShield className="w-5 h-5" style={{ color: isDark ? '#F87171' : '#DC2626' }} />
         </div>
         <div>
           <span
@@ -41,14 +45,20 @@ export function OHNeverDoSection({
           >
             Strict Ethical Standard
           </span>
-          <h3 className={`text-xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-950'}`}>
+          <h3
+            className={`text-xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-950'}`}
+            style={{ color: isDark ? '#FFFFFF' : '#0F172A' }}
+          >
             {title}
           </h3>
         </div>
       </div>
 
       {subtitle && (
-        <p className={`text-sm mb-6 leading-relaxed font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+        <p
+          className={`text-sm mb-6 leading-relaxed font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}
+          style={{ color: isDark ? '#CBD5E1' : '#334155' }}
+        >
           {subtitle}
         </p>
       )}
@@ -56,9 +66,18 @@ export function OHNeverDoSection({
       {/* Never List */}
       <ul className="space-y-3.5">
         {items.map((item, idx) => (
-          <li key={idx} className={`flex items-start gap-3 text-sm leading-snug font-bold ${isDark ? 'text-slate-200' : 'text-slate-950'}`}>
-            <FiXCircle className={`w-4.5 h-4.5 shrink-0 mt-0.5 ${isDark ? 'text-red-400' : 'text-red-600'}`} />
-            <span className="font-bold">{item}</span>
+          <li
+            key={idx}
+            className={`flex items-start gap-3 text-sm leading-snug font-bold ${isDark ? 'text-slate-200' : 'text-slate-950'}`}
+            style={{ color: isDark ? '#F1F5F9' : '#0F172A' }}
+          >
+            <FiXCircle
+              className={`w-4.5 h-4.5 shrink-0 mt-0.5 ${isDark ? 'text-red-400' : 'text-red-600'}`}
+              style={{ color: isDark ? '#F87171' : '#DC2626' }}
+            />
+            <span style={{ color: isDark ? '#F1F5F9' : '#0F172A', fontWeight: 700 }}>
+              {item}
+            </span>
           </li>
         ))}
       </ul>

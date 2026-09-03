@@ -1823,6 +1823,20 @@ details > summary::-webkit-details-marker { display: none; }
   border-radius: 18px;
   padding: 26px;
 }
+.oh-never-do-card li,
+.oh-never-do-card li span,
+.oh-never-do-card--light li,
+.oh-never-do-card--light li span {
+  color: #0F172A !important;
+  -webkit-text-fill-color: #0F172A !important;
+  opacity: 1 !important;
+}
+.oh-never-do-card--dark li,
+.oh-never-do-card--dark li span {
+  color: #F1F5F9 !important;
+  -webkit-text-fill-color: #F1F5F9 !important;
+  opacity: 1 !important;
+}
 .copilot-rail h3 {
   color: #fff;
   font-size: 16.5px;

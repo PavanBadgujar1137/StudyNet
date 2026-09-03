@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import {
   OHFooter,
@@ -27,15 +27,6 @@ const FORMATS = [
   { value: '1:1', label: '1:1 Sessions' },
   { value: 'circle', label: 'Circles' },
   { value: 'membership', label: 'Membership' },
-]
-
-const LANGUAGES = [
-  { value: 'all', label: 'Any Language' },
-  { value: 'English', label: 'English' },
-  { value: 'Hindi', label: 'Hindi' },
-  { value: 'Marathi', label: 'Marathi' },
-  { value: 'Tamil', label: 'Tamil' },
-  { value: 'Bengali', label: 'Bengali' },
 ]
 
 const SORT_OPTIONS = [
@@ -224,6 +215,31 @@ export function FindAPractitioner() {
     sortBy !== 'featured'
   )
 
+  // Dynamically compute unique available languages from registered practitioners
+  const availableLanguages = useMemo(() => {
+    const langSet = new Set()
+    practitioners.forEach((p) => {
+      if (Array.isArray(p.languages)) {
+        p.languages.forEach((l) => {
+          if (l && typeof l === 'string' && l.trim()) {
+            langSet.add(l.trim())
+          }
+        })
+      }
+    })
+
+    if (langSet.size === 0) {
+      langSet.add('English')
+      langSet.add('Hindi')
+    }
+
+    const list = [{ value: 'all', label: 'Any Language' }]
+    Array.from(langSet).sort().forEach((lang) => {
+      list.push({ value: lang, label: lang })
+    })
+    return list
+  }, [practitioners])
+
   const resetAllFilters = () => {
     setSearchQuery('')
     setNeedFilter('all')
@@ -232,7 +248,6 @@ export function FindAPractitioner() {
     setSortBy('featured')
     setPage(1)
   }
-
 
   return (
     <div className="oh-dir-page relative min-h-screen">
@@ -325,7 +340,7 @@ export function FindAPractitioner() {
                     onChange={(e) => handleFilterChange(setLangFilter, e.target.value)}
                     className="dir-select-pill"
                   >
-                    {LANGUAGES.map((l) => (
+                    {availableLanguages.map((l) => (
                       <option key={l.value} value={l.value}>{l.label}</option>
                     ))}
                   </select>
@@ -397,6 +412,14 @@ export function FindAPractitioner() {
               <div className="dir-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {practitioners
                   .filter((p) => (p.offers && p.offers.length > 0) || (p.userOffers && p.userOffers.length > 0))
+                  .filter((p) => {
+                    if (langFilter && langFilter !== 'all') {
+                      const cleanLang = langFilter.trim().toLowerCase()
+                      const pLangs = Array.isArray(p.languages) ? p.languages.map((l) => String(l).trim().toLowerCase()) : []
+                      return pLangs.includes(cleanLang)
+                    }
+                    return true
+                  })
                   .map((p) => {
                   const name = formatPractitionerName(p.user || p, 'Practitioner')
                   const isVerified = p.verificationStatus === 'verified' || true
@@ -477,7 +500,7 @@ export function FindAPractitioner() {
 
                       {/* Languages & Formats info line */}
                       <div className="p-info-meta">
-                        <span className="info-item">🌐 {p.languages && p.languages.length > 0 ? p.languages.slice(0, 2).join(', ') : 'English'}</span>
+                        <span className="info-item">🌐 {p.languages && p.languages.length > 0 ? p.languages.join(', ') : 'English'}</span>
                         <span className="info-item">👥 {p.formats && p.formats.length > 0 ? p.formats.join(' & ') : '1:1 Guidance'}</span>
                       </div>
 

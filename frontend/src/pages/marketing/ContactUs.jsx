@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { OHFooter } from '../../components/openhand'
+import { OHFooter, OHButton } from '../../components/openhand'
 
 import { apiConnector } from '../../services/apiConnector'
 import toast from 'react-hot-toast'
@@ -761,13 +760,13 @@ export function ContactUs() {
             <p>
               The free plan is open right now. You can create your practice space in seconds and contact us whenever you're ready.
             </p>
-            <div className="talk-cta-row">
-              <Link to="/signup" className="talk-btn" style={{ width: 'auto', padding: '13px 28px' }}>
-                Start Free Practice Space <FiArrowRight style={{ marginLeft: '8px' }} />
-              </Link>
-              <Link to="/learner-journey" className="talk-btn-ghost">
+            <div className="talk-cta-row flex flex-wrap items-center justify-center gap-4 mt-6">
+              <OHButton href="/signup" size="lg">
+                Start Free Practice Space →
+              </OHButton>
+              <OHButton href="/learner-journey" variant="ghost" size="lg">
                 See Learner Journey →
-              </Link>
+              </OHButton>
             </div>
           </div>
         </div>

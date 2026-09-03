@@ -83,10 +83,28 @@ exports.getPractitioners = async (req, res) => {
         if (!matchesFormats) continue
       }
 
+      // Extract languages from practitioner offers, profile, or user
+      const offerLangs = []
+      userOffers.forEach((o) => {
+        if (Array.isArray(o.languages)) offerLangs.push(...o.languages)
+        if (o.language) offerLangs.push(o.language)
+      })
+
+      const rawLangs = offerLangs.length > 0
+        ? offerLangs
+        : (profile.languages && profile.languages.length > 0)
+        ? profile.languages
+        : (u.languages && u.languages.length > 0)
+        ? u.languages
+        : ["English", "Hindi"]
+
+      const effectiveLanguages = [...new Set(rawLangs.map((l) => String(l).trim()).filter(Boolean))]
+      profile.languages = effectiveLanguages
+
       // Apply language filter
       if (lang && lang !== "all") {
-        const langRegex = new RegExp(lang, "i")
-        const matchesLang = (profile.languages || []).some((l) => langRegex.test(l))
+        const cleanLang = lang.trim().toLowerCase()
+        const matchesLang = effectiveLanguages.some((l) => String(l).trim().toLowerCase() === cleanLang)
         if (!matchesLang) continue
       }
 

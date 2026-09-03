@@ -69,35 +69,35 @@ export function IntakeModal({ open, onClose, practitionerName, questions = [], o
 
   return (
     <OHModal open={open} onClose={onClose} size="md" title="Pre-Session Intake">
-      <div className="p-4 sm:p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6 bg-white text-slate-900 rounded-2xl">
         {!completed ? (
           <>
-            <div className="border-b border-richblack-700 pb-4">
+            <div className="border-b border-slate-200 pb-4">
               <OHEyebrow text="Stage 02 — Learner Intake" />
-              <h3 className="text-xl font-bold text-richblack-5 mt-1">
+              <h3 className="text-xl font-extrabold text-slate-900 mt-1">
                 An intake that does the small talk for you
               </h3>
-              <p className="text-xs text-richblack-300 mt-1 flex items-center gap-1.5">
-                <FiClock className="text-teal-400" />
-                Saves ~15 minutes of your call with {practitionerName || 'your practitioner'}
+              <p className="text-xs text-slate-500 font-medium mt-1 flex items-center gap-1.5">
+                <FiClock className="text-blue-600" />
+                Saves ~15 minutes of your call with {practitionerName || 'Dr. Sarah M.'}
               </p>
             </div>
 
             {/* Step Progress Bar */}
-            <div className="flex items-center justify-between text-xs text-richblack-400 font-medium">
+            <div className="flex items-center justify-between text-xs text-slate-600 font-bold">
               <span>Question {currentStep + 1} of {activeQuestions.length}</span>
               <span>{Math.round(((currentStep + 1) / activeQuestions.length) * 100)}% Completed</span>
             </div>
-            <div className="w-full h-1.5 bg-richblack-700 rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
               <div
-                className="h-full bg-gradient-to-r from-teal-400 to-indigo-500 transition-all duration-300"
+                className="h-full bg-gradient-to-r from-blue-600 to-indigo-600 transition-all duration-300 rounded-full"
                 style={{ width: `${((currentStep + 1) / activeQuestions.length) * 100}%` }}
               />
             </div>
 
             {/* Active Question Box */}
-            <div className="bg-richblack-800 border border-richblack-700 p-4 rounded-xl space-y-3">
-              <label className="block text-sm font-semibold text-richblack-100">
+            <div className="bg-slate-50 border border-slate-200 p-4 sm:p-5 rounded-2xl space-y-3">
+              <label className="block text-sm sm:text-base font-extrabold text-slate-900">
                 {activeQuestions[currentStep]}
               </label>
               <textarea
@@ -105,7 +105,8 @@ export function IntakeModal({ open, onClose, practitionerName, questions = [], o
                 onChange={(e) => handleAnswerChange(e.target.value)}
                 placeholder="Type your reflection or answer here..."
                 rows={4}
-                className="w-full bg-richblack-900 border border-richblack-600 rounded-lg p-3 text-sm text-richblack-5 focus:outline-none focus:border-teal-400 resize-none"
+                style={{ color: '#0F172A', backgroundColor: '#FFFFFF' }}
+                className="w-full bg-white border border-slate-300 rounded-xl p-3.5 text-sm text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 resize-none shadow-sm transition-all"
               />
             </div>
 
@@ -115,10 +116,10 @@ export function IntakeModal({ open, onClose, practitionerName, questions = [], o
                 type="button"
                 onClick={handlePrev}
                 disabled={currentStep === 0}
-                className={`flex items-center gap-2 text-xs font-semibold px-3 py-2 rounded-lg ${
+                className={`flex items-center gap-2 text-xs sm:text-sm font-bold px-4 py-2.5 rounded-xl transition-all ${
                   currentStep === 0
-                    ? 'text-richblack-600 cursor-not-allowed'
-                    : 'text-richblack-300 hover:text-richblack-5 hover:bg-richblack-800'
+                    ? 'text-slate-300 cursor-not-allowed'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 }`}
               >
                 <FiArrowLeft /> Back
@@ -128,11 +129,12 @@ export function IntakeModal({ open, onClose, practitionerName, questions = [], o
                 onClick={handleNext}
                 disabled={isSubmitting}
                 variant="primary"
+                size="md"
               >
                 {currentStep === activeQuestions.length - 1 ? (
                   isSubmitting ? 'Saving Intake...' : 'Submit & Proceed'
                 ) : (
-                  <span className="flex items-center gap-2">
+                  <span className="flex items-center gap-2 font-bold">
                     Next Question <FiArrowRight />
                   </span>
                 )}
@@ -141,11 +143,11 @@ export function IntakeModal({ open, onClose, practitionerName, questions = [], o
           </>
         ) : (
           <div className="text-center py-6 space-y-4">
-            <div className="w-14 h-14 bg-teal-500/20 text-teal-400 rounded-full flex items-center justify-center mx-auto text-2xl">
+            <div className="w-14 h-14 bg-blue-50 text-blue-600 border border-blue-200 rounded-2xl flex items-center justify-center mx-auto text-2xl shadow-sm">
               <FiCheckCircle />
             </div>
-            <h4 className="text-lg font-bold text-richblack-5">Intake Completed!</h4>
-            <p className="text-xs text-richblack-300 max-w-sm mx-auto">
+            <h4 className="text-xl font-extrabold text-slate-900">Intake Completed!</h4>
+            <p className="text-xs sm:text-sm text-slate-600 font-medium max-w-sm mx-auto leading-relaxed">
               Your responses have been saved and sent directly to {practitionerName || 'your practitioner'}. 
               They will review it before your call so you skip the 15-minute warm-up!
             </p>

@@ -209,7 +209,7 @@ export function PractitionerJourney() {
             Subscribe to an OpenHand learner plan or find a practitioner to get started. Switch or cancel anytime.
           </p>
           <div className="cta-row flex flex-wrap items-center justify-center gap-4">
-            <OHButton href="#plans" size="lg">Choose a Learner Plan</OHButton>
+            <OHButton href="/pricing" size="lg">Choose a Learner Plan</OHButton>
             <OHButton href="/find-a-practitioner" variant="ghost" size="lg">Find a Practitioner →</OHButton>
           </div>
         </div>
