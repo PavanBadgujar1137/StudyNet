@@ -161,6 +161,8 @@ export function CheckIn({ clientName = 'Student', practitionerName = 'your instr
               onChange={(e) => setNote(e.target.value)}
               placeholder="Share any thoughts, feelings, or notes for your practitioner..."
               rows={3}
+              style={{ color: '#0F172A', WebkitTextFillColor: '#0F172A', backgroundColor: '#FFFFFF' }}
+              className="oh-intake-textarea"
             />
           </div>
 

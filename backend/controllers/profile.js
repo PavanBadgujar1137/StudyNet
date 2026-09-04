@@ -40,8 +40,8 @@ exports.updateProfile = async (req, res) => {
       title,
       firstName,
       lastName,
-    })
-    await user.save()
+      contactNumber,
+    }, { new: true })
 
     // Update the profile fields
     profile.dateOfBirth = dateOfBirth

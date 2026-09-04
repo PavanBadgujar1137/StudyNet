@@ -1,8 +1,9 @@
 import { useState } from "react"
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai"
 import { BiArrowBack } from "react-icons/bi"
+import { toast } from "react-hot-toast"
 import { useDispatch, useSelector } from "react-redux"
-import { Link, useLocation, useNavigate } from "react-router-dom"
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom"
 
 import { resetPassword } from "../services/operations/authAPI"
 
@@ -10,6 +11,8 @@ function UpdatePassword() {
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const location = useLocation()
+  const params = useParams()
+
   const { loading } = useSelector((state) => state.auth)
   const [formData, setFormData] = useState({
     password: "",
@@ -30,9 +33,18 @@ function UpdatePassword() {
 
   const handleOnSubmit = (e) => {
     e.preventDefault()
-    const token = location.pathname.split("/").at(-1)
+    const token = params.id || params.token || location.pathname.split("/").filter(Boolean).at(-1)
+    if (!token) {
+      toast.error("Invalid or missing reset token")
+      return
+    }
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match")
+      return
+    }
     dispatch(resetPassword(password, confirmPassword, token, navigate))
   }
+
 
   return (
     <div className="grid min-h-[calc(100vh-3.5rem)] place-items-center">

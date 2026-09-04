@@ -206,9 +206,18 @@ export function Practitioners({ onUpdate, setActiveTab }) {
           }
         },
         prefill: {
-          name: user ? `${user.firstName} ${user.lastName}`.trim() : '',
+          name: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : '',
           email: user?.email || '',
-          contact: (user?.additionalDetails?.contactNumber && user.additionalDetails.contactNumber !== 'null' && user.additionalDetails.contactNumber !== 'undefined') ? String(user.additionalDetails.contactNumber).trim() : '',
+          ...(
+            (() => {
+              const rawPhone = user?.additionalDetails?.contactNumber || user?.contactNumber
+              if (rawPhone && rawPhone !== 'null' && rawPhone !== 'undefined') {
+                const trimmed = String(rawPhone).trim()
+                if (trimmed.length > 0) return { contact: trimmed }
+              }
+              return {}
+            })()
+          ),
         },
         theme: {
           color: '#1F5FE0',

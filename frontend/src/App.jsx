@@ -228,6 +228,15 @@ function App() {
           }
         />
         <Route
+          path="update-password/:token"
+          element={
+            <OpenRoute>
+              <UpdatePassword />
+            </OpenRoute>
+          }
+        />
+
+        <Route
           path="signup"
           element={
             <OpenRoute>

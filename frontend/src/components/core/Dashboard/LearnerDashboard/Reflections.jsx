@@ -93,6 +93,8 @@ export function Reflections({ practitionerName, dashboardData, onReflectionUpdat
                 value={answers[p._id] || ''}
                 onChange={(e) => setAnswers({ ...answers, [p._id]: e.target.value })}
                 placeholder="Write as much or as little as you want. Or leave it — the question can just sit with you."
+                style={{ color: '#0F172A', WebkitTextFillColor: '#0F172A', backgroundColor: '#FFFFFF' }}
+                className="oh-intake-textarea"
               />
             )}
 

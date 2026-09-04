@@ -197,38 +197,43 @@ export function ContactUs() {
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-fadeIn">
           <div
             className="relative w-full max-w-md rounded-2xl bg-white border border-slate-200 shadow-2xl p-6 text-left"
-            style={{ background: '#FFFFFF', color: '#0F172A' }}
+            style={{ backgroundColor: '#FFFFFF', color: '#0F172A', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}
           >
             <button
               type="button"
               onClick={() => setDirectActionModal(null)}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-800 transition-colors p-1"
+              style={{ color: '#64748B' }}
+              aria-label="Close dialog"
             >
-              <FiX size={18} />
+              <FiX size={20} />
             </button>
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
+              <div
+                className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0"
+                style={{ backgroundColor: '#EEF2FF', borderColor: '#E0E7FF', color: '#4F46E5' }}
+              >
                 {directActionModal === 'setup' ? <FiMessageSquare size={18} /> : directActionModal === 'tech' ? <FiMail size={18} /> : <FiPhoneCall size={18} />}
               </div>
               <div>
-                <h3 className="text-lg font-extrabold text-slate-900" style={{ color: '#0F172A', margin: 0, lineHeight: 1.3 }}>
+                <h3 className="text-lg font-extrabold" style={{ color: '#0F172A', margin: 0, lineHeight: 1.3, fontSize: '18px', fontWeight: 800 }}>
                   {directActionModal === 'setup'
                     ? 'Practice Setup Desk Options'
                     : directActionModal === 'tech'
                     ? 'Tech & Ethics Desk Options'
                     : 'Organizations Desk Line'}
                 </h3>
-                <span className="text-xs text-slate-500 font-medium">Direct Communication Channel</span>
+                <span className="text-xs font-semibold" style={{ color: '#64748B', fontSize: '12px' }}>Direct Communication Channel</span>
               </div>
             </div>
-            <p className="text-xs text-slate-600 mb-5 leading-relaxed">
+            <p className="text-xs mb-5 leading-relaxed" style={{ color: '#475569', fontSize: '13px', lineHeight: 1.5 }}>
               {directActionModal === 'setup'
                 ? 'Connect instantly with practice architects for circle pricing and onboarding guidance.'
                 : directActionModal === 'tech'
                 ? 'Direct line for HIPAA/GDPR data security, AURA consent ethics, and caseload migration.'
                 : 'Direct line for enterprise pilot scoping, HR confidentiality agreements, and seat billing.'}
             </p>
-            <div className="space-y-2.5">
+            <div className="flex flex-col gap-3">
               <a
                 href={
                   directActionModal === 'setup'
@@ -237,9 +242,25 @@ export function ContactUs() {
                     ? 'mailto:tech-ethics@openhand.in?subject=Tech%20%26%20Ethics%20Security%20Inquiry'
                     : 'mailto:enterprise@openhand.in?subject=Organizations%20Pilot%20Inquiry'
                 }
-                className="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md"
+                className="w-full py-3 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md"
+                style={{
+                  backgroundColor: '#0F172A',
+                  color: '#FFFFFF',
+                  padding: '12px 16px',
+                  borderRadius: '12px',
+                  fontWeight: 700,
+                  fontSize: '13px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  textDecoration: 'none',
+                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.2)',
+                  cursor: 'pointer'
+                }}
               >
-                <FiMail size={14} /> Send Direct Email (Open Mailbox)
+                <FiMail size={16} style={{ color: '#FFFFFF' }} />
+                <span style={{ color: '#FFFFFF', fontWeight: 700 }}>Send Direct Email (Open Mailbox)</span>
               </a>
               <button
                 type="button"
@@ -249,14 +270,30 @@ export function ContactUs() {
                   const bookElem = document.getElementById('book')
                   if (bookElem) bookElem.scrollIntoView({ behavior: 'smooth' })
                 }}
-                className="w-full py-3 px-4 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-800 font-semibold text-xs flex items-center justify-center gap-2 transition-all border border-slate-200"
+                className="w-full py-3 px-4 rounded-xl font-semibold text-xs flex items-center justify-center gap-2 transition-all border border-slate-200"
+                style={{
+                  backgroundColor: '#F8FAFC',
+                  color: '#0F172A',
+                  border: '1px solid #CBD5E1',
+                  padding: '12px 16px',
+                  borderRadius: '12px',
+                  fontWeight: 600,
+                  fontSize: '13px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  cursor: 'pointer'
+                }}
               >
-                <FiSend size={14} /> Fill Booking Form
+                <FiSend size={16} style={{ color: '#0F172A' }} />
+                <span style={{ color: '#0F172A', fontWeight: 600 }}>Fill Booking Form</span>
               </button>
             </div>
           </div>
         </div>
       )}
+
 
       {/* Hero */}
       <header className="talk-hero">

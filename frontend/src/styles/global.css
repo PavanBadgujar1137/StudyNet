@@ -616,6 +616,46 @@ details > summary::-webkit-details-marker { display: none; }
 .oh-modal__close svg { width: 20px; height: 20px; }
 .oh-modal__body { padding: var(--oh-space-8); overflow-y: auto; flex: 1; }
 
+/* Pre-Session Intake & Modal Input Text Visibility Fix */
+.oh-intake-textarea,
+.oh-modal textarea,
+.oh-modal input[type="text"],
+.oh-modal input[type="search"],
+.client-app-shell .oh-intake-textarea,
+.client-app-shell .oh-modal textarea,
+.client-app-shell textarea.oh-intake-textarea {
+  color: #0F172A !important;
+  -webkit-text-fill-color: #0F172A !important;
+  background-color: #FFFFFF !important;
+  caret-color: #2563EB !important;
+  opacity: 1 !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  line-height: 1.5 !important;
+}
+
+.oh-intake-textarea::placeholder,
+.oh-modal textarea::placeholder,
+.oh-modal input::placeholder,
+.client-app-shell .oh-intake-textarea::placeholder,
+.client-app-shell .oh-modal textarea::placeholder {
+  color: #64748B !important;
+  -webkit-text-fill-color: #64748B !important;
+  opacity: 1 !important;
+}
+
+.oh-intake-textarea:focus,
+.oh-modal textarea:focus,
+.oh-modal input:focus,
+.client-app-shell .oh-intake-textarea:focus,
+.client-app-shell .oh-modal textarea:focus {
+  color: #0F172A !important;
+  -webkit-text-fill-color: #0F172A !important;
+  background-color: #FFFFFF !important;
+  border-color: #2563EB !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+}
+
 /* OHNav */
 .oh-nav { position: sticky; top: 0; z-index: var(--oh-z-nav); background: rgba(243, 244, 246, 0.86); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid var(--oh-rule); transition: box-shadow var(--oh-t-base) var(--oh-ease), background var(--oh-t-base) var(--oh-ease); }
 .oh-nav--scrolled { box-shadow: 0 4px 24px -8px rgba(13, 27, 61, 0.14); }

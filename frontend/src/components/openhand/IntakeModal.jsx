@@ -105,8 +105,14 @@ export function IntakeModal({ open, onClose, practitionerName, questions = [], o
                 onChange={(e) => handleAnswerChange(e.target.value)}
                 placeholder="Type your reflection or answer here..."
                 rows={4}
-                style={{ color: '#0F172A', backgroundColor: '#FFFFFF' }}
-                className="w-full bg-white border border-slate-300 rounded-xl p-3.5 text-sm text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 resize-none shadow-sm transition-all"
+                style={{
+                  color: '#0F172A',
+                  WebkitTextFillColor: '#0F172A',
+                  backgroundColor: '#FFFFFF',
+                  caretColor: '#2563EB',
+                  opacity: 1,
+                }}
+                className="oh-intake-textarea w-full bg-white border border-slate-300 rounded-xl p-3.5 text-sm sm:text-base font-semibold text-slate-900 placeholder:text-slate-500 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 resize-none shadow-sm transition-all"
               />
             </div>
 

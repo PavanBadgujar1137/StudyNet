@@ -167,6 +167,70 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
     })
   }
 
+  const [downloadingQr, setDownloadingQr] = useState(false)
+
+  const handleDownloadQr = async () => {
+    if (downloadingQr) return
+    setDownloadingQr(true)
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&format=png&data=${encodeURIComponent(bookingLink)}`
+    const fileName = `openhand-practice-qr-${cleanHandle || 'code'}.png`
+    const toastId = toast.loading('Generating high-res QR code PNG...')
+
+    try {
+      const response = await fetch(qrUrl)
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+      const blob = await response.blob()
+      const blobUrl = URL.createObjectURL(blob)
+
+      const link = document.createElement('a')
+      link.href = blobUrl
+      link.download = fileName
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000)
+
+      toast.success('QR Code PNG downloaded successfully!', { id: toastId })
+    } catch (err) {
+      console.warn('Fetch QR failed, attempting canvas fallback:', err)
+      try {
+        const img = new Image()
+        img.crossOrigin = 'anonymous'
+        img.onload = () => {
+          const canvas = document.createElement('canvas')
+          canvas.width = 500
+          canvas.height = 500
+          const ctx = canvas.getContext('2d')
+          ctx.fillStyle = '#FFFFFF'
+          ctx.fillRect(0, 0, 500, 500)
+          ctx.drawImage(img, 0, 0, 500, 500)
+          const dataUrl = canvas.toDataURL('image/png')
+
+          const a = document.createElement('a')
+          a.href = dataUrl
+          a.download = fileName
+          document.body.appendChild(a)
+          a.click()
+          document.body.removeChild(a)
+          toast.success('QR Code PNG downloaded successfully!', { id: toastId })
+          setDownloadingQr(false)
+        }
+        img.onerror = () => {
+          window.open(qrUrl, '_blank')
+          toast.success('Opened QR code in new tab. Right-click to save.', { id: toastId })
+          setDownloadingQr(false)
+        }
+        img.src = qrUrl
+        return
+      } catch (fallbackErr) {
+        window.open(qrUrl, '_blank')
+        toast.success('Opened QR code in new tab. Right-click to save.', { id: toastId })
+      }
+    } finally {
+      setDownloadingQr(false)
+    }
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       
@@ -602,13 +666,11 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
 
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
               <button
-                onClick={() => {
-                  toast.success('QR Code ready for print!')
-                  setShowQrModal(false)
-                }}
-                style={{ background: '#3B82F6', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: 700, cursor: 'pointer' }}
+                onClick={handleDownloadQr}
+                disabled={downloadingQr}
+                style={{ background: downloadingQr ? '#94A3B8' : '#3B82F6', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: 700, cursor: downloadingQr ? 'not-allowed' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
               >
-                Download PNG
+                {downloadingQr ? 'Downloading...' : '📥 Download PNG'}
               </button>
               <button
                 onClick={() => setShowQrModal(false)}
