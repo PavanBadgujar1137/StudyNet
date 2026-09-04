@@ -7,6 +7,7 @@ import { logout } from "./authAPI"
 
 const {
   UPDATE_DISPLAY_PICTURE_API,
+  DELETE_DISPLAY_PICTURE_API,
   UPDATE_PROFILE_API,
   CHANGE_PASSWORD_API,
   DELETE_PROFILE_API,
@@ -33,6 +34,32 @@ export function updateDisplayPicture(token, formData) {
     } catch (error) {
       console.log("UPDATE_DISPLAY_PICTURE_API API ERROR............", error)
       const errorMsg = error?.response?.data?.message || error?.message || "Could Not Update Display Picture"
+      toast.error(errorMsg, { id: toastId })
+    }
+  }
+}
+
+export function deleteDisplayPicture(token) {
+  return async (dispatch) => {
+    const toastId = toast.loading("Removing profile picture...")
+    try {
+      const response = await apiConnector(
+        "DELETE",
+        DELETE_DISPLAY_PICTURE_API,
+        null,
+        {
+          Authorization: `Bearer ${token}`,
+        }
+      )
+
+      if (!response?.data?.success) {
+        throw new Error(response?.data?.message || "Could not remove profile picture")
+      }
+      toast.success("Profile picture removed successfully", { id: toastId })
+      dispatch(setUser(response.data.data))
+    } catch (error) {
+      console.log("DELETE_DISPLAY_PICTURE_API API ERROR............", error)
+      const errorMsg = error?.response?.data?.message || error?.message || "Could Not Remove Profile Picture"
       toast.error(errorMsg, { id: toastId })
     }
   }

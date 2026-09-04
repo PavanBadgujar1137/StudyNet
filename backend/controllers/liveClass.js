@@ -164,7 +164,7 @@ exports.getInstructorSchedule = async (req, res) => {
 exports.getUpcomingClasses = async (req, res) => {
   try {
     const now = new Date()
-    const classes = await LiveClass.find({
+    const rawClasses = await LiveClass.find({
       scheduledStart: { $gte: now },
       status: { $in: ["scheduled", "live"] },
     })
@@ -172,6 +172,17 @@ exports.getUpcomingClasses = async (req, res) => {
       .sort({ scheduledStart: 1 })
       .limit(20)
       .lean()
+
+    const classes = rawClasses.map((cls) => {
+      let title = (cls.title || "").replace(/[*^%$#@!~`+={}\[\]\\|;"'<>,?]/g, " ").replace(/\s+/g, " ").trim()
+      title = title.replace(/^[-:/&\s]+/, "").replace(/[-:/&\s]+$/, "")
+      const alphaCount = (title.match(/[a-zA-Z0-9]/g) || []).length
+      const hasVowelsOrDigits = /[aeiouyAEIOUY0-9]/.test(title)
+      if (alphaCount < 2 || (!hasVowelsOrDigits && title.length >= 4)) {
+        title = "Live Zoom Class"
+      }
+      return { ...cls, title }
+    })
 
     return res.status(200).json({ success: true, data: classes })
   } catch (error) {

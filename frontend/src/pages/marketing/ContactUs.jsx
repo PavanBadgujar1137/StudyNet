@@ -758,7 +758,7 @@ export function ContactUs() {
             <p>Common questions practitioners have before scheduling a founder call.</p>
           </div>
 
-          <div className="talk-faq space-y-4">
+          <div className="talk-faq">
             {faqs.map((faq, idx) => {
               const isOpen = activeFaq === idx
               return (

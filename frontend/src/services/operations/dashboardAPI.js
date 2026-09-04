@@ -1,6 +1,5 @@
 import { apiConnector } from "../apiConnector"
 import { profileEndpoints } from "../apis"
-import toast from "react-hot-toast"
 
 const { GET_CLIENT_DASHBOARD_API, GET_PRACTITIONER_DASHBOARD_API } = profileEndpoints
 

@@ -162,6 +162,39 @@ exports.updateDisplayPicture = async (req, res) => {
   }
 }
 
+exports.deleteDisplayPicture = async (req, res) => {
+  try {
+    const userId = req.user.id
+    const user = await User.findById(userId)
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      })
+    }
+
+    const defaultImage = `https://api.dicebear.com/5.x/initials/svg?seed=${encodeURIComponent(user.firstName + " " + (user.lastName || ""))}`
+
+    const updatedProfile = await User.findByIdAndUpdate(
+      userId,
+      { image: defaultImage },
+      { new: true }
+    )
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile picture removed successfully",
+      data: updatedProfile,
+    })
+  } catch (error) {
+    console.log("DELETE DISPLAY PICTURE ERROR:", error)
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    })
+  }
+}
+
 exports.getEnrolledCourses = async (req, res) => {
   try {
     return res.status(200).json({
@@ -221,12 +254,24 @@ exports.getClientDashboardData = async (req, res) => {
     // Upcoming Zoom Live Classes
     let upcomingClasses = []
     try {
-      upcomingClasses = (await LiveClass.find({
+      const rawClasses = (await LiveClass.find({
         status: { $in: ["scheduled", "live"] },
       })
         .populate("instructor", "firstName lastName image")
         .sort({ scheduledStart: 1 })
-        .limit(10)) || []
+        .limit(10)
+        .lean()) || []
+
+      upcomingClasses = rawClasses.map((cls) => {
+        let title = (cls.title || "").replace(/[*^%$#@!~`+={}\[\]\\|;"'<>,?]/g, " ").replace(/\s+/g, " ").trim()
+        title = title.replace(/^[-:/&\s]+/, "").replace(/[-:/&\s]+$/, "")
+        const alphaCount = (title.match(/[a-zA-Z0-9]/g) || []).length
+        const hasVowelsOrDigits = /[aeiouyAEIOUY0-9]/.test(title)
+        if (alphaCount < 2 || (!hasVowelsOrDigits && title.length >= 4)) {
+          title = "Live Zoom Class"
+        }
+        return { ...cls, title }
+      })
     } catch (e) { upcomingClasses = [] }
 
     // Circles

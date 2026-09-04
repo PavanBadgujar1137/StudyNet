@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux'
 import { FiVideo, FiExternalLink, FiPlus, FiCopy, FiCheckCircle, FiX, FiCalendar, FiUser, FiClock, FiRefreshCw, FiBell, FiEdit3 } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import { scheduleLiveClass, cancelClass, rescheduleClass } from '../../../../services/operations/liveClassAPI'
+import { formatClassTitle } from '../../../../utils/formatTitle'
 import { apiConnector } from '../../../../services/apiConnector'
 
 export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData, onUpdate }) {
@@ -346,7 +347,7 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
                 </div>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <b style={{ fontSize: '15px', color: '#0F172A' }}>{cls.title}</b>
+                    <b style={{ fontSize: '15px', color: '#0F172A' }}>{formatClassTitle(cls.title)}</b>
                     <span
                       style={{
                         fontSize: '11px',

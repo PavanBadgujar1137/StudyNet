@@ -2,15 +2,26 @@ import React, { useState } from 'react'
 import { useSelector } from 'react-redux'
 import { apiConnector } from '../../../../services/apiConnector'
 import toast from 'react-hot-toast'
+import CheckInRhythm from './CheckInRhythm'
 
-export function CheckIn({ clientName = 'Student', practitionerName = 'your instructor', dashboardData, onCheckInSuccess }) {
+export function CheckIn({ clientName = 'Student', practitionerName = 'your instructor', dashboardData, onCheckInSuccess, setActiveTab, onCancel }) {
   const { token } = useSelector((state) => state.auth)
   const [selectedMood, setSelectedMood] = useState('steady')
   const [sleepScore, setSleepScore] = useState(7)
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
-  
+
+  const handleCancel = () => {
+    if (onCancel) {
+      onCancel()
+    } else if (setActiveTab) {
+      setActiveTab('journey')
+    } else {
+      window.history.back()
+    }
+  }
+
   const instructorTitle = practitionerName ? (practitionerName.includes('Instructor') ? practitionerName : practitionerName) : 'your instructor'
 
   const moods = [
@@ -96,16 +107,47 @@ export function CheckIn({ clientName = 'Student', practitionerName = 'your instr
 
   return (
     <div id="checkin">
-      <div className="hd">
+      <div className="hd" style={{ marginBottom: '18px' }}>
         <div className="k">Check in</div>
         <h1>How are you today?</h1>
         <p>Takes about fifteen seconds. {instructorTitle} can review your check-ins to track your ongoing progress.</p>
       </div>
 
+      <CheckInRhythm
+        dashboardData={dashboardData}
+        onLogClick={() => {
+          const formEl = document.getElementById('ciForm')
+          if (formEl) formEl.scrollIntoView({ behavior: 'smooth' })
+        }}
+      />
+
       {!isSaved ? (
         <div className="ci" id="ciForm">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h2>{todayStr}</h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <button
+                type="button"
+                onClick={handleCancel}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  color: '#FFFFFF',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  padding: '6px 14px',
+                  borderRadius: '10px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.2s ease'
+                }}
+                title="Cancel / Go Back"
+              >
+                ← Back / Cancel
+              </button>
+              <h2 style={{ margin: 0 }}>{todayStr}</h2>
+            </div>
             {todayCheckIn && (
               <span style={{ fontSize: '12px', background: '#DBEAFE', color: '#1E40AF', padding: '4px 10px', borderRadius: '12px', fontWeight: 700 }}>
                 Updating Today's Check-in
@@ -166,9 +208,28 @@ export function CheckIn({ clientName = 'Student', practitionerName = 'your instr
             />
           </div>
 
-          <button className="go" id="save" onClick={handleSave} disabled={saving}>
-            {saving ? 'Saving...' : todayCheckIn ? "Update today's check-in" : "Save today's check-in"}
-          </button>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', marginTop: '16px' }}>
+            <button className="go" id="save" onClick={handleSave} disabled={saving} style={{ margin: 0 }}>
+              {saving ? 'Saving...' : todayCheckIn ? "Update today's check-in" : "Save today's check-in"}
+            </button>
+            <button
+              type="button"
+              onClick={handleCancel}
+              style={{
+                background: 'transparent',
+                color: '#CBD5E1',
+                border: '1px solid rgba(255, 255, 255, 0.25)',
+                padding: '12px 24px',
+                borderRadius: '999px',
+                fontWeight: 600,
+                fontSize: '14px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              Cancel / Exit
+            </button>
+          </div>
           <p className="privacy">Only you and {practitionerName} can see this. It is never shared with your employer, your circle, or anyone else.</p>
         </div>
       ) : (

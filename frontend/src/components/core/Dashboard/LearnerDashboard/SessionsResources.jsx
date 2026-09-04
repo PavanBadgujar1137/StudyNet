@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FiVideo } from 'react-icons/fi'
 import { formatPractitionerName } from '../../../../utils/formatName'
+import { formatClassTitle } from '../../../../utils/formatTitle'
 
 export function SessionsResources({ practitionerName = 'your instructor', dashboardData }) {
   const navigate = useNavigate()
@@ -25,24 +26,27 @@ export function SessionsResources({ practitionerName = 'your instructor', dashbo
 
         {upcomingClasses.length > 0 ? (
           upcomingClasses.map((cls) => (
-            <div key={cls._id} className="srow" style={{ alignItems: 'center', width: '100%', overflow: 'hidden' }}>
-              <div className="sdate" style={{ flexShrink: 0 }}>
-                <b>{new Date(cls.scheduledStart).getDate()}</b>
-                <span>{new Date(cls.scheduledStart).toLocaleString('default', { month: 'short' })}</span>
+            <div key={cls._id} className="srow" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', width: '100%', maxWidth: '100%', overflow: 'hidden', padding: '16px 0', borderBottom: '1px solid #E2E8F0', boxSizing: 'border-box' }}>
+              <div className="sdate" style={{ flexShrink: 0, width: '58px', textAlign: 'center', background: '#F1F5F9', borderRadius: '12px', padding: '9px 0' }}>
+                <b style={{ display: 'block', fontSize: '19px', color: '#0F172A', lineHeight: 1 }}>{new Date(cls.scheduledStart).getDate()}</b>
+                <span style={{ fontSize: '11px', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{new Date(cls.scheduledStart).toLocaleString('default', { month: 'short' })}</span>
               </div>
-              <div className="info" style={{ flex: 1, minWidth: 0, overflow: 'hidden', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
-                <b style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{cls.title}</b>
-                <span style={{ display: 'block', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+              <div className="info" style={{ flex: 1, minWidth: 0, maxWidth: '100%', overflow: 'hidden', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+                <b style={{ fontSize: '15px', color: '#0F172A', wordBreak: 'break-word', overflowWrap: 'anywhere', display: 'block', marginBottom: '2px' }}>
+                  {formatClassTitle(cls.title)}
+                </b>
+                <span style={{ fontSize: '13px', color: '#64748B', display: 'block', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                   Instructor: {cls.instructor?.firstName ? `Dr. ${cls.instructor.firstName} ${cls.instructor.lastName || ''}` : instructorTitle} · {new Date(cls.scheduledStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
-              <div className="go" style={{ flexShrink: 0 }}>
+              <div className="go" style={{ flexShrink: 0, marginLeft: 'auto' }}>
                 <button
+                  type="button"
                   onClick={() => navigate(`/live/${cls._id}`)}
-                  className="btn"
-                  style={{ padding: '8px 16px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  className="oh-zoom-join-btn"
                 >
-                  <FiVideo size={14} /> Join Zoom Class
+                  <FiVideo size={16} />
+                  <span>Join Zoom Class</span>
                 </button>
               </div>
             </div>

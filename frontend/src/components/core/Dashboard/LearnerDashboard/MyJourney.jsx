@@ -1,17 +1,14 @@
 import React from 'react'
+import CheckInRhythm from './CheckInRhythm'
 
 export function MyJourney({ clientName = 'Student', practitionerName = 'your instructor', dashboardData, loading, setActiveTab }) {
   const checkInCount = dashboardData?.checkInCount || 0
-  const streak = dashboardData?.streak || 0
   const milestones = dashboardData?.milestones || []
 
   // Dynamic joined circles calculation
   const rawJoinedCircles = dashboardData?.joinedCircles || dashboardData?.memberships || []
   const joinedCirclesList = rawJoinedCircles.filter((c) => c && (c.cohort || c._id))
   const hasJoinedCircle = joinedCirclesList.length > 0
-
-  const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-  const todayDayName = new Date().toLocaleDateString('en-US', { weekday: 'long' })
 
   return (
     <div id="journey">
@@ -20,27 +17,10 @@ export function MyJourney({ clientName = 'Student', practitionerName = 'your ins
         <p style={{ margin: '4px 0 0', color: '#64748B', fontSize: '14px' }}>This is your personal learning path — kept private to you and your practitioner. There's no score, no comparison with anyone else, and no wrong pace.</p>
       </div>
 
-      <div className="card" style={{ marginBottom: '22px' }}>
-        <div className="sechd">
-          <h3>Your check-in rhythm</h3>
-          <span style={{ fontSize: '13px', color: 'var(--muted)' }}>Current streak: <b>{streak} day{streak !== 1 ? 's' : ''}</b> ({checkInCount} total check-ins)</span>
-        </div>
-        <div className="streak">
-          {daysOfWeek.map((dayName) => {
-            const isToday = dayName.toLowerCase() === todayDayName.toLowerCase()
-            return (
-              <div
-                key={dayName}
-                className={`sd ${isToday ? 'today' : ''}`}
-                style={isToday ? { backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' } : {}}
-              >
-                {dayName}
-              </div>
-            )
-          })}
-        </div>
-        <p className="note">Missed a day? Nothing breaks. Come back whenever — the point is the noticing, not the streak.</p>
-      </div>
+      <CheckInRhythm
+        dashboardData={dashboardData}
+        onLogClick={() => setActiveTab && setActiveTab('checkin')}
+      />
 
       <div className="jrn">
         <svg className="jsvg" viewBox="0 0 80 1000" preserveAspectRatio="none" aria-hidden="true">

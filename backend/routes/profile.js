@@ -6,6 +6,7 @@ const {
   updateProfile,
   getAllUserDetails,
   updateDisplayPicture,
+  deleteDisplayPicture,
   getEnrolledCourses,
   instructorDashboard,
   getClientDashboardData,
@@ -24,6 +25,7 @@ router.get("/getUserDetails", auth, getAllUserDetails)
 // Get Enrolled Courses
 router.get("/getEnrolledCourses", auth, getEnrolledCourses)
 router.put("/updateDisplayPicture", auth, updateDisplayPicture)
+router.delete("/deleteDisplayPicture", auth, deleteDisplayPicture)
 router.get("/instructorDashboard", auth, isInstructor, instructorDashboard)
 
 // Aggregated Dashboard Endpoints

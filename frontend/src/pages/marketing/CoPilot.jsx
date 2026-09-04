@@ -3,9 +3,9 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { OHFooter, OHNeverDoSection } from '../../components/openhand'
 import { 
-
   FiChevronDown, 
-  FiHelpCircle 
+  FiHelpCircle,
+  FiLock
 } from 'react-icons/fi'
 
 const FAQ_ITEMS = [
@@ -80,39 +80,53 @@ export function CoPilot() {
               </div>
             </div>
 
-            <div className="copilot-panel">
-              <div className="copilot-ptop">
-                <span className="copilot-live">
-                  <i /> Live
-                </span>
-                <span className="t">Session 3 · 24:16</span>
+            <div className="oh-copilot__panel-wrap copilot-panel-wrap">
+              <div className="oh-copilot__panel copilot-panel">
+                <div className="oh-copilot__panel-top copilot-ptop">
+                  <span className="oh-copilot__live-tag copilot-live">
+                    <span className="oh-copilot__live-dot" /> Live AURA
+                  </span>
+                  <span className="oh-copilot__session-time t">Session 3 · 24:16</span>
+                </div>
+
+                <div className="oh-copilot__panel-body copilot-pbody">
+                  <div className="oh-copilot__sug oh-copilot__sug--blue copilot-sug">
+                    <div className="oh-copilot__sug-label k">Try Asking</div>
+                    <p className="oh-copilot__sug-text">
+                      "You said 'I should be over it by now' — whose voice is the 'should' in?"
+                    </p>
+                    <div className="oh-copilot__chips act">
+                      <span className="oh-copilot__chip copilot-chip">Use</span>
+                      <span className="oh-copilot__chip copilot-chip">Not now</span>
+                    </div>
+                  </div>
+
+                  <div className="oh-copilot__sug oh-copilot__sug--indigo copilot-sug">
+                    <div className="oh-copilot__sug-label k">Pattern Across Sessions</div>
+                    <p className="oh-copilot__sug-text">
+                      Third time work has come up right after family. Worth naming the link?
+                    </p>
+                    <div className="oh-copilot__chips act">
+                      <span className="oh-copilot__chip copilot-chip">Flag for notes</span>
+                    </div>
+                  </div>
+
+                  <div className="oh-copilot__sug oh-copilot__sug--violet copilot-sug">
+                    <div className="oh-copilot__sug-label k">Technique That Fits Here</div>
+                    <p className="oh-copilot__sug-text">
+                      Two-chair work — she's holding both sides of this herself. Script ready.
+                    </p>
+                    <div className="oh-copilot__chips act">
+                      <span className="oh-copilot__chip copilot-chip">Open script</span>
+                      <span className="oh-copilot__chip copilot-chip">Save for later</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="oh-copilot__panel-foot copilot-pfoot">
+                  <FiLock style={{ marginRight: 6 }} /> Visible only to you · Learner consented at 00:00
+                </div>
               </div>
-              <div className="copilot-pbody">
-                <div className="copilot-sug">
-                  <div className="k">Try asking</div>
-                  <p>"You said 'I should be over it by now' — whose voice is the 'should' in?"</p>
-                  <div className="act">
-                    <span className="copilot-chip">Use</span>
-                    <span className="copilot-chip">Not now</span>
-                  </div>
-                </div>
-                <div className="copilot-sug">
-                  <div className="k">Pattern across sessions</div>
-                  <p>Third time work has come up right after family. Worth naming the link?</p>
-                  <div className="act">
-                    <span className="copilot-chip">Flag for notes</span>
-                  </div>
-                </div>
-                <div className="copilot-sug">
-                  <div className="k">Technique that fits</div>
-                  <p>Two-chair work — she's holding both sides of this herself. Script ready.</p>
-                  <div className="act">
-                    <span className="copilot-chip">Open script</span>
-                    <span className="copilot-chip">Save</span>
-                  </div>
-                </div>
-              </div>
-              <div className="copilot-pfoot">Visible only to you · Learner consented at 00:00</div>
             </div>
           </div>
         </div>

@@ -404,6 +404,7 @@ export function LearnerDashboard() {
                   practitionerName={practitionerFirstName}
                   dashboardData={dashboardData}
                   onCheckInSuccess={handleCheckInSuccess}
+                  setActiveTab={setActiveTab}
                 />
               )}
               {activeTab === 'practitioners' && (

@@ -379,7 +379,7 @@ export function Practitioners({ onUpdate, setActiveTab }) {
           Loading practitioners database...
         </div>
       ) : filteredPractitioners.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 items-start">
           {filteredPractitioners.map((p) => {
             const pId = p.user?._id || p._id
             const firstName = p.user?.firstName || p.firstName || 'Practitioner'
@@ -408,8 +408,11 @@ export function Practitioners({ onUpdate, setActiveTab }) {
                   gap: '14px',
                   boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
                   position: 'relative',
+                  alignSelf: 'start',
+                  height: 'fit-content',
                 }}
               >
+
                 {/* Profile Header */}
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                   <div

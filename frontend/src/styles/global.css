@@ -1636,20 +1636,18 @@ details > summary::-webkit-details-marker { display: none; }
 .copilot-sug {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.09);
-  border-left: 2px solid;
-  border-radius: 12px;
-  padding: 15px 16px;
-  margin-bottom: 13px;
-  opacity: 0;
-  transform: translateY(10px);
-  animation: copilot-rise 0.6s ease forwards;
+  border-left: 4px solid;
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+  display: block !important;
 }
-.copilot-sug:nth-child(1) { border-left-color: #1F5FE0; animation-delay: 0.3s; }
-.copilot-sug:nth-child(2) { border-left-color: #4733C9; animation-delay: 1.3s; }
-.copilot-sug:nth-child(3) { border-left-color: #8A2BE0; animation-delay: 2.3s; }
-@keyframes copilot-rise {
-  to { opacity: 1; transform: none; }
-}
+.copilot-sug:nth-child(1) { border-left-color: #3B82F6; }
+.copilot-sug:nth-child(2) { border-left-color: #6366F1; }
+.copilot-sug:nth-child(3) { border-left-color: #A855F7; }
 .copilot-sug .k {
   font-size: 10.5px;
   font-weight: 700;
@@ -1863,14 +1861,31 @@ details > summary::-webkit-details-marker { display: none; }
   border-radius: 18px;
   padding: 26px;
 }
-.oh-never-do-card li,
-.oh-never-do-card li span,
+.copilot-rails .oh-never-do-card--light,
+.oh-never-do-card--light,
+.oh-never-do-card--light *,
+.oh-never-do-card--light h3,
+.oh-never-do-card--light p,
+.oh-never-do-card--light ul,
 .oh-never-do-card--light li,
 .oh-never-do-card--light li span {
   color: #0F172A !important;
   -webkit-text-fill-color: #0F172A !important;
   opacity: 1 !important;
 }
+.oh-never-do-card--light .oh-never-do-badge {
+  background-color: #FEE2E2 !important;
+  color: #991B1B !important;
+  -webkit-text-fill-color: #991B1B !important;
+  border: 1px solid #FCA5A5 !important;
+  font-weight: 800 !important;
+  opacity: 1 !important;
+}
+.oh-never-do-card--dark,
+.oh-never-do-card--dark *,
+.oh-never-do-card--dark h3,
+.oh-never-do-card--dark p,
+.oh-never-do-card--dark ul,
 .oh-never-do-card--dark li,
 .oh-never-do-card--dark li span {
   color: #F1F5F9 !important;

@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react"
-import { FiUpload, FiCamera } from "react-icons/fi"
+import { FiUpload, FiCamera, FiTrash2 } from "react-icons/fi"
 import { useDispatch, useSelector } from "react-redux"
 
-import { updateDisplayPicture } from "../../../../services/operations/SettingsAPI"
+import { updateDisplayPicture, deleteDisplayPicture } from "../../../../services/operations/SettingsAPI"
 
 export default function ChangeProfilePicture() {
   const { token } = useSelector((state) => state.auth)
@@ -10,6 +10,7 @@ export default function ChangeProfilePicture() {
   const dispatch = useDispatch()
 
   const [loading, setLoading] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [imageFile, setImageFile] = useState(null)
   const [previewSource, setPreviewSource] = useState(null)
 
@@ -42,11 +43,29 @@ export default function ChangeProfilePicture() {
       formData.append("displayPicture", imageFile)
       dispatch(updateDisplayPicture(token, formData)).then(() => {
         setLoading(false)
+        setImageFile(null)
+        setPreviewSource(null)
       })
     } catch (error) {
       console.log("ERROR MESSAGE - ", error.message)
       setLoading(false)
     }
+  }
+
+  const handleDeletePicture = () => {
+    if (imageFile || previewSource) {
+      setImageFile(null)
+      setPreviewSource(null)
+      if (fileInputRef.current) fileInputRef.current.value = ""
+    }
+    setDeleting(true)
+    dispatch(deleteDisplayPicture(token)).then(() => {
+      setDeleting(false)
+      setImageFile(null)
+      setPreviewSource(null)
+    }).catch(() => {
+      setDeleting(false)
+    })
   }
 
   useEffect(() => {
@@ -80,7 +99,7 @@ export default function ChangeProfilePicture() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', maxWidth: '400px', justifyContent: 'flex-end' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', maxWidth: '480px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
         <input
           type="file"
           ref={fileInputRef}
@@ -89,13 +108,14 @@ export default function ChangeProfilePicture() {
           accept="image/png, image/gif, image/jpeg"
         />
         <button
+          type="button"
           onClick={handleClick}
-          disabled={loading}
+          disabled={loading || deleting}
           style={{
             background: '#F1F5F9',
             color: '#334155',
             border: '1px solid #CBD5E1',
-            padding: '10px 20px',
+            padding: '10px 18px',
             borderRadius: '12px',
             fontWeight: 700,
             fontSize: '12px',
@@ -105,14 +125,16 @@ export default function ChangeProfilePicture() {
         >
           Select Image
         </button>
+
         <button
+          type="button"
           onClick={handleFileUpload}
-          disabled={loading || !imageFile}
+          disabled={loading || deleting || !imageFile}
           style={{
             background: 'linear-gradient(135deg, #1F5FE0 0%, #8A2BE0 100%)',
             color: '#FFFFFF',
             border: 'none',
-            padding: '10px 20px',
+            padding: '10px 18px',
             borderRadius: '12px',
             fontWeight: 700,
             fontSize: '12px',
@@ -120,7 +142,7 @@ export default function ChangeProfilePicture() {
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
-            opacity: (loading || !imageFile) ? 0.5 : 1,
+            opacity: (loading || deleting || !imageFile) ? 0.5 : 1,
             boxShadow: '0 4px 12px rgba(31, 95, 224, 0.35)',
             transition: 'all 0.15s ease'
           }}
@@ -128,8 +150,31 @@ export default function ChangeProfilePicture() {
           {loading ? "Uploading..." : "Upload New Photo"}
           {!loading && <FiUpload style={{ fontSize: '13px' }} />}
         </button>
+
+        <button
+          type="button"
+          onClick={handleDeletePicture}
+          disabled={loading || deleting}
+          style={{
+            background: '#FEF2F2',
+            color: '#DC2626',
+            border: '1px solid #FCA5A5',
+            padding: '10px 16px',
+            borderRadius: '12px',
+            fontWeight: 700,
+            fontSize: '12px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            transition: 'all 0.15s ease'
+          }}
+          title="Remove profile picture"
+        >
+          <FiTrash2 style={{ fontSize: '13px', color: '#DC2626' }} />
+          <span>{deleting ? "Removing..." : "Remove Photo"}</span>
+        </button>
       </div>
     </div>
   )
 }
-

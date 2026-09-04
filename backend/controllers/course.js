@@ -136,12 +136,13 @@ exports.addVideoToCourse = async (req, res) => {
       return res.status(404).json({ success: false, message: "Course not found or not authorized" })
     }
 
-    // Upload video to Cloudinary
-    const uploadResult = await cloudinary.uploader.upload(req.files.video.tempFilePath, {
+    // Upload video to Cloudinary using upload_large for large files (MP4, MOV, AVI)
+    const uploadResult = await cloudinary.uploader.upload_large(req.files.video.tempFilePath, {
       folder: "openhand/course_videos",
       resource_type: "video",
-      chunk_size: 6000000, // 6MB chunks for large files
+      chunk_size: 6000000, // 6MB chunking for large video files
     })
+
 
     let thumbnailUrl = ""
     if (req.files?.thumbnail) {

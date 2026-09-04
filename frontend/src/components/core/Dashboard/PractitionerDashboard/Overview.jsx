@@ -2,6 +2,7 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { FiVideo } from 'react-icons/fi'
+import { formatClassTitle } from '../../../../utils/formatTitle'
 
 export function Overview({ practitionerName = 'Practitioner', setActiveSection, telemetryData, loading }) {
   const navigate = useNavigate()
@@ -186,7 +187,7 @@ export function Overview({ practitionerName = 'Practitioner', setActiveSection, 
                   <FiVideo size={14} />
                 </div>
                 <div className="who">
-                  <b>{cls.title}</b>
+                  <b>{formatClassTitle(cls.title)}</b>
                   <span>Zoom Class · {new Date(cls.scheduledStart).toLocaleDateString()}</span>
                 </div>
                 <div className="rt">

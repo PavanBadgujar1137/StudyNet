@@ -391,11 +391,28 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   font-size: 12.5px;
   color: #475569;
   font-weight: 600;
   padding: 0 10px;
   transition: all 0.2s ease;
+  cursor: pointer;
+  outline: none;
+  user-select: none;
+}
+.client-app-shell .sd:hover {
+  border-color: #8A2BE0;
+  background: rgba(138, 43, 224, 0.08);
+  color: #6B21A8;
+  transform: translateY(-1px);
+}
+.client-app-shell .sd.selected {
+  border: 2px solid #8A2BE0 !important;
+  background: rgba(138, 43, 224, 0.14) !important;
+  color: #581C87 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 12px rgba(138, 43, 224, 0.18);
 }
 .client-app-shell .sd.f {
   background: linear-gradient(135deg, #1F5FE0, #8A2BE0);
@@ -404,13 +421,24 @@
   box-shadow: 0 4px 12px rgba(31, 95, 224, 0.2);
 }
 .client-app-shell .sd.today {
-  border: 2px solid #8A2BE0;
-  background: rgba(138, 43, 224, 0.12);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  color: #7C3AED;
-  font-weight: 700;
-  box-shadow: 0 4px 16px rgba(138, 43, 224, 0.2);
+  border: 1.5px solid #8A2BE0;
+  background: rgba(138, 43, 224, 0.06);
+}
+.client-app-shell .sd span {
+  pointer-events: none;
+}
+.client-app-shell .sd .sd-badge {
+  background: #10B981;
+  color: #FFFFFF;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  pointer-events: none;
 }
 
 /* Check-in Form */
@@ -771,6 +799,36 @@
 .client-app-shell .srow .go, .practitioner-app-layout .srow .go {
   margin-left: auto;
   flex-shrink: 0;
+}
+.client-app-shell .oh-zoom-join-btn,
+.oh-zoom-join-btn {
+  background: #2563EB !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  padding: 8px 18px !important;
+  border-radius: 10px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2) !important;
+  transition: all 0.2s ease !important;
+}
+.client-app-shell .oh-zoom-join-btn:hover,
+.oh-zoom-join-btn:hover {
+  background: #1D4ED8 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
+}
+.client-app-shell .oh-zoom-join-btn svg,
+.oh-zoom-join-btn svg {
+  flex-shrink: 0 !important;
+  stroke-width: 2.2 !important;
 }
 .client-app-shell .pill, .practitioner-app-layout .pill {
   font-size: 11px;
