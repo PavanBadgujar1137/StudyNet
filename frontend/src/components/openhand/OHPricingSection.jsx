@@ -83,13 +83,21 @@ export default function OHPricingSection({ defaultRole = "learner", title, subti
 
       toast.dismiss(toastId)
 
+      const isRealRazorpayOrder =
+        typeof order?.id === 'string' &&
+        /^order_[A-Za-z0-9]{14,}$/.test(order.id) &&
+        !order.id.includes('sub') &&
+        !order.id.includes('pract') &&
+        !order.id.includes('mock') &&
+        !order.id.includes('fake')
+
       const options = {
         key: key,
         amount: order.amount,
-        currency: order.currency,
+        currency: order.currency || 'INR',
         name: "OpenHand Wellbeing Platform",
         description: `Subscription: ${planName}`,
-        order_id: order.id,
+        ...(isRealRazorpayOrder ? { order_id: order.id } : {}),
         prefill: {
           name: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : "",
           email: user?.email || "",

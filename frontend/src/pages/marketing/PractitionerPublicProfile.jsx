@@ -114,13 +114,20 @@ export function PractitionerPublicProfile() {
 
       const { order, key, bookingId } = orderRes.data
 
+      const isRealRazorpayOrder =
+        typeof order?.id === 'string' &&
+        /^order_[A-Za-z0-9]{14,}$/.test(order.id) &&
+        !order.id.includes('pract') &&
+        !order.id.includes('mock') &&
+        !order.id.includes('fake')
+
       const options = {
         key: key || 'rzp_test_TDhFSRuAl18Gcb',
         amount: order.amount,
         currency: order.currency || 'INR',
         name: 'OpenHand Practitioner Booking',
         description: `Booking: ${offer.title}`,
-        order_id: order.id,
+        ...(isRealRazorpayOrder ? { order_id: order.id } : {}),
         prefill: {
           name: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : '',
           email: user?.email || '',

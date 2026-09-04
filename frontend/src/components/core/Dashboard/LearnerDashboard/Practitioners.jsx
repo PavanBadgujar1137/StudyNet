@@ -167,6 +167,13 @@ export function Practitioners({ onUpdate, setActiveTab }) {
       const keyId = orderData?.key || process.env.REACT_APP_RAZORPAY_KEY || 'rzp_test_TDhFSRuAl18Gcb'
       const finalAmount = orderData?.amount || amount
 
+      const isRealRazorpayOrder =
+        typeof orderObj?.id === 'string' &&
+        /^order_[A-Za-z0-9]{14,}$/.test(orderObj.id) &&
+        !orderObj.id.includes('pract') &&
+        !orderObj.id.includes('mock') &&
+        !orderObj.id.includes('fake')
+
       // 2. Open Razorpay Checkout modal with authentic order
       const options = {
         key: keyId,
@@ -174,7 +181,7 @@ export function Practitioners({ onUpdate, setActiveTab }) {
         currency: orderObj.currency || 'INR',
         name: 'OpenHand Practice Platform',
         description: `Counseling Fee for ${pName}`,
-        order_id: orderObj.id,
+        ...(isRealRazorpayOrder ? { order_id: orderObj.id } : {}),
         handler: async function (response) {
           try {
             // 3. Verify signature and confirm connection in backend
@@ -221,6 +228,11 @@ export function Practitioners({ onUpdate, setActiveTab }) {
         },
         theme: {
           color: '#1F5FE0',
+        },
+        modal: {
+          ondismiss: function () {
+            setPayingId(null)
+          },
         },
       }
 

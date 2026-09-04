@@ -90,13 +90,20 @@ export function FindAPractitioner() {
 
       const { order, key, amount: finalAmount } = orderRes.data
 
+      const isRealRazorpayOrder =
+        typeof order?.id === 'string' &&
+        /^order_[A-Za-z0-9]{14,}$/.test(order.id) &&
+        !order.id.includes('pract') &&
+        !order.id.includes('mock') &&
+        !order.id.includes('fake')
+
       const options = {
         key: key || process.env.REACT_APP_RAZORPAY_KEY || 'rzp_test_TDhFSRuAl18Gcb',
         amount: order.amount,
         currency: order.currency || 'INR',
         name: 'OpenHand Practice Platform',
         description: `Counseling Fee for ${pName}`,
-        order_id: order.id,
+        ...(isRealRazorpayOrder ? { order_id: order.id } : {}),
         prefill: {
           name: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : '',
           email: user?.email || '',
