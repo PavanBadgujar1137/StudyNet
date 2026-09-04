@@ -445,16 +445,24 @@ exports.changePassword = async (req, res) => {
     // Get old password, new password, and confirm new password from req.body
     const { oldPassword, newPassword } = req.body
 
+    // Check if new password is identical to current password
+    if (oldPassword === newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "New password cannot be the same as your current password.",
+      })
+    }
+
     // Validate old password
     const isPasswordMatch = await bcrypt.compare(
       oldPassword,
       userDetails.password
     )
     if (!isPasswordMatch) {
-      // If old password does not match, return a 401 (Unauthorized) error
+      // If old password does not match, return a 401 error with a clear message
       return res
         .status(401)
-        .json({ success: false, message: "The password is incorrect" })
+        .json({ success: false, message: "Current password is incorrect" })
     }
 
     // Update password

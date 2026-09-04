@@ -46,6 +46,8 @@ export function CheckIn({ clientName = 'Student', practitionerName = 'your instr
     (c) => new Date(c.createdAt).toDateString() === todayDateStr
   )
 
+  const [editingCheckInId, setEditingCheckInId] = useState(null)
+
   const handleSave = async (e) => {
     e.preventDefault()
     if (!token) return
@@ -64,6 +66,7 @@ export function CheckIn({ clientName = 'Student', practitionerName = 'your instr
         'POST',
         '/api/v1/checkins',
         {
+          checkInId: editingCheckInId || undefined,
           mood: selectedMood,
           sleepScore: numericSleep,
           note: note.slice(0, 500),
@@ -74,6 +77,7 @@ export function CheckIn({ clientName = 'Student', practitionerName = 'your instr
 
       if (response?.data?.success) {
         setIsSaved(true)
+        setEditingCheckInId(null)
         toast.success(response.data.message || 'Check-in saved successfully!')
         if (onCheckInSuccess) onCheckInSuccess()
       } else {
@@ -90,19 +94,37 @@ export function CheckIn({ clientName = 'Student', practitionerName = 'your instr
   // ITEM 12 FIX: Explicit form reset for logging another check-in
   const handleLogAnother = () => {
     setIsSaved(false)
+    setEditingCheckInId(null)
     setNote('')
     setSleepScore(7)
     setSelectedMood('steady')
   }
 
-  // Edit today's check-in prefill
-  const handleEditToday = () => {
-    if (todayCheckIn) {
-      setSelectedMood(todayCheckIn.mood || 'steady')
-      setSleepScore(todayCheckIn.sleepScore !== undefined ? todayCheckIn.sleepScore : 7)
-      setNote(todayCheckIn.note || '')
+  // Edit a specific check-in entry from log history
+  const handleEditCheckIn = (checkInObj) => {
+    const target = checkInObj || todayCheckIn
+    if (target) {
+      setSelectedMood(target.mood || 'steady')
+      setSleepScore(target.sleepScore !== undefined ? target.sleepScore : 7)
+      setNote(target.note || '')
+      setEditingCheckInId(target._id)
       setIsSaved(false)
+
+      toast.success(`Loaded check-in from ${new Date(target.createdAt).toLocaleDateString()} for editing`)
+
+      // Smooth scroll up to check-in form
+      setTimeout(() => {
+        const formEl = document.getElementById('ciForm') || document.getElementById('checkin')
+        if (formEl) {
+          formEl.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+      }, 50)
     }
+  }
+
+  // Edit today's check-in prefill shortcut
+  const handleEditToday = () => {
+    handleEditCheckIn(todayCheckIn)
   }
 
   return (
@@ -302,7 +324,7 @@ export function CheckIn({ clientName = 'Student', practitionerName = 'your instr
 
         {checkIns.length > 0 ? (
           <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {checkIns.slice(0, 5).map((c) => {
+            {checkIns.slice(0, 10).map((c) => {
               const isToday = new Date(c.createdAt).toDateString() === todayDateStr
               return (
                 <div key={c._id} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 14px', background: isToday ? '#EFF6FF' : '#F8FAFC', borderRadius: '10px', border: isToday ? '1px solid #BFDBFE' : '1px solid #E2E8F0', fontSize: '13px' }}>
@@ -316,11 +338,13 @@ export function CheckIn({ clientName = 'Student', practitionerName = 'your instr
                   <div style={{ textAlign: 'right', fontSize: '11px', color: '#64748B', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
                     <span style={{ fontWeight: 600 }}>Sleep: {c.sleepScore}/10</span>
                     <div>{new Date(c.createdAt).toLocaleDateString()}</div>
-                    {isToday && (
-                      <button onClick={handleEditToday} style={{ marginTop: '4px', fontSize: '11px', background: 'none', border: 'none', color: '#2563EB', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}>
-                        Edit
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleEditCheckIn(c)}
+                      style={{ marginTop: '4px', fontSize: '11px', background: 'none', border: 'none', color: '#2563EB', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
+                    >
+                      Edit
+                    </button>
                   </div>
                 </div>
               )

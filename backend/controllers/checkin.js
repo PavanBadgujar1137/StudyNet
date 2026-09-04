@@ -24,16 +24,26 @@ exports.submitCheckIn = async (req, res) => {
       })
     }
 
-    // ITEM 13 FIX: Check if check-in exists for today to update instead of creating duplicate entry
-    const startOfDay = new Date()
-    startOfDay.setHours(0, 0, 0, 0)
-    const endOfDay = new Date()
-    endOfDay.setHours(23, 59, 59, 999)
+    // Check if check-in exists by ID or for today to update instead of creating duplicate entry
+    let existingCheckIn = null
+    if (req.body.checkInId) {
+      existingCheckIn = await CheckIn.findOne({
+        _id: req.body.checkInId,
+        client: userId,
+      })
+    }
 
-    let existingCheckIn = await CheckIn.findOne({
-      client: userId,
-      createdAt: { $gte: startOfDay, $lte: endOfDay },
-    })
+    if (!existingCheckIn) {
+      const startOfDay = new Date()
+      startOfDay.setHours(0, 0, 0, 0)
+      const endOfDay = new Date()
+      endOfDay.setHours(23, 59, 59, 999)
+
+      existingCheckIn = await CheckIn.findOne({
+        client: userId,
+        createdAt: { $gte: startOfDay, $lte: endOfDay },
+      })
+    }
 
     if (existingCheckIn) {
       existingCheckIn.mood = mood
@@ -45,7 +55,7 @@ exports.submitCheckIn = async (req, res) => {
 
       return res.status(200).json({
         success: true,
-        message: "Today's check-in updated successfully",
+        message: "Check-in updated successfully",
         checkIn: existingCheckIn,
         updated: true,
         privacyNotice: existingCheckIn.isPrivate

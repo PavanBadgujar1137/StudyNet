@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form"
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai"
 import { FiShield, FiCheck } from "react-icons/fi"
 import { useSelector } from "react-redux"
+import { toast } from "react-hot-toast"
 
 import { changePassword } from "../../../../services/operations/SettingsAPI"
 
@@ -19,6 +20,10 @@ export default function UpdatePassword() {
   } = useForm()
 
   const submitPasswordForm = async (data) => {
+    if (data.oldPassword === data.newPassword) {
+      toast.error("New password cannot be the same as your current password.")
+      return
+    }
     try {
       await changePassword(token, data)
     } catch (error) {

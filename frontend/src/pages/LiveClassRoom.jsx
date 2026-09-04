@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom"
 import { useSelector } from "react-redux"
 import {
   FiVideo, FiCopy, FiExternalLink, FiCalendar, FiClock,
-  FiUser, FiCheckCircle, FiPlayCircle, FiPower, FiShield, FiTv
+  FiUser, FiCheckCircle, FiPlayCircle, FiPower, FiShield, FiTv, FiArrowLeft
 } from "react-icons/fi"
 import toast from "react-hot-toast"
 
@@ -14,6 +14,14 @@ import { apiConnector } from "../services/apiConnector"
 export default function LiveClassRoom() {
   const { classId } = useParams()
   const navigate = useNavigate()
+
+  const handleGoBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1)
+    } else {
+      navigate('/dashboard?tab=sessions')
+    }
+  }
   const { token } = useSelector((s) => s.auth)
   const { user } = useSelector((s) => s.profile)
 
@@ -117,6 +125,30 @@ export default function LiveClassRoom() {
     <div style={{ minHeight: 'calc(100vh - 3.5rem)', background: '#F8FAFC', padding: '32px 16px', color: '#0F172A' }}>
       <div style={{ maxWidth: '1140px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
         
+        {/* Top Back Navigation Bar */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <button
+            onClick={handleGoBack}
+            style={{
+              background: '#FFFFFF',
+              border: '1px solid #CBD5E1',
+              color: '#0F172A',
+              padding: '9px 18px',
+              borderRadius: '12px',
+              fontWeight: 700,
+              fontSize: '13px',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <FiArrowLeft size={16} /> Back to Sessions &amp; Resources
+          </button>
+        </div>
+
         {/* Top Header Card */}
         <div style={{ background: '#ffffff', border: '1px solid #E2E8F0', borderRadius: '24px', padding: '28px 32px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', position: 'relative', overflow: 'hidden' }}>
           
@@ -233,7 +265,26 @@ export default function LiveClassRoom() {
               {/* Header inside screen */}
               <div style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#EFF6FF', color: '#2563EB', display: 'flex', alignItems: 'center', justifyCenter: 'center', fontSize: '16px' }}>
+                  <button
+                    onClick={handleGoBack}
+                    style={{
+                      background: '#FFFFFF',
+                      border: '1px solid #CBD5E1',
+                      color: '#2563EB',
+                      padding: '6px 12px',
+                      borderRadius: '8px',
+                      fontSize: '12.5px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                    title="Back to Sessions & Resources"
+                  >
+                    <FiArrowLeft size={14} /> Back
+                  </button>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#EFF6FF', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>
                     <FiVideo size={18} />
                   </div>
                   <div>

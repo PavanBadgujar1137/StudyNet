@@ -33,10 +33,10 @@ export function CheckInRhythm({ dashboardData, onLogClick }) {
   const weekDays = getWeekDays()
   const todayDay = weekDays.find((d) => d.isToday) || weekDays[0]
 
-  // Default selected day to today
-  const [selectedDayStr, setSelectedDayStr] = useState(todayDay.dateString)
+  // Default selected day to today's dayName
+  const [selectedDayName, setSelectedDayName] = useState(todayDay.dayName)
 
-  const selectedDayObj = weekDays.find((d) => d.dateString === selectedDayStr) || todayDay
+  const selectedDayObj = weekDays.find((d) => d.dayName === selectedDayName) || todayDay
 
   // Find check-in for a given day object (matches current week date first, then falls back to weekday name)
   const findCheckInForDay = (dayObj) => {
@@ -75,20 +75,50 @@ export function CheckInRhythm({ dashboardData, onLogClick }) {
       <div className="streak">
         {weekDays.map((day) => {
           const checkIn = findCheckInForDay(day)
-          const isSelected = day.dateString === selectedDayStr
+          const isSelected = day.dayName === selectedDayName
           const hasCheckIn = !!checkIn
 
           return (
             <button
               key={day.dayName}
               type="button"
-              onClick={() => setSelectedDayStr(day.dateString)}
-              className={`sd ${day.isToday ? 'today' : ''} ${isSelected ? 'selected' : ''} ${hasCheckIn ? 'has-checkin' : ''}`}
+              onClick={() => setSelectedDayName(day.dayName)}
+              style={{
+                flex: 1,
+                minWidth: '90px',
+                height: '44px',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                fontSize: '12.5px',
+                fontWeight: isSelected ? 800 : day.isToday ? 700 : 600,
+                padding: '0 10px',
+                transition: 'all 0.15s ease',
+                cursor: 'pointer',
+                outline: 'none',
+                userSelect: 'none',
+                background: isSelected
+                  ? '#F3E8FF'
+                  : day.isToday
+                  ? '#FFFFFF'
+                  : 'rgba(14, 18, 53, 0.04)',
+                border: isSelected
+                  ? '2px solid #8A2BE0'
+                  : day.isToday
+                  ? '1.5px dashed #A855F7'
+                  : '1px solid rgba(14, 18, 53, 0.08)',
+                color: isSelected ? '#581C87' : day.isToday ? '#7E22CE' : '#475569',
+                boxShadow: isSelected ? '0 4px 12px rgba(138, 43, 224, 0.18)' : 'none',
+              }}
               title={`${day.dayName} (${day.date.toLocaleDateString()}) - ${hasCheckIn ? 'Check-in Logged' : 'No Check-in'}`}
               aria-label={`Select ${day.dayName}`}
             >
-              <span className="sd-name">{day.dayName}</span>
-              {hasCheckIn && <span className="sd-badge">✓</span>}
+              <span>{day.dayName}</span>
+              {hasCheckIn && (
+                <span style={{ fontSize: '11px', color: '#16A34A', fontWeight: 800 }}>✓</span>
+              )}
             </button>
           )
         })}
