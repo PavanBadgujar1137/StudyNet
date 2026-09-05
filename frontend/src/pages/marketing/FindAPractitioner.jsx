@@ -539,7 +539,7 @@ export function FindAPractitioner() {
                         </div>
                       </div>
 
-                      {/* CTA Buttons: Free Connect & View Profile */}
+                      {/* CTA Buttons: Connect & Book & View Profile */}
                       <div className="flex gap-2 w-full mt-3">
                         <button
                           type="button"
@@ -547,7 +547,7 @@ export function FindAPractitioner() {
                           disabled={connectingId === (p._id || p.id)}
                           className="flex-1 py-2.5 px-3 rounded-xl border border-indigo-200 text-indigo-700 bg-indigo-50/70 hover:bg-indigo-100 font-bold text-xs transition-all flex items-center justify-center gap-1"
                         >
-                          {connectingId === (p._id || p.id) ? 'Connecting...' : '🤝 Connect Free'}
+                          {connectingId === (p._id || p.id) ? 'Connecting...' : '🤝 Connect & Book'}
                         </button>
                         <OHButton href={`/practitioner/${p.handle || p._id || ''}`} className="flex-1 p-book-btn">
                           View Profile →
