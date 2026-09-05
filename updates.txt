@@ -1,0 +1,73 @@
+Test Result Details Openhand 31 Aug 2026
+
+1. User is able to back to main browser page, It should be stopped at main page or Page not found / refresh when user clicks on Back
+
+2. User should see valid detailed and pleasant UI On for Organization Page check the UI of A pilot runs in eight weeks
+Circle has numbers it should have Week number or image as top it has Week 1, week 2… Also, the Next Arrow button is not working to move to 6th week onwards
+
+3. Reset Filter option is not enabled for Price filter on Find a Practitioner
+
+4. Week wise activity text for eight weeks plan if selected heighted in light blue color making text invisible
+
+5. What it will never Do section is not uniform across website
+
+6. Consent messages should pop up on screen in center not as browser pop up which might get miss and also doesn’t align with website standard
+
+7. Contact Us all 3 sections does not lead to anything specific like opening chatbot or email box or contact details to call
+
+8. Three conversation takes direct access contact us however every time the focus is on Organization & EAP not as per the box above
+
+9. Contact message send successfully however the Submit another request is not highlighted correctly
+
+10. Boxes behavior on selection of another box under the questions practitioners ask us and AURA is not same for Before you ask us under Contact Us
+
+11. After Creating account taken to Dashboard it says check-in journey, Initially I reduced sleep hours added comment it was not allowing me to save records it happened 3 time then I came to dashboard again and tried with the text as Test then it got saved
+
+12. Also, the text on Anything you want to put down? (Optional) is not clear when user wants to log another checking
+
+13. I am able to log multiple sleep check in with different texts this should be editable not add every time for same parameter
+
+15. Social Post & Media Studio can be saved as Draft but cannot be edited
+
+16. Every practitioner is getting addressed by Dr in Social media
+
+17. Session Title / Topic does not have character limit and similar should be across all text boxes on site if not added already for all text boxes header, question or content
+
+18. Able to create backdated Meetings since few hours back and even for last month
+
+19. Created course saved as Course Created but status as Draft - should be Draft for Edit, Ready for Publish then once Published then it should be changed to Active based on flow
+
+20. Draft course cannot be edited
+
+_____________________________________________complete____________________________________________________________
+
+21. Price is also does not have any numeric character limitation not even on decimals
+
+22. On clicking Publish it says Published but it does not have the Publish Link ready for Copy and share on social media or as in person over chat or email
+
+23. It allows the Delete Published Course where status is Published. If published course has to be deleted it has to have return flow like - unpublish - send update email, refund initialization if paid course and then only should be deleted or should have check on with participants
+
+24. Offers - Live Offers can be deleted, can be edited. Should have restrictions
+
+25. Offers Amount section not having character limit
+
+26. Prepopulated text is good it is better to have pop up saying Practitioner to update text as they need to avoid common AI language
+
+27. Practitioner can add Specialties and Language, but they cannot edit on the same page
+
+28. Request Review from Client added correct email that is not received
+
+29. Initial Offer is displayed when I clicked on Find Practitioner link on top
+
+30. As I click Find Practitioner link from Practitioner login it removes the Practitioner login on the page it should open the page in separate tabs or should not leave Practitioner login. As on using browser back login it is returning to browser
+
+31. Find Practitioner showed my only 1 offer listed
+As user when I clicked on View Profile on program it is taking me directly to Practitioner board
+
+32. In above scenario if I log out from practitioner session - View profile shows me login page
+need to check Cache clearing / Cache session
+
+33. QR Code takes me rightly to My Profile on Mobile through URL
+However, when I have clicked on Find Practitioner page and click on View profile it is going to Login page
+
+34. Request Review and Testimonial has Request Review button added email id, but email is not received
