@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@drawable/launch_background</item>
+        <item name="android:windowSplashScreenBackground">@color/oh_white</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/oh_mark</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/oh_white</item>
+    </style>
+    <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@color/oh_white</item>
+    </style>
+</resources>
