@@ -1,8 +1,8 @@
 // utils/imageUploader.js
 // AWS S3 File Upload Utility — replaces Cloudinary uploadImageToCloudinary
 // Supports: images, videos, PDFs, and any binary file type
+// URLs are served via CloudFront CDN when AWS_CLOUDFRONT_DOMAIN is set.
 
-const { PutObjectCommand } = require("@aws-sdk/client-s3")
 const { Upload } = require("@aws-sdk/lib-storage")
 const s3Client = require("../config/s3")
 const mime = require("mime-types")
@@ -11,12 +11,17 @@ const fs = require("fs")
 
 const BUCKET = process.env.AWS_S3_BUCKET_NAME
 const REGION = process.env.AWS_REGION || "ap-south-1"
-const FOLDER_PREFIX = process.env.AWS_S3_FOLDER || "openhand"
+const FOLDER_PREFIX = process.env.AWS_S3_FOLDER || "openhand/uat"
+const CLOUDFRONT_DOMAIN = process.env.AWS_CLOUDFRONT_DOMAIN // e.g. d2ruooz1ktuxdd.cloudfront.net
 
 /**
- * Builds the public S3 URL for a given key.
+ * Builds the public URL for a given S3 key.
+ * Uses CloudFront if AWS_CLOUDFRONT_DOMAIN is set, otherwise falls back to direct S3 URL.
  */
-function buildS3Url(key) {
+function buildFileUrl(key) {
+  if (CLOUDFRONT_DOMAIN) {
+    return `https://${CLOUDFRONT_DOMAIN}/${key}`
+  }
   return `https://${BUCKET}.s3.${REGION}.amazonaws.com/${key}`
 }
 
@@ -38,7 +43,7 @@ function buildS3Key(folder, originalName) {
  *
  * @param {Object} file         - express-fileupload file object (has .tempFilePath, .name, .mimetype)
  * @param {string} folder       - S3 subfolder path (e.g. "profile_pictures", "course_videos")
- * @returns {Promise<{url: string, key: string}>}
+ * @returns {Promise<{url: string, key: string, secure_url: string}>}
  */
 exports.uploadFileToS3 = async (file, folder = "uploads") => {
   if (!file?.tempFilePath) {
@@ -77,7 +82,8 @@ exports.uploadFileToS3 = async (file, folder = "uploads") => {
 
   await upload.done()
 
-  const url = buildS3Url(key)
+  const url = buildFileUrl(key)
+  console.log(`[S3 Upload] SUCCESS — Key: ${key} | URL: ${url}`)
   return { url, key, secure_url: url } // secure_url alias for backward compatibility
 }
 
