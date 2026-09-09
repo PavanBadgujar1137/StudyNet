@@ -19,7 +19,7 @@ const liveClassRoutes = require("./routes/liveClass")
 const recordedLectureRoutes = require("./routes/recordedLecture")
 const noteRoutes = require("./routes/notes")
 const database = require("./config/database")
-const { cloudinaryConnect } = require("./config/cloudinary")
+// S3 client is initialized lazily in config/s3.js — no explicit connect needed
 
 const PORT = process.env.PORT || 4000
 
@@ -101,8 +101,7 @@ app.use(
 )
 
 
-// Connecting to Cloudinary
-cloudinaryConnect()
+// AWS S3 — no global connect needed; s3Client is initialized on first import of config/s3.js
 
 const practitionerRoutes = require("./routes/practitioner")
 const offerRoutes = require("./routes/offer")

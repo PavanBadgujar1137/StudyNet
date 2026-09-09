@@ -1,5 +1,5 @@
 const Note = require("../models/Note")
-const { uploadImageToCloudinary } = require("../utils/imageUploader")
+const { uploadFileToS3 } = require("../utils/imageUploader")
 
 // ─────────────────────────────────────────────────────────────────────────────
 // INSTRUCTOR: Upload Note / DPP / Study Material
@@ -30,14 +30,14 @@ exports.uploadNote = async (req, res) => {
       return res.status(400).json({ success: false, message: "No file uploaded." })
     }
 
-    // Upload to Cloudinary (use custom folder)
+    // Upload to AWS S3 (use custom folder)
     const file = req.files.file
-    const uploadRes = await uploadImageToCloudinary(file, process.env.FOLDER_NAME || "OpenHand")
+    const uploadRes = await uploadFileToS3(file, process.env.AWS_S3_FOLDER || "study_materials")
 
     const note = await Note.create({
       title,
       type,
-      fileUrl: uploadRes.secure_url,
+      fileUrl: uploadRes.url,
       relatedLecture: relatedLectureId || undefined,
       relatedCourse: courseId,
       downloadable: downloadable !== "false",

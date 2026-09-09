@@ -8,7 +8,7 @@ const noteSchema = new mongoose.Schema(
       enum: ["notes", "dpp", "formula_sheet", "assignment"],
       required: true,
     },
-    fileUrl: { type: String, required: true }, // Cloudinary file link
+    fileUrl: { type: String, required: true }, // AWS S3 file URL
     relatedLecture: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "RecordedLecture",

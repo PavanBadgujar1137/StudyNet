@@ -1,6 +1,6 @@
 const SocialPost = require("../models/SocialPost")
 const SocialAccount = require("../models/SocialAccount")
-const { uploadImageToCloudinary } = require("../utils/imageUploader")
+const { uploadFileToS3 } = require("../utils/imageUploader")
 
 // Helper function to build web share intents
 const generateShareIntents = (caption, mediaUrl) => {
@@ -45,11 +45,11 @@ exports.createPost = async (req, res) => {
 
     let mediaUrl = rawMediaUrl || ""
     if (req.files && req.files.mediaFile) {
-      const uploadDetails = await uploadImageToCloudinary(
+      const uploadDetails = await uploadFileToS3(
         req.files.mediaFile,
-        process.env.FOLDER_NAME || "openhand_social_posts"
+        process.env.AWS_S3_FOLDER || "social_posts"
       )
-      mediaUrl = uploadDetails.secure_url
+      mediaUrl = uploadDetails.url
     }
 
     const shareIntents = generateShareIntents(caption, mediaUrl)
@@ -121,11 +121,11 @@ exports.updatePost = async (req, res) => {
 
     let mediaUrl = rawMediaUrl !== undefined ? rawMediaUrl : post.mediaUrl
     if (req.files && req.files.mediaFile) {
-      const uploadDetails = await uploadImageToCloudinary(
+      const uploadDetails = await uploadFileToS3(
         req.files.mediaFile,
-        process.env.FOLDER_NAME || "openhand_social_posts"
+        process.env.AWS_S3_FOLDER || "social_posts"
       )
-      mediaUrl = uploadDetails.secure_url
+      mediaUrl = uploadDetails.url
     }
     post.mediaUrl = mediaUrl
 

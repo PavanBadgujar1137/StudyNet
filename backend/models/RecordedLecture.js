@@ -4,7 +4,7 @@ const recordedLectureSchema = new mongoose.Schema(
   {
     title: { type: String, required: true, trim: true },
     description: { type: String, default: "" },
-    videoUrl: { type: String, required: true }, // Cloudinary CDN URL or similar
+    videoUrl: { type: String, required: true }, // AWS S3 URL
     thumbnail: { type: String },
     durationSeconds: { type: Number, default: 0 },
 

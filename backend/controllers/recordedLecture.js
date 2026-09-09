@@ -1,5 +1,47 @@
 const RecordedLecture = require("../models/RecordedLecture")
-const cloudinary = require("cloudinary").v2
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner")
+const { GetObjectCommand } = require("@aws-sdk/client-s3")
+const s3Client = require("../config/s3")
+
+const BUCKET = process.env.AWS_S3_BUCKET_NAME
+const REGION = process.env.AWS_REGION || "ap-south-1"
+
+/**
+ * Extracts the S3 object key from a full S3 URL.
+ * URL format: https://<bucket>.s3.<region>.amazonaws.com/<key>
+ */
+function extractS3Key(url) {
+  try {
+    const urlObj = new URL(url)
+    // Remove leading slash from pathname to get the key
+    return urlObj.pathname.replace(/^\//, "")
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Generates a presigned URL for private S3 objects (1-hour expiry).
+ * Falls back to the original URL if signing fails.
+ */
+async function generatePresignedUrl(objectUrl) {
+  const key = extractS3Key(objectUrl)
+  if (!key || !BUCKET) return objectUrl
+
+  try {
+    const command = new GetObjectCommand({
+      Bucket: BUCKET,
+      Key: key,
+    })
+    const presignedUrl = await getSignedUrl(s3Client, command, {
+      expiresIn: 3600, // 1 hour
+    })
+    return presignedUrl
+  } catch (err) {
+    console.warn("S3 presigned URL generation failed, using direct URL:", err.message)
+    return objectUrl
+  }
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // INSTRUCTOR: Create a recorded lecture (or link from ended live class)
@@ -102,28 +144,8 @@ exports.getLecturePlayback = async (req, res) => {
       }
     }
 
-    // Generate signed / expiring video URL (best effort, falls back to direct URL)
-    let signedUrl = lecture.videoUrl
-    if (lecture.videoUrl.includes("cloudinary.com")) {
-      try {
-        // Extract public ID from Cloudinary URL
-        const parts = lecture.videoUrl.split("/")
-        const uploadIndex = parts.indexOf("upload")
-        if (uploadIndex !== -1) {
-          const publicIdWithExtension = parts.slice(uploadIndex + 2).join("/")
-          const publicId = publicIdWithExtension.replace(/\.[^/.]+$/, "") // strip extension
-          
-          signedUrl = cloudinary.url(publicId, {
-            resource_type: "video",
-            sign_url: true,
-            type: "authenticated",
-            expires_at: Math.floor(Date.now() / 1000) + 3600, // 1 hour expiry
-          })
-        }
-      } catch (err) {
-        console.warn("Cloudinary URL signing failed, using fallback:", err.message)
-      }
-    }
+    // Generate S3 presigned URL for secure, time-limited video playback
+    const signedUrl = await generatePresignedUrl(lecture.videoUrl)
 
     // Telemetry: increment view count
     lecture.views += 1

@@ -118,7 +118,7 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
         {uploading && (
           <div style={{ background: '#EFF6FF', borderRadius: 8, padding: '12px 16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 12, color: '#3B82F6', fontWeight: 600 }}>
-              <span>Uploading to Cloudinary...</span>
+              <span>Uploading to AWS S3...</span>
               <span>{progress}%</span>
             </div>
             <div style={{ background: '#BFDBFE', borderRadius: 4, height: 6, overflow: 'hidden' }}>

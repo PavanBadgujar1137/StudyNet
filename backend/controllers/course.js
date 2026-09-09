@@ -2,7 +2,7 @@ const Course = require("../models/Course")
 const CourseVideo = require("../models/CourseVideo")
 const Subscription = require("../models/Subscription")
 const User = require("../models/User")
-const cloudinary = require("cloudinary").v2
+const { uploadFileToS3 } = require("../utils/imageUploader")
 
 // ─── CREATE COURSE (Practitioner) ─────────────────────────────────────────────
 exports.createCourse = async (req, res) => {
@@ -16,11 +16,8 @@ exports.createCourse = async (req, res) => {
 
     let thumbnailUrl = ""
     if (req.files?.thumbnail) {
-      const uploaded = await cloudinary.uploader.upload(req.files.thumbnail.tempFilePath, {
-        folder: "openhand/course_thumbnails",
-        resource_type: "image",
-      })
-      thumbnailUrl = uploaded.secure_url
+      const uploaded = await uploadFileToS3(req.files.thumbnail, "course_thumbnails")
+      thumbnailUrl = uploaded.url
     }
 
     const numPrice = Number(price) || 0
@@ -71,11 +68,8 @@ exports.updateCourse = async (req, res) => {
     }
 
     if (req.files?.thumbnail) {
-      const uploaded = await cloudinary.uploader.upload(req.files.thumbnail.tempFilePath, {
-        folder: "openhand/course_thumbnails",
-        resource_type: "image",
-      })
-      course.thumbnail = uploaded.secure_url
+      const uploaded = await uploadFileToS3(req.files.thumbnail, "course_thumbnails")
+      course.thumbnail = uploaded.url
     }
 
     await course.save()
@@ -109,7 +103,6 @@ exports.deleteCourse = async (req, res) => {
     await CourseVideo.deleteMany({ course: id })
     await Course.findByIdAndDelete(id)
 
-
     return res.status(200).json({ success: true, message: "Course deleted" })
   } catch (error) {
     console.error("deleteCourse error:", error)
@@ -136,38 +129,25 @@ exports.addVideoToCourse = async (req, res) => {
       return res.status(404).json({ success: false, message: "Course not found or not authorized" })
     }
 
-    // Upload video to Cloudinary using upload_large for large files (MP4, MOV, AVI)
-    const uploadResult = await cloudinary.uploader.upload_large(req.files.video.tempFilePath, {
-      folder: "openhand/course_videos",
-      resource_type: "video",
-      chunk_size: 6000000, // 6MB chunking for large video files
-    })
-
+    // Upload video to AWS S3 using multipart upload (handles large MP4, MOV, AVI files)
+    const uploadResult = await uploadFileToS3(req.files.video, "course_videos")
 
     let thumbnailUrl = ""
     if (req.files?.thumbnail) {
-      const thumbResult = await cloudinary.uploader.upload(req.files.thumbnail.tempFilePath, {
-        folder: "openhand/video_thumbnails",
-        resource_type: "image",
-      })
-      thumbnailUrl = thumbResult.secure_url
+      const thumbResult = await uploadFileToS3(req.files.thumbnail, "video_thumbnails")
+      thumbnailUrl = thumbResult.url
     }
 
-    // Auto-generate thumbnail from video if not provided
-    if (!thumbnailUrl && uploadResult.public_id) {
-      thumbnailUrl = cloudinary.url(uploadResult.public_id, {
-        resource_type: "video",
-        format: "jpg",
-        transformation: [{ start_offset: "1" }],
-      })
-    }
+    // Note: S3 does not auto-generate video thumbnails (unlike Cloudinary).
+    // A separate thumbnail upload is required, or you may use a client-side
+    // video frame capture library to generate a thumbnail before uploading.
 
     const video = await CourseVideo.create({
       title,
       description: description || "",
-      videoUrl: uploadResult.secure_url,
+      videoUrl: uploadResult.url,
       thumbnail: thumbnailUrl,
-      durationSeconds: Number(durationSeconds || uploadResult.duration || 0),
+      durationSeconds: Number(durationSeconds || 0),
       order: Number(order || course.videos.length),
       course: courseId,
     })
@@ -357,4 +337,3 @@ exports.getCourseVideos = async (req, res) => {
     return res.status(500).json({ success: false, message: error.message })
   }
 }
-

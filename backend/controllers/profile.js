@@ -14,7 +14,7 @@ const RatingAndReview = require("../models/RatingandReview")
 const CircleMembership = require("../models/CircleMembership")
 const ClientConnection = require("../models/ClientConnection")
 const Subscription = require("../models/Subscription")
-const { uploadImageToCloudinary } = require("../utils/imageUploader")
+const { uploadFileToS3 } = require("../utils/imageUploader")
 const mongoose = require("mongoose")
 const { convertSecondsToDuration } = require("../utils/secToDuration")
 
@@ -137,15 +137,13 @@ exports.updateDisplayPicture = async (req, res) => {
 
     const displayPicture = req.files.displayPicture
     const userId = req.user.id
-    const image = await uploadImageToCloudinary(
+    const image = await uploadFileToS3(
       displayPicture,
-      process.env.FOLDER_NAME,
-      1000,
-      90
+      "profile_pictures"
     )
     const updatedProfile = await User.findByIdAndUpdate(
       userId,
-      { image: image.secure_url },
+      { image: image.url },
       { new: true }
     )
     return res.status(200).json({
