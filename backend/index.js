@@ -1,20 +1,20 @@
 // Load env before any other app modules
-// 1) .env (local switch blocks)  2) .env.uat / .env.production if present (PM2)
+// UAT -> .env.uat | Production -> .env
 const path = require("path")
 const fs = require("fs")
 const dotenv = require("dotenv")
 
-dotenv.config({ path: path.join(__dirname, ".env") })
 const appEnvName = String(process.env.APP_ENV || "uat").toLowerCase()
-const envFile =
-  appEnvName === "production" || appEnvName === "prod"
-    ? ".env.production"
-    : ".env.uat"
+const isUat = appEnvName === "uat" || appEnvName === "development"
+const envFile = isUat ? ".env.uat" : ".env"
 const envPath = path.join(__dirname, envFile)
+
 if (fs.existsSync(envPath)) {
-  dotenv.config({ path: envPath, override: true })
+  dotenv.config({ path: envPath })
+} else {
+  dotenv.config({ path: path.join(__dirname, ".env") })
 }
-console.log(`APP_ENV=${process.env.APP_ENV || appEnvName} | file=${fs.existsSync(envPath) ? envFile : ".env"}`)
+console.log(`APP_ENV=${process.env.APP_ENV || appEnvName} | loaded=${envFile}`)
 
 const os = require("os")
 const http = require("http")
