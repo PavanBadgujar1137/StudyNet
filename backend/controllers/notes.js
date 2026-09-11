@@ -32,7 +32,7 @@ exports.uploadNote = async (req, res) => {
 
     // Upload to AWS S3 (use custom folder)
     const file = req.files.file
-    const uploadRes = await uploadFileToS3(file, process.env.AWS_S3_FOLDER || "study_materials")
+    const uploadRes = await uploadFileToS3(file, "study_materials")
 
     const note = await Note.create({
       title,

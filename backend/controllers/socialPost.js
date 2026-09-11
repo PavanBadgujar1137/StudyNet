@@ -47,7 +47,7 @@ exports.createPost = async (req, res) => {
     if (req.files && req.files.mediaFile) {
       const uploadDetails = await uploadFileToS3(
         req.files.mediaFile,
-        process.env.AWS_S3_FOLDER || "social_posts"
+        "social_posts"
       )
       mediaUrl = uploadDetails.url
     }
@@ -123,7 +123,7 @@ exports.updatePost = async (req, res) => {
     if (req.files && req.files.mediaFile) {
       const uploadDetails = await uploadFileToS3(
         req.files.mediaFile,
-        process.env.AWS_S3_FOLDER || "social_posts"
+        "social_posts"
       )
       mediaUrl = uploadDetails.url
     }
