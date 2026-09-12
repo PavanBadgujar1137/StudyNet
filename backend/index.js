@@ -1,9 +1,21 @@
-// Load env before any other app modules (always from backend/.env)
+// Load env before any other app modules
+// UAT -> .env.uat | Production -> .env
 const path = require("path")
-const dotenv = require("dotenv")
-dotenv.config({ path: path.join(__dirname, ".env") })
-
 const fs = require("fs")
+const dotenv = require("dotenv")
+
+const appEnvName = String(process.env.APP_ENV || "uat").toLowerCase()
+const isUat = appEnvName === "uat" || appEnvName === "development"
+const envFile = isUat ? ".env.uat" : ".env"
+const envPath = path.join(__dirname, envFile)
+
+if (fs.existsSync(envPath)) {
+  dotenv.config({ path: envPath })
+} else {
+  dotenv.config({ path: path.join(__dirname, ".env") })
+}
+console.log(`APP_ENV=${process.env.APP_ENV || appEnvName} | loaded=${envFile}`)
+
 const os = require("os")
 const http = require("http")
 const express = require("express")
