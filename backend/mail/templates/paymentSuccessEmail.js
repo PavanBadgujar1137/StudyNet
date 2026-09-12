@@ -77,7 +77,7 @@ exports.paymentSuccessEmail = (name, amount, orderId, paymentId) => {
                 <p>Your Order ID is <b>${orderId}</b></p>
             </div>
             <div class="support">If you have any questions or need assistance, please feel free to reach out to us at <a
-                    href="mailto:info@openhand.live">info@openhand.live</a>. We are here to help!</div>
+                    href="mailto:connect@openhand.live">connect@openhand.live</a>. We are here to help!</div>
         </div>
     </body>
     

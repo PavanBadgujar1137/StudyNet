@@ -23,35 +23,64 @@ function formatTotalDuration(secs) {
   return h > 0 ? `${h}h ${m}m` : `${m} min`
 }
 
+function getYouTubeEmbedUrl(url) {
+  if (!url) return null
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/
+  const match = String(url).match(regExp)
+  return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}?autoplay=1&rel=0` : null
+}
+
 // ─── Video Player Modal ────────────────────────────────────────────────────────
 function VideoPlayer({ video, onClose, onNext, hasNext }) {
   const videoRef = useRef()
+  const ytEmbedUrl = getYouTubeEmbedUrl(video?.videoUrl)
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 2000, display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-        <button onClick={onClose} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', fontSize: 14 }}>
-          <FiChevronLeft /> Back to Course
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(5, 8, 18, 0.95)', backdropFilter: 'blur(8px)', zIndex: 2000, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 28px', borderBottom: '1px solid rgba(255,255,255,0.08)', background: 'rgba(15, 23, 42, 0.6)' }}>
+        <button onClick={onClose} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', color: '#F1F5F9', cursor: 'pointer', fontSize: 13, fontWeight: 600, padding: '8px 14px', borderRadius: 8 }}>
+          <FiChevronLeft size={16} /> Back to Course
         </button>
-        <div style={{ color: '#F1F5F9', fontWeight: 700, fontSize: 15 }}>{video.title}</div>
-        <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 8, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', cursor: 'pointer' }}>
-          <FiX />
+        <div style={{ color: '#F8FAFC', fontWeight: 700, fontSize: 16, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '50%' }}>
+          {video.title}
+        </div>
+        <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 8, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F1F5F9', cursor: 'pointer' }}>
+          <FiX size={18} />
         </button>
       </div>
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-        <video
-          ref={videoRef}
-          src={video.videoUrl}
-          controls
-          autoPlay
-          style={{ maxWidth: '100%', maxHeight: '100%', borderRadius: 12, boxShadow: '0 0 80px rgba(0,0,0,0.8)' }}
-        />
+
+      {/* Video Content Stage */}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+        <div style={{ width: '100%', maxWidth: '960px', maxHeight: 'calc(100vh - 160px)', aspectRatio: '16/9', background: '#000', borderRadius: 16, overflow: 'hidden', boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.1)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {ytEmbedUrl ? (
+            <iframe
+              src={ytEmbedUrl}
+              title={video.title}
+              style={{ width: '100%', height: '100%', border: 'none' }}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          ) : (
+            <video
+              ref={videoRef}
+              src={video.videoUrl}
+              controls
+              autoPlay
+              style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#000' }}
+            />
+          )}
+        </div>
       </div>
-      <div style={{ padding: '16px 24px', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ color: '#64748B', fontSize: 13 }}>{video.description}</div>
+
+      {/* Footer / Description & Actions */}
+      <div style={{ padding: '16px 28px', borderTop: '1px solid rgba(255,255,255,0.08)', background: 'rgba(15, 23, 42, 0.6)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ color: '#94A3B8', fontSize: 13, maxWidth: '70%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {video.description || video.title}
+        </div>
         {hasNext && (
-          <button onClick={onNext} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 18px', background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)', border: 'none', borderRadius: 8, color: '#fff', cursor: 'pointer', fontWeight: 600, fontSize: 13 }}>
-            Next Video <FiArrowRight />
+          <button onClick={onNext} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', background: 'linear-gradient(135deg, #2563EB, #4F46E5)', border: 'none', borderRadius: 10, color: '#fff', cursor: 'pointer', fontWeight: 700, fontSize: 13, boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)' }}>
+            Next Video <FiArrowRight size={14} />
           </button>
         )}
       </div>

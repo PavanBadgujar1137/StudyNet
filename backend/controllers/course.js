@@ -115,13 +115,13 @@ exports.addVideoToCourse = async (req, res) => {
   try {
     const practitionerId = req.user.id
     const { id: courseId } = req.params
-    const { title, description, durationSeconds, order } = req.body
+    const { title, description, videoUrl: bodyVideoUrl, durationSeconds, order } = req.body
 
     if (!title) {
       return res.status(400).json({ success: false, message: "Video title is required" })
     }
-    if (!req.files?.video) {
-      return res.status(400).json({ success: false, message: "Video file is required" })
+    if (!req.files?.video && !bodyVideoUrl?.trim()) {
+      return res.status(400).json({ success: false, message: "Video file or URL is required" })
     }
 
     const course = await Course.findOne({ _id: courseId, practitioner: practitionerId })
@@ -129,8 +129,11 @@ exports.addVideoToCourse = async (req, res) => {
       return res.status(404).json({ success: false, message: "Course not found or not authorized" })
     }
 
-    // Upload video to AWS S3 using multipart upload (handles large MP4, MOV, AVI files)
-    const uploadResult = await uploadFileToS3(req.files.video, "course_videos")
+    let videoUrl = bodyVideoUrl?.trim() || ""
+    if (req.files?.video) {
+      const uploadResult = await uploadFileToS3(req.files.video, "course_videos")
+      videoUrl = uploadResult.url
+    }
 
     let thumbnailUrl = ""
     if (req.files?.thumbnail) {
@@ -138,14 +141,10 @@ exports.addVideoToCourse = async (req, res) => {
       thumbnailUrl = thumbResult.url
     }
 
-    // Note: S3 does not auto-generate video thumbnails (unlike Cloudinary).
-    // A separate thumbnail upload is required, or you may use a client-side
-    // video frame capture library to generate a thumbnail before uploading.
-
     const video = await CourseVideo.create({
       title,
       description: description || "",
-      videoUrl: uploadResult.url,
+      videoUrl: videoUrl,
       thumbnail: thumbnailUrl,
       durationSeconds: Number(durationSeconds || 0),
       order: Number(order || course.videos.length),
@@ -156,7 +155,7 @@ exports.addVideoToCourse = async (req, res) => {
     course.videos.push(video._id)
     await course.save()
 
-    return res.status(201).json({ success: true, message: "Video uploaded successfully", video })
+    return res.status(201).json({ success: true, message: "Video added successfully", video })
   } catch (error) {
     console.error("addVideoToCourse error:", error)
     return res.status(500).json({ success: false, message: error.message })

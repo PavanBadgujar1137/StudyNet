@@ -7,25 +7,28 @@ const crypto = require("crypto")
 
 exports.resetPasswordToken = async (req, res) => {
   try {
-    const email = req.body?.email?.trim()
-    if (!email) {
+    const rawEmail = req.body?.email?.trim()
+    if (!rawEmail) {
       return res.json({
         success: false,
         message: "Email address is required",
       })
     }
 
-    const user = await User.findOne({ email: email })
+    const user = await User.findOne({
+      email: { $regex: new RegExp(`^${rawEmail.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&")}$`, "i") },
+    })
+
     if (!user) {
       return res.json({
         success: false,
-        message: `This Email: ${email} is not Registered With Us. Enter a Valid Email.`,
+        message: `This Email: ${rawEmail} is not Registered With Us. Enter a Valid Email.`,
       })
     }
     const token = crypto.randomBytes(20).toString("hex")
 
     await User.findOneAndUpdate(
-      { email: email },
+      { _id: user._id },
       {
         token: token,
         resetPasswordExpires: Date.now() + 3600000, // 1 hour
@@ -34,11 +37,6 @@ exports.resetPasswordToken = async (req, res) => {
     )
 
     // Dynamic origin resolution precedence:
-    // 1. HTTP Request Origin header (exact host/port browser requested from)
-    // 2. HTTP Request Referer header origin
-    // 3. process.env.FRONTEND_URL
-    // 4. process.env.CLIENT_URL
-    // 5. Default fallback: http://localhost:3000
     let origin = req.headers.origin
     if (!origin && req.headers.referer) {
       try {
@@ -47,13 +45,13 @@ exports.resetPasswordToken = async (req, res) => {
       } catch (e) {}
     }
     if (!origin) {
-      origin = process.env.FRONTEND_URL || process.env.CLIENT_URL || "http://localhost:3000"
+      origin = process.env.FRONTEND_URL || process.env.CLIENT_URL || "https://openhand.live"
     }
 
     const url = `${origin.replace(/\/+$/, "")}/update-password/${token}`
 
     await mailSender(
-      email,
+      user.email,
       "Password Reset Request - OpenHand",
       passwordResetEmail(url, user.firstName || "User")
     )
@@ -74,7 +72,8 @@ exports.resetPasswordToken = async (req, res) => {
 
 exports.resetPassword = async (req, res) => {
   try {
-    const { password, confirmPassword, token } = req.body
+    const { password, confirmPassword } = req.body
+    let token = req.body?.token
 
     if (!token || typeof token !== "string" || !token.trim()) {
       return res.json({
@@ -83,6 +82,8 @@ exports.resetPassword = async (req, res) => {
       })
     }
 
+    const cleanToken = token.trim().split("?")[0].split("#")[0].replace(/\/+$/, "")
+
     if (confirmPassword !== password) {
       return res.json({
         success: false,
@@ -90,7 +91,7 @@ exports.resetPassword = async (req, res) => {
       })
     }
 
-    const userDetails = await User.findOne({ token: token.trim() })
+    const userDetails = await User.findOne({ token: cleanToken })
     if (!userDetails) {
       return res.json({
         success: false,

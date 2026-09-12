@@ -104,7 +104,7 @@ exports.passwordResetEmail = (resetUrl, name = "User") => {
           </div>
           <div class="support">
               If you have any questions or need assistance, please contact us at 
-              <a href="mailto:info@openhand.live" style="color: #2563EB;">info@openhand.live</a>.
+              <a href="mailto:connect@openhand.live" style="color: #2563EB;">connect@openhand.live</a>.
           </div>
       </div>
   </body>

@@ -12,8 +12,9 @@ const mailSender = async (email, title, body) => {
       },
     })
 
+    const senderEmail = process.env.MAIL_FROM || process.env.MAIL_USER || "connect@openhand.live"
     const info = await transporter.sendMail({
-      from: `"OpenHand" <${process.env.MAIL_USER}>`,
+      from: `"OpenHand" <${senderEmail}>`,
       to: email,
       subject: title,
       html: body,

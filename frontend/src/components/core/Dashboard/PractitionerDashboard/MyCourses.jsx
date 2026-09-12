@@ -10,10 +10,28 @@ import toast from 'react-hot-toast'
 import { apiConnector } from '../../../../services/apiConnector'
 
 function formatDuration(secs) {
-  if (!secs) return '0:00'
+  if (!secs || secs <= 0) return '0:00'
   const m = Math.floor(secs / 60)
-  const s = secs % 60
+  const s = Math.floor(secs % 60)
   return `${m}:${String(s).padStart(2, '0')}`
+}
+
+function getVideoDuration(file) {
+  return new Promise((resolve) => {
+    if (!file) return resolve(0)
+    try {
+      const videoElement = document.createElement('video')
+      videoElement.preload = 'metadata'
+      videoElement.onloadedmetadata = () => {
+        window.URL.revokeObjectURL(videoElement.src)
+        resolve(Math.round(videoElement.duration || 0))
+      }
+      videoElement.onerror = () => resolve(0)
+      videoElement.src = URL.createObjectURL(file)
+    } catch (e) {
+      resolve(0)
+    }
+  })
 }
 
 // ─── Video Upload Card ────────────────────────────────────────────────────────
@@ -21,19 +39,32 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
   const { token } = useSelector(s => s.auth)
   const [form, setForm] = useState({ title: '', description: '' })
   const [videoFile, setVideoFile] = useState(null)
+  const [videoUrlInput, setVideoUrlInput] = useState('')
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
   const videoInputRef = useRef()
 
   const handleUpload = async () => {
-    if (!form.title || !videoFile) return toast.error('Title and video file are required')
+    if (!form.title.trim()) return toast.error('Video title is required')
+    if (!videoFile && !videoUrlInput.trim()) return toast.error('Please upload a video file or enter a video URL')
+    
     setUploading(true)
     setProgress(10)
     try {
+      let measuredDuration = 0
+      if (videoFile) {
+        measuredDuration = await getVideoDuration(videoFile)
+      }
+
       const fd = new FormData()
       fd.append('title', form.title.slice(0, 100))
       fd.append('description', form.description.slice(0, 500))
-      fd.append('video', videoFile)
+      if (videoFile) {
+        fd.append('video', videoFile)
+        fd.append('durationSeconds', measuredDuration)
+      } else {
+        fd.append('videoUrl', videoUrlInput.trim())
+      }
 
       const progressInterval = setInterval(() => {
         setProgress(p => Math.min(p + 8, 85))
@@ -48,7 +79,7 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
       setProgress(100)
 
       if (res?.data?.success) {
-        toast.success('Video uploaded successfully!')
+        toast.success('Video added successfully!')
         onSuccess()
       } else {
         toast.error(res?.data?.message || 'Upload failed')
@@ -91,6 +122,7 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
             style={{ width: '100%', padding: '10px 14px', border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 14, color: '#1E293B', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
           />
         </div>
+
         <div>
           <label style={{ display: 'block', fontSize: 12, color: '#64748B', marginBottom: 4, fontWeight: 600 }}>Video File *</label>
           <div onClick={() => videoInputRef.current?.click()}
@@ -112,7 +144,24 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
             )}
           </div>
           <input ref={videoInputRef} type="file" accept="video/*" style={{ display: 'none' }}
-            onChange={e => setVideoFile(e.target.files[0])} />
+            onChange={e => { setVideoFile(e.target.files[0]); setVideoUrlInput('') }} />
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', margin: '4px 0' }}>
+          <div style={{ flex: 1, height: 1, background: '#E2E8F0' }} />
+          <span style={{ margin: '0 10px', fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase' }}>OR</span>
+          <div style={{ flex: 1, height: 1, background: '#E2E8F0' }} />
+        </div>
+
+        <div>
+          <label style={{ display: 'block', fontSize: 12, color: '#64748B', marginBottom: 4, fontWeight: 600 }}>Video URL (YouTube or Direct Link)</label>
+          <input
+            type="url"
+            value={videoUrlInput}
+            onChange={e => { setVideoUrlInput(e.target.value); if (e.target.value) setVideoFile(null) }}
+            placeholder="https://www.youtube.com/watch?v=... or video link"
+            style={{ width: '100%', padding: '10px 14px', border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 13, color: '#1E293B', outline: 'none', boxSizing: 'border-box' }}
+          />
         </div>
 
         {uploading && (

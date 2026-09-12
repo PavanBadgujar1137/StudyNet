@@ -33,7 +33,8 @@ function UpdatePassword() {
 
   const handleOnSubmit = (e) => {
     e.preventDefault()
-    const token = params.id || params.token || location.pathname.split("/").filter(Boolean).at(-1)
+    let rawToken = params.id || params.token || location.pathname.split("/").filter(Boolean).at(-1) || ""
+    const token = rawToken.trim().split("?")[0].split("#")[0].replace(/\/+$/, "")
     if (!token) {
       toast.error("Invalid or missing reset token")
       return
