@@ -66,7 +66,7 @@ exports.signup = async (req, res) => {
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: "User already exists. Please sign in to continue.",
+        message: "This email is already registered. Each account requires a unique email address. Please sign in or use another email to register.",
       })
     }
 
@@ -397,7 +397,7 @@ exports.sendotp = async (req, res) => {
       // Return 400 Bad Request status code with descriptive message
       return res.status(400).json({
         success: false,
-        message: `This email is already registered. Please sign in or use another email to register.`,
+        message: "This email is already registered. Each account requires a unique email address. Please sign in or use another email to register.",
       })
     }
 

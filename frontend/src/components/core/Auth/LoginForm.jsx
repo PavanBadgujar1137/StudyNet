@@ -70,14 +70,14 @@ function LoginForm() {
           </Link>
         </div>
 
-        <button type="submit" className="auth-submit-btn">
+        <button type="submit" className="auth-submit-btn auth-submit-btn--main">
           Sign In to OpenHand →
         </button>
       </form>
 
       <p className="auth-switch">
         Don't have an account?{" "}
-        <Link to="/signup" className="auth-switch-link">Start free →</Link>
+        <Link to="/signup" className="auth-switch-link">Create free account →</Link>
       </p>
 
       <SocialAuthButtons mode="login" />
