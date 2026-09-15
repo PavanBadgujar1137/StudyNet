@@ -5795,12 +5795,23 @@ textarea.oh-intake-textarea:focus,
 }
 
 .split-card-title {
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 800;
   color: #0F172A;
-  margin: 0 0 4px;
+  margin: 0 0 6px;
   font-family: 'Poppins', sans-serif;
   text-align: center;
+  letter-spacing: -0.02em;
+}
+
+.split-card-title--cyan,
+.split-col--learner .split-card-title {
+  color: #0284C7;
+}
+
+.split-card-title--violet,
+.split-col--practitioner .split-card-title {
+  color: #7C3AED;
 }
 
 .split-card-desc {
@@ -5815,14 +5826,36 @@ textarea.oh-intake-textarea:focus,
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 6px;
+  align-items: center;
+  gap: 8px;
 }
 
 .split-pill {
-  font-size: 11px;
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  white-space: nowrap !important;
+  font-size: 12px;
   font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  line-height: 1;
+  transition: all 0.2s ease-in-out;
+}
+
+.split-pill svg {
+  width: 15px;
+  height: 15px;
+  font-size: 15px;
+  flex-shrink: 0;
+  display: inline-block;
+  margin: 0 !important;
+}
+
+.split-pill:hover {
+  transform: translateY(-1px);
 }
 
 .split-pill--cyan {
@@ -5831,10 +5864,20 @@ textarea.oh-intake-textarea:focus,
   border: 1px solid #BAE6FD;
 }
 
+.split-pill--cyan:hover {
+  background: #E0F2FE;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.15);
+}
+
 .split-pill--violet {
   background: #F5F3FF;
   color: #6D28D9;
   border: 1px solid #DDD6FE;
+}
+
+.split-pill--violet:hover {
+  background: #EDE9FE;
+  box-shadow: 0 4px 12px rgba(109, 40, 217, 0.15);
 }
 
 /* Form Styling inside Split Cards (Light Website Theme) */
@@ -6014,17 +6057,16 @@ textarea.oh-intake-textarea:focus,
 
 .synergy-node {
   position: absolute;
-  width: 50px;
-  height: 50px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   background: #FFFFFF;
-  border: 2px solid #E2E8F0;
+  border: 2.5px solid #E2E8F0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-  transition: transform 0.3s ease, opacity 0.3s ease;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 6;
 }
 
@@ -6032,14 +6074,30 @@ textarea.oh-intake-textarea:focus,
   left: 15px;
   top: 50%;
   transform: translateY(-50%);
-  border-color: #0EA5E9;
+  border-color: #38BDF8;
+  box-shadow: 0 0 22px rgba(14, 165, 233, 0.35), 0 8px 20px rgba(0, 0, 0, 0.08);
+  background: radial-gradient(circle at 35% 35%, #FFFFFF, #E0F2FE);
+  animation: floatSlowLeft 4s ease-in-out infinite alternate;
 }
 
 .sat-practitioner {
   right: 15px;
   top: 50%;
   transform: translateY(-50%);
-  border-color: #7C3AED;
+  border-color: #C084FC;
+  box-shadow: 0 0 22px rgba(168, 85, 247, 0.35), 0 8px 20px rgba(0, 0, 0, 0.08);
+  background: radial-gradient(circle at 35% 35%, #FFFFFF, #F3E8FF);
+  animation: floatSlowRight 4s ease-in-out infinite alternate;
+}
+
+@keyframes floatSlowLeft {
+  0% { transform: translateY(-50%) translateY(-3px) scale(1); }
+  100% { transform: translateY(-50%) translateY(4px) scale(1.04); }
+}
+
+@keyframes floatSlowRight {
+  0% { transform: translateY(-50%) translateY(4px) scale(1.04); }
+  100% { transform: translateY(-50%) translateY(-3px) scale(1); }
 }
 
 /* Bridge Bar */

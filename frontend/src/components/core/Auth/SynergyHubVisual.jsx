@@ -1,4 +1,5 @@
 import React from 'react'
+import { HiAcademicCap, HiBadgeCheck } from 'react-icons/hi'
 import logoIcon from '../../../assets/Logo/Logo-Icon.png'
 
 function SynergyHubVisual({ activeSide = null }) {
@@ -25,10 +26,10 @@ function SynergyHubVisual({ activeSide = null }) {
         {/* Orbiting Satellite Nodes */}
         <div className="synergy-satellites">
           <div className="synergy-node sat-learner" style={{ opacity: isLearnerActive ? 1 : 0.4 }}>
-            <span>🧘</span>
+            <HiAcademicCap size={24} color="#0284C7" />
           </div>
           <div className="synergy-node sat-practitioner" style={{ opacity: isPractitionerActive ? 1 : 0.4 }}>
-            <span>🪷</span>
+            <HiBadgeCheck size={24} color="#7C3AED" />
           </div>
         </div>
       </div>

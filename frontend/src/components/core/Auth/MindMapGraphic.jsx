@@ -149,7 +149,7 @@ function MindMapGraphic({ activeSide = null }) {
           <g transform="translate(65, 240)" className="tree-node">
             <circle cx="0" cy="0" r="15" fill="#FFFFFF" stroke="#2563EB" strokeWidth="2.5" />
             <circle cx="0" cy="0" r="6.5" fill="#2563EB" className="pulse-node-3" />
-            <text x="-35" y="28" fill="#1D4ED8" fontSize="10.5" fontWeight="700" className="tree-node-label">Live HD Sessions</text>
+            <text x="-35" y="28" fill="#1D4ED8" fontSize="10.5" fontWeight="700" className="tree-node-label">Live Mentorship</text>
           </g>
 
           {/* Minor Sub-nodes (Left) */}

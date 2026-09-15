@@ -1,5 +1,15 @@
 import React, { useState } from 'react'
 import { useSelector } from 'react-redux'
+import {
+  HiAcademicCap,
+  HiBadgeCheck,
+  HiVideoCamera,
+  HiUserGroup,
+  HiSparkles,
+  HiBriefcase,
+  HiChartPie,
+  HiLightningBolt
+} from 'react-icons/hi'
 import SignupForm from '../components/core/Auth/SignupForm'
 import SynergyHubVisual from '../components/core/Auth/SynergyHubVisual'
 import { ACCOUNT_TYPE } from '../utils/constants'
@@ -27,7 +37,7 @@ function Signup() {
           {/* Headline Bar */}
           <div className="split-headline">
             <h1 className="split-headline-title">
-              Join the OpenHand <span className="text-cyan-glow">Integrative Platform</span>
+              Welcome to <span className="text-cyan-glow">OpenHand</span>
             </h1>
             <p className="split-headline-sub">
               Register below to begin your journey as a Learner or build your practice space as a Practitioner
@@ -43,7 +53,7 @@ function Signup() {
                   setActiveSide('learner')
                 }}
               >
-                🧘 Learner Registration
+                <HiAcademicCap style={{ display: 'inline', marginRight: '6px', verticalAlign: '-2px' }} size={18} /> Become a Learner
               </button>
               <button
                 type="button"
@@ -53,7 +63,7 @@ function Signup() {
                   setActiveSide('practitioner')
                 }}
               >
-                🪷 Practitioner Registration
+                <HiBadgeCheck style={{ display: 'inline', marginRight: '6px', verticalAlign: '-2px' }} size={18} /> Become a Practitioner
               </button>
             </div>
           </div>
@@ -66,18 +76,21 @@ function Signup() {
               onMouseEnter={() => setActiveSide('learner')}
             >
               <div className="split-card-header">
-                <div className="split-badge split-badge--cyan">
-                  <span>🧘</span> LEARNER PORTAL
-                </div>
-                <h2 className="split-card-title">Learner Registration</h2>
+                <h2 className="split-card-title split-card-title--cyan">Become a Learner</h2>
                 <p className="split-card-desc">
                   Begin your journey of healing, connect with verified practitioners, and track your daily reflections.
                 </p>
 
                 <div className="split-pills-row">
-                  <span className="split-pill split-pill--cyan">📹 HD Sessions</span>
-                  <span className="split-pill split-pill--cyan">🌿 Wellness Circles</span>
-                  <span className="split-pill split-pill--cyan">📊 Daily Telemetry</span>
+                  <span className="split-pill split-pill--cyan">
+                    <HiVideoCamera /> <span>Mentorship</span>
+                  </span>
+                  <span className="split-pill split-pill--cyan">
+                    <HiUserGroup /> <span>Wellness Circles</span>
+                  </span>
+                  <span className="split-pill split-pill--cyan">
+                    <HiSparkles /> <span>Daily Reflections</span>
+                  </span>
                 </div>
               </div>
 
@@ -101,18 +114,21 @@ function Signup() {
               onMouseEnter={() => setActiveSide('practitioner')}
             >
               <div className="split-card-header">
-                <div className="split-badge split-badge--violet">
-                  <span>🪷</span> PRACTITIONER PORTAL
-                </div>
-                <h2 className="split-card-title">Practitioner Registration</h2>
+                <h2 className="split-card-title split-card-title--violet">Become a Practitioner</h2>
                 <p className="split-card-desc">
-                  Build your integrative practice space, host live video sessions, and manage telemetry analytics.
+                  Empower your healing practice, offer 1:1 mentorship, and scale your client impact seamlessly.
                 </p>
 
                 <div className="split-pills-row">
-                  <span className="split-pill split-pill--violet">💼 Practice Hub</span>
-                  <span className="split-pill split-pill--violet">📈 Client Analytics</span>
-                  <span className="split-pill split-pill--violet">⚡ AI Co-Pilot</span>
+                  <span className="split-pill split-pill--violet">
+                    <HiBriefcase /> <span>Practice Hub</span>
+                  </span>
+                  <span className="split-pill split-pill--violet">
+                    <HiChartPie /> <span>Client Analytics</span>
+                  </span>
+                  <span className="split-pill split-pill--violet">
+                    <HiLightningBolt /> <span>AI Co-Pilot</span>
+                  </span>
                 </div>
               </div>
 
