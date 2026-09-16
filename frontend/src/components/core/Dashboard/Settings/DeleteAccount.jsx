@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import { FiTrash2, FiAlertTriangle, FiX, FiShieldAlert } from "react-icons/fi"
+import { FiTrash2, FiAlertTriangle, FiX } from "react-icons/fi"
 import { useDispatch, useSelector } from "react-redux"
 import { useNavigate } from "react-router-dom"
 
@@ -130,7 +130,7 @@ export default function DeleteAccount() {
                     flexShrink: 0,
                   }}
                 >
-                  <FiShieldAlert size={24} />
+                  <FiAlertTriangle size={24} />
                 </div>
                 <div>
                   <h3 style={{ margin: 0, fontSize: '18.5px', fontWeight: 800, color: '#0F172A' }}>
