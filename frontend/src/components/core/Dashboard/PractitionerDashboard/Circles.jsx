@@ -460,15 +460,7 @@ export function Circles({ telemetryData, onUpdate, setActiveSection }) {
                 </span>
               </div>
 
-              {/* B2B EAP Mode Badge & Contract */}
-              <div style={{ background: '#F8FAFC', padding: '12px', borderRadius: '10px', border: '1px solid #E2E8F0', marginBottom: '20px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 800, color: '#2563EB' }}>
-                  🏢 B2B Org / EAP Mode Active
-                </div>
-                <p style={{ margin: '4px 0 0', fontSize: '11.5px', color: '#475569', leading: '1.4' }}>
-                  HR gets aggregate participation rates &amp; theme clusters. HR NEVER sees individual names, transcripts, or notes.
-                </p>
-              </div>
+
 
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
                 <button

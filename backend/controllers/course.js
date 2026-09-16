@@ -182,13 +182,37 @@ exports.deleteVideo = async (req, res) => {
   }
 }
 
+// ─── UPDATE VIDEO IN COURSE (Practitioner) ──────────────────────────────────
+exports.updateVideoInCourse = async (req, res) => {
+  try {
+    const practitionerId = req.user.id
+    const { courseId, videoId } = req.params
+    const { title, description, durationSeconds, videoUrl } = req.body
+
+    const course = await Course.findOne({ _id: courseId, practitioner: practitionerId })
+    if (!course) return res.status(404).json({ success: false, message: "Not authorized or course not found" })
+
+    const updateFields = {}
+    if (title !== undefined) updateFields.title = title
+    if (description !== undefined) updateFields.description = description
+    if (durationSeconds !== undefined) updateFields.durationSeconds = Number(durationSeconds)
+    if (videoUrl !== undefined) updateFields.videoUrl = videoUrl
+
+    const updatedVideo = await CourseVideo.findByIdAndUpdate(videoId, updateFields, { new: true })
+    return res.status(200).json({ success: true, message: "Video updated", video: updatedVideo })
+  } catch (error) {
+    console.error("updateVideoInCourse error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
 // ─── GET MY COURSES (Practitioner) ────────────────────────────────────────────
 exports.getPractitionerCourses = async (req, res) => {
   try {
     const practitionerId = req.user.id
 
     const courses = await Course.find({ practitioner: practitionerId })
-      .populate("videos", "title durationSeconds order thumbnail views")
+      .populate("videos", "title description videoUrl durationSeconds order thumbnail views")
       .sort({ createdAt: -1 })
       .lean()
 
@@ -204,7 +228,7 @@ exports.getAllCourses = async (req, res) => {
   try {
     const courses = await Course.find({ status: "published" })
       .populate("practitioner", "firstName lastName image")
-      .populate("videos", "title durationSeconds order thumbnail")
+      .populate("videos", "title description videoUrl durationSeconds order thumbnail")
       .sort({ createdAt: -1 })
       .lean()
 
@@ -256,7 +280,7 @@ exports.getCourseDetail = async (req, res) => {
 
     const course = await Course.findById(id)
       .populate("practitioner", "firstName lastName image email")
-      .populate("videos", "title durationSeconds order thumbnail")
+      .populate("videos", "title description videoUrl durationSeconds order thumbnail")
       .lean()
 
     if (!course) return res.status(404).json({ success: false, message: "Course not found" })

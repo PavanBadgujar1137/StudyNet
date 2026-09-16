@@ -6,6 +6,7 @@ const {
   updateCourse,
   deleteCourse,
   addVideoToCourse,
+  updateVideoInCourse,
   deleteVideo,
   getPractitionerCourses,
   getAllCourses,
@@ -24,6 +25,7 @@ router.post("/", auth, isInstructor, createCourse)
 router.put("/:id", auth, isInstructor, updateCourse)
 router.delete("/:id", auth, isInstructor, deleteCourse)
 router.post("/:id/videos", auth, isInstructor, addVideoToCourse)
+router.put("/:courseId/videos/:videoId", auth, isInstructor, updateVideoInCourse)
 router.delete("/:courseId/videos/:videoId", auth, isInstructor, deleteVideo)
 
 module.exports = router

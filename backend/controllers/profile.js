@@ -32,25 +32,45 @@ exports.updateProfile = async (req, res) => {
     } = req.body
     const id = req.user.id
 
-    // Find the profile by id
+    // Find the user details
     const userDetails = await User.findById(id)
-    const profile = await Profile.findById(userDetails.additionalDetails)
+    if (!userDetails) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found",
+      })
+    }
 
-    const user = await User.findByIdAndUpdate(id, {
-      title,
-      firstName,
-      lastName,
-      contactNumber,
-    }, { new: true })
+    // Find or create profile
+    let profile = userDetails.additionalDetails
+      ? await Profile.findById(userDetails.additionalDetails)
+      : null
 
-    // Update the profile fields
-    profile.dateOfBirth = dateOfBirth
-    profile.about = about
-    profile.contactNumber = contactNumber
-    profile.gender = gender
+    if (!profile) {
+      profile = await Profile.create({
+        gender: gender || "",
+        dateOfBirth: dateOfBirth || "",
+        about: about || "",
+        contactNumber: contactNumber || "",
+      })
+      userDetails.additionalDetails = profile._id
+      await userDetails.save()
+    } else {
+      profile.dateOfBirth = dateOfBirth
+      profile.about = about
+      profile.contactNumber = contactNumber
+      profile.gender = gender
+      await profile.save()
+    }
 
-    // Save the updated profile
-    await profile.save()
+    // Update user details
+    const updateUserData = {}
+    if (title !== undefined) updateUserData.title = title
+    if (firstName !== undefined) updateUserData.firstName = firstName
+    if (lastName !== undefined) updateUserData.lastName = lastName
+    if (contactNumber !== undefined) updateUserData.contactNumber = contactNumber
+
+    await User.findByIdAndUpdate(id, updateUserData, { new: true })
 
     // Find the updated user details
     const updatedUserDetails = await User.findById(id)
@@ -63,7 +83,7 @@ exports.updateProfile = async (req, res) => {
       updatedUserDetails,
     })
   } catch (error) {
-    console.log(error)
+    console.error("updateProfile error:", error)
     return res.status(500).json({
       success: false,
       error: error.message,

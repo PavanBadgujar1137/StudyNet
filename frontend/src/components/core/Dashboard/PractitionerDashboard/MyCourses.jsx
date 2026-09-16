@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import {
   FiBookOpen, FiPlus, FiVideo, FiUpload, FiTrash2,
-  FiUsers, FiClock, FiX, FiEdit2,
+  FiUsers, FiClock, FiX, FiEdit2, FiPlay, FiEdit3,
   FiChevronDown, FiChevronUp, FiGlobe, FiRefreshCw
 
 } from 'react-icons/fi'
@@ -16,22 +16,126 @@ function formatDuration(secs) {
   return `${m}:${String(s).padStart(2, '0')}`
 }
 
+function getYouTubeEmbedUrl(url) {
+  if (!url) return null
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/
+  const match = String(url).match(regExp)
+  return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}?autoplay=1&rel=0` : null
+}
+
 function getVideoDuration(file) {
   return new Promise((resolve) => {
     if (!file) return resolve(0)
     try {
       const videoElement = document.createElement('video')
       videoElement.preload = 'metadata'
-      videoElement.onloadedmetadata = () => {
-        window.URL.revokeObjectURL(videoElement.src)
-        resolve(Math.round(videoElement.duration || 0))
+
+      const timer = setTimeout(() => {
+        resolve(0)
+      }, 5000)
+
+      const handleMeta = () => {
+        clearTimeout(timer)
+        const dur = Math.round(videoElement.duration || 0)
+        try { window.URL.revokeObjectURL(videoElement.src) } catch (e) {}
+        resolve(isNaN(dur) ? 0 : dur)
       }
-      videoElement.onerror = () => resolve(0)
+
+      videoElement.onloadedmetadata = handleMeta
+      videoElement.ondurationchange = handleMeta
+      videoElement.oncanplay = handleMeta
+      videoElement.onerror = () => {
+        clearTimeout(timer)
+        resolve(0)
+      }
       videoElement.src = URL.createObjectURL(file)
     } catch (e) {
       resolve(0)
     }
   })
+}
+
+// ─── Video Preview Modal ──────────────────────────────────────────────────────
+function VideoPreviewModal({ video, courseId, onClose, onUpdate }) {
+  const { token } = useSelector(s => s.auth)
+  const videoRef = useRef()
+  const [savingDuration, setSavingDuration] = useState(false)
+  const ytEmbedUrl = getYouTubeEmbedUrl(video?.videoUrl)
+
+  const handleLoadedMetadata = async (e) => {
+    const dur = Math.round(e.target.duration || 0)
+    if (dur > 0 && (!video.durationSeconds || video.durationSeconds === 0)) {
+      try {
+        setSavingDuration(true)
+        await apiConnector('PUT', `/api/v1/courses/${courseId}/videos/${video._id}`, { durationSeconds: dur }, { Authorization: `Bearer ${token}` })
+        video.durationSeconds = dur
+        toast.success(`Video duration saved: ${formatDuration(dur)}`)
+        if (onUpdate) onUpdate()
+      } catch (err) {
+        console.error('Failed to auto-save video duration', err)
+      } finally {
+        setSavingDuration(false)
+      }
+    }
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(15, 23, 42, 0.88)', backdropFilter: 'blur(8px)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 28px', borderBottom: '1px solid rgba(255,255,255,0.1)', background: 'rgba(15, 23, 42, 0.95)' }}>
+        <div>
+          <div style={{ color: '#3B82F6', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>Practitioner Video Preview</div>
+          <div style={{ color: '#F8FAFC', fontWeight: 700, fontSize: 16, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+            {video?.title}
+          </div>
+        </div>
+        <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 8, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F1F5F9', cursor: 'pointer' }}>
+          <FiX size={18} />
+        </button>
+      </div>
+
+      {/* Video Player */}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+        <div style={{ width: '100%', maxWidth: '920px', aspectRatio: '16/9', background: '#000', borderRadius: 16, overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {ytEmbedUrl ? (
+            <iframe
+              src={ytEmbedUrl}
+              title={video.title}
+              style={{ width: '100%', height: '100%', border: 'none' }}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          ) : video?.videoUrl ? (
+            <video
+              ref={videoRef}
+              src={video.videoUrl}
+              controls
+              autoPlay
+              onLoadedMetadata={handleLoadedMetadata}
+              style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#000' }}
+            />
+          ) : (
+            <div style={{ color: '#94A3B8', textAlign: 'center', padding: 20 }}>
+              <FiVideo size={48} style={{ marginBottom: 12 }} />
+              <div>No video stream URL available</div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div style={{ padding: '16px 28px', borderTop: '1px solid rgba(255,255,255,0.1)', background: 'rgba(15, 23, 42, 0.95)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+        <div style={{ color: '#CBD5E1', fontSize: 13, maxWidth: '70%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {video?.description || 'No description provided.'}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#94A3B8', fontSize: 12, flexShrink: 0 }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.08)', padding: '6px 14px', borderRadius: 20, color: '#F1F5F9', fontWeight: 600 }}>
+            <FiClock size={13} color="#3B82F6" /> Length: {formatDuration(video?.durationSeconds)} {savingDuration && '(Auto-saving...)'}
+          </span>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 // ─── Video Upload Card ────────────────────────────────────────────────────────
@@ -40,42 +144,62 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
   const [form, setForm] = useState({ title: '', description: '' })
   const [videoFile, setVideoFile] = useState(null)
   const [videoUrlInput, setVideoUrlInput] = useState('')
+  const [customDuration, setCustomDuration] = useState('')
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
   const videoInputRef = useRef()
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      setVideoFile(file)
+      setVideoUrlInput('')
+      const dur = await getVideoDuration(file)
+      if (dur > 0) {
+        setCustomDuration(String(dur))
+      }
+    }
+  }
 
   const handleUpload = async () => {
     if (!form.title.trim()) return toast.error('Video title is required')
     if (!videoFile && !videoUrlInput.trim()) return toast.error('Please upload a video file or enter a video URL')
     
     setUploading(true)
-    setProgress(10)
+    setProgress(1)
     try {
-      let measuredDuration = 0
-      if (videoFile) {
-        measuredDuration = await getVideoDuration(videoFile)
+      let finalDuration = Number(customDuration) || 0
+      if (!finalDuration && videoFile) {
+        finalDuration = await getVideoDuration(videoFile)
       }
 
       const fd = new FormData()
       fd.append('title', form.title.slice(0, 100))
       fd.append('description', form.description.slice(0, 500))
+      fd.append('durationSeconds', finalDuration)
+
       if (videoFile) {
         fd.append('video', videoFile)
-        fd.append('durationSeconds', measuredDuration)
       } else {
         fd.append('videoUrl', videoUrlInput.trim())
       }
 
-      const progressInterval = setInterval(() => {
-        setProgress(p => Math.min(p + 8, 85))
-      }, 500)
+      const res = await apiConnector(
+        'POST',
+        `/api/v1/courses/${courseId}/videos`,
+        fd,
+        { Authorization: `Bearer ${token}` },
+        null,
+        {
+          onUploadProgress: (progressEvent) => {
+            if (progressEvent.total) {
+              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+              setProgress(percentCompleted)
+            }
+          },
+        }
+      )
 
-      const res = await apiConnector('POST', `/api/v1/courses/${courseId}/videos`, fd, {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'multipart/form-data',
-      })
-
-      clearInterval(progressInterval)
       setProgress(100)
 
       if (res?.data?.success) {
@@ -134,17 +258,17 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
             {videoFile ? (
               <div>
                 <div style={{ color: '#10B981', fontWeight: 600, fontSize: 14 }}>{videoFile.name}</div>
-                <div style={{ color: '#64748B', fontSize: 12 }}>{(videoFile.size / 1024 / 1024).toFixed(1)} MB</div>
+                <div style={{ color: '#64748B', fontSize: 12 }}>{(videoFile.size / 1024 / 1024).toFixed(1)} MB {customDuration > 0 && `• ${formatDuration(customDuration)}`}</div>
               </div>
             ) : (
               <div>
                 <div style={{ color: '#64748B', fontSize: 14 }}>Click to select video file</div>
-                <div style={{ color: '#94A3B8', fontSize: 12 }}>MP4, MOV, AVI (max 500MB)</div>
+                <div style={{ color: '#94A3B8', fontSize: 12 }}>MP4, MOV, AVI, MKV (max 20GB)</div>
               </div>
             )}
           </div>
           <input ref={videoInputRef} type="file" accept="video/*" style={{ display: 'none' }}
-            onChange={e => { setVideoFile(e.target.files[0]); setVideoUrlInput('') }} />
+            onChange={handleFileChange} />
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', margin: '4px 0' }}>
@@ -164,10 +288,25 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
           />
         </div>
 
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+            <label style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>Video Duration (in seconds, optional)</label>
+            {customDuration > 0 && <span style={{ fontSize: 11, color: '#3B82F6', fontWeight: 600 }}>Formatted: {formatDuration(customDuration)}</span>}
+          </div>
+          <input
+            type="number"
+            min="0"
+            value={customDuration}
+            onChange={e => setCustomDuration(e.target.value)}
+            placeholder="e.g. 180 for 3 minutes"
+            style={{ width: '100%', padding: '10px 14px', border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 13, color: '#1E293B', outline: 'none', boxSizing: 'border-box' }}
+          />
+        </div>
+
         {uploading && (
           <div style={{ background: '#EFF6FF', borderRadius: 8, padding: '12px 16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 12, color: '#3B82F6', fontWeight: 600 }}>
-              <span>Uploading to AWS S3...</span>
+              <span>Uploading video...</span>
               <span>{progress}%</span>
             </div>
             <div style={{ background: '#BFDBFE', borderRadius: 4, height: 6, overflow: 'hidden' }}>
@@ -372,6 +511,7 @@ function CourseCard({ course, onUpdate, onEdit }) {
   const [showVideoForm, setShowVideoForm] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [previewVideo, setPreviewVideo] = useState(null)
 
   // ITEM 19 FIX: Cycle course status: draft -> ready_for_publish -> published
   const handleNextStatus = async () => {
@@ -391,6 +531,22 @@ function CourseCard({ course, onUpdate, onEdit }) {
       toast.error('Failed to update status')
     }
     setPublishing(false)
+  }
+
+  const handleEditDuration = async (vid) => {
+    const input = window.prompt(`Enter duration in seconds for "${vid.title}":`, vid.durationSeconds || 0)
+    if (input === null) return
+    const secs = parseInt(input, 10)
+    if (isNaN(secs) || secs < 0) return toast.error('Please enter a valid number of seconds')
+    try {
+      const res = await apiConnector('PUT', `/api/v1/courses/${course._id}/videos/${vid._id}`, { durationSeconds: secs }, { Authorization: `Bearer ${token}` })
+      if (res?.data?.success) {
+        toast.success('Video duration updated')
+        onUpdate()
+      }
+    } catch (e) {
+      toast.error('Failed to update duration')
+    }
   }
 
   const deleteVideo = async (videoId) => {
@@ -430,6 +586,15 @@ function CourseCard({ course, onUpdate, onEdit }) {
       onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)'}
       onMouseLeave={e => e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)'}
     >
+      {previewVideo && (
+        <VideoPreviewModal
+          video={previewVideo}
+          courseId={course._id}
+          onClose={() => setPreviewVideo(null)}
+          onUpdate={onUpdate}
+        />
+      )}
+
       {/* Course Header */}
       <div style={{ padding: '20px 24px', display: 'flex', alignItems: 'flex-start', gap: 16 }}>
         {/* Thumbnail */}
@@ -525,9 +690,21 @@ function CourseCard({ course, onUpdate, onEdit }) {
                     <div style={{ fontWeight: 600, fontSize: 13, color: '#1E293B' }}>{vid.title}</div>
                     {vid.description && <div style={{ fontSize: 12, color: '#64748B' }}>{vid.description}</div>}
                   </div>
-                  <span style={{ fontSize: 12, color: '#94A3B8', display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <FiClock size={12} /> {formatDuration(vid.durationSeconds)}
-                  </span>
+
+                  <button onClick={() => setPreviewVideo(vid)}
+                    style={{ padding: '6px 12px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, color: '#2563EB', cursor: 'pointer', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <FiPlay size={12} /> Preview
+                  </button>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span style={{ fontSize: 12, color: vid.durationSeconds > 0 ? '#64748B' : '#EF4444', fontWeight: vid.durationSeconds > 0 ? 500 : 700, display: 'flex', alignItems: 'center', gap: 4, background: '#F1F5F9', padding: '4px 8px', borderRadius: 6 }}>
+                      <FiClock size={12} /> {formatDuration(vid.durationSeconds)}
+                    </span>
+                    <button onClick={() => handleEditDuration(vid)} title="Edit duration in seconds" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', padding: 2 }}>
+                      <FiEdit3 size={13} />
+                    </button>
+                  </div>
+
                   <button onClick={() => deleteVideo(vid._id)}
                     style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444', padding: 4 }}>
                     <FiTrash2 size={14} />
