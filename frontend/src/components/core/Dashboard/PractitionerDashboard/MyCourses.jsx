@@ -219,71 +219,98 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
 
       const { presignedUrl, publicUrl, key } = presignRes.data
 
-      // Step 2: Upload directly to S3 using XHR for real progress
+      // Step 2: Upload directly to S3. If CORS/preflight 403, fall back to API (nginx).
       setPhase('s3')
       setProgress(5)
 
-      await new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest()
-        xhrRef.current = xhr
+      const uploadToS3 = () =>
+        new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest()
+          xhrRef.current = xhr
 
-        xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) {
-            // Scale S3 upload progress from 5% to 90%
-            const pct = Math.round(5 + (e.loaded / e.total) * 85)
-            setProgress(pct)
+          xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+              const pct = Math.round(5 + (e.loaded / e.total) * 85)
+              setProgress(pct)
+            }
           }
-        }
 
-        xhr.onload = () => {
-          xhrRef.current = null
-          if (xhr.status >= 200 && xhr.status < 300) {
-            resolve()
-          } else {
-            reject(new Error(`S3 upload failed (HTTP ${xhr.status})`))
+          xhr.onload = () => {
+            xhrRef.current = null
+            if (xhr.status >= 200 && xhr.status < 300) resolve()
+            else reject(new Error(`S3 upload failed (HTTP ${xhr.status})`))
           }
+
+          xhr.onerror = () => {
+            xhrRef.current = null
+            reject(new Error('S3_CORS'))
+          }
+
+          xhr.onabort = () => {
+            xhrRef.current = null
+            reject(new Error('Upload cancelled'))
+          }
+
+          xhr.open('PUT', presignedUrl)
+          // Do not set Content-Type — it is not in the signed headers and triggers a failed CORS preflight.
+          xhr.send(videoFile)
+        })
+
+      const uploadViaApi = async () => {
+        const fd = new FormData()
+        fd.append('title', form.title.slice(0, 100))
+        fd.append('description', form.description.slice(0, 500))
+        fd.append('durationSeconds', String(finalDuration))
+        fd.append('video', videoFile)
+        const res = await apiConnector(
+          'POST',
+          `/api/v1/courses/${courseId}/videos`,
+          fd,
+          { Authorization: `Bearer ${token}` },
+          null,
+          {
+            onUploadProgress: (e) => {
+              if (e.total) setProgress(Math.round(5 + (e.loaded / e.total) * 90))
+            },
+          }
+        )
+        if (!res?.data?.success) {
+          throw new Error(res?.data?.message || 'Server upload failed')
         }
+      }
 
-        xhr.onerror = () => {
-          xhrRef.current = null
-          reject(new Error('Network error during S3 upload'))
+      let usedDirectS3 = true
+      try {
+        await uploadToS3()
+      } catch (s3Err) {
+        if (s3Err.message === 'Upload cancelled') throw s3Err
+        usedDirectS3 = false
+        await uploadViaApi()
+      }
+
+      if (usedDirectS3) {
+        setPhase('confirming')
+        setProgress(95)
+        const confirmRes = await apiConnector(
+          'POST',
+          `/api/v1/courses/${courseId}/videos/confirm`,
+          {
+            title: form.title.slice(0, 100),
+            description: form.description.slice(0, 500),
+            videoUrl: publicUrl,
+            key,
+            durationSeconds: finalDuration,
+          },
+          { Authorization: `Bearer ${token}` }
+        )
+        if (!confirmRes?.data?.success) {
+          throw new Error(confirmRes?.data?.message || 'Upload confirmation failed')
         }
-
-        xhr.onabort = () => {
-          xhrRef.current = null
-          reject(new Error('Upload cancelled'))
-        }
-
-        xhr.open('PUT', presignedUrl)
-        xhr.setRequestHeader('Content-Type', videoFile.type || 'video/mp4')
-        xhr.send(videoFile)
-      })
-
-      // Step 3: Confirm with backend — save DB record
-      setPhase('confirming')
-      setProgress(95)
-
-      const confirmRes = await apiConnector(
-        'POST',
-        `/api/v1/courses/${courseId}/videos/confirm`,
-        {
-          title: form.title.slice(0, 100),
-          description: form.description.slice(0, 500),
-          videoUrl: publicUrl,
-          key,
-          durationSeconds: finalDuration,
-        },
-        { Authorization: `Bearer ${token}` }
-      )
+      }
 
       setProgress(100)
-
-      if (confirmRes?.data?.success) {
-        toast.success('Video uploaded successfully!')
-        onSuccess()
-      } else {
-        toast.error(confirmRes?.data?.message || 'Upload confirmation failed')
-      }
+      toast.success('Video uploaded successfully!')
+      onSuccess()
     } catch (e) {
       if (e.message !== 'Upload cancelled') {
         toast.error('Upload failed: ' + (e.message || 'Unknown error'))

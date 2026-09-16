@@ -1,25 +1,9 @@
 [
   {
-    "AllowedHeaders": [
-      "*",
-      "Content-Type",
-      "Content-Length",
-      "x-amz-acl",
-      "x-amz-checksum-crc32",
-      "x-amz-sdk-checksum-algorithm",
-      "x-amz-content-sha256",
-      "x-amz-date",
-      "authorization"
-    ],
+    "AllowedHeaders": ["*"],
     "AllowedMethods": ["GET", "PUT", "POST", "HEAD", "DELETE"],
-    "AllowedOrigins": [
-      "https://openhand.live",
-      "https://www.openhand.live",
-      "https://uat.openhand.live",
-      "http://localhost:3000",
-      "http://localhost:5173"
-    ],
-    "ExposeHeaders": ["ETag", "x-amz-request-id"],
+    "AllowedOrigins": ["*"],
+    "ExposeHeaders": ["ETag", "x-amz-request-id", "x-amz-id-2"],
     "MaxAgeSeconds": 86400
   }
 ]

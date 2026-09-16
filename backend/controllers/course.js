@@ -138,7 +138,7 @@ exports.presignVideoUpload = async (req, res) => {
   try {
     const practitionerId = req.user.id
     const { id: courseId } = req.params
-    const { fileName, contentType } = req.body
+    const { fileName } = req.body
 
     if (!fileName) {
       return res.status(400).json({ success: false, message: "fileName is required" })
@@ -152,26 +152,15 @@ exports.presignVideoUpload = async (req, res) => {
       return res.status(404).json({ success: false, message: "Course not found or not authorized" })
     }
 
-    const resolvedType = contentType || mime.lookup(fileName) || "video/mp4"
     const key = buildS3Key("course_videos", fileName)
 
     const command = new PutObjectCommand({
       Bucket: BUCKET,
       Key: key,
-      ContentType: resolvedType,
     })
 
-    // Presigned URL valid for 4 hours (14400s) to allow slow uploads
-    const presignedUrl = await getSignedUrl(s3Client, command, {
-      expiresIn: 14400,
-      unhoistableHeaders: new Set([
-        "x-amz-checksum-crc32",
-        "x-amz-checksum-crc32c",
-        "x-amz-sdk-checksum-algorithm",
-        "x-amz-checksum-sha1",
-        "x-amz-checksum-sha256",
-      ]),
-    })
+    // Do not sign Content-Type / checksum headers — browser CORS PUT only uses host.
+    const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn: 14400 })
     const publicUrl = buildFileUrl(key)
 
     console.log(`[Presign] courseId=${courseId} key=${key}`)
