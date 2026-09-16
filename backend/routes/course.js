@@ -9,6 +9,7 @@ const {
   presignVideoUpload,
   confirmVideoUpload,
   updateVideoInCourse,
+  reorderVideos,
   deleteVideo,
   getPractitionerCourses,
   getAllCourses,
@@ -26,6 +27,9 @@ router.get("/practitioner/my-courses", auth, isInstructor, getPractitionerCourse
 router.post("/", auth, isInstructor, createCourse)
 router.put("/:id", auth, isInstructor, updateCourse)
 router.delete("/:id", auth, isInstructor, deleteCourse)
+
+// Reorder videos in course
+router.put("/:id/videos/reorder", auth, isInstructor, reorderVideos)
 
 // Direct-to-S3 upload flow (recommended for large video files)
 // Step 1: get presigned URL → browser uploads directly to S3

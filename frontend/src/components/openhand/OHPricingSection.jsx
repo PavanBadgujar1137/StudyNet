@@ -227,7 +227,7 @@ export default function OHPricingSection({ defaultRole = "learner", title, subti
       features: [
         "Everything in Advance Plan",
         "1 free 1:1 Session per month",
-        "25% discount on additional Sessions",
+        "25% discount on all 1:1 practitioner sessions (after your free monthly session)",
         "Dedicated care manager & concierge support",
         "Family sharing (up to 3 sub-accounts)",
         "24/7 priority support & instant AURA access",
@@ -281,7 +281,7 @@ export default function OHPricingSection({ defaultRole = "learner", title, subti
       featured: false,
       features: [
         "Everything in Growth",
-        "0% platform commission on initial earnings & direct T+2 bank payouts",
+        "Fastest payouts: direct T+2 bank settlement",
         "White-label portal & custom domain",
         "Branded app",
         "Dedicated account manager",
@@ -344,7 +344,7 @@ export default function OHPricingSection({ defaultRole = "learner", title, subti
                   </span>
                 ) : subStatus.isTrialActive ? (
                   <span>
-                    ⚡ {activeTab === "learner" ? "7-Day" : "14-Day"} Free Trial Active: <strong>{subStatus.trialDaysRemaining} days remaining</strong>
+                    ⚡ {activeTab === "learner" ? "7-Day" : "14-Day"} Free Trial Active: <strong>{activeTab === "learner" ? Math.min(7, subStatus.trialDaysRemaining || 7) : subStatus.trialDaysRemaining} days remaining</strong>
                   </span>
                 ) : (
                   <span>⚠️ {activeTab === "learner" ? "7-Day" : "14-Day"} Free Trial Expired — Subscribe below to unlock all features</span>
@@ -385,6 +385,16 @@ export default function OHPricingSection({ defaultRole = "learner", title, subti
             </div>
           )}
         </div>
+
+        {/* All Plans 0% Commission Callout for Practitioners */}
+        {activeTab === "practitioner" && (
+          <div className="text-center mb-6">
+            <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs sm:text-sm font-extrabold text-blue-700 bg-blue-50 border border-blue-200 shadow-xs">
+              <span>✨</span>
+              <span>All plans: 0% commission on your session &amp; Circle earnings.</span>
+            </span>
+          </div>
+        )}
 
         {/* Pricing Cards Grid */}
         <div className="plans-grid grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch pt-4">

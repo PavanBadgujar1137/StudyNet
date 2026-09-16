@@ -311,6 +311,40 @@ exports.updateVideoInCourse = async (req, res) => {
   }
 }
 
+// ─── REORDER VIDEOS IN COURSE (Practitioner) ────────────────────────────────
+exports.reorderVideos = async (req, res) => {
+  try {
+    const practitionerId = req.user.id
+    const { id: courseId } = req.params
+    const { videoIds } = req.body
+
+    if (!Array.isArray(videoIds)) {
+      return res.status(400).json({ success: false, message: "videoIds must be an array" })
+    }
+
+    const course = await Course.findOne({ _id: courseId, practitioner: practitionerId })
+    if (!course) return res.status(404).json({ success: false, message: "Course not found or not authorized" })
+
+    course.videos = videoIds
+    await course.save()
+
+    const updateOps = videoIds.map((vidId, index) => ({
+      updateOne: {
+        filter: { _id: vidId, course: courseId },
+        update: { $set: { order: index } },
+      },
+    }))
+    if (updateOps.length > 0) {
+      await CourseVideo.bulkWrite(updateOps)
+    }
+
+    return res.status(200).json({ success: true, message: "Videos reordered successfully" })
+  } catch (error) {
+    console.error("reorderVideos error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
 // ─── GET MY COURSES (Practitioner) ────────────────────────────────────────────
 exports.getPractitionerCourses = async (req, res) => {
   try {

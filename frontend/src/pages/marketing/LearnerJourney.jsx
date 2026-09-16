@@ -10,7 +10,11 @@ import {
 import { 
   FiShield, 
   FiTrendingUp,
-  FiLock
+  FiLock,
+  FiMic,
+  FiHelpCircle,
+  FiRepeat,
+  FiFileText,
 } from 'react-icons/fi'
 
 
@@ -23,7 +27,7 @@ const STAGES = [
     whoType: 'cl',
     title: 'They land on your link',
     desc: "From your Instagram bio. They see who you are, what you help with, and one clear next step — not a menu of seventeen services. They book, pay by UPI, and get a confirmation before they've closed the tab.",
-    earn: 'You receive ₹2,500 — settled to your bank in two days',
+    earn: "You receive ₹2,500 — settled to your bank on your plan's payout schedule",
   },
   {
     num: '02',
@@ -63,7 +67,7 @@ const STAGES = [
     whoType: 'co',
     title: 'You invite them into the circle',
     desc: 'One-to-one work has a ceiling — your hours. So you open a six-week circle. Same material, eight people, one evening a week. Your learner joins the one that fits them, and starts holding other people too.',
-    earn: 'Circle of 8 at ₹15,000 = ₹1,20,000 for six evenings',
+    earn: 'Circle of 8 at ₹15,000/seat = ₹1,20,000 for six evenings',
   },
   {
     num: '06',
@@ -83,28 +87,32 @@ const STAGES = [
     whoType: 'co',
     title: 'The loop closes — and starts again',
     desc: 'They finish. OpenHand asks for a testimonial at the moment they feel it, not three months later. They move onto your ₹799/month circle membership. And they send you two people who watched them change.',
-    earn: 'One learner became ₹2,500 → ₹17,500 → recurring',
+    earn: 'One learner: ₹2,500 first session → ₹17,500 total after their first Circle → ₹799/month recurring',
   },
 ]
 
 const COPILOT_FEATURES = [
   {
     n: '01',
+    icon: FiMic,
     title: 'It listens, with permission',
     desc: 'Your learner explicitly consents before any session is transcribed. They can withdraw it at any time, mid-session, and AURA goes silent immediately.',
   },
   {
     n: '02',
+    icon: FiHelpCircle,
     title: 'It suggests the next question',
     desc: 'Not a script to read aloud. A prompt in your peripheral vision — the question a supervisor might have nudged you toward, arriving while it’s still useful.',
   },
   {
     n: '03',
+    icon: FiRepeat,
     title: 'It remembers across sessions',
     desc: '“She mentioned her sister in week two — she’s circling it again.” The connective memory that makes learners feel truly held, without you rereading six sets of notes before every call.',
   },
   {
     n: '04',
+    icon: FiFileText,
     title: 'It writes the aftermath',
     desc: 'Session notes, the next set of reflection prompts, and a suggested plan for next time — drafted the moment you hang up. You edit and approve. Nothing sends without you.',
   },
@@ -113,6 +121,7 @@ const COPILOT_FEATURES = [
 export function LearnerJourney() {
   const navigate = useNavigate()
   const [activeStages, setActiveStages] = useState({})
+  const [filterWho, setFilterWho] = useState('all') // 'all' | 'cl' | 'co'
   const [previewIntakeOpen, setPreviewIntakeOpen] = useState(false)
   const progRef = useRef(null)
 
@@ -210,15 +219,43 @@ export function LearnerJourney() {
             This is a real shape of a learner journey inside OpenHand — what your learner feels at each turn, and what lands in your account while it happens.
           </p>
 
-          <div className="oh-journey-legend">
-            <span className="oh-journey-legend__item">
+          {/* Interactive Filterable Legend */}
+          <div className="oh-journey-legend flex flex-wrap items-center justify-center gap-2 sm:gap-3 mt-6">
+            <button
+              type="button"
+              onClick={() => setFilterWho('all')}
+              className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                filterWho === 'all'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'bg-white/80 text-slate-600 hover:bg-white border border-slate-200'
+              }`}
+            >
+              Show all stages
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterWho(filterWho === 'cl' ? 'all' : 'cl')}
+              className={`oh-journey-legend__item px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                filterWho === 'cl'
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'bg-white/80 text-slate-700 hover:bg-white border border-slate-200'
+              }`}
+            >
               <span className="oh-journey-dot oh-journey-dot--cl" />
               <span>What your learner experiences</span>
-            </span>
-            <span className="oh-journey-legend__item">
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterWho(filterWho === 'co' ? 'all' : 'co')}
+              className={`oh-journey-legend__item px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                filterWho === 'co'
+                  ? 'bg-purple-600 text-white shadow-xs'
+                  : 'bg-white/80 text-slate-700 hover:bg-white border border-slate-200'
+              }`}
+            >
               <span className="oh-journey-dot oh-journey-dot--co" />
               <span>What you see and earn</span>
-            </span>
+            </button>
           </div>
         </div>
       </header>
@@ -250,13 +287,15 @@ export function LearnerJourney() {
 
           {STAGES.map((s, idx) => {
             const isVisible = activeStages[idx]
+            const isDimmed = filterWho !== 'all' && s.whoType !== filterWho
+
             return (
               <div
                 key={s.num}
                 data-index={idx}
                 className={`oh-journey__stage oh-journey__stage--${s.side} ${
                   isVisible ? 'oh-journey__stage--vis' : ''
-                }`}
+                } ${isDimmed ? 'opacity-25 grayscale-[0.5] scale-95 transition-all duration-300' : 'transition-all duration-300'}`}
               >
                 {/* Left side bubble if side === left */}
                 {s.side === 'left' ? (
@@ -348,26 +387,39 @@ export function LearnerJourney() {
               </div>
 
               <div className="oh-copilot__list">
-                {COPILOT_FEATURES.map((item) => (
-                  <div key={item.n} className="oh-copilot__item">
-                    <div className="oh-copilot__num">{item.n}</div>
-                    <div>
-                      <h3 className="oh-copilot__item-title">{item.title}</h3>
-                      <p className="oh-copilot__item-desc">{item.desc}</p>
+                {COPILOT_FEATURES.map((item) => {
+                  const IconComp = item.icon
+                  return (
+                    <div key={item.n} className="oh-copilot__item flex items-start gap-4">
+                      <div className="oh-copilot__num flex items-center justify-center gap-1">
+                        {IconComp && <IconComp size={16} className="text-blue-400" />}
+                        <span>{item.n}</span>
+                      </div>
+                      <div>
+                        <h3 className="oh-copilot__item-title">{item.title}</h3>
+                        <p className="oh-copilot__item-desc">{item.desc}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
 
             {/* Right Column: Live Session AURA Mock Panel */}
             <div className="oh-copilot__panel-wrap">
               <div className="oh-copilot__panel">
-                <div className="oh-copilot__panel-top">
-                  <span className="oh-copilot__live-tag">
-                    <span className="oh-copilot__live-dot" /> Live AURA
+                <div className="oh-copilot__panel-top flex items-center justify-between">
+                  <span className="oh-copilot__live-tag inline-flex items-center gap-1.5">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    Live AURA
                   </span>
-                  <span className="oh-copilot__session-time">Session 3 · 24:16</span>
+                  <span className="oh-copilot__session-time inline-flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                    Session 3 · 24:16
+                  </span>
                 </div>
 
                 <div className="oh-copilot__panel-body">
@@ -433,18 +485,18 @@ export function LearnerJourney() {
       <section className="oh-journey-close">
         <div className="oh-wrap text-center">
           <h2 className="oh-journey-close__title">
-            This is what "held" looks like as a product.
+            This is what being held looks like.
           </h2>
           <p className="oh-journey-close__sub">
-            Ninety days, one link, three ways to earn — and nobody handed off to a stranger.
+            Ninety days, one relationship, and support that actually remembers you.
           </p>
 
           <div className="oh-journey-close__cta-row">
-            <OHButton href="/signup" size="lg">
-              Start your free practice space
+            <OHButton href="#pricing" size="lg">
+              Choose Your Plan →
             </OHButton>
-            <OHButton href="/contact-us" variant="ghost" size="lg">
-              Talk to a real human →
+            <OHButton href="/find-a-practitioner" variant="ghost" size="lg">
+              Find a Practitioner →
             </OHButton>
           </div>
         </div>

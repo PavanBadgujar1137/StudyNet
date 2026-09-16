@@ -48,7 +48,12 @@ export function PractitionerJourney() {
     {
       cat: 'Commission & Take-Rate',
       q: 'What take-rate or commission does OpenHand charge?',
-      a: 'OpenHand charges 0% platform commission on your initial earnings. Tiered platform subscription plans (Starter ₹999, Growth ₹2,999, Master ₹5,999) cover platform hosting, AURA intelligence, and payment gateway infrastructure with direct T+2 bank payouts.',
+      a: 'OpenHand charges 0% platform commission on your earnings. Tiered platform subscription plans (Starter ₹999, Growth ₹2,999, Master ₹5,999) cover platform hosting, AURA intelligence, and payment gateway infrastructure with direct T+2 bank payouts.',
+    },
+    {
+      cat: 'AURA & Privacy',
+      q: 'How does AURA handle client consent and data privacy?',
+      a: 'AURA operates strictly on explicit client and practitioner consent. Audio or transcripts are never stored permanently, never used to train public AI models, and only aftercare summary drafts are generated for practitioner review before saving.',
     },
     {
       cat: 'Circles',
@@ -84,9 +89,13 @@ export function PractitionerJourney() {
           <h1 className="text-center w-full mx-auto text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight my-4">
             Build your practice. <span className="oh-grad-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">Keep what you earn.</span>
           </h1>
-          <p className="sub text-slate-600 text-base sm:text-lg max-w-2xl mx-auto font-medium leading-relaxed mb-6">
+          <p className="sub text-slate-600 text-base sm:text-lg max-w-2xl mx-auto font-medium leading-relaxed mb-4">
             OpenHand gives practitioners a free starting point — publish offers, run 1:1 Sessions, host Circles, and use AURA — consent-first session AI — to hold space better.
           </p>
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs sm:text-sm font-bold shadow-xs">
+            <span>✨</span>
+            <span>Trusted by 1,200+ practitioners across India</span>
+          </div>
         </div>
       </header>
 
@@ -356,7 +365,7 @@ export function PractitionerJourney() {
                         ₹{totalEarnings.toLocaleString('en-IN')}
                       </div>
                       <div className="text-xs text-blue-100/90 font-medium mb-3">
-                        ₹{totalEarnings.toLocaleString('en-IN')} collected minus ₹0 to OpenHand
+                        OpenHand charges 0% commission — you keep everything above your monthly plan fee.
                       </div>
                       <div className="inline-block bg-white/20 backdrop-blur-xs px-3.5 py-1.5 rounded-full text-xs font-bold text-white border border-white/10">
                         Best plan for you: {calculatedPlan}
@@ -417,12 +426,12 @@ export function PractitionerJourney() {
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-800">
                 <tr><td className="p-4 font-semibold text-slate-900">Monthly Subscription Starting Price</td><td className="us-col p-4 font-bold text-blue-700 bg-blue-50/70">₹999/mo</td><td className="p-4 text-slate-600">No subscription</td><td className="p-4 text-slate-600">Varies per platform</td><td className="p-4 text-slate-600">No subscription option</td></tr>
-                <tr><td className="p-4 font-semibold text-slate-900">Practitioner Courses Library</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Included in Growth &amp; Master</td><td className="p-4 text-slate-600">₹1,500+ / course</td><td className="p-4 text-slate-600">Pay per course</td><td className="no p-4 text-slate-400">✕ N/A</td></tr>
-                <tr><td className="p-4 font-semibold text-slate-900">Live Group Circles</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Unlimited in Growth &amp; Master</td><td className="p-4 text-slate-600">₹800+ / circle</td><td className="no p-4 text-slate-400">✕ Extra charge</td><td className="no p-4 text-slate-400">✕ N/A</td></tr>
+                <tr><td className="p-4 font-semibold text-slate-900">Practitioner Courses Library</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Included in Growth &amp; Master</td><td className="p-4 text-slate-600">₹1,500+ / course</td><td className="p-4 text-slate-600">Pay per course</td><td className="no p-4 text-slate-400">✕ Not offered</td></tr>
+                <tr><td className="p-4 font-semibold text-slate-900">Live Group Circles</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Unlimited in Growth &amp; Master</td><td className="p-4 text-slate-600">₹800+ / circle</td><td className="no p-4 text-slate-400">✕ Extra charge</td><td className="no p-4 text-slate-400">✕ Not offered</td></tr>
                 <tr><td className="p-4 font-semibold text-slate-900">1:1 Session Discounts</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ 15%–25% OFF + 1 Free/mo on Master</td><td className="no p-4 text-slate-400">✕ 0% discount</td><td className="no p-4 text-slate-400">✕ 0% discount</td><td className="no p-4 text-slate-400">✕ Full fee always</td></tr>
-                <tr><td className="p-4 font-semibold text-slate-900">Personal AI Companion (AURA)</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Included in all plans</td><td className="no p-4 text-slate-400">✕ N/A</td><td className="no p-4 text-slate-400">✕ N/A</td><td className="no p-4 text-slate-400">✕ N/A</td></tr>
-                <tr><td className="p-4 font-semibold text-slate-900">Daily Reflection &amp; Mood Check-ins</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Included in all plans</td><td className="no p-4 text-slate-400">✕ N/A</td><td className="no p-4 text-slate-400">✕ N/A</td><td className="no p-4 text-slate-400">✕ N/A</td></tr>
-                <tr><td className="p-4 font-semibold text-slate-900">Family Account Sharing</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Up to 3 sub-accounts on Master</td><td className="no p-4 text-slate-400">✕ N/A</td><td className="no p-4 text-slate-400">✕ N/A</td><td className="no p-4 text-slate-400">✕ N/A</td></tr>
+                <tr><td className="p-4 font-semibold text-slate-900">Personal AI Companion (AURA)</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Included in all plans</td><td className="no p-4 text-slate-400">✕ Not offered</td><td className="no p-4 text-slate-400">✕ Not offered</td><td className="no p-4 text-slate-400">✕ Not offered</td></tr>
+                <tr><td className="p-4 font-semibold text-slate-900">Daily Reflection &amp; Mood Check-ins</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Included in all plans</td><td className="no p-4 text-slate-400">✕ Not offered</td><td className="no p-4 text-slate-400">✕ Not offered</td><td className="no p-4 text-slate-400">✕ Not offered</td></tr>
+                <tr><td className="p-4 font-semibold text-slate-900">Family Account Sharing</td><td className="us-col yes p-4 font-bold text-blue-700 bg-blue-50/70">✓ Up to 3 sub-accounts on Master</td><td className="no p-4 text-slate-400">✕ Not offered</td><td className="no p-4 text-slate-400">✕ Not offered</td><td className="no p-4 text-slate-400">✕ Not offered</td></tr>
               </tbody>
             </table>
           </div>
@@ -472,14 +481,14 @@ export function PractitionerJourney() {
       <section className="oh-sec py-16 bg-gradient-to-b from-slate-50 to-white text-center border-t border-slate-200">
         <div className="oh-wrap max-w-4xl mx-auto px-4">
           <h2 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight mb-4">
-            Start your personal care journey today.
+            Ready to build your practice?
           </h2>
           <p className="text-slate-600 text-base sm:text-lg font-medium max-w-2xl mx-auto mb-8 leading-relaxed">
-            Subscribe to an OpenHand learner plan or find a practitioner to get started. Switch or cancel anytime.
+            Start free on OpenHand, publish your first offer, and upgrade to Growth or Master Studio whenever you&apos;re ready to scale. No commission, no lock-in.
           </p>
           <div className="cta-row flex flex-wrap items-center justify-center gap-4">
-            <OHButton href="/pricing" size="lg">Choose a Learner Plan</OHButton>
-            <OHButton href="/find-a-practitioner" variant="ghost" size="lg">Find a Practitioner →</OHButton>
+            <OHButton href="/signup?role=practitioner" size="lg">Start Free — No Card Required</OHButton>
+            <OHButton href="#pricing" variant="ghost" size="lg">Compare Plans →</OHButton>
           </div>
         </div>
       </section>

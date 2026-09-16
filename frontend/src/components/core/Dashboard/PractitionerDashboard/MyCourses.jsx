@@ -3,8 +3,8 @@ import { useSelector } from 'react-redux'
 import {
   FiBookOpen, FiPlus, FiVideo, FiUpload, FiTrash2,
   FiUsers, FiClock, FiX, FiEdit2, FiPlay, FiEdit3,
-  FiChevronDown, FiChevronUp, FiGlobe, FiRefreshCw
-
+  FiChevronDown, FiChevronUp, FiGlobe, FiRefreshCw,
+  FiMove, FiArrowUp, FiArrowDown, FiAlertTriangle
 } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import { apiConnector } from '../../../../services/apiConnector'
@@ -53,6 +53,176 @@ function getVideoDuration(file) {
       resolve(0)
     }
   })
+}
+
+// ─── Professional Delete Confirmation Modal with Checkbox ────────────────────
+function DeleteConfirmModal({ isOpen, title, itemName, itemType, warningText, onConfirm, onCancel, loading }) {
+  const [confirmed, setConfirmed] = useState(false)
+
+  useEffect(() => {
+    if (isOpen) setConfirmed(false)
+  }, [isOpen])
+
+  if (!isOpen) return null
+
+  return (
+    <div style={{
+      position: 'fixed',
+      inset: 0,
+      zIndex: 3000,
+      background: 'rgba(15, 23, 42, 0.75)',
+      backdropFilter: 'blur(6px)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 16
+    }}>
+      <div style={{
+        background: '#FFFFFF',
+        borderRadius: 20,
+        width: '100%',
+        maxWidth: 480,
+        padding: '28px 28px 24px',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+        position: 'relative'
+      }}>
+        {/* Header Icon + Title */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, marginBottom: 16 }}>
+          <div style={{
+            width: 44,
+            height: 44,
+            borderRadius: 12,
+            background: '#FEE2E2',
+            color: '#DC2626',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0
+          }}>
+            <FiAlertTriangle size={22} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h3 style={{ margin: '0 0 4px', fontSize: 18, fontWeight: 800, color: '#0F172A' }}>
+              {title || `Delete ${itemType === 'course' ? 'Course' : 'Video'}`}
+            </h3>
+            <p style={{ margin: 0, fontSize: 13, color: '#64748B', lineHeight: 1.4, wordBreak: 'break-word' }}>
+              Are you sure you want to permanently delete <strong style={{ color: '#0F172A' }}>"{itemName}"</strong>?
+            </p>
+          </div>
+          <button
+            onClick={onCancel}
+            disabled={loading}
+            style={{
+              background: '#F1F5F9',
+              border: 'none',
+              borderRadius: 8,
+              width: 32,
+              height: 32,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#64748B',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              flexShrink: 0
+            }}
+          >
+            <FiX size={16} />
+          </button>
+        </div>
+
+        {/* Warning Box */}
+        <div style={{
+          background: '#FEF2F2',
+          border: '1px solid #FECACA',
+          borderRadius: 12,
+          padding: '12px 14px',
+          marginBottom: 18,
+          fontSize: 12.5,
+          color: '#991B1B',
+          lineHeight: 1.5
+        }}>
+          {warningText || (
+            itemType === 'course'
+              ? 'This will permanently remove this course and all associated videos, assets, and learner progression records. This action cannot be undone.'
+              : 'This video will be permanently removed from this course. Learners will no longer be able to view or stream it. This action cannot be undone.'
+          )}
+        </div>
+
+        {/* Mandatory Confirmation Checkbox */}
+        <label style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 10,
+          background: '#F8FAFC',
+          border: confirmed ? '1.5px solid #EF4444' : '1.5px solid #E2E8F0',
+          borderRadius: 12,
+          padding: '12px 14px',
+          cursor: 'pointer',
+          userSelect: 'none',
+          marginBottom: 22,
+          transition: 'all 0.2s'
+        }}>
+          <input
+            type="checkbox"
+            checked={confirmed}
+            onChange={(e) => setConfirmed(e.target.checked)}
+            disabled={loading}
+            style={{ marginTop: 3, width: 16, height: 16, accentColor: '#DC2626', cursor: 'pointer' }}
+          />
+          <span style={{ fontSize: 12.5, color: '#334155', fontWeight: 500, lineHeight: 1.45 }}>
+            Yes, I confirm that I want to delete this {itemType === 'course' ? 'course' : 'video'} and understand that this action cannot be undone.
+          </span>
+        </label>
+
+        {/* Action Buttons */}
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={loading}
+            style={{
+              flex: 1,
+              padding: '11px 16px',
+              background: '#F1F5F9',
+              border: '1px solid #E2E8F0',
+              borderRadius: 10,
+              color: '#475569',
+              fontWeight: 600,
+              fontSize: 13,
+              cursor: loading ? 'not-allowed' : 'pointer'
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={!confirmed || loading}
+            style={{
+              flex: 1.4,
+              padding: '11px 16px',
+              background: !confirmed || loading ? '#FCA5A5' : 'linear-gradient(135deg, #EF4444, #DC2626)',
+              border: 'none',
+              borderRadius: 10,
+              color: '#FFFFFF',
+              fontWeight: 700,
+              fontSize: 13,
+              cursor: !confirmed || loading ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              boxShadow: confirmed && !loading ? '0 4px 12px rgba(220, 38, 38, 0.25)' : 'none',
+              transition: 'all 0.2s'
+            }}
+          >
+            <FiTrash2 size={14} />
+            {loading ? 'Deleting...' : 'Confirm Delete'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 // ─── Video Preview Modal ──────────────────────────────────────────────────────
@@ -162,7 +332,6 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
   }
 
   const handleCancel = () => {
-    // Abort any in-flight S3 XHR
     if (xhrRef.current) {
       xhrRef.current.abort()
       xhrRef.current = null
@@ -178,7 +347,6 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
     setProgress(0)
 
     try {
-      // ── URL-only path (YouTube / external link) ──────────────────────────────
       if (!videoFile) {
         setPhase('confirming')
         setProgress(50)
@@ -198,9 +366,6 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
         return
       }
 
-      // ── File upload path: Direct-to-S3 via Presigned URL ────────────────────
-
-      // Step 1: Get presigned URL from backend
       setPhase('presigning')
       setProgress(2)
       let finalDuration = Number(customDuration) || 0
@@ -219,7 +384,6 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
 
       const { presignedUrl, publicUrl, key } = presignRes.data
 
-      // Step 2: Upload directly to S3. If CORS/preflight 403, fall back to API (nginx).
       setPhase('s3')
       setProgress(5)
 
@@ -252,7 +416,6 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
           }
 
           xhr.open('PUT', presignedUrl)
-          // Do not set Content-Type — it is not in the signed headers and triggers a failed CORS preflight.
           xhr.send(videoFile)
         })
 
@@ -452,9 +615,7 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
   )
 }
 
-
-// ─── Edit Course Modal (ITEM 20 FIX) ──────────────────────────────────────────
-
+// ─── Edit Course Modal ────────────────────────────────────────────────────────
 function EditCourseModal({ course, onClose, onSuccess }) {
   const { token } = useSelector(s => s.auth)
   const [form, setForm] = useState({
@@ -530,7 +691,6 @@ function EditCourseModal({ course, onClose, onSuccess }) {
               rows={3} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #E2E8F0', borderRadius: 10, fontSize: 14, color: '#1E293B', outline: 'none', boxSizing: 'border-box' }} />
           </div>
 
-          {/* ITEM 19 FIX: 3-Stage Course Status Flow Selector */}
           <div>
             <label style={{ display: 'block', fontSize: 12, color: '#64748B', marginBottom: 6, fontWeight: 600 }}>Course Status Stage</label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
@@ -635,10 +795,114 @@ function CourseCard({ course, onUpdate, onEdit }) {
   const [expanded, setExpanded] = useState(false)
   const [showVideoForm, setShowVideoForm] = useState(false)
   const [publishing, setPublishing] = useState(false)
-  const [deleting, setDeleting] = useState(false)
   const [previewVideo, setPreviewVideo] = useState(null)
 
-  // ITEM 19 FIX: Cycle course status: draft -> ready_for_publish -> published
+  // Local videos list for drag-and-drop & rank positioning
+  const [videosList, setVideosList] = useState(course.videos || [])
+  const [draggedIndex, setDraggedIndex] = useState(null)
+  const [dragOverIndex, setDragOverIndex] = useState(null)
+  const [reordering, setReordering] = useState(false)
+
+  // Delete modal state
+  const [deleteModal, setDeleteModal] = useState({
+    isOpen: false,
+    itemType: 'video', // 'video' | 'course'
+    itemId: null,
+    itemName: '',
+    warningText: '',
+    loading: false,
+  })
+
+  // Sync videos whenever course prop changes
+  useEffect(() => {
+    setVideosList(course.videos || [])
+  }, [course.videos])
+
+  // Persist new video order to backend
+  const persistOrder = async (newVideos) => {
+    setVideosList(newVideos)
+    setReordering(true)
+    try {
+      const videoIds = newVideos.map(v => v._id)
+      const res = await apiConnector(
+        'PUT',
+        `/api/v1/courses/${course._id}/videos/reorder`,
+        { videoIds },
+        { Authorization: `Bearer ${token}` }
+      )
+      if (res?.data?.success) {
+        toast.success('Video order updated successfully')
+        onUpdate()
+      } else {
+        toast.error(res?.data?.message || 'Failed to update video order')
+        setVideosList(course.videos || [])
+      }
+    } catch (err) {
+      toast.error('Failed to save new video order')
+      setVideosList(course.videos || [])
+    } finally {
+      setReordering(false)
+    }
+  }
+
+  // Shift rank up
+  const handleMoveUp = (index) => {
+    if (index === 0 || reordering) return
+    const updated = [...videosList]
+    const temp = updated[index]
+    updated[index] = updated[index - 1]
+    updated[index - 1] = temp
+    persistOrder(updated)
+  }
+
+  // Shift rank down
+  const handleMoveDown = (index) => {
+    if (index === videosList.length - 1 || reordering) return
+    const updated = [...videosList]
+    const temp = updated[index]
+    updated[index] = updated[index + 1]
+    updated[index + 1] = temp
+    persistOrder(updated)
+  }
+
+  // Drag and Drop handlers
+  const handleDragStart = (e, index) => {
+    setDraggedIndex(index)
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', String(index))
+  }
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    if (dragOverIndex !== index) {
+      setDragOverIndex(index)
+    }
+  }
+
+  const handleDrop = (e, targetIndex) => {
+    e.preventDefault()
+    if (draggedIndex === null || draggedIndex === targetIndex) {
+      setDraggedIndex(null)
+      setDragOverIndex(null)
+      return
+    }
+
+    const updated = [...videosList]
+    const [movedItem] = updated.splice(draggedIndex, 1)
+    updated.splice(targetIndex, 0, movedItem)
+
+    setDraggedIndex(null)
+    setDragOverIndex(null)
+    persistOrder(updated)
+  }
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null)
+    setDragOverIndex(null)
+  }
+
+  // Cycle course status: draft -> ready_for_publish -> published
   const handleNextStatus = async () => {
     setPublishing(true)
     try {
@@ -674,25 +938,79 @@ function CourseCard({ course, onUpdate, onEdit }) {
     }
   }
 
-  const deleteVideo = async (videoId) => {
-    if (!window.confirm('Delete this video?')) return
-    try {
-      const res = await apiConnector('DELETE', `/api/v1/courses/${course._id}/videos/${videoId}`, null, { Authorization: `Bearer ${token}` })
-      if (res?.data?.success) { toast.success('Video deleted'); onUpdate() }
-    } catch (e) { toast.error('Failed to delete') }
+  // Delete Prompt Triggers
+  const promptDeleteVideo = (vid) => {
+    setDeleteModal({
+      isOpen: true,
+      itemType: 'video',
+      itemId: vid._id,
+      itemName: vid.title,
+      warningText: 'This video will be permanently removed from this course. Learners will no longer be able to stream or access it.',
+      loading: false,
+    })
   }
 
-  const deleteCourse = async () => {
-    if (!window.confirm('Delete this entire course and all its videos?')) return
-    setDeleting(true)
-    try {
-      const res = await apiConnector('DELETE', `/api/v1/courses/${course._id}`, null, { Authorization: `Bearer ${token}` })
-      if (res?.data?.success) { toast.success('Course deleted'); onUpdate() }
-    } catch (e) { toast.error('Failed to delete course') }
-    setDeleting(false)
+  const promptDeleteCourse = () => {
+    if (course.status === 'published') {
+      toast.error('Published courses cannot be deleted directly while live. Please unpublish or set to draft first.')
+      return
+    }
+    setDeleteModal({
+      isOpen: true,
+      itemType: 'course',
+      itemId: course._id,
+      itemName: course.title,
+      warningText: 'This will permanently delete this entire course and all uploaded videos. This action cannot be undone.',
+      loading: false,
+    })
   }
 
-  const totalDuration = course.videos?.reduce((s, v) => s + (v.durationSeconds || 0), 0) || 0
+  // Confirm delete handler (modal callback)
+  const handleConfirmDelete = async () => {
+    setDeleteModal(prev => ({ ...prev, loading: true }))
+    try {
+      if (deleteModal.itemType === 'video') {
+        const res = await apiConnector(
+          'DELETE',
+          `/api/v1/courses/${course._id}/videos/${deleteModal.itemId}`,
+          null,
+          { Authorization: `Bearer ${token}` }
+        )
+        if (res?.data?.success) {
+          toast.success('Video deleted successfully')
+          setDeleteModal({ isOpen: false, itemType: 'video', itemId: null, itemName: '', warningText: '', loading: false })
+          onUpdate()
+        } else {
+          toast.error(res?.data?.message || 'Failed to delete video')
+          setDeleteModal(prev => ({ ...prev, loading: false }))
+        }
+      } else if (deleteModal.itemType === 'course') {
+        const res = await apiConnector(
+          'DELETE',
+          `/api/v1/courses/${course._id}`,
+          null,
+          { Authorization: `Bearer ${token}` }
+        )
+        if (res?.data?.success) {
+          toast.success('Course deleted successfully')
+          setDeleteModal({ isOpen: false, itemType: 'course', itemId: null, itemName: '', warningText: '', loading: false })
+          onUpdate()
+        } else {
+          toast.error(res?.data?.message || 'Failed to delete course')
+          setDeleteModal(prev => ({ ...prev, loading: false }))
+        }
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.message || err?.message || 'Failed to delete')
+      setDeleteModal(prev => ({ ...prev, loading: false }))
+    }
+  }
+
+  const handleCancelDelete = () => {
+    setDeleteModal({ isOpen: false, itemType: 'video', itemId: null, itemName: '', warningText: '', loading: false })
+  }
+
+  const totalDuration = videosList.reduce((s, v) => s + (v.durationSeconds || 0), 0)
 
   const getStatusBadge = () => {
     if (course.status === 'published') {
@@ -711,6 +1029,18 @@ function CourseCard({ course, onUpdate, onEdit }) {
       onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)'}
       onMouseLeave={e => e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)'}
     >
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        title={`Delete ${deleteModal.itemType === 'course' ? 'Course' : 'Video'}`}
+        itemName={deleteModal.itemName}
+        itemType={deleteModal.itemType}
+        warningText={deleteModal.warningText}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        loading={deleteModal.loading}
+      />
+
       {previewVideo && (
         <VideoPreviewModal
           video={previewVideo}
@@ -733,14 +1063,13 @@ function CourseCard({ course, onUpdate, onEdit }) {
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#1E293B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '60%' }}>{course.title}</h3>
-            {/* ITEM 19 FIX: 3-Stage Course Status Badge */}
             <span style={{ padding: '3px 12px', borderRadius: 20, fontSize: 11, fontWeight: 800, background: badge.bg, color: badge.color }}>
               {badge.label}
             </span>
           </div>
           {course.description && <p style={{ margin: '0 0 8px', color: '#64748B', fontSize: 13, lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{course.description}</p>}
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 12, color: '#94A3B8', flexWrap: 'wrap' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><FiVideo size={12} /> {course.videos?.length || 0} videos</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><FiVideo size={12} /> {videosList.length} videos</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><FiClock size={12} /> {formatDuration(totalDuration)}</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><FiUsers size={12} /> {course.enrolledClients?.length || 0} enrolled</span>
             {course.isFree ? (
@@ -753,37 +1082,45 @@ function CourseCard({ course, onUpdate, onEdit }) {
 
         {/* Action Controls */}
         <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
-          {/* ITEM 20 FIX: Edit Draft Course Button */}
           <button onClick={() => onEdit(course)}
             style={{ padding: '7px 12px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, color: '#2563EB', cursor: 'pointer', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
             <FiEdit2 size={13} /> Edit
           </button>
           
-          {/* ITEM 19 FIX: Cycle Status Button */}
           <button onClick={handleNextStatus} disabled={publishing}
             style={{ padding: '7px 12px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, color: '#475569', cursor: 'pointer', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
             {course.status === 'draft' ? 'Mark Ready' : course.status === 'ready_for_publish' ? 'Publish Live' : 'Set to Draft'}
           </button>
 
-          <button onClick={deleteCourse} disabled={deleting}
-            style={{ padding: '7px 10px', background: '#FEF2F2', border: 'none', borderRadius: 8, color: '#EF4444', cursor: 'pointer', fontSize: 12 }}>
+          <button onClick={promptDeleteCourse}
+            title="Delete Course"
+            style={{ padding: '7px 10px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, color: '#EF4444', cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <FiTrash2 size={14} />
           </button>
         </div>
       </div>
 
       {/* Videos Dropdown Accordion */}
-      <div style={{ padding: '0 24px 16px', display: 'flex', gap: 12, borderTop: '1px solid #F1F5F9', paddingTop: 14 }}>
-        <button onClick={() => setExpanded(!expanded)}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#3B82F6', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, padding: 0 }}>
-          {expanded ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />}
-          {expanded ? 'Hide Videos' : `View ${course.videos?.length || 0} Videos`}
-        </button>
+      <div style={{ padding: '0 24px 16px', display: 'flex', gap: 12, borderTop: '1px solid #F1F5F9', paddingTop: 14, alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <button onClick={() => setExpanded(!expanded)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#3B82F6', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, padding: 0 }}>
+            {expanded ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />}
+            {expanded ? 'Hide Videos' : `View ${videosList.length} Videos`}
+          </button>
 
-        <button onClick={() => setShowVideoForm(true)}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#10B981', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, padding: 0 }}>
-          <FiPlus size={16} /> Add Video
-        </button>
+          <button onClick={() => setShowVideoForm(true)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#10B981', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, padding: 0 }}>
+            <FiPlus size={16} /> Add Video
+          </button>
+        </div>
+
+        {expanded && videosList.length > 1 && (
+          <div style={{ fontSize: 11, color: '#94A3B8', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <FiMove size={12} color="#3B82F6" />
+            <span>Drag items or use ▲ ▼ to reorder video rank</span>
+          </div>
+        )}
       </div>
 
       {/* Video Upload Form */}
@@ -797,45 +1134,198 @@ function CourseCard({ course, onUpdate, onEdit }) {
         </div>
       )}
 
-      {/* Expanded Videos List */}
+      {/* Expanded Videos List with Drag-and-Drop Reordering */}
       {expanded && (
         <div style={{ background: '#F8FAFC', borderTop: '1px solid #E2E8F0', padding: 20 }}>
-          {!course.videos || course.videos.length === 0 ? (
+          {videosList.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '16px 0', color: '#94A3B8', fontSize: 13 }}>
               No videos added yet. Click "Add Video" above to upload your first lecture.
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {course.videos.map((vid, i) => (
-                <div key={vid._id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: '#fff', border: '1px solid #E2E8F0', borderRadius: 10 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#EFF6FF', color: '#3B82F6', fontWeight: 700, fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    {i + 1}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 600, fontSize: 13, color: '#1E293B' }}>{vid.title}</div>
-                    {vid.description && <div style={{ fontSize: 12, color: '#64748B' }}>{vid.description}</div>}
-                  </div>
+              {videosList.map((vid, i) => {
+                const isDragging = draggedIndex === i
+                const isOver = dragOverIndex === i
 
-                  <button onClick={() => setPreviewVideo(vid)}
-                    style={{ padding: '6px 12px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, color: '#2563EB', cursor: 'pointer', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <FiPlay size={12} /> Preview
-                  </button>
+                return (
+                  <div
+                    key={vid._id}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, i)}
+                    onDragOver={(e) => handleDragOver(e, i)}
+                    onDrop={(e) => handleDrop(e, i)}
+                    onDragEnd={handleDragEnd}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                      padding: '10px 14px',
+                      background: isDragging ? '#F1F5F9' : '#FFFFFF',
+                      border: isOver ? '2px dashed #3B82F6' : '1px solid #E2E8F0',
+                      borderRadius: 12,
+                      opacity: isDragging ? 0.5 : 1,
+                      transform: isOver ? 'scale(1.01)' : 'scale(1)',
+                      transition: 'border 0.15s, transform 0.15s, box-shadow 0.15s',
+                      boxShadow: isOver ? '0 4px 12px rgba(59, 130, 246, 0.15)' : 'none',
+                      cursor: 'grab'
+                    }}
+                  >
+                    {/* Drag Handle Icon */}
+                    <div
+                      title="Drag to reorder position"
+                      style={{
+                        color: '#94A3B8',
+                        cursor: 'grab',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '4px',
+                        borderRadius: 4
+                      }}
+                    >
+                      <FiMove size={16} />
+                    </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span style={{ fontSize: 12, color: vid.durationSeconds > 0 ? '#64748B' : '#EF4444', fontWeight: vid.durationSeconds > 0 ? 500 : 700, display: 'flex', alignItems: 'center', gap: 4, background: '#F1F5F9', padding: '4px 8px', borderRadius: 6 }}>
-                      <FiClock size={12} /> {formatDuration(vid.durationSeconds)}
-                    </span>
-                    <button onClick={() => handleEditDuration(vid)} title="Edit duration in seconds" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', padding: 2 }}>
-                      <FiEdit3 size={13} />
+                    {/* Step Shift Buttons (Up / Down arrows for quick rank shift) */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleMoveUp(i) }}
+                        disabled={i === 0 || reordering}
+                        title="Move Up"
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          padding: '1px 3px',
+                          cursor: i === 0 || reordering ? 'not-allowed' : 'pointer',
+                          color: i === 0 ? '#CBD5E1' : '#64748B',
+                          lineHeight: 1,
+                          borderRadius: 3
+                        }}
+                      >
+                        <FiArrowUp size={12} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleMoveDown(i) }}
+                        disabled={i === videosList.length - 1 || reordering}
+                        title="Move Down"
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          padding: '1px 3px',
+                          cursor: i === videosList.length - 1 || reordering ? 'not-allowed' : 'pointer',
+                          color: i === videosList.length - 1 ? '#CBD5E1' : '#64748B',
+                          lineHeight: 1,
+                          borderRadius: 3
+                        }}
+                      >
+                        <FiArrowDown size={12} />
+                      </button>
+                    </div>
+
+                    {/* Rank Badge */}
+                    <div style={{
+                      width: 30,
+                      height: 30,
+                      borderRadius: 8,
+                      background: '#EFF6FF',
+                      color: '#2563EB',
+                      fontWeight: 800,
+                      fontSize: 12,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}>
+                      #{i + 1}
+                    </div>
+
+                    {/* Title & Description */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: 13, color: '#1E293B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {vid.title}
+                      </div>
+                      {vid.description && (
+                        <div style={{ fontSize: 12, color: '#64748B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {vid.description}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Preview Button */}
+                    <button
+                      type="button"
+                      onClick={() => setPreviewVideo(vid)}
+                      style={{
+                        padding: '6px 12px',
+                        background: '#EFF6FF',
+                        border: '1px solid #BFDBFE',
+                        borderRadius: 8,
+                        color: '#2563EB',
+                        cursor: 'pointer',
+                        fontSize: 12,
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        flexShrink: 0
+                      }}
+                    >
+                      <FiPlay size={12} /> Preview
+                    </button>
+
+                    {/* Duration Badge & Edit */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                      <span style={{
+                        fontSize: 12,
+                        color: vid.durationSeconds > 0 ? '#64748B' : '#EF4444',
+                        fontWeight: vid.durationSeconds > 0 ? 500 : 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        background: '#F1F5F9',
+                        padding: '4px 8px',
+                        borderRadius: 6
+                      }}>
+                        <FiClock size={12} /> {formatDuration(vid.durationSeconds)}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleEditDuration(vid)}
+                        title="Edit duration in seconds"
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', padding: 2 }}
+                      >
+                        <FiEdit3 size={13} />
+                      </button>
+                    </div>
+
+                    {/* Delete Video Button with Professional Confirmation */}
+                    <button
+                      type="button"
+                      onClick={() => promptDeleteVideo(vid)}
+                      title="Delete Video"
+                      style={{
+                        background: '#FEF2F2',
+                        border: '1px solid #FECACA',
+                        borderRadius: 6,
+                        cursor: 'pointer',
+                        color: '#EF4444',
+                        padding: '5px 7px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        transition: 'all 0.15s'
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = '#FEE2E2'}
+                      onMouseLeave={e => e.currentTarget.style.background = '#FEF2F2'}
+                    >
+                      <FiTrash2 size={13} />
                     </button>
                   </div>
-
-                  <button onClick={() => deleteVideo(vid._id)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444', padding: 4 }}>
-                    <FiTrash2 size={14} />
-                  </button>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>
@@ -1019,7 +1509,6 @@ export default function MyCourses() {
           </div>
         ))}
       </div>
-
 
       {/* Courses List */}
       {loading ? (
