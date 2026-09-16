@@ -270,7 +270,43 @@ exports.login = async (req, res) => {
 // ─── Social Login (Google & LinkedIn) ──────────────────────────────────────────
 exports.socialLogin = async (req, res) => {
   try {
-    const { provider = "google", email, firstName, lastName, image, accountType = "Client" } = req.body
+    let { provider = "google", email, firstName, lastName, image, accountType = "Client", code, redirectUri } = req.body
+
+    // If OAuth authorization code is provided (e.g. for LinkedIn), exchange it for access token & user info
+    if (code && (provider === "linkedin" || !email)) {
+      try {
+        const axios = require("axios")
+        const callbackUrl = redirectUri || `${req.headers.origin || process.env.FRONTEND_URL || "http://localhost:3000"}/social-callback`
+
+        const tokenRes = await axios.post("https://www.linkedin.com/oauth/v2/accessToken", new URLSearchParams({
+          grant_type: "authorization_code",
+          code: code,
+          client_id: process.env.LINKEDIN_CLIENT_ID,
+          client_secret: process.env.LINKEDIN_CLIENT_SECRET,
+          redirect_uri: callbackUrl,
+        }).toString(), {
+          headers: { "Content-Type": "application/x-www-form-urlencoded" }
+        })
+
+        const accessToken = tokenRes?.data?.access_token
+        if (accessToken) {
+          const userinfoRes = await axios.get("https://api.linkedin.com/v2/userinfo", {
+            headers: { Authorization: `Bearer ${accessToken}` }
+          })
+
+          const linkedinProfile = userinfoRes.data
+          if (linkedinProfile?.email) {
+            email = linkedinProfile.email
+            firstName = linkedinProfile.given_name || linkedinProfile.name?.split(" ")[0] || "User"
+            lastName = linkedinProfile.family_name || linkedinProfile.name?.split(" ").slice(1).join(" ") || ""
+            image = linkedinProfile.picture || ""
+            provider = "linkedin"
+          }
+        }
+      } catch (oauthErr) {
+        console.error("LinkedIn OAuth exchange error:", oauthErr?.response?.data || oauthErr.message)
+      }
+    }
 
     if (!email) {
       return res.status(400).json({

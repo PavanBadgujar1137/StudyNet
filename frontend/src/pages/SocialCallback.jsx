@@ -60,6 +60,7 @@ function SocialCallback() {
       const provider = state?.includes('linkedin') ? 'linkedin' : 'google'
       const authData = {
         code,
+        redirectUri: `${window.location.origin}/social-callback`,
         email: searchParams.get('email') || undefined,
       }
 
