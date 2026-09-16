@@ -1,0 +1,15 @@
+[
+  {
+    "AllowedHeaders": ["*"],
+    "AllowedMethods": ["PUT", "POST", "GET", "HEAD"],
+    "AllowedOrigins": [
+      "https://openhand.live",
+      "https://www.openhand.live",
+      "https://uat.openhand.live",
+      "http://localhost:3000",
+      "http://localhost:5173"
+    ],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 86400
+  }
+]

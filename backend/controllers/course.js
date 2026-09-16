@@ -3,6 +3,27 @@ const CourseVideo = require("../models/CourseVideo")
 const Subscription = require("../models/Subscription")
 const User = require("../models/User")
 const { uploadFileToS3 } = require("../utils/imageUploader")
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner")
+const { PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3")
+const s3Client = require("../config/s3")
+const path = require("path")
+const mime = require("mime-types")
+
+const BUCKET = process.env.AWS_S3_BUCKET_NAME
+const REGION = process.env.AWS_REGION || "ap-south-1"
+const FOLDER_PREFIX = process.env.AWS_S3_FOLDER || "openhand/uat"
+const CLOUDFRONT_DOMAIN = process.env.AWS_CLOUDFRONT_DOMAIN
+
+function buildFileUrl(key) {
+  if (CLOUDFRONT_DOMAIN) return `https://${CLOUDFRONT_DOMAIN}/${key}`
+  return `https://${BUCKET}.s3.${REGION}.amazonaws.com/${key}`
+}
+function buildS3Key(folder, originalName) {
+  const ts = Date.now()
+  const ext = path.extname(originalName || "file") || ""
+  const base = path.basename(originalName || "upload", ext).replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 80)
+  return `${FOLDER_PREFIX}/${folder}/${ts}-${base}${ext}`
+}
 
 // ─── CREATE COURSE (Practitioner) ─────────────────────────────────────────────
 exports.createCourse = async (req, res) => {
@@ -110,7 +131,93 @@ exports.deleteCourse = async (req, res) => {
   }
 }
 
-// ─── ADD VIDEO TO COURSE (Practitioner) ───────────────────────────────────────
+// ─── PRESIGN VIDEO UPLOAD (Practitioner) — Step 1 of direct-to-S3 flow ────────
+// Returns a presigned PUT URL so the browser can upload directly to S3.
+// No file data touches the Node.js server or Nginx — eliminates size/timeout issues.
+exports.presignVideoUpload = async (req, res) => {
+  try {
+    const practitionerId = req.user.id
+    const { id: courseId } = req.params
+    const { fileName, contentType } = req.body
+
+    if (!fileName) {
+      return res.status(400).json({ success: false, message: "fileName is required" })
+    }
+    if (!BUCKET) {
+      return res.status(500).json({ success: false, message: "S3 bucket not configured" })
+    }
+
+    const course = await Course.findOne({ _id: courseId, practitioner: practitionerId })
+    if (!course) {
+      return res.status(404).json({ success: false, message: "Course not found or not authorized" })
+    }
+
+    const resolvedType = contentType || mime.lookup(fileName) || "video/mp4"
+    const key = buildS3Key("course_videos", fileName)
+
+    const command = new PutObjectCommand({
+      Bucket: BUCKET,
+      Key: key,
+      ContentType: resolvedType,
+    })
+
+    // Presigned URL valid for 4 hours (14400s) to allow slow uploads
+    const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn: 14400 })
+    const publicUrl = buildFileUrl(key)
+
+    console.log(`[Presign] courseId=${courseId} key=${key}`)
+    return res.status(200).json({ success: true, presignedUrl, publicUrl, key })
+  } catch (error) {
+    console.error("presignVideoUpload error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// ─── CONFIRM VIDEO UPLOAD (Practitioner) — Step 2 of direct-to-S3 flow ─────────
+// Called after the browser has finished uploading directly to S3.
+// Creates the CourseVideo DB record and adds it to the course.
+exports.confirmVideoUpload = async (req, res) => {
+  try {
+    const practitionerId = req.user.id
+    const { id: courseId } = req.params
+    const { title, description, videoUrl, key, durationSeconds, order } = req.body
+
+    if (!title) {
+      return res.status(400).json({ success: false, message: "Video title is required" })
+    }
+    if (!videoUrl) {
+      return res.status(400).json({ success: false, message: "videoUrl is required" })
+    }
+
+    const course = await Course.findOne({ _id: courseId, practitioner: practitionerId })
+    if (!course) {
+      return res.status(404).json({ success: false, message: "Course not found or not authorized" })
+    }
+
+    const video = await CourseVideo.create({
+      title,
+      description: description || "",
+      videoUrl,
+      s3Key: key || "",
+      thumbnail: "",
+      durationSeconds: Number(durationSeconds || 0),
+      order: Number(order ?? course.videos.length),
+      course: courseId,
+    })
+
+    course.videos.push(video._id)
+    await course.save()
+
+    console.log(`[Confirm] Video saved courseId=${courseId} videoId=${video._id}`)
+    return res.status(201).json({ success: true, message: "Video added successfully", video })
+  } catch (error) {
+    console.error("confirmVideoUpload error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// ─── ADD VIDEO TO COURSE (Practitioner) — Legacy fallback for URL-only additions ─
+// Used when practitioner provides a YouTube / external link (no file upload needed).
 exports.addVideoToCourse = async (req, res) => {
   try {
     const practitionerId = req.user.id
@@ -131,6 +238,7 @@ exports.addVideoToCourse = async (req, res) => {
 
     let videoUrl = bodyVideoUrl?.trim() || ""
     if (req.files?.video) {
+      // Server-side upload fallback (small files only)
       const uploadResult = await uploadFileToS3(req.files.video, "course_videos")
       videoUrl = uploadResult.url
     }
@@ -144,14 +252,13 @@ exports.addVideoToCourse = async (req, res) => {
     const video = await CourseVideo.create({
       title,
       description: description || "",
-      videoUrl: videoUrl,
+      videoUrl,
       thumbnail: thumbnailUrl,
       durationSeconds: Number(durationSeconds || 0),
       order: Number(order || course.videos.length),
       course: courseId,
     })
 
-    // Add video to course's videos array
     course.videos.push(video._id)
     await course.save()
 

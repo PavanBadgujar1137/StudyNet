@@ -138,7 +138,7 @@ function VideoPreviewModal({ video, courseId, onClose, onUpdate }) {
   )
 }
 
-// ─── Video Upload Card ────────────────────────────────────────────────────────
+// ─── Video Upload Card (Direct-to-S3 via Presigned URL) ─────────────────────
 function VideoUploadForm({ courseId, onSuccess, onCancel }) {
   const { token } = useSelector(s => s.auth)
   const [form, setForm] = useState({ title: '', description: '' })
@@ -147,7 +147,9 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
   const [customDuration, setCustomDuration] = useState('')
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
+  const [phase, setPhase] = useState('') // 'presigning' | 's3' | 'confirming' | ''
   const videoInputRef = useRef()
+  const xhrRef = useRef(null)
 
   const handleFileChange = async (e) => {
     const file = e.target.files[0]
@@ -155,65 +157,149 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
       setVideoFile(file)
       setVideoUrlInput('')
       const dur = await getVideoDuration(file)
-      if (dur > 0) {
-        setCustomDuration(String(dur))
-      }
+      if (dur > 0) setCustomDuration(String(dur))
     }
+  }
+
+  const handleCancel = () => {
+    // Abort any in-flight S3 XHR
+    if (xhrRef.current) {
+      xhrRef.current.abort()
+      xhrRef.current = null
+    }
+    onCancel()
   }
 
   const handleUpload = async () => {
     if (!form.title.trim()) return toast.error('Video title is required')
     if (!videoFile && !videoUrlInput.trim()) return toast.error('Please upload a video file or enter a video URL')
-    
+
     setUploading(true)
-    setProgress(1)
+    setProgress(0)
+
     try {
-      let finalDuration = Number(customDuration) || 0
-      if (!finalDuration && videoFile) {
-        finalDuration = await getVideoDuration(videoFile)
-      }
-
-      const fd = new FormData()
-      fd.append('title', form.title.slice(0, 100))
-      fd.append('description', form.description.slice(0, 500))
-      fd.append('durationSeconds', finalDuration)
-
-      if (videoFile) {
-        fd.append('video', videoFile)
-      } else {
-        fd.append('videoUrl', videoUrlInput.trim())
-      }
-
-      const res = await apiConnector(
-        'POST',
-        `/api/v1/courses/${courseId}/videos`,
-        fd,
-        { Authorization: `Bearer ${token}` },
-        null,
-        {
-          onUploadProgress: (progressEvent) => {
-            if (progressEvent.total) {
-              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-              setProgress(percentCompleted)
-            }
-          },
+      // ── URL-only path (YouTube / external link) ──────────────────────────────
+      if (!videoFile) {
+        setPhase('confirming')
+        setProgress(50)
+        const res = await apiConnector(
+          'POST',
+          `/api/v1/courses/${courseId}/videos`,
+          { title: form.title, description: form.description, videoUrl: videoUrlInput.trim(), durationSeconds: Number(customDuration) || 0 },
+          { Authorization: `Bearer ${token}` }
+        )
+        setProgress(100)
+        if (res?.data?.success) {
+          toast.success('Video link added successfully!')
+          onSuccess()
+        } else {
+          toast.error(res?.data?.message || 'Failed to add video')
         }
+        return
+      }
+
+      // ── File upload path: Direct-to-S3 via Presigned URL ────────────────────
+
+      // Step 1: Get presigned URL from backend
+      setPhase('presigning')
+      setProgress(2)
+      let finalDuration = Number(customDuration) || 0
+      if (!finalDuration) finalDuration = await getVideoDuration(videoFile)
+
+      const presignRes = await apiConnector(
+        'POST',
+        `/api/v1/courses/${courseId}/videos/presign`,
+        { fileName: videoFile.name, contentType: videoFile.type || 'video/mp4' },
+        { Authorization: `Bearer ${token}` }
+      )
+
+      if (!presignRes?.data?.success) {
+        throw new Error(presignRes?.data?.message || 'Failed to get upload URL')
+      }
+
+      const { presignedUrl, publicUrl, key } = presignRes.data
+
+      // Step 2: Upload directly to S3 using XHR for real progress
+      setPhase('s3')
+      setProgress(5)
+
+      await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+        xhrRef.current = xhr
+
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            // Scale S3 upload progress from 5% to 90%
+            const pct = Math.round(5 + (e.loaded / e.total) * 85)
+            setProgress(pct)
+          }
+        }
+
+        xhr.onload = () => {
+          xhrRef.current = null
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve()
+          } else {
+            reject(new Error(`S3 upload failed (HTTP ${xhr.status})`))
+          }
+        }
+
+        xhr.onerror = () => {
+          xhrRef.current = null
+          reject(new Error('Network error during S3 upload'))
+        }
+
+        xhr.onabort = () => {
+          xhrRef.current = null
+          reject(new Error('Upload cancelled'))
+        }
+
+        xhr.open('PUT', presignedUrl)
+        xhr.setRequestHeader('Content-Type', videoFile.type || 'video/mp4')
+        xhr.send(videoFile)
+      })
+
+      // Step 3: Confirm with backend — save DB record
+      setPhase('confirming')
+      setProgress(95)
+
+      const confirmRes = await apiConnector(
+        'POST',
+        `/api/v1/courses/${courseId}/videos/confirm`,
+        {
+          title: form.title.slice(0, 100),
+          description: form.description.slice(0, 500),
+          videoUrl: publicUrl,
+          key,
+          durationSeconds: finalDuration,
+        },
+        { Authorization: `Bearer ${token}` }
       )
 
       setProgress(100)
 
-      if (res?.data?.success) {
-        toast.success('Video added successfully!')
+      if (confirmRes?.data?.success) {
+        toast.success('Video uploaded successfully!')
         onSuccess()
       } else {
-        toast.error(res?.data?.message || 'Upload failed')
+        toast.error(confirmRes?.data?.message || 'Upload confirmation failed')
       }
     } catch (e) {
-      toast.error('Upload failed: ' + (e.message || 'Unknown error'))
+      if (e.message !== 'Upload cancelled') {
+        toast.error('Upload failed: ' + (e.message || 'Unknown error'))
+      }
+    } finally {
+      setUploading(false)
+      setProgress(0)
+      setPhase('')
     }
-    setUploading(false)
-    setProgress(0)
   }
+
+  const phaseLabel = {
+    presigning: 'Preparing upload...',
+    s3: 'Uploading to cloud...',
+    confirming: 'Saving video record...',
+  }[phase] || 'Uploading...'
 
   return (
     <div style={{ background: '#F8FAFC', border: '2px dashed #CBD5E1', borderRadius: 14, padding: 20, marginTop: 12 }}>
@@ -248,7 +334,7 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
         </div>
 
         <div>
-          <label style={{ display: 'block', fontSize: 12, color: '#64748B', marginBottom: 4, fontWeight: 600 }}>Video File *</label>
+          <label style={{ display: 'block', fontSize: 12, color: '#64748B', marginBottom: 4, fontWeight: 600 }}>Video File</label>
           <div onClick={() => videoInputRef.current?.click()}
             style={{ border: '2px dashed #CBD5E1', borderRadius: 10, padding: '20px', textAlign: 'center', cursor: 'pointer', background: videoFile ? '#F0FDF4' : '#F8FAFC', transition: 'all 0.2s' }}
             onMouseEnter={e => e.currentTarget.style.borderColor = '#3B82F6'}
@@ -263,7 +349,7 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
             ) : (
               <div>
                 <div style={{ color: '#64748B', fontSize: 14 }}>Click to select video file</div>
-                <div style={{ color: '#94A3B8', fontSize: 12 }}>MP4, MOV, AVI, MKV (max 20GB)</div>
+                <div style={{ color: '#94A3B8', fontSize: 12 }}>MP4, MOV, AVI, MKV (max 20GB) — uploads directly to cloud</div>
               </div>
             )}
           </div>
@@ -298,7 +384,7 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
             min="0"
             value={customDuration}
             onChange={e => setCustomDuration(e.target.value)}
-            placeholder="e.g. 180 for 3 minutes"
+            placeholder="e.g. 180 for 3 minutes (auto-detected from file)"
             style={{ width: '100%', padding: '10px 14px', border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 13, color: '#1E293B', outline: 'none', boxSizing: 'border-box' }}
           />
         </div>
@@ -306,22 +392,32 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
         {uploading && (
           <div style={{ background: '#EFF6FF', borderRadius: 8, padding: '12px 16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 12, color: '#3B82F6', fontWeight: 600 }}>
-              <span>Uploading video...</span>
+              <span>{phaseLabel}</span>
               <span>{progress}%</span>
             </div>
-            <div style={{ background: '#BFDBFE', borderRadius: 4, height: 6, overflow: 'hidden' }}>
-              <div style={{ background: '#3B82F6', height: '100%', width: `${progress}%`, transition: 'width 0.5s ease', borderRadius: 4 }} />
+            <div style={{ background: '#BFDBFE', borderRadius: 4, height: 8, overflow: 'hidden' }}>
+              <div style={{
+                background: phase === 'confirming' ? '#10B981' : 'linear-gradient(90deg, #3B82F6, #6366F1)',
+                height: '100%',
+                width: `${progress}%`,
+                transition: 'width 0.3s ease',
+                borderRadius: 4,
+              }} />
+            </div>
+            <div style={{ fontSize: 11, color: '#64748B', marginTop: 6 }}>
+              {phase === 's3' && videoFile && `${(videoFile.size / 1024 / 1024).toFixed(0)} MB — uploading directly to cloud storage`}
+              {phase === 'confirming' && 'Almost done — saving your video...'}
             </div>
           </div>
         )}
 
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={onCancel} style={{ flex: 1, padding: '10px', background: '#F1F5F9', border: 'none', borderRadius: 8, color: '#64748B', cursor: 'pointer', fontWeight: 600, fontSize: 13 }}>
-            Cancel
+          <button onClick={handleCancel} style={{ flex: 1, padding: '10px', background: '#F1F5F9', border: 'none', borderRadius: 8, color: '#64748B', cursor: 'pointer', fontWeight: 600, fontSize: 13 }}>
+            {uploading ? 'Cancel Upload' : 'Cancel'}
           </button>
           <button onClick={handleUpload} disabled={uploading}
             style={{ flex: 2, padding: '10px', background: uploading ? '#CBD5E1' : 'linear-gradient(135deg, #3B82F6, #1D4ED8)', border: 'none', borderRadius: 8, color: '#fff', cursor: uploading ? 'not-allowed' : 'pointer', fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-            <FiUpload /> {uploading ? 'Uploading...' : 'Upload Video'}
+            <FiUpload /> {uploading ? phaseLabel : 'Upload Video'}
           </button>
         </div>
       </div>
@@ -329,7 +425,9 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
   )
 }
 
+
 // ─── Edit Course Modal (ITEM 20 FIX) ──────────────────────────────────────────
+
 function EditCourseModal({ course, onClose, onSuccess }) {
   const { token } = useSelector(s => s.auth)
   const [form, setForm] = useState({
