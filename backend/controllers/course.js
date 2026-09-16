@@ -165,8 +165,8 @@ exports.presignVideoUpload = async (req, res) => {
     const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn: 14400 })
     const publicUrl = buildFileUrl(key)
 
-    console.log(`[Presign] courseId=${courseId} key=${key} contentType=${resolvedType}`)
-    return res.status(200).json({ success: true, presignedUrl, publicUrl, key, contentType: resolvedType })
+    console.log(`[Presign] courseId=${courseId} key=${key}`)
+    return res.status(200).json({ success: true, presignedUrl, publicUrl, key })
   } catch (error) {
     console.error("presignVideoUpload error:", error)
     return res.status(500).json({ success: false, message: error.message })

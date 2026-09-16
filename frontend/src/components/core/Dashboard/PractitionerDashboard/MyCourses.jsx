@@ -217,7 +217,7 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
         throw new Error(presignRes?.data?.message || 'Failed to get upload URL')
       }
 
-      const { presignedUrl, publicUrl, key, contentType: signedContentType } = presignRes.data
+      const { presignedUrl, publicUrl, key } = presignRes.data
 
       // Step 2: Upload directly to S3 using XHR for real progress
       setPhase('s3')
@@ -240,13 +240,13 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
           if (xhr.status >= 200 && xhr.status < 300) {
             resolve()
           } else {
-            reject(new Error(`S3 upload failed (HTTP ${xhr.status}): ${xhr.responseText || xhr.statusText}`))
+            reject(new Error(`S3 upload failed (HTTP ${xhr.status})`))
           }
         }
 
         xhr.onerror = () => {
           xhrRef.current = null
-          reject(new Error('Network or CORS error during cloud upload. Please check S3 CORS configuration.'))
+          reject(new Error('Network error during S3 upload'))
         }
 
         xhr.onabort = () => {
@@ -255,7 +255,7 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
         }
 
         xhr.open('PUT', presignedUrl)
-        xhr.setRequestHeader('Content-Type', signedContentType || videoFile.type || 'video/mp4')
+        xhr.setRequestHeader('Content-Type', videoFile.type || 'video/mp4')
         xhr.send(videoFile)
       })
 
