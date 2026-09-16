@@ -162,7 +162,16 @@ exports.presignVideoUpload = async (req, res) => {
     })
 
     // Presigned URL valid for 4 hours (14400s) to allow slow uploads
-    const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn: 14400 })
+    const presignedUrl = await getSignedUrl(s3Client, command, {
+      expiresIn: 14400,
+      unhoistableHeaders: new Set([
+        "x-amz-checksum-crc32",
+        "x-amz-checksum-crc32c",
+        "x-amz-sdk-checksum-algorithm",
+        "x-amz-checksum-sha1",
+        "x-amz-checksum-sha256",
+      ]),
+    })
     const publicUrl = buildFileUrl(key)
 
     console.log(`[Presign] courseId=${courseId} key=${key}`)
