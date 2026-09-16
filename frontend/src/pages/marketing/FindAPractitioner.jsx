@@ -439,13 +439,31 @@ export function FindAPractitioner() {
                   .map((p) => {
                   const name = formatPractitionerName(p.user || p, 'Practitioner')
                   const isVerified = p.verificationStatus === 'verified' || true
+                  const userImg = p.user?.image || p.image || p.avatar || null
 
                   return (
                     <article key={p._id} className="practitioner-card">
                       {/* Header: Avatar + Meta */}
                       <div className="p-card-head">
                         <div className="p-avatar-wrap">
-                          <div className="p-avatar">{p.avatarInitials || name.slice(0, 2).toUpperCase()}</div>
+                          {userImg ? (
+                            <img
+                              src={userImg}
+                              alt={name}
+                              className="p-avatar-img"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none'
+                                const fallback = e.currentTarget.parentElement?.querySelector('.p-avatar')
+                                if (fallback) fallback.style.display = 'flex'
+                              }}
+                            />
+                          ) : null}
+                          <div
+                            className="p-avatar"
+                            style={{ display: userImg ? 'none' : 'flex' }}
+                          >
+                            {p.avatarInitials || name.slice(0, 2).toUpperCase()}
+                          </div>
                           {p.onlineNow && <span className="p-online-dot" title="Accepting learners" />}
                         </div>
 
@@ -474,13 +492,6 @@ export function FindAPractitioner() {
 
                       {/* Bio */}
                       <p className="p-bio-text">{p.bio}</p>
-
-                      {/* Specialty Chips */}
-                      <div className="p-specialty-tags">
-                        {p.specialties?.map((t, i) => (
-                          <span key={i} className="p-specialty-pill">{t}</span>
-                        ))}
-                      </div>
 
                       {/* Published Offers Section */}
                       {((p.offers && p.offers.length > 0) || (p.userOffers && p.userOffers.length > 0)) && (

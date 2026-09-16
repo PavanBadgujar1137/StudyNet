@@ -1056,21 +1056,22 @@ textarea.oh-intake-textarea:focus,
 
 .practitioner-card { background: #ffffff; border: 1px solid rgba(13, 27, 61, 0.08); border-radius: 20px; padding: 24px; box-shadow: 0 10px 30px -10px rgba(13, 27, 61, 0.05); display: flex; flex-direction: column; transition: all 0.25s ease; position: relative; }
 .practitioner-card:hover { transform: translateY(-4px); border-color: rgba(37, 99, 235, 0.35); box-shadow: 0 20px 40px -12px rgba(37, 99, 235, 0.14); }
-.p-card-head { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 14px; }
-.p-avatar-wrap { position: relative; flex: none; }
-.p-avatar { width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, #2563EB 0%, #7C3AED 100%); display: flex; align-items: center; justify-content: center; font-family: var(--oh-font-head); font-weight: 700; font-size: 17px; color: #ffffff; box-shadow: 0 4px 14px -2px rgba(37, 99, 235, 0.3); }
-.p-online-dot { position: absolute; bottom: 0; right: 0; width: 12px; height: 12px; border-radius: 50%; background: #10B981; border: 2px solid #ffffff; }
+.p-card-head { display: flex; gap: 16px; align-items: center; margin-bottom: 16px; }
+.p-avatar-wrap { position: relative; flex: none; width: 88px; height: 88px; }
+.p-avatar { width: 88px; height: 88px; border-radius: 50%; background: linear-gradient(135deg, #2563EB 0%, #7C3AED 100%); display: flex; align-items: center; justify-content: center; font-family: var(--oh-font-head); font-weight: 700; font-size: 28px; color: #ffffff; box-shadow: 0 6px 18px -3px rgba(37, 99, 235, 0.3); }
+.p-avatar-img { width: 88px; height: 88px; border-radius: 50%; object-fit: cover; box-shadow: 0 6px 18px -3px rgba(37, 99, 235, 0.2); border: 2px solid #EFF6FF; display: block; }
+.p-online-dot { position: absolute; bottom: 2px; right: 2px; width: 15px; height: 15px; border-radius: 50%; background: #10B981; border: 2.5px solid #ffffff; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15); }
 .p-meta-wrap { flex: 1; min-width: 0; }
 .p-name-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.p-name { font-family: var(--oh-font-head); font-weight: 700; font-size: 16.5px; color: var(--oh-navy); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.p-name { font-family: var(--oh-font-head); font-weight: 700; font-size: 17px; color: var(--oh-navy); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .p-verified-badge { font-size: 11px; font-weight: 700; color: #2563EB; background: rgba(37, 99, 235, 0.08); padding: 2px 8px; border-radius: 999px; white-space: nowrap; flex: none; }
-.p-credentials { font-size: 12px; color: var(--oh-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.p-rating-row { display: flex; align-items: center; gap: 4px; margin-top: 4px; font-size: 12px; }
+.p-credentials { font-size: 12.5px; color: var(--oh-muted); margin-top: 3px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.p-rating-row { display: flex; align-items: center; gap: 4px; margin-top: 5px; font-size: 12px; }
 .p-rating-star { font-weight: 700; color: #D97706; }
 .p-rating-count { color: var(--oh-muted); }
 
 .p-bio-text { font-size: 13.5px; color: var(--oh-muted); line-height: 1.55; flex: 1; margin-bottom: 14px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-.p-specialty-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.p-specialty-tags { display: none; }
 .p-specialty-pill { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: rgba(37, 99, 235, 0.07); color: #2563EB; border: 1px solid rgba(37, 99, 235, 0.12); }
 .p-info-meta { font-size: 12px; color: var(--oh-muted); display: flex; justify-content: space-between; padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid rgba(13, 27, 61, 0.06); }
 .info-item { font-weight: 500; }
@@ -1079,6 +1080,11 @@ textarea.oh-intake-textarea:focus,
 .p-rate-amount { font-family: var(--oh-font-head); font-weight: 800; font-size: 17px; color: var(--oh-navy); }
 .p-rate-unit { font-size: 12px; color: var(--oh-muted); font-weight: 500; }
 .p-avail-badge { font-size: 11.5px; font-weight: 600; color: #059669; background: rgba(16, 185, 129, 0.08); padding: 4px 10px; border-radius: 999px; }
+@media (max-width: 420px) {
+  .p-avatar-wrap, .p-avatar, .p-avatar-img { width: 72px; height: 72px; }
+  .p-avatar { font-size: 22px; }
+  .p-card-head { gap: 12px; }
+}
 
 /* Directory Pagination Controls */
 .dir-pagination-wrap { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 40px; margin-bottom: 24px; flex-wrap: wrap; }
