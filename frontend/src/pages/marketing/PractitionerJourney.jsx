@@ -92,10 +92,6 @@ export function PractitionerJourney() {
           <p className="sub text-slate-600 text-base sm:text-lg max-w-2xl mx-auto font-medium leading-relaxed mb-4">
             OpenHand gives practitioners a free starting point — publish offers, run 1:1 Sessions, host Circles, and use AURA — consent-first session AI — to hold space better.
           </p>
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs sm:text-sm font-bold shadow-xs">
-            <span>✨</span>
-            <span>Trusted by 1,200+ practitioners across India</span>
-          </div>
         </div>
       </header>
 

@@ -7,15 +7,8 @@ import {
   OHPricingSection,
   IntakeModal,
 } from '../../components/openhand'
-import { 
-  FiShield, 
-  FiTrendingUp,
-  FiLock,
-  FiMic,
-  FiHelpCircle,
-  FiRepeat,
-  FiFileText,
-} from 'react-icons/fi'
+import { FiTrendingUp } from 'react-icons/fi'
+import openHandMeetAuraSvg from '../../assets/Images/OpenHand_Meet_AURA_High_Resolution.svg'
 
 
 const STAGES = [
@@ -88,33 +81,6 @@ const STAGES = [
     title: 'The loop closes — and starts again',
     desc: 'They finish. OpenHand asks for a testimonial at the moment they feel it, not three months later. They move onto your ₹799/month circle membership. And they send you two people who watched them change.',
     earn: 'One learner: ₹2,500 first session → ₹17,500 total after their first Circle → ₹799/month recurring',
-  },
-]
-
-const COPILOT_FEATURES = [
-  {
-    n: '01',
-    icon: FiMic,
-    title: 'It listens, with permission',
-    desc: 'Your learner explicitly consents before any session is transcribed. They can withdraw it at any time, mid-session, and AURA goes silent immediately.',
-  },
-  {
-    n: '02',
-    icon: FiHelpCircle,
-    title: 'It suggests the next question',
-    desc: 'Not a script to read aloud. A prompt in your peripheral vision — the question a supervisor might have nudged you toward, arriving while it’s still useful.',
-  },
-  {
-    n: '03',
-    icon: FiRepeat,
-    title: 'It remembers across sessions',
-    desc: '“She mentioned her sister in week two — she’s circling it again.” The connective memory that makes learners feel truly held, without you rereading six sets of notes before every call.',
-  },
-  {
-    n: '04',
-    icon: FiFileText,
-    title: 'It writes the aftermath',
-    desc: 'Session notes, the next set of reflection prompts, and a suggested plan for next time — drafted the moment you hang up. You edit and approve. Nothing sends without you.',
   },
 ]
 
@@ -371,110 +337,15 @@ export function LearnerJourney() {
         </div>
       </section>
 
-      {/* Powered by AURA Section */}
-      <section className="oh-copilot-section" id="copilot">
-        <div className="oh-wrap">
-          <div className="oh-copilot__grid">
-
-            {/* Left Column: Header + 4 Feature Items */}
-            <div className="flex flex-col gap-6">
-              <div>
-                <OHEyebrow dark>Powered by AURA AI</OHEyebrow>
-                <h2 className="oh-copilot__heading">A second pair of ears in every session.</h2>
-                <p className="oh-copilot__sub">
-                  You're listening to a person. You shouldn't also be tracking frameworks, remembering what they said in week two, and planning the next question. That's what AURA is for — and it only ever speaks to you.
-                </p>
-              </div>
-
-              <div className="oh-copilot__list">
-                {COPILOT_FEATURES.map((item) => {
-                  const IconComp = item.icon
-                  return (
-                    <div key={item.n} className="oh-copilot__item flex items-start gap-4">
-                      <div className="oh-copilot__num flex items-center justify-center gap-1">
-                        {IconComp && <IconComp size={16} className="text-blue-400" />}
-                        <span>{item.n}</span>
-                      </div>
-                      <div>
-                        <h3 className="oh-copilot__item-title">{item.title}</h3>
-                        <p className="oh-copilot__item-desc">{item.desc}</p>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Right Column: Live Session AURA Mock Panel */}
-            <div className="oh-copilot__panel-wrap">
-              <div className="oh-copilot__panel">
-                <div className="oh-copilot__panel-top flex items-center justify-between">
-                  <span className="oh-copilot__live-tag inline-flex items-center gap-1.5">
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                    </span>
-                    Live AURA
-                  </span>
-                  <span className="oh-copilot__session-time inline-flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
-                    Session 3 · 24:16
-                  </span>
-                </div>
-
-                <div className="oh-copilot__panel-body">
-                  <div className="oh-copilot__sug oh-copilot__sug--blue">
-                    <div className="oh-copilot__sug-label">Try Asking</div>
-                    <p className="oh-copilot__sug-text">
-                      "You said 'I should be over it by now' — whose voice is the 'should' in?"
-                    </p>
-                    <div className="oh-copilot__chips">
-                      <span className="oh-copilot__chip">Use</span>
-                      <span className="oh-copilot__chip">Not now</span>
-                    </div>
-                  </div>
-
-                  <div className="oh-copilot__sug oh-copilot__sug--indigo">
-                    <div className="oh-copilot__sug-label">Pattern Across Sessions</div>
-                    <p className="oh-copilot__sug-text">
-                      Third time work has come up right after family. Worth naming the link?
-                    </p>
-                    <div className="oh-copilot__chips">
-                      <span className="oh-copilot__chip">Flag for notes</span>
-                    </div>
-                  </div>
-
-                  <div className="oh-copilot__sug oh-copilot__sug--violet">
-                    <div className="oh-copilot__sug-label">Technique That Fits Here</div>
-                    <p className="oh-copilot__sug-text">
-                      Two-chair work — she's holding both sides of this herself. Script ready.
-                    </p>
-                    <div className="oh-copilot__chips">
-                      <span className="oh-copilot__chip">Open script</span>
-                      <span className="oh-copilot__chip">Save for later</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="oh-copilot__panel-foot">
-                  <FiLock style={{ marginRight: 6 }} /> Visible only to you · Learner consented at 00:00
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-          {/* Ethical Consent Card */}
-          <div className="oh-copilot__consent">
-            <h3 className="oh-copilot__consent-title">
-              <FiShield style={{ color: '#60A5FA', marginRight: 8 }} />
-              Where we draw the line
-            </h3>
-            <p className="oh-copilot__consent-desc">
-              AURA never speaks to your learner, never diagnoses, and never sends anything on your behalf. Recordings are encrypted, retained only as long as you choose, and are not used to train external models. You are the practitioner. It's an instrument, and you're holding it.
-            </p>
-          </div>
-
+      {/* Meet AURA Section — High Resolution Banner */}
+      <section className="oh-sec py-8 sm:py-14 bg-white relative" id="copilot">
+        <div className="w-full max-w-[1400px] mx-auto px-3 sm:px-6 lg:px-8 flex items-center justify-center">
+          <img
+            src={openHandMeetAuraSvg}
+            alt="Meet AURA — Consent-First AI Companion for Practitioners"
+            className="w-full h-auto max-w-[1360px] object-contain block select-none rounded-2xl shadow-xl"
+            loading="eager"
+          />
         </div>
       </section>
 
