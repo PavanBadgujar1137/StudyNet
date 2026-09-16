@@ -297,9 +297,9 @@ export default function OHPricingSection({ defaultRole = "learner", title, subti
     <section className={isModal ? "py-6 bg-transparent" : "oh-sec py-16 bg-slate-50 border-t border-b border-slate-200"} id="pricing">
       <div className="oh-wrap max-w-[1360px] mx-auto px-4">
         {/* Header */}
-        <div className="text-center max-w-3xl mx-auto mb-10">
+        <div className="text-center max-w-5xl mx-auto mb-10">
           <OHEyebrow>{activeTab === "learner" ? "Learner Membership Plans" : "Practitioner Platform Plans"}</OHEyebrow>
-          <h2 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight my-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[42px] font-black text-slate-900 tracking-tight my-4">
             {title || (
               <>
                 Invest in your care.{" "}
@@ -309,7 +309,7 @@ export default function OHPricingSection({ defaultRole = "learner", title, subti
               </>
             )}
           </h2>
-          <p className="text-slate-600 text-base sm:text-lg font-medium leading-relaxed">
+          <p className="text-slate-600 text-base sm:text-lg font-medium leading-relaxed max-w-2xl mx-auto">
             {subtitle ||
               "All payments are processed securely via Razorpay. Choose the plan tailored for your journey below."}
           </p>

@@ -1,50 +1,42 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
+import openHand4StepsSvg from '../../assets/Images/OpenHand_4_Steps_High_Resolution.svg'
 import {
   OHFooter,
   OHButton,
   OHEyebrow,
-  OHRangeCalculator,
   OHPricingSection,
 } from '../../components/openhand'
 
 export function PractitionerJourney() {
+  const navigate = useNavigate()
   const [openFaq, setOpenFaq] = useState(null)
+  const [unlockEmail, setUnlockEmail] = useState('')
+  const [isUnlocked, setIsUnlocked] = useState(false)
 
-  // PRACTITIONER earnings calculator — "what you keep per month"
-  // (was incorrectly a learner savings calculator — fixed per 5.3)
-  const calcCompute = (val) => {
-    const sessionsPerMonth = val.sessionsPerMonth || 0
-    const sessionFee = val.sessionRate || 0
-    const circlesPerMonth = val.circlesPerMonth || 0
-    const seatsPerCircle = val.seatsPerCircle || 0
-    const pricePerSeat = val.pricePerSeat || 0
+  // Sliders state
+  const [sessionsCount, setSessionsCount] = useState(8)
+  const [sessionRate, setSessionRate] = useState(3000)
+  const [circlesCount, setCirclesCount] = useState(2)
+  const [seatsCount, setSeatsCount] = useState(6)
+  const [seatPrice, setSeatPrice] = useState(1500)
 
-    const sessionRevenue = sessionsPerMonth * sessionFee
-    const circleRevenue = circlesPerMonth * seatsPerCircle * pricePerSeat
-    const gross = sessionRevenue + circleRevenue
+  // Dynamic Calculations
+  const totalEarnings = (sessionsCount * sessionRate) + (circlesCount * seatsCount * seatPrice)
+  let calculatedPlan = 'Starter'
+  if (circlesCount > 2 || sessionsCount > 5) calculatedPlan = 'Growth'
+  if (sessionsCount > 10 || (circlesCount * seatsCount) > 50) calculatedPlan = 'Master'
 
-    // ⚠️ CP-6: Actual commission/take-rate CLIENT_SUPPLIED — placeholder 0% used
-    // Client must confirm actual rate. Replace 0 with real decimal (e.g., 0.08 = 8%)
-    const COMMISSION_RATE = 0  // TODO: CLIENT_SUPPLIED_COMMISSION_%
-    const fee = gross * COMMISSION_RATE
-    const net = gross - fee
-
-    // Best plan suggestion
-    let bestPlan = 'Free Tier'
-    if (circlesPerMonth > 0 || sessionsPerMonth > 2) bestPlan = 'Starter'
-    if (circlesPerMonth > 2 || sessionsPerMonth > 5) bestPlan = 'Growth'
-    if (sessionsPerMonth > 10 || (circlesPerMonth * seatsPerCircle) > 50) bestPlan = 'Master'
-
-    return { gross, fee, net, bestPlan }
+  const handleUnlock = (e) => {
+    e.preventDefault()
+    if (!unlockEmail || !unlockEmail.includes('@')) {
+      toast.error('Please enter a valid practitioner email')
+      return
+    }
+    setIsUnlocked(true)
+    toast.success('Calculator unlocked! Enter your practice numbers.')
   }
-
-  const calcSliders = [
-    { id: 'sessionsPerMonth', label: '1:1 Sessions per month', min: 0, max: 30, value: 8 },
-    { id: 'sessionRate', label: 'Your session fee (per session)', min: 500, max: 15000, step: 500, value: 3000, format: (v) => `₹${v.toLocaleString('en-IN')}` },
-    { id: 'circlesPerMonth', label: 'Circles hosted per month', min: 0, max: 8, value: 2 },
-    { id: 'seatsPerCircle', label: 'Seats per Circle (max 8)', min: 1, max: 8, value: 6 },
-    { id: 'pricePerSeat', label: 'Price per Circle seat', min: 500, max: 5000, step: 250, value: 1500, format: (v) => `₹${v.toLocaleString('en-IN')}` },
-  ]
 
   // Practitioner FAQs — per 5.3 (was incorrectly showing learner FAQs on practitioner page)
   const faqs = [
@@ -98,6 +90,18 @@ export function PractitionerJourney() {
         </div>
       </header>
 
+      {/* HOW IT ACTUALLY WORKS — 4 Steps High Resolution Banner */}
+      <section className="oh-sec py-8 sm:py-14 bg-white relative" id="how-it-works">
+        <div className="w-full max-w-[1400px] mx-auto px-3 sm:px-6 lg:px-8 flex items-center justify-center">
+          <img
+            src={openHand4StepsSvg}
+            alt="Get Started in 4 Simple Steps — Share, Teach, Help, Get Rewarded"
+            className="w-full h-auto max-w-[1360px] object-contain block select-none"
+            loading="eager"
+          />
+        </div>
+      </section>
+
       {/* Practitioner Pricing Section */}
       <OHPricingSection
         defaultRole="practitioner"
@@ -106,22 +110,287 @@ export function PractitionerJourney() {
         subtitle="Choose the practitioner plan tailored to your practice size and growth goals."
       />
 
-      {/* PRACTITIONER Earnings Calculator — PJ-1/5.3: was incorrectly showing learner savings */}
-      <section className="oh-sec py-12 bg-white border-t border-b border-slate-200">
-        <div className="oh-wrap max-w-5xl mx-auto px-4 text-center">
-          <div className="max-w-2xl mx-auto mb-8">
-            <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 mb-3">What you keep per month</h2>
-            <p className="text-slate-600 text-base font-medium">
-              Drag the sliders to estimate your monthly earnings from 1:1 Sessions and Circles on OpenHand.
-              {/* ⚠️ CP-6: commission rate is CLIENT_SUPPLIED — currently shown as 0% placeholder */}
+      {/* PRACTITIONER Earnings Calculator — Two Ways Gated Mockup UI */}
+      <section className="oh-sec py-16 bg-slate-50/70 border-t border-b border-slate-200" id="earnings-calculator">
+        <div className="w-full max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8">
+          
+          {/* Section Header */}
+          <div className="max-w-3xl mx-auto text-center mb-12">
+            <h2 className="text-2xl sm:text-4xl font-black text-slate-900 mb-3 tracking-tight">
+              Two ways to show the earnings calculator
+            </h2>
+            <p className="text-slate-600 text-sm sm:text-base font-medium leading-relaxed">
+              Illustrative mockup only — not the real OpenHand page. Left: what a visitor (learner, competitor,
+              anyone) sees by default. Right: the interactive slider calculator, unlocked only for signed-in
+              practitioners.
             </p>
           </div>
 
-          <OHRangeCalculator
-            sliders={calcSliders}
-            compute={calcCompute}
-            note="⚠️ Commission / take-rate is CLIENT_SUPPLIED and currently shown as 0%. Confirm actual rate with the client before publishing. Payment gateway charges and taxes apply at checkout."
-          />
+          {/* 2-Card Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch mb-8 w-full">
+            
+            {/* Left Card — Visible to Everyone (5 Cols) */}
+            <div className="lg:col-span-5 bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8 flex flex-col justify-between relative overflow-hidden">
+              <div className="h-1.5 w-full absolute top-0 left-0 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
+              
+              <div>
+                <div className="mb-4">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-extrabold tracking-wider uppercase bg-blue-50 text-blue-600 border border-blue-100">
+                    VISIBLE TO EVERYONE
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap gap-2.5 mb-6">
+                  <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/70">
+                    ✓ 0% commission on Starter
+                  </span>
+                  <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/70">
+                    Direct Razorpay payouts
+                  </span>
+                </div>
+
+                <h3 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mb-3">
+                  Keep what you earn
+                </h3>
+                <p className="text-slate-600 text-sm sm:text-base leading-relaxed mb-6 font-medium">
+                  OpenHand doesn't take a cut of your session or Circle fees. A flat monthly platform plan covers hosting, AURA and payments — the rest is yours.
+                </p>
+
+                <div className="space-y-3 mb-6">
+                  <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200/70">
+                    <span className="text-sm font-semibold text-slate-800">Practitioner running 8 sessions/mo</span>
+                    <div className="text-right">
+                      <div className="text-sm font-bold text-slate-900">Keeps ~90%+</div>
+                      <div className="text-[11px] text-slate-400 font-medium">illustrative</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200/70">
+                    <span className="text-sm font-semibold text-slate-800">Practitioner hosting 2 Circles/mo</span>
+                    <div className="text-right">
+                      <div className="text-sm font-bold text-slate-900">Keeps ~90%+</div>
+                      <div className="text-[11px] text-slate-400 font-medium">illustrative</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 text-xs text-slate-700 space-y-2 mb-6">
+                  <div className="flex items-center gap-2 font-medium">
+                    <span className="text-emerald-600 font-bold">✓</span> Direct client payouts settled to your bank account
+                  </div>
+                  <div className="flex items-center gap-2 font-medium">
+                    <span className="text-emerald-600 font-bold">✓</span> Transparent fixed monthly subscription
+                  </div>
+                  <div className="flex items-center gap-2 font-medium">
+                    <span className="text-emerald-600 font-bold">✓</span> You own 100% of your client relationships &amp; notes
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <button
+                  onClick={() => navigate('/login?role=practitioner')}
+                  className="w-full py-4 px-6 rounded-xl font-bold text-white bg-[#0F172A] hover:bg-[#1E293B] shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 text-sm sm:text-base cursor-pointer"
+                >
+                  See your exact take-home →
+                </button>
+                <p className="text-xs text-slate-500 text-center mt-3 font-medium">
+                  Sign in to open the calculator with your own numbers
+                </p>
+              </div>
+            </div>
+
+            {/* Right Card — Unlocked for Practitioners (7 Cols) */}
+            <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8 flex flex-col justify-between relative overflow-hidden">
+              <div className="h-1.5 w-full absolute top-0 left-0 bg-gradient-to-r from-amber-400 to-orange-500"></div>
+
+              <div>
+                <div className="mb-4 flex items-center justify-between">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-extrabold tracking-wider uppercase bg-amber-50 text-amber-700 border border-amber-200">
+                    UNLOCKED FOR PRACTITIONERS
+                  </span>
+                  {isUnlocked && (
+                    <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                      ✓ Active
+                    </span>
+                  )}
+                </div>
+
+                <div className="w-11 h-11 mx-auto rounded-2xl bg-amber-50 border border-amber-200/80 flex items-center justify-center text-amber-600 mb-3 shadow-sm">
+                  <span className="text-lg">🔒</span>
+                </div>
+
+                <h3 className="text-xl sm:text-2xl font-black text-slate-900 text-center mb-2 tracking-tight">
+                  Calculate your exact earnings
+                </h3>
+                <p className="text-slate-600 text-xs sm:text-sm text-center max-w-lg mx-auto mb-4 leading-relaxed font-medium">
+                  Enter your practitioner email to unlock the interactive calculator with your own session count, fees and Circle pricing.
+                </p>
+
+                <form onSubmit={handleUnlock} className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto w-full mb-2.5">
+                  <input
+                    type="email"
+                    value={unlockEmail}
+                    onChange={(e) => setUnlockEmail(e.target.value)}
+                    placeholder="Enter email"
+                    className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 bg-slate-50/50"
+                  />
+                  <button
+                    type="submit"
+                    className="px-6 py-2.5 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 text-sm shadow-sm transition-all whitespace-nowrap cursor-pointer"
+                  >
+                    {isUnlocked ? 'Update' : 'Unlock'}
+                  </button>
+                </form>
+
+                <div className="text-center mb-5">
+                  <button
+                    onClick={() => navigate('/login?role=practitioner')}
+                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
+                  >
+                    Already a practitioner? Sign in instead →
+                  </button>
+                </div>
+              </div>
+
+              {/* Embedded Calculator Container */}
+              <div className="relative rounded-2xl bg-[#090E1A] p-5 sm:p-6 text-white shadow-inner border border-slate-800 overflow-hidden">
+                
+                {/* 2-Column Split: Sliders on Left, Result Card on Right */}
+                <div className={`grid grid-cols-1 md:grid-cols-12 gap-6 items-center ${!isUnlocked ? 'filter blur-[3.5px] opacity-40 pointer-events-none select-none' : ''}`}>
+                  
+                  {/* Left Column: Sliders (7 cols) */}
+                  <div className="md:col-span-7 space-y-3.5">
+                    
+                    {/* Slider 1 */}
+                    <div>
+                      <div className="flex justify-between text-xs font-semibold mb-1 text-slate-300">
+                        <span>1:1 Sessions per month</span>
+                        <span className="font-bold text-white text-sm">{sessionsCount}</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="30"
+                        value={sessionsCount}
+                        onChange={(e) => setSessionsCount(Number(e.target.value))}
+                        className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                      />
+                    </div>
+
+                    {/* Slider 2 */}
+                    <div>
+                      <div className="flex justify-between text-xs font-semibold mb-1 text-slate-300">
+                        <span>Your session fee</span>
+                        <span className="font-bold text-white text-sm">₹{sessionRate.toLocaleString('en-IN')}</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="500"
+                        max="15000"
+                        step="500"
+                        value={sessionRate}
+                        onChange={(e) => setSessionRate(Number(e.target.value))}
+                        className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                      />
+                    </div>
+
+                    {/* Slider 3 */}
+                    <div>
+                      <div className="flex justify-between text-xs font-semibold mb-1 text-slate-300">
+                        <span>Circles hosted per month</span>
+                        <span className="font-bold text-white text-sm">{circlesCount}</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="8"
+                        value={circlesCount}
+                        onChange={(e) => setCirclesCount(Number(e.target.value))}
+                        className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                      />
+                    </div>
+
+                    {/* Slider 4 */}
+                    <div>
+                      <div className="flex justify-between text-xs font-semibold mb-1 text-slate-300">
+                        <span>Seats per Circle (max 8)</span>
+                        <span className="font-bold text-white text-sm">{seatsCount}</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="1"
+                        max="8"
+                        value={seatsCount}
+                        onChange={(e) => setSeatsCount(Number(e.target.value))}
+                        className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                      />
+                    </div>
+
+                    {/* Slider 5 */}
+                    <div>
+                      <div className="flex justify-between text-xs font-semibold mb-1 text-slate-300">
+                        <span>Price per Circle seat</span>
+                        <span className="font-bold text-white text-sm">₹{seatPrice.toLocaleString('en-IN')}</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="500"
+                        max="5000"
+                        step="250"
+                        value={seatPrice}
+                        onChange={(e) => setSeatPrice(Number(e.target.value))}
+                        className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                      />
+                    </div>
+
+                  </div>
+
+                  {/* Right Column: Result Card (5 cols) */}
+                  <div className="md:col-span-5 h-full flex flex-col justify-center">
+                    <div className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 rounded-2xl p-5 text-center text-white shadow-lg border border-white/10">
+                      <div className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-widest text-blue-100 mb-1">
+                        YOU KEEP, PER MONTH
+                      </div>
+                      <div className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight my-2">
+                        ₹{totalEarnings.toLocaleString('en-IN')}
+                      </div>
+                      <div className="text-xs text-blue-100/90 font-medium mb-3">
+                        ₹{totalEarnings.toLocaleString('en-IN')} collected minus ₹0 to OpenHand
+                      </div>
+                      <div className="inline-block bg-white/20 backdrop-blur-xs px-3.5 py-1.5 rounded-full text-xs font-bold text-white border border-white/10">
+                        Best plan for you: {calculatedPlan}
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+
+                <p className="text-[11px] text-slate-400 text-center mt-4 font-medium border-t border-slate-800/80 pt-3">
+                  Payment gateway charges and taxes apply at checkout.
+                </p>
+
+                {/* Locked Centered Overlay */}
+                {!isUnlocked && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center p-4 bg-black/40 backdrop-blur-[2px]">
+                    <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-xl px-5 py-3 rounded-2xl text-xs sm:text-sm font-bold text-slate-800 text-center max-w-[280px]">
+                      Full slider calculator appears here once unlocked
+                    </div>
+                  </div>
+                )}
+
+              </div>
+
+            </div>
+          </div>
+
+          {/* Bottom Explanatory Box (Wide) */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-7 w-full shadow-sm text-left">
+            <p className="text-slate-700 text-xs sm:text-sm leading-relaxed font-medium">
+              <strong className="text-slate-900 font-bold">Why split it this way:</strong> the left panel keeps the trust-building message (&quot;no commission&quot;) visible to any visitor, so it still works as a conversion tool in search results and social shares. The right panel — the exact plan-by-plan slider with real ₹ figures — only renders after an email or sign-in, so a casual visitor or a competitor scanning the page can't screenshot your full pricing model or reverse-engineer your unit economics. It also gives you a practitioner lead capture at the exact moment someone is most convinced.
+            </p>
+          </div>
+
         </div>
       </section>
 
