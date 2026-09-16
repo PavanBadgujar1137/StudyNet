@@ -40,7 +40,9 @@ export function Practitioners({ onUpdate, setActiveTab }) {
         const initialMap = {}
         list.forEach((p) => {
           const pId = p.user?._id || p._id
-          const offers = p.offers || p.userOffers || []
+          const offers = (p.offers || p.userOffers || []).filter(
+            (o) => o.status === 'published' || (!o.status && o.status !== 'draft')
+          )
           if (offers.length > 0) {
             initialMap[pId] = [offers[0]._id]
           }
@@ -96,7 +98,9 @@ export function Practitioners({ onUpdate, setActiveTab }) {
   // Calculate total fee for a practitioner based on selected checkboxes
   const getSelectedFeeForPractitioner = (p) => {
     const pId = p.user?._id || p._id
-    const offers = p.offers || p.userOffers || []
+    const offers = (p.offers || p.userOffers || []).filter(
+      (o) => o.status === 'published' || (!o.status && o.status !== 'draft')
+    )
     const selectedIds = selectedOffersMap[pId] || []
 
     if (offers.length === 0) return p.sessionRate || 0
@@ -251,7 +255,9 @@ export function Practitioners({ onUpdate, setActiveTab }) {
 
   // Filtered practitioners list (ONLY display practitioners who have published at least 1 active offer!)
   const filteredPractitioners = practitioners.filter((p) => {
-    const offers = p.offers || p.userOffers || []
+    const offers = (p.offers || p.userOffers || []).filter(
+      (o) => o.status === 'published' || (!o.status && o.status !== 'draft')
+    )
     if (offers.length === 0) return false // Hide practitioner card if practitioner has 0 active published offers
 
     const fullName = `${p.user?.firstName || p.firstName || ''} ${p.user?.lastName || p.lastName || ''}`.toLowerCase()
@@ -402,7 +408,9 @@ export function Practitioners({ onUpdate, setActiveTab }) {
 
             const conn = getConnectionForPractitioner(pId)
             const connStatus = conn?.status // 'active' | 'approved' | 'pending_approval'
-            const offers = p.offers || p.userOffers || []
+            const offers = (p.offers || p.userOffers || []).filter(
+              (o) => o.status === 'published' || (!o.status && o.status !== 'draft')
+            )
 
             const selectedIds = selectedOffersMap[pId] || []
             const selectedFee = getSelectedFeeForPractitioner(p)

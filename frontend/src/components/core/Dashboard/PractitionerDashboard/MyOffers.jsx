@@ -70,7 +70,6 @@ export function MyOffers({ telemetryData, onUpdate }) {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingOffer, setEditingOffer] = useState(null)
   const [submitting, setSubmitting] = useState(false)
-  const [deletingId, setDeletingId] = useState(null)
   const [togglingId, setTogglingId] = useState(null)
 
   // Filter tab state ('all' | 'session' | 'circle' | 'program')
@@ -88,6 +87,9 @@ export function MyOffers({ telemetryData, onUpdate }) {
   const [status, setStatus] = useState('published')
 
   const [offersList, setOffersList] = useState(telemetryData?.offers || [])
+  const [deleteTargetOffer, setDeleteTargetOffer] = useState(null)
+  const [deleteConfirmed, setDeleteConfirmed] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
 
   // Fetch practitioner's real published offers from backend
   const loadOffers = useCallback(async () => {
@@ -126,7 +128,7 @@ export function MyOffers({ telemetryData, onUpdate }) {
     setEditingOffer(offer)
     setTitle(offer.title || '')
     setDescription(offer.description || '')
-    setPrice(offer.price !== undefined ? offer.price : '')
+    setPrice(offer.price || '')
     setType(offer.type || 'session')
     setDurationMinutes(offer.durationMinutes || 50)
     setMaxSeats(offer.maxSeats || '')
@@ -136,92 +138,84 @@ export function MyOffers({ telemetryData, onUpdate }) {
     setShowCreateModal(true)
   }
 
-  const applyPreset = (preset) => {
-    setTitle(preset.title)
-    setType(preset.type)
-    setPrice(preset.price)
-    setDurationMinutes(preset.durationMinutes)
-    setMaxSeats(preset.maxSeats)
-    setWeekCount(preset.weekCount)
-    setTagsInput(preset.tags)
-    setDescription(preset.description)
+  const applyPreset = (p) => {
+    setTitle(p.title)
+    setDescription(p.description)
+    setPrice(p.price)
+    setType(p.type)
+    setDurationMinutes(p.durationMinutes)
+    setMaxSeats(p.maxSeats)
+    setWeekCount(p.weekCount)
+    setTagsInput(p.tags)
     setStatus('published')
-    toast.success(`Preset "${preset.label}" applied! ✨ Please review & personalize text to avoid generic AI language.`, { duration: 5000 })
-
+    toast.success(`Preset "${p.label}" applied! ✨ Please review & personalize text to avoid generic AI language.`, { duration: 5000 })
   }
-
-
 
   const handleSubmitOffer = async (e) => {
     e.preventDefault()
-    if (!title || price === '' || isNaN(Number(price))) {
-      toast.error('Offer title and valid price are required.')
+    if (!title.trim() || !price) {
+      toast.error('Please enter offer title and price')
       return
     }
 
     setSubmitting(true)
-    const formattedTags = tagsInput
-      .split(',')
-      .map((t) => t.trim())
-      .filter(Boolean)
-
-    const payload = {
-      title,
-      description,
-      price: Number(price),
-      type,
-      kind: type,
-      durationMinutes: Number(durationMinutes) || 50,
-      maxSeats: maxSeats ? Number(maxSeats) : undefined,
-      weekCount: weekCount ? Number(weekCount) : undefined,
-      tags: formattedTags,
-      status,
-    }
-
     try {
+      const parsedTags = tagsInput
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean)
+
+      const payload = {
+        title: title.trim(),
+        description: description.trim(),
+        price: Number(price),
+        type,
+        durationMinutes: Number(durationMinutes) || 50,
+        maxSeats: maxSeats ? Number(maxSeats) : undefined,
+        weekCount: weekCount ? Number(weekCount) : undefined,
+        tags: parsedTags,
+        status,
+      }
+
       let res
       if (editingOffer) {
-        // Update existing offer
         res = await apiConnector('PUT', `/api/v1/offers/${editingOffer._id}`, payload, {
           Authorization: `Bearer ${token}`,
         })
       } else {
-        // Create new offer
         res = await apiConnector('POST', '/api/v1/offers', payload, {
           Authorization: `Bearer ${token}`,
         })
       }
 
       if (res?.data?.success) {
-        toast.success(
-          editingOffer ? 'Offer updated successfully!' : '🎉 Offer published to directory successfully!'
-        )
+        toast.success(editingOffer ? 'Offer updated!' : '🎉 Offer published to directory successfully!')
         setShowCreateModal(false)
         loadOffers()
         if (onUpdate) onUpdate()
       } else {
-        toast.error(res?.data?.message || 'Failed to save offer')
+        toast.error(res?.data?.message || 'Operation failed')
       }
     } catch (err) {
-      console.error('Submit offer error:', err)
-      toast.error('Could not save offer')
+      console.error('Save offer error:', err)
+      toast.error('Failed to save offer')
     } finally {
       setSubmitting(false)
     }
   }
 
   const handleToggleStatus = async (offer) => {
+    const nextStatus = offer.status === 'published' ? 'draft' : 'published'
     setTogglingId(offer._id)
-    const newStatus = offer.status === 'published' ? 'draft' : 'published'
     try {
       const res = await apiConnector(
         'PUT',
         `/api/v1/offers/${offer._id}`,
-        { status: newStatus },
+        { status: nextStatus },
         { Authorization: `Bearer ${token}` }
       )
       if (res?.data?.success) {
-        toast.success(`Offer marked as ${newStatus === 'published' ? 'LIVE' : 'DRAFT'}`)
+        toast.success(`Offer marked as ${nextStatus.toUpperCase()}`)
         loadOffers()
         if (onUpdate) onUpdate()
       } else {
@@ -234,9 +228,9 @@ export function MyOffers({ telemetryData, onUpdate }) {
     }
   }
 
-  const handleDeleteOffer = async (offer) => {
+  const handleRequestDelete = (offer) => {
     const offerId = typeof offer === 'object' ? offer._id : offer
-    const targetOffer = offersList.find((o) => o._id === offerId)
+    const targetOffer = offersList.find((o) => o._id === offerId) || (typeof offer === 'object' ? offer : null)
 
     // ITEM 24 FIX: Restrict deleting live active offers
     if (targetOffer && targetOffer.status === 'published') {
@@ -244,8 +238,14 @@ export function MyOffers({ telemetryData, onUpdate }) {
       return
     }
 
-    if (!window.confirm('Are you sure you want to delete this draft offer?')) return
-    setDeletingId(offerId)
+    setDeleteTargetOffer(targetOffer)
+    setDeleteConfirmed(false)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTargetOffer) return
+    const offerId = deleteTargetOffer._id
+    setDeleteLoading(true)
     try {
       const res = await apiConnector('DELETE', `/api/v1/offers/${offerId}`, null, {
         Authorization: `Bearer ${token}`,
@@ -253,6 +253,7 @@ export function MyOffers({ telemetryData, onUpdate }) {
 
       if (res?.data?.success) {
         toast.success('Offer deleted successfully')
+        setDeleteTargetOffer(null)
         loadOffers()
         if (onUpdate) onUpdate()
       } else {
@@ -262,7 +263,7 @@ export function MyOffers({ telemetryData, onUpdate }) {
       console.error('Delete offer error:', err)
       toast.error('Failed to delete offer')
     } finally {
-      setDeletingId(null)
+      setDeleteLoading(false)
     }
   }
 
@@ -565,8 +566,7 @@ export function MyOffers({ telemetryData, onUpdate }) {
                     </div>
 
                     <button
-                      onClick={() => handleDeleteOffer(o._id)}
-                      disabled={deletingId === o._id}
+                      onClick={() => handleRequestDelete(o)}
                       style={{
                         background: '#FEF2F2',
                         color: '#991B1B',
@@ -581,7 +581,7 @@ export function MyOffers({ telemetryData, onUpdate }) {
                         gap: '4px',
                       }}
                     >
-                      <FiTrash2 size={13} /> {deletingId === o._id ? '...' : 'Delete'}
+                      <FiTrash2 size={13} /> Delete
                     </button>
                   </div>
                 </div>
@@ -924,6 +924,164 @@ export function MyOffers({ telemetryData, onUpdate }) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* DELETE CONFIRMATION MODAL */}
+      {deleteTargetOffer && (
+        <div
+          onClick={() => !deleteLoading && setDeleteTargetOffer(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.7)',
+            backdropFilter: 'blur(5px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 99999,
+            padding: 16,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#FFFFFF',
+              borderRadius: 20,
+              maxWidth: 480,
+              width: '100%',
+              padding: 28,
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              border: '1px solid #E2E8F0',
+            }}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 12,
+                  background: '#FEE2E2',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#DC2626',
+                  flexShrink: 0,
+                }}>
+                  <FiTrash2 size={22} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#0F172A' }}>
+                    Delete Practice Offer?
+                  </h3>
+                  <p style={{ margin: '2px 0 0', fontSize: 13, color: '#64748B', fontWeight: 500 }}>
+                    "{deleteTargetOffer.title}"
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => !deleteLoading && setDeleteTargetOffer(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#94A3B8',
+                  cursor: 'pointer',
+                  padding: 4,
+                  display: 'flex',
+                }}
+              >
+                <FiX size={20} />
+              </button>
+            </div>
+
+            {/* Warning Box */}
+            <div style={{
+              background: '#FEF2F2',
+              border: '1px solid #FECACA',
+              borderRadius: 12,
+              padding: '12px 14px',
+              marginBottom: 18,
+              fontSize: 12.5,
+              color: '#991B1B',
+              lineHeight: 1.5,
+            }}>
+              This will permanently delete this practice offer and remove it from your published services. Learners will no longer be able to discover or book this offer. This action cannot be undone.
+            </div>
+
+            {/* Mandatory Confirmation Checkbox */}
+            <label style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: 10,
+              background: '#F8FAFC',
+              border: deleteConfirmed ? '1.5px solid #EF4444' : '1.5px solid #E2E8F0',
+              borderRadius: 12,
+              padding: '12px 14px',
+              cursor: 'pointer',
+              userSelect: 'none',
+              marginBottom: 22,
+              transition: 'all 0.2s',
+            }}>
+              <input
+                type="checkbox"
+                checked={deleteConfirmed}
+                onChange={(e) => setDeleteConfirmed(e.target.checked)}
+                disabled={deleteLoading}
+                style={{ marginTop: 3, width: 16, height: 16, accentColor: '#DC2626', cursor: 'pointer' }}
+              />
+              <span style={{ fontSize: 12.5, color: '#334155', fontWeight: 500, lineHeight: 1.45 }}>
+                Yes, I confirm that I want to delete this offer and understand that this action cannot be undone.
+              </span>
+            </label>
+
+            {/* Action Buttons */}
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                type="button"
+                onClick={() => setDeleteTargetOffer(null)}
+                disabled={deleteLoading}
+                style={{
+                  flex: 1,
+                  padding: '11px 16px',
+                  background: '#F1F5F9',
+                  border: '1px solid #E2E8F0',
+                  borderRadius: 10,
+                  color: '#475569',
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: deleteLoading ? 'not-allowed' : 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                disabled={!deleteConfirmed || deleteLoading}
+                style={{
+                  flex: 1.4,
+                  padding: '11px 16px',
+                  background: !deleteConfirmed || deleteLoading ? '#FCA5A5' : 'linear-gradient(135deg, #EF4444, #DC2626)',
+                  border: 'none',
+                  borderRadius: 10,
+                  color: '#FFFFFF',
+                  fontWeight: 700,
+                  fontSize: 13,
+                  cursor: !deleteConfirmed || deleteLoading ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  boxShadow: deleteConfirmed && !deleteLoading ? '0 4px 12px rgba(220, 38, 38, 0.25)' : 'none',
+                  transition: 'all 0.2s',
+                }}
+              >
+                <FiTrash2 size={14} />
+                {deleteLoading ? 'Deleting...' : 'Confirm Delete'}
+              </button>
+            </div>
           </div>
         </div>
       )}

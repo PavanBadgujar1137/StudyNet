@@ -51,9 +51,10 @@ exports.getPractitioners = async (req, res) => {
         accountType: u.accountType,
       }
 
-      // Attach all offers created by this practitioner from MongoDB
+      // Attach only published offers created by this practitioner from MongoDB
       const userOffers = await Offer.find({
         $or: [{ practitioner: u._id }, { practitioner: profile._id }],
+        status: "published",
       }).lean()
       profile.offers = userOffers || []
       profile.userOffers = userOffers || []
@@ -244,6 +245,7 @@ exports.getPractitionerByHandle = async (req, res) => {
 
     const userOffers = await Offer.find({
       $or: [{ practitioner: practUserId }, { practitioner: profile._id }],
+      status: "published",
     }).lean()
 
     const practitionerCourses = await Course.find({ instructor: practUserId }).select("_id").lean()

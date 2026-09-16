@@ -119,6 +119,11 @@ exports.updateOffer = async (req, res) => {
         { user: userId },
         { sessionRate: minRate, formats }
       )
+    } else {
+      await PractitionerProfile.findOneAndUpdate(
+        { user: userId },
+        { sessionRate: 0, formats: [] }
+      )
     }
 
     return res.status(200).json({
@@ -167,6 +172,11 @@ exports.deleteOffer = async (req, res) => {
       await PractitionerProfile.findOneAndUpdate(
         { user: userId },
         { sessionRate: minRate, formats }
+      )
+    } else {
+      await PractitionerProfile.findOneAndUpdate(
+        { user: userId },
+        { sessionRate: 0, formats: [] }
       )
     }
 

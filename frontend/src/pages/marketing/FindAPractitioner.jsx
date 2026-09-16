@@ -427,7 +427,11 @@ export function FindAPractitioner() {
             <>
               <div className="dir-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {practitioners
-                  .filter((p) => (p.offers && p.offers.length > 0) || (p.userOffers && p.userOffers.length > 0))
+                  .filter((p) => {
+                    const rawOffers = p.offers || p.userOffers || []
+                    const publishedOffers = rawOffers.filter((o) => o.status === 'published' || (!o.status && o.status !== 'draft'))
+                    return publishedOffers.length > 0
+                  })
                   .filter((p) => {
                     if (langFilter && langFilter !== 'all') {
                       const cleanLang = langFilter.trim().toLowerCase()
@@ -440,6 +444,9 @@ export function FindAPractitioner() {
                   const name = formatPractitionerName(p.user || p, 'Practitioner')
                   const isVerified = p.verificationStatus === 'verified' || true
                   const userImg = p.user?.image || p.image || p.avatar || null
+                  const rawOffers = p.offers || p.userOffers || []
+                  const publishedOffers = rawOffers.filter((o) => o.status === 'published' || (!o.status && o.status !== 'draft'))
+                  const minPrice = publishedOffers.length > 0 ? Math.min(...publishedOffers.map((o) => o.price || 0)) : (p.sessionRate || 0)
 
                   return (
                     <article key={p._id} className="practitioner-card">
@@ -494,13 +501,13 @@ export function FindAPractitioner() {
                       <p className="p-bio-text">{p.bio}</p>
 
                       {/* Published Offers Section */}
-                      {((p.offers && p.offers.length > 0) || (p.userOffers && p.userOffers.length > 0)) && (
+                      {publishedOffers.length > 0 && (
                         <div style={{ marginBottom: '12px', background: '#F8FAFC', padding: '10px 12px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
                           <span style={{ fontSize: '11px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '6px' }}>
-                            Published Offers ({(p.offers || p.userOffers).length})
+                            Published Offers ({publishedOffers.length})
                           </span>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                            {(p.offers || p.userOffers).map((o, oIdx) => (
+                            {publishedOffers.map((o, oIdx) => (
                               <div
                                 key={o._id || oIdx}
                                 style={{
@@ -534,9 +541,9 @@ export function FindAPractitioner() {
                       {/* Footer: Price & Availability */}
                       <div className="p-card-foot">
                         <div className="p-rate-box">
-                          {p.sessionRate && p.sessionRate > 0 ? (
+                          {minPrice > 0 ? (
                             <>
-                              <span className="p-rate-amount">₹{p.sessionRate.toLocaleString('en-IN')}</span>
+                              <span className="p-rate-amount">₹{minPrice.toLocaleString('en-IN')}</span>
                               <span className="p-rate-unit"> /session</span>
                             </>
                           ) : (

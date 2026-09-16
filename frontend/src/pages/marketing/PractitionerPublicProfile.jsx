@@ -202,7 +202,9 @@ export function PractitionerPublicProfile() {
 
   const user = profile.user || {}
   const practitionerName = formatPractitionerName(user, 'Practitioner')
-  const offers = profile.offers || profile.userOffers || []
+  const offers = (profile.offers || profile.userOffers || []).filter(
+    (o) => o.status === 'published' || (!o.status && o.status !== 'draft')
+  )
   const reviews = profile.reviews || []
 
   return (
