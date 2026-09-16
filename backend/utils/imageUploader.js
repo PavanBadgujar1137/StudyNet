@@ -75,8 +75,7 @@ exports.uploadFileToS3 = async (file, folder = "uploads") => {
       ContentType: contentType,
     },
     // Part size for multipart uploads (5MB min per AWS requirement)
-    partSize: 10 * 1024 * 1024, // 10MB per part
-    // Number of concurrent upload parts
+    partSize: 64 * 1024 * 1024, // 64MB parts — fewer parts for 10h videos
     queueSize: 4,
   })
 

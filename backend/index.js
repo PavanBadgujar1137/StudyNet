@@ -109,7 +109,7 @@ app.use(
   fileUpload({
     useTempFiles: true,
     tempFileDir,
-    limits: { fileSize: 20 * 1024 * 1024 * 1024 }, // 20GB max file size limit for video uploads
+    limits: { fileSize: 50 * 1024 * 1024 * 1024 }, // 50GB — ~10h 1080p lecture
     abortOnLimit: true,
   })
 )

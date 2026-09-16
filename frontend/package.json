@@ -43,7 +43,9 @@
   "scripts": {
     "start": "react-scripts start",
     "dev": "react-scripts start",
-    "build": "cross-env DISABLE_ESLINT_PLUGIN=true react-scripts build",
+    "build": "node scripts/build-with-env.js production",
+    "build:production": "node scripts/build-with-env.js production",
+    "build:uat": "node scripts/build-with-env.js uat",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
