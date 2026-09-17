@@ -69,7 +69,7 @@ function DeleteConfirmModal({ isOpen, title, itemName, itemType, warningText, on
     <div style={{
       position: 'fixed',
       inset: 0,
-      zIndex: 3000,
+      zIndex: 99999,
       background: 'rgba(15, 23, 42, 0.75)',
       backdropFilter: 'blur(6px)',
       display: 'flex',
@@ -250,7 +250,7 @@ function VideoPreviewModal({ video, courseId, onClose, onUpdate }) {
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(15, 23, 42, 0.88)', backdropFilter: 'blur(8px)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(15, 23, 42, 0.88)', backdropFilter: 'blur(8px)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 28px', borderBottom: '1px solid rgba(255,255,255,0.1)', background: 'rgba(15, 23, 42, 0.95)' }}>
         <div>
@@ -663,16 +663,71 @@ function EditCourseModal({ course, onClose, onSuccess }) {
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 999, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyCenter: 'center', padding: 16 }}>
-      <div style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth: 540, margin: 'auto', padding: 28, boxShadow: '0 20px 40px rgba(0,0,0,0.2)', position: 'relative' }}>
-        <button onClick={onClose} style={{ position: 'absolute', top: 20, right: 20, background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}>
-          <FiX size={20} />
-        </button>
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 99999,
+        background: 'rgba(15, 23, 42, 0.75)',
+        backdropFilter: 'blur(6px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px 16px',
+        boxSizing: 'border-box',
+        overflowY: 'auto',
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+    >
+      <div
+        style={{
+          background: '#FFFFFF',
+          borderRadius: 20,
+          width: '100%',
+          maxWidth: 560,
+          maxHeight: 'min(90vh, 780px)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+          position: 'relative',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div style={{ padding: '24px 28px 16px', borderBottom: '1px solid #F1F5F9', position: 'relative', flexShrink: 0 }}>
+          <button
+            onClick={onClose}
+            aria-label="Close modal"
+            style={{
+              position: 'absolute',
+              top: 20,
+              right: 20,
+              background: '#F1F5F9',
+              border: 'none',
+              borderRadius: '50%',
+              width: 32,
+              height: 32,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: '#64748B',
+              transition: 'all 0.15s'
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#E2E8F0'; e.currentTarget.style.color = '#1E293B' }}
+            onMouseLeave={e => { e.currentTarget.style.background = '#F1F5F9'; e.currentTarget.style.color = '#64748B' }}
+          >
+            <FiX size={18} />
+          </button>
+          <h3 style={{ margin: '0 0 4px', color: '#0F172A', fontSize: 19, fontWeight: 800 }}>Edit Course</h3>
+          <p style={{ margin: 0, color: '#64748B', fontSize: 13, lineHeight: 1.4 }}>Update course title, description, pricing and publish status flow.</p>
+        </div>
 
-        <h3 style={{ margin: '0 0 6px', color: '#1E293B', fontSize: 18, fontWeight: 800 }}>Edit Course (Draft/Published)</h3>
-        <p style={{ margin: '0 0 20px', color: '#64748B', fontSize: 13 }}>Update course title, description, pricing and publish status flow.</p>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {/* Form Body (Scrollable) */}
+        <div style={{ padding: '20px 28px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16, flex: 1 }}>
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
               <label style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>Course Title *</label>
@@ -778,9 +833,44 @@ function EditCourseModal({ course, onClose, onSuccess }) {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: '12px', background: '#F1F5F9', border: 'none', borderRadius: 10, color: '#64748B', cursor: 'pointer', fontWeight: 600 }}>Cancel</button>
-          <button onClick={handleUpdate} disabled={updating} style={{ flex: 2, padding: '12px', background: updating ? '#CBD5E1' : 'linear-gradient(135deg, #3B82F6, #1D4ED8)', border: 'none', borderRadius: 10, color: '#fff', cursor: updating ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: 14 }}>
+        {/* Pinned Action Footer */}
+        <div style={{ padding: '16px 28px 20px', borderTop: '1px solid #F1F5F9', background: '#FAFAFA', display: 'flex', gap: 12, flexShrink: 0 }}>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              flex: 1,
+              padding: '11px 16px',
+              background: '#FFFFFF',
+              border: '1.5px solid #E2E8F0',
+              borderRadius: 10,
+              color: '#64748B',
+              cursor: 'pointer',
+              fontWeight: 600,
+              fontSize: 13,
+              transition: 'all 0.15s'
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleUpdate}
+            disabled={updating}
+            style={{
+              flex: 2,
+              padding: '11px 16px',
+              background: updating ? '#CBD5E1' : 'linear-gradient(135deg, #3B82F6, #1D4ED8)',
+              border: 'none',
+              borderRadius: 10,
+              color: '#fff',
+              cursor: updating ? 'not-allowed' : 'pointer',
+              fontWeight: 700,
+              fontSize: 13.5,
+              boxShadow: updating ? 'none' : '0 4px 14px rgba(59, 130, 246, 0.3)',
+              transition: 'all 0.15s'
+            }}
+          >
             {updating ? 'Updating...' : 'Save Changes'}
           </button>
         </div>
@@ -1374,16 +1464,71 @@ function CreateCourseModal({ onClose, onSuccess }) {
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 999, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyCenter: 'center', padding: 16 }}>
-      <div style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth: 540, margin: 'auto', padding: 28, boxShadow: '0 20px 40px rgba(0,0,0,0.2)', position: 'relative' }}>
-        <button onClick={onClose} style={{ position: 'absolute', top: 20, right: 20, background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}>
-          <FiX size={20} />
-        </button>
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 99999,
+        background: 'rgba(15, 23, 42, 0.75)',
+        backdropFilter: 'blur(6px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px 16px',
+        boxSizing: 'border-box',
+        overflowY: 'auto',
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+    >
+      <div
+        style={{
+          background: '#FFFFFF',
+          borderRadius: 20,
+          width: '100%',
+          maxWidth: 560,
+          maxHeight: 'min(90vh, 780px)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+          position: 'relative',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div style={{ padding: '24px 28px 16px', borderBottom: '1px solid #F1F5F9', position: 'relative', flexShrink: 0 }}>
+          <button
+            onClick={onClose}
+            aria-label="Close modal"
+            style={{
+              position: 'absolute',
+              top: 20,
+              right: 20,
+              background: '#F1F5F9',
+              border: 'none',
+              borderRadius: '50%',
+              width: 32,
+              height: 32,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: '#64748B',
+              transition: 'all 0.15s'
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#E2E8F0'; e.currentTarget.style.color = '#1E293B' }}
+            onMouseLeave={e => { e.currentTarget.style.background = '#F1F5F9'; e.currentTarget.style.color = '#64748B' }}
+          >
+            <FiX size={18} />
+          </button>
+          <h3 style={{ margin: '0 0 4px', color: '#0F172A', fontSize: 19, fontWeight: 800 }}>Create New Course</h3>
+          <p style={{ margin: 0, color: '#64748B', fontSize: 13, lineHeight: 1.4 }}>Create a new course container (saved as Draft for Edit). Add videos next.</p>
+        </div>
 
-        <h3 style={{ margin: '0 0 6px', color: '#1E293B', fontSize: 18, fontWeight: 800 }}>Create New Course</h3>
-        <p style={{ margin: '0 0 20px', color: '#64748B', fontSize: 13 }}>Create a new course container (saved as Draft for Edit). Add videos next.</p>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {/* Form Body (Scrollable) */}
+        <div style={{ padding: '20px 28px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16, flex: 1 }}>
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
               <label style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>Course Title *</label>
@@ -1433,18 +1578,54 @@ function CreateCourseModal({ onClose, onSuccess }) {
               placeholder="e.g. mindfulness, anxiety, meditation"
               style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #E2E8F0', borderRadius: 10, fontSize: 14, color: '#1E293B', outline: 'none', boxSizing: 'border-box' }} />
           </div>
+
           <div>
             <label style={{ display: 'block', fontSize: 12, color: '#64748B', marginBottom: 4, fontWeight: 600 }}>Thumbnail Image (optional)</label>
-            <div onClick={() => thumbRef.current?.click()} style={{ border: '2px dashed #CBD5E1', borderRadius: 10, padding: '20px', textAlign: 'center', cursor: 'pointer', background: '#F8FAFC' }}>
-              {thumbnail ? <div style={{ color: '#10B981', fontWeight: 600 }}>{thumbnail.name} ✓</div> : <div style={{ color: '#94A3B8' }}><FiUpload style={{ marginBottom: 4 }} /><br />Click to upload thumbnail</div>}
+            <div onClick={() => thumbRef.current?.click()} style={{ border: '2px dashed #CBD5E1', borderRadius: 10, padding: '16px', textAlign: 'center', cursor: 'pointer', background: '#F8FAFC' }}>
+              {thumbnail ? <div style={{ color: '#10B981', fontWeight: 600 }}>{thumbnail.name} ✓</div> : <div style={{ color: '#94A3B8', fontSize: 13 }}><FiUpload style={{ marginBottom: 4 }} /><br />Click to upload thumbnail</div>}
             </div>
             <input ref={thumbRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => setThumbnail(e.target.files[0])} />
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: '12px', background: '#F1F5F9', border: 'none', borderRadius: 10, color: '#64748B', cursor: 'pointer', fontWeight: 600 }}>Cancel</button>
-          <button onClick={handleCreate} disabled={creating} style={{ flex: 2, padding: '12px', background: creating ? '#CBD5E1' : 'linear-gradient(135deg, #3B82F6, #1D4ED8)', border: 'none', borderRadius: 10, color: '#fff', cursor: creating ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: 14 }}>
+        {/* Pinned Action Footer */}
+        <div style={{ padding: '16px 28px 20px', borderTop: '1px solid #F1F5F9', background: '#FAFAFA', display: 'flex', gap: 12, flexShrink: 0 }}>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              flex: 1,
+              padding: '11px 16px',
+              background: '#FFFFFF',
+              border: '1.5px solid #E2E8F0',
+              borderRadius: 10,
+              color: '#64748B',
+              cursor: 'pointer',
+              fontWeight: 600,
+              fontSize: 13,
+              transition: 'all 0.15s'
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleCreate}
+            disabled={creating}
+            style={{
+              flex: 2,
+              padding: '11px 16px',
+              background: creating ? '#CBD5E1' : 'linear-gradient(135deg, #3B82F6, #1D4ED8)',
+              border: 'none',
+              borderRadius: 10,
+              color: '#fff',
+              cursor: creating ? 'not-allowed' : 'pointer',
+              fontWeight: 700,
+              fontSize: 13.5,
+              boxShadow: creating ? 'none' : '0 4px 14px rgba(59, 130, 246, 0.3)',
+              transition: 'all 0.15s'
+            }}
+          >
             {creating ? 'Creating...' : '✓ Create Course (Draft Mode)'}
           </button>
         </div>
