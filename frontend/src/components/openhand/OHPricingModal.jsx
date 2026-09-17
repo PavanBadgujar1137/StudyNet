@@ -1,8 +1,13 @@
 import React from 'react'
+import { useSelector } from 'react-redux'
 import { FiX } from 'react-icons/fi'
 import OHPricingSection from './OHPricingSection'
 
-export default function OHPricingModal({ isOpen, onClose, defaultRole = 'learner' }) {
+export default function OHPricingModal({ isOpen, onClose, defaultRole, hideRoleSwitcher = true }) {
+  const { user } = useSelector((state) => state.profile)
+  const isPractitioner = user?.accountType === 'Practitioner' || user?.accountType === 'Instructor'
+  const resolvedRole = defaultRole || (isPractitioner ? 'practitioner' : 'learner')
+
   if (!isOpen) return null
 
   return (
@@ -65,7 +70,7 @@ export default function OHPricingModal({ isOpen, onClose, defaultRole = 'learner
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ fontSize: '18px' }}>💳</span>
             <span style={{ fontWeight: 800, fontSize: '16px', color: '#0F172A' }}>
-              Select Subscription Plan
+              {resolvedRole === 'practitioner' ? 'Select Practitioner Plan' : 'Select Subscription Plan'}
             </span>
           </div>
 
@@ -104,10 +109,13 @@ export default function OHPricingModal({ isOpen, onClose, defaultRole = 'learner
         {/* Modal Scrollable Body */}
         <div style={{ padding: '20px 24px 48px' }}>
           <OHPricingSection
-            defaultRole={defaultRole}
-            title="Choose Your Subscription Plan"
-            subtitle="Subscribe via Razorpay to instantly unlock all platform features and practitioner courses."
+            defaultRole={resolvedRole}
+            title={resolvedRole === 'practitioner' ? 'Unlock More for Your Practice' : 'Choose Your Subscription Plan'}
+            subtitle={resolvedRole === 'practitioner'
+              ? 'Free tier: 1 offer, directory listing, AURA Aftercare Notes. Upgrade to add Circles, automations, the live AURA panel, and more.'
+              : 'Subscribe via Razorpay to instantly unlock all platform features and practitioner courses.'}
             isModal={true}
+            hideRoleSwitcher={hideRoleSwitcher}
           />
         </div>
       </div>
