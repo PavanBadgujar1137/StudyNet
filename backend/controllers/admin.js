@@ -764,12 +764,16 @@ exports.updateClientPlan = async (req, res) => {
   }
 }
 
-// ─── Admin: Get All Courses for Plan Assignment ──────────────────────────────
+// ─── Admin: Get All Courses for Plan Assignment & Video Management ────────────
 exports.getAllCoursesAdmin = async (req, res) => {
   try {
     const courses = await Course.find()
       .populate("practitioner", "firstName lastName email image")
-      .populate("videos", "title durationSeconds")
+      .populate({
+        path: "videos",
+        select: "title description videoUrl thumbnail durationSeconds createdAt views s3Key order",
+        options: { sort: { order: 1, createdAt: 1 } },
+      })
       .sort({ createdAt: -1 })
       .lean()
 

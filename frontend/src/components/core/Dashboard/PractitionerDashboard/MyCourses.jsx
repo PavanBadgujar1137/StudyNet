@@ -922,7 +922,7 @@ function CourseCard({ course, onUpdate, onEdit }) {
       )
       if (res?.data?.success) {
         toast.success('Video order updated successfully')
-        onUpdate()
+        if (onUpdate) onUpdate(true)
       } else {
         toast.error(res?.data?.message || 'Failed to update video order')
         setVideosList(course.videos || [])
@@ -957,13 +957,23 @@ function CourseCard({ course, onUpdate, onEdit }) {
 
   // Drag and Drop handlers
   const handleDragStart = (e, index) => {
+    e.stopPropagation()
     setDraggedIndex(index)
     e.dataTransfer.effectAllowed = 'move'
     e.dataTransfer.setData('text/plain', String(index))
   }
 
+  const handleDragEnter = (e, index) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (dragOverIndex !== index) {
+      setDragOverIndex(index)
+    }
+  }
+
   const handleDragOver = (e, index) => {
     e.preventDefault()
+    e.stopPropagation()
     e.dataTransfer.dropEffect = 'move'
     if (dragOverIndex !== index) {
       setDragOverIndex(index)
@@ -972,22 +982,26 @@ function CourseCard({ course, onUpdate, onEdit }) {
 
   const handleDrop = (e, targetIndex) => {
     e.preventDefault()
-    if (draggedIndex === null || draggedIndex === targetIndex) {
-      setDraggedIndex(null)
-      setDragOverIndex(null)
+    e.stopPropagation()
+    const rawSource = e.dataTransfer.getData('text/plain')
+    const sourceIndex = draggedIndex !== null ? draggedIndex : (rawSource !== '' ? parseInt(rawSource, 10) : null)
+
+    setDraggedIndex(null)
+    setDragOverIndex(null)
+
+    if (sourceIndex === null || isNaN(sourceIndex) || sourceIndex === targetIndex || sourceIndex < 0 || sourceIndex >= videosList.length) {
       return
     }
 
     const updated = [...videosList]
-    const [movedItem] = updated.splice(draggedIndex, 1)
+    const [movedItem] = updated.splice(sourceIndex, 1)
     updated.splice(targetIndex, 0, movedItem)
 
-    setDraggedIndex(null)
-    setDragOverIndex(null)
     persistOrder(updated)
   }
 
-  const handleDragEnd = () => {
+  const handleDragEnd = (e) => {
+    if (e) e.stopPropagation()
     setDraggedIndex(null)
     setDragOverIndex(null)
   }
@@ -1242,6 +1256,7 @@ function CourseCard({ course, onUpdate, onEdit }) {
                     key={vid._id}
                     draggable
                     onDragStart={(e) => handleDragStart(e, i)}
+                    onDragEnter={(e) => handleDragEnter(e, i)}
                     onDragOver={(e) => handleDragOver(e, i)}
                     onDrop={(e) => handleDrop(e, i)}
                     onDragEnd={handleDragEnd}
@@ -1642,13 +1657,13 @@ export default function MyCourses() {
   const [showCreate, setShowCreate] = useState(false)
   const [editingCourse, setEditingCourse] = useState(null)
 
-  const loadCourses = useCallback(async () => {
-    setLoading(true)
+  const loadCourses = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true)
     try {
       const res = await apiConnector('GET', '/api/v1/courses/practitioner/my-courses', null, { Authorization: `Bearer ${token}` })
       if (res?.data?.success) setCourses(res.data.courses || [])
     } catch (e) { toast.error('Failed to load courses') }
-    setLoading(false)
+    if (!silent) setLoading(false)
   }, [token])
 
   useEffect(() => { loadCourses() }, [loadCourses])

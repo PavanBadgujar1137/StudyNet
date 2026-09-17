@@ -6,13 +6,62 @@ import {
   FiGrid, FiUsers, FiDollarSign, FiCreditCard, FiCalendar,
   FiMessageSquare, FiSearch, FiRefreshCw, FiCheck,
   FiX, FiEye, FiArrowUp, FiArrowDown,
-  FiShield, FiBookOpen, FiBell, FiUser, FiTrash2, FiAlertTriangle
+  FiShield, FiBookOpen, FiBell, FiUser, FiTrash2, FiAlertTriangle,
+  FiVideo, FiDownload, FiPlay, FiClock
 } from 'react-icons/fi'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const fmt = (n) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n || 0)
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'
 const fmtDateTime = (d) => d ? new Date(d).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'
+
+const formatDuration = (sec) => {
+  if (!sec || isNaN(sec)) return '0:00'
+  const m = Math.floor(sec / 60)
+  const s = Math.floor(sec % 60)
+  return `${m}:${s < 10 ? '0' : ''}${s}`
+}
+
+function getYouTubeEmbedUrl(url) {
+  if (!url) return null
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/
+  const match = String(url).match(regExp)
+  return match && match[2].length === 11 ? `https://www.youtube.com/embed/${match[2]}` : null
+}
+
+const downloadVideoHelper = async (videoUrl, title = 'course_video') => {
+  if (!videoUrl) {
+    toast.error('No video download URL available')
+    return
+  }
+  const cleanName = (title || 'video').replace(/[^a-zA-Z0-9_-]/g, '_')
+  const toastId = toast.loading(`Starting download: ${title}...`)
+  try {
+    const res = await fetch(videoUrl, { mode: 'cors' })
+    if (!res.ok) throw new Error('Fetch failed')
+    const blob = await res.blob()
+    const blobUrl = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = blobUrl
+    a.download = `${cleanName}.mp4`
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    window.URL.revokeObjectURL(blobUrl)
+    toast.success('Download started successfully!', { id: toastId })
+  } catch (err) {
+    // Direct link fallback if CORS prevents blob reading
+    const a = document.createElement('a')
+    a.href = videoUrl
+    a.target = '_blank'
+    a.rel = 'noopener noreferrer'
+    a.download = `${cleanName}.mp4`
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    toast.success('Opening video file for download...', { id: toastId })
+  }
+}
 
 const STATUS_COLORS = {
   active: '#10B981', expired: '#6B7280', cancelled: '#EF4444',
@@ -497,7 +546,7 @@ function ClientsTab() {
   )
 }
 
-// ─── Admin Courses & Plan Assignment Tab ──────────────────────────────────────
+// ─── Admin Courses & Video Management Tab ──────────────────────────────────────
 function CoursesTab() {
   const { token } = useSelector(s => s.auth)
   const [courses, setCourses] = useState([])
@@ -507,6 +556,10 @@ function CoursesTab() {
   const [selectedPlan, setSelectedPlan] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('published')
   const [saving, setSaving] = useState(false)
+
+  // Video Preview & Download Modal State
+  const [videoModal, setVideoModal] = useState(null)
+  const [activeVideo, setActiveVideo] = useState(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -535,11 +588,22 @@ function CoursesTab() {
     setSaving(false)
   }
 
+  const handleOpenVideos = (course) => {
+    setVideoModal(course)
+    if (course.videos && course.videos.length > 0) {
+      setActiveVideo(course.videos[0])
+    } else {
+      setActiveVideo(null)
+    }
+  }
+
   const filtered = courses.filter(c =>
     !search ||
     c.title?.toLowerCase().includes(search.toLowerCase()) ||
     `${c.practitioner?.firstName} ${c.practitioner?.lastName}`.toLowerCase().includes(search.toLowerCase())
   )
+
+  const activeYtUrl = activeVideo ? getYouTubeEmbedUrl(activeVideo.videoUrl) : null
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -589,6 +653,393 @@ function CoursesTab() {
         </div>
       )}
 
+      {/* ─── Admin Course Videos Preview & Download Modal ────────────────────── */}
+      {videoModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(15,23,42,0.85)',
+          backdropFilter: 'blur(8px)',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '16px',
+        }} onClick={() => setVideoModal(null)}>
+          <div style={{
+            background: '#FFFFFF',
+            border: '1px solid #E2E8F0',
+            borderRadius: 24,
+            width: '100%',
+            maxWidth: '1100px',
+            maxHeight: '90vh',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            boxShadow: '0 25px 60px rgba(0,0,0,0.3)',
+          }} onClick={e => e.stopPropagation()}>
+            
+            {/* Modal Header */}
+            <div style={{
+              padding: '18px 24px',
+              background: '#0F172A',
+              color: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderBottom: '1px solid #1E293B',
+            }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <span style={{ background: '#3B82F6', color: '#FFFFFF', padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 800, textTransform: 'uppercase' }}>
+                    ADMIN COURSE INSPECTOR
+                  </span>
+                  <span style={{ color: '#94A3B8', fontSize: 12 }}>
+                    by Dr. {videoModal.practitioner?.firstName} {videoModal.practitioner?.lastName} ({videoModal.practitioner?.email})
+                  </span>
+                </div>
+                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#FFFFFF' }}>
+                  {videoModal.title}
+                </h3>
+              </div>
+
+              <button
+                onClick={() => setVideoModal(null)}
+                style={{
+                  background: 'rgba(255,255,255,0.1)',
+                  border: 'none',
+                  borderRadius: 10,
+                  width: 36,
+                  height: 36,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#FFFFFF',
+                  cursor: 'pointer',
+                  fontSize: 18,
+                  transition: 'background 0.2s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = '#EF4444'}
+                onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+              >
+                <FiX />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{
+              flex: 1,
+              overflowY: 'auto',
+              padding: '24px',
+              display: 'grid',
+              gridTemplateColumns: videoModal.videos?.length ? '1.4fr 1fr' : '1fr',
+              gap: 24,
+            }}>
+              {/* Left Column: Active Video Player & Download Controls */}
+              <div>
+                {activeVideo ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    {/* Video Player Container */}
+                    <div style={{
+                      width: '100%',
+                      aspectRatio: '16/9',
+                      background: '#000000',
+                      borderRadius: 16,
+                      overflow: 'hidden',
+                      boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
+                      position: 'relative',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                      {activeYtUrl ? (
+                        <iframe
+                          src={activeYtUrl}
+                          title={activeVideo.title}
+                          style={{ width: '100%', height: '100%', border: 'none' }}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      ) : activeVideo.videoUrl ? (
+                        <video
+                          key={activeVideo.videoUrl}
+                          src={activeVideo.videoUrl}
+                          controls
+                          autoPlay
+                          style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#000' }}
+                        />
+                      ) : (
+                        <div style={{ color: '#94A3B8', textAlign: 'center', padding: 20 }}>
+                          <FiVideo size={48} style={{ marginBottom: 12, color: '#64748B' }} />
+                          <div>No video stream URL available for this lecture.</div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Active Video Info & Download Actions */}
+                    <div style={{
+                      background: '#F8FAFC',
+                      borderRadius: 16,
+                      padding: '18px 20px',
+                      border: '1px solid #E2E8F0',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 12,
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+                        <div>
+                          <div style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', marginBottom: 4 }}>
+                            {activeVideo.title}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#64748B', fontSize: 12 }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                              <FiClock size={13} color="#3B82F6" /> {formatDuration(activeVideo.durationSeconds)}
+                            </span>
+                            {activeVideo.createdAt && (
+                              <span>Uploaded: {fmtDate(activeVideo.createdAt)}</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Download Video Button */}
+                        {activeVideo.videoUrl && (
+                          <button
+                            onClick={() => downloadVideoHelper(activeVideo.videoUrl, `${videoModal.title} - ${activeVideo.title}`)}
+                            style={{
+                              background: 'linear-gradient(135deg, #10B981, #059669)',
+                              color: '#FFFFFF',
+                              border: 'none',
+                              borderRadius: 10,
+                              padding: '10px 16px',
+                              fontWeight: 700,
+                              fontSize: 13,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 6,
+                              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+                              flexShrink: 0,
+                              transition: 'transform 0.15s',
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.02)'}
+                            onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                            title="Download this video to your computer"
+                          >
+                            <FiDownload size={15} /> Download Video
+                          </button>
+                        )}
+                      </div>
+
+                      {activeVideo.description && (
+                        <p style={{ margin: 0, color: '#475569', fontSize: 13, lineHeight: 1.5 }}>
+                          {activeVideo.description}
+                        </p>
+                      )}
+
+                      {/* Video Stream URL Link */}
+                      {activeVideo.videoUrl && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: '#64748B', borderTop: '1px solid #E2E8F0', paddingTop: 10 }}>
+                          <span style={{ fontWeight: 600 }}>Stream URL:</span>
+                          <a
+                            href={activeVideo.videoUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: '#2563EB', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '350px' }}
+                          >
+                            {activeVideo.videoUrl}
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{
+                    background: '#F8FAFC',
+                    borderRadius: 16,
+                    padding: '40px 20px',
+                    border: '1.5px dashed #CBD5E1',
+                    textAlign: 'center',
+                    color: '#64748B',
+                  }}>
+                    <FiVideo size={48} style={{ color: '#94A3B8', marginBottom: 12 }} />
+                    <div style={{ fontWeight: 700, fontSize: 16, color: '#0F172A', marginBottom: 4 }}>
+                      No Videos in this Course
+                    </div>
+                    <div style={{ fontSize: 13 }}>
+                      The practitioner has not uploaded any video lectures to this course yet.
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Right Column: Course Video Lectures List */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <h4 style={{ margin: 0, color: '#0F172A', fontSize: 15, fontWeight: 800 }}>
+                    Course Lectures ({videoModal.videos?.length || 0})
+                  </h4>
+                  <span style={{ fontSize: 12, color: '#64748B' }}>
+                    Click to preview or download
+                  </span>
+                </div>
+
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 8,
+                  maxHeight: '460px',
+                  overflowY: 'auto',
+                  paddingRight: 4,
+                }}>
+                  {videoModal.videos && videoModal.videos.length > 0 ? (
+                    videoModal.videos.map((vid, idx) => {
+                      const isCurrent = activeVideo?._id === vid._id || (activeVideo?.videoUrl && activeVideo.videoUrl === vid.videoUrl)
+                      return (
+                        <div
+                          key={vid._id || idx}
+                          onClick={() => setActiveVideo(vid)}
+                          style={{
+                            background: isCurrent ? '#EFF6FF' : '#FFFFFF',
+                            border: isCurrent ? '2px solid #3B82F6' : '1px solid #E2E8F0',
+                            borderRadius: 12,
+                            padding: '12px 14px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: 12,
+                            transition: 'all 0.15s',
+                            boxShadow: isCurrent ? '0 2px 8px rgba(59, 130, 246, 0.15)' : 'none',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+                            <div style={{
+                              width: 32,
+                              height: 32,
+                              borderRadius: 8,
+                              background: isCurrent ? '#3B82F6' : '#F1F5F9',
+                              color: isCurrent ? '#FFFFFF' : '#64748B',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontWeight: 700,
+                              fontSize: 12,
+                              flexShrink: 0,
+                            }}>
+                              {isCurrent ? <FiPlay size={14} /> : idx + 1}
+                            </div>
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <div style={{
+                                fontWeight: 700,
+                                fontSize: 13,
+                                color: isCurrent ? '#1D4ED8' : '#0F172A',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}>
+                                {vid.title}
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#64748B', fontSize: 11, marginTop: 2 }}>
+                                <span>{formatDuration(vid.durationSeconds)}</span>
+                                {vid.views !== undefined && <span>• {vid.views} views</span>}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Quick Actions for this item */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }} onClick={e => e.stopPropagation()}>
+                            {vid.videoUrl && (
+                              <button
+                                onClick={() => downloadVideoHelper(vid.videoUrl, `${videoModal.title} - ${vid.title}`)}
+                                style={{
+                                  background: '#10B981',
+                                  color: '#FFFFFF',
+                                  border: 'none',
+                                  borderRadius: 8,
+                                  width: 32,
+                                  height: 32,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  cursor: 'pointer',
+                                  boxShadow: '0 2px 6px rgba(16, 185, 129, 0.25)',
+                                }}
+                                title="Download this video"
+                              >
+                                <FiDownload size={14} />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })
+                  ) : (
+                    <div style={{ padding: 20, textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>
+                      No videos uploaded for this course.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{
+              padding: '14px 24px',
+              background: '#F8FAFC',
+              borderTop: '1px solid #E2E8F0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}>
+              <div style={{ color: '#64748B', fontSize: 12 }}>
+                Course Status: <strong>{videoModal.status}</strong> • Pricing: <strong>{videoModal.isFree || !videoModal.price ? 'Free Course' : `₹${videoModal.price}`}</strong>
+              </div>
+
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button
+                  onClick={() => {
+                    const c = videoModal
+                    setVideoModal(null)
+                    setAssignModal(c)
+                    setSelectedPlan(c.requiredPlan || '')
+                    setSelectedStatus(c.status || 'published')
+                  }}
+                  style={{
+                    padding: '8px 16px',
+                    background: '#FFFFFF',
+                    border: '1px solid #CBD5E1',
+                    borderRadius: 8,
+                    color: '#334155',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Change Plan Tier
+                </button>
+                <button
+                  onClick={() => setVideoModal(null)}
+                  style={{
+                    padding: '8px 18px',
+                    background: '#0F172A',
+                    border: 'none',
+                    borderRadius: 8,
+                    color: '#FFFFFF',
+                    fontSize: 13,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Close Inspector
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* Course Search & Refresh Bar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#FFFFFF', border: '1.5px solid #E2E8F0', borderRadius: 12, padding: '8px 14px', flex: 1 }}>
           <FiSearch color="#94A3B8" />
@@ -602,6 +1053,7 @@ function CoursesTab() {
 
       <div style={{ color: '#64748B', fontSize: 13 }}>{filtered.length} total courses uploaded by practitioners</div>
 
+      {/* Courses Data Table */}
       <div style={{ background: '#FFFFFF', borderRadius: 16, border: '1px solid #E2E8F0', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.03)' }}>
         <DataTable
           loading={loading}
@@ -610,7 +1062,26 @@ function CoursesTab() {
             { key: 'course', label: 'Course Title', render: r => (
               <div>
                 <div style={{ color: '#0F172A', fontWeight: 700 }}>{r.title}</div>
-                <div style={{ color: '#64748B', fontSize: 11 }}>{r.videos?.length || 0} videos</div>
+                <button
+                  onClick={() => handleOpenVideos(r)}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    marginTop: 4,
+                    background: r.videos?.length ? '#EFF6FF' : '#F1F5F9',
+                    color: r.videos?.length ? '#2563EB' : '#64748B',
+                    border: r.videos?.length ? '1px solid #BFDBFE' : '1px solid #CBD5E1',
+                    borderRadius: 12,
+                    padding: '2px 8px',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                  title="Click to view and download all course videos"
+                >
+                  <FiVideo size={12} /> {r.videos?.length || 0} videos (Preview &amp; Download)
+                </button>
               </div>
             )},
             { key: 'practitioner', label: 'Practitioner (Creator)', render: r => (
@@ -631,10 +1102,43 @@ function CoursesTab() {
             { key: 'status', label: 'Status', render: r => <StatusBadge status={r.status} /> },
             { key: 'createdAt', label: 'Uploaded', render: r => fmtDate(r.createdAt) },
             { key: 'action', label: 'Admin Action', render: r => (
-              <button onClick={() => { setAssignModal(r); setSelectedPlan(r.requiredPlan || ''); setSelectedStatus(r.status || 'published') }}
-                style={{ padding: '6px 14px', background: 'linear-gradient(135deg, #3B82F6, #1D4ED8)', border: 'none', borderRadius: 8, color: '#fff', cursor: 'pointer', fontWeight: 600, fontSize: 12 }}>
-                Assign Plan Tier
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button
+                  onClick={() => handleOpenVideos(r)}
+                  style={{
+                    padding: '6px 12px',
+                    background: '#0F172A',
+                    border: 'none',
+                    borderRadius: 8,
+                    color: '#fff',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    fontSize: 12,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    boxShadow: '0 2px 6px rgba(15,23,42,0.2)',
+                  }}
+                  title="Preview & Download Course Videos"
+                >
+                  <FiVideo size={13} /> Videos ({r.videos?.length || 0})
+                </button>
+                <button
+                  onClick={() => { setAssignModal(r); setSelectedPlan(r.requiredPlan || ''); setSelectedStatus(r.status || 'published') }}
+                  style={{
+                    padding: '6px 12px',
+                    background: 'linear-gradient(135deg, #3B82F6, #1D4ED8)',
+                    border: 'none',
+                    borderRadius: 8,
+                    color: '#fff',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    fontSize: 12,
+                  }}
+                >
+                  Plan Tier
+                </button>
+              </div>
             )},
           ]}
           data={filtered}
