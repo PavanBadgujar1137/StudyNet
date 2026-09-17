@@ -13,13 +13,16 @@ function LoginForm({ themeColor = "blue", onFormFocus = null, roleTitle = null }
   const [showPassword, setShowPassword] = useState(false)
   const { email, password } = formData
 
+  // Map display roleTitle → actual accountType string expected in DB
+  const expectedAccountType = roleTitle === "Practitioner" ? "Practitioner" : null
+
   const handleOnChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
   const handleOnSubmit = (e) => {
     e.preventDefault()
-    dispatch(login(email, password, navigate))
+    dispatch(login(email, password, navigate, expectedAccountType))
   }
 
   const handleFocus = () => {
@@ -102,7 +105,10 @@ function LoginForm({ themeColor = "blue", onFormFocus = null, roleTitle = null }
         <Link to="/signup" className="auth-switch-link">Create free account →</Link>
       </p>
 
-      <SocialAuthButtons mode="login" />
+      <SocialAuthButtons
+        accountType={expectedAccountType || "Client"}
+        mode="login"
+      />
     </div>
   )
 }

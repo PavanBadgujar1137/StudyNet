@@ -152,7 +152,7 @@ export function signUp(
   }
 }
 
-export function login(email, password, navigate) {
+export function login(email, password, navigate, expectedAccountType = null) {
   return async (dispatch) => {
     const toastId = toast.loading("Logging in...")
     dispatch(setLoading(true))
@@ -168,13 +168,54 @@ export function login(email, password, navigate) {
         throw new Error(response?.data?.message || "Login Failed")
       }
 
+      const loggedUser = response.data.user
+
+      // ── Role Mismatch Guard ──────────────────────────────────────────────
+      // If this login was initiated from the Practitioner panel, the user's
+      // accountType in the database MUST be "Practitioner" or "Instructor".
+      // If not, block the login and show a helpful error.
+      if (expectedAccountType === "Practitioner") {
+        const isPractitioner =
+          loggedUser?.accountType === "Practitioner" ||
+          loggedUser?.accountType === "Instructor"
+        if (!isPractitioner) {
+          toast.error(
+            "This email is registered as a Learner account. Please use the Learner Sign In panel, or sign up for a Practitioner account.",
+            { id: toastId, duration: 6000 }
+          )
+          return
+        }
+      }
+
+      // (Optional) If Learner panel — block Practitioner accounts logging in from wrong side
+      if (!expectedAccountType || expectedAccountType === null) {
+        const isPractitionerTryingLearnerPanel =
+          loggedUser?.accountType === "Practitioner" ||
+          loggedUser?.accountType === "Instructor"
+        if (isPractitionerTryingLearnerPanel) {
+          toast.error(
+            "This email is registered as a Practitioner account. Please use the Practitioner Sign In panel.",
+            { id: toastId, duration: 6000 }
+          )
+          return
+        }
+      }
+      // ────────────────────────────────────────────────────────────────────
+
       toast.success("Login Successful", { id: toastId })
       dispatch(setToken(response.data.token))
-      const userImage = (response.data?.user?.image && !response.data.user.image.includes("dicebear"))
-        ? response.data.user.image
-        : getInitialsAvatar(response.data?.user?.firstName, response.data?.user?.lastName)
-      dispatch(setUser({ ...response.data.user, image: userImage }))
-      if (response.data?.user?.accountType === "Admin") {
+      const userImage = (loggedUser?.image && !loggedUser.image.includes("dicebear"))
+        ? loggedUser.image
+        : getInitialsAvatar(loggedUser?.firstName, loggedUser?.lastName)
+
+      const fullUser = { ...loggedUser, image: userImage }
+      dispatch(setUser(fullUser))
+
+      // Persist to localStorage so refresh keeps the correct user session
+      localStorage.setItem("token", JSON.stringify(response.data.token))
+      localStorage.setItem("user", JSON.stringify(fullUser))
+
+      if (loggedUser?.accountType === "Admin") {
         navigate("/admin")
       } else {
         navigate("/dashboard")
@@ -188,6 +229,7 @@ export function login(email, password, navigate) {
     }
   }
 }
+
 
 export function getPasswordResetToken(email, setEmailSent) {
   return async (dispatch) => {
