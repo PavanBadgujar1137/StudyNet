@@ -61,3 +61,19 @@ export const processMonthlyPayout = async (token, practitionerId, amount) => {
   }
   return null
 }
+
+export const hardDeleteUserAdmin = async (token, userId) => {
+  try {
+    const res = await apiConnector('DELETE', `/api/v1/admin/users/${userId}`, null, { Authorization: `Bearer ${token}` })
+    if (res?.data?.success) {
+      toast.success(res.data.message || 'User permanently hard deleted from database')
+      return res.data
+    }
+    toast.error(res?.data?.message || 'Failed to hard delete user')
+  } catch (error) {
+    console.error('hardDeleteUserAdmin error:', error)
+    toast.error(error?.response?.data?.message || 'Failed to hard delete user')
+  }
+  return null
+}
+

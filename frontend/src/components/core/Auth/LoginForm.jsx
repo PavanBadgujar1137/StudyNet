@@ -6,7 +6,7 @@ import { login } from "../../../services/operations/authAPI"
 
 import SocialAuthButtons from "./SocialAuthButtons"
 
-function LoginForm() {
+function LoginForm({ themeColor = "blue", onFormFocus = null, roleTitle = null }) {
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const [formData, setFormData] = useState({ email: "", password: "" })
@@ -22,8 +22,18 @@ function LoginForm() {
     dispatch(login(email, password, navigate))
   }
 
+  const handleFocus = () => {
+    if (onFormFocus) {
+      onFormFocus()
+    }
+  }
+
   return (
-    <div className="auth-inner-form">
+    <div
+      className={`auth-inner-form auth-inner-form--${themeColor}`}
+      onMouseEnter={handleFocus}
+      onFocusCapture={handleFocus}
+    >
       <form onSubmit={handleOnSubmit} className="auth-field-list">
         <div className="auth-field">
           <label className="auth-label">
@@ -35,6 +45,7 @@ function LoginForm() {
             name="email"
             value={email}
             onChange={handleOnChange}
+            onFocus={handleFocus}
             placeholder="you@example.com"
             className="auth-input"
           />
@@ -51,6 +62,7 @@ function LoginForm() {
               name="password"
               value={password}
               onChange={handleOnChange}
+              onFocus={handleFocus}
               placeholder="••••••••"
               className="auth-input"
             />
@@ -61,17 +73,27 @@ function LoginForm() {
               aria-label={showPassword ? "Hide password" : "Show password"}
             >
               {showPassword
-                ? <AiOutlineEyeInvisible fontSize={20} />
-                : <AiOutlineEye fontSize={20} />}
+                ? <AiOutlineEyeInvisible fontSize={18} />
+                : <AiOutlineEye fontSize={18} />}
             </button>
           </div>
-          <Link to="/forgot-password" className="auth-forgot">
-            Forgot password?
-          </Link>
+          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "4px" }}>
+            <Link
+              to="/forgot-password"
+              className="auth-forgot"
+              style={{
+                fontSize: "12px",
+                color: themeColor === "violet" ? "#7C3AED" : "#0284C7",
+                fontWeight: "600",
+              }}
+            >
+              Forgot password?
+            </Link>
+          </div>
         </div>
 
-        <button type="submit" className="auth-submit-btn auth-submit-btn--main">
-          Sign In to OpenHand →
+        <button type="submit" className={`auth-submit-btn auth-submit-btn--${themeColor}`}>
+          Sign In as {roleTitle || "OpenHand User"} →
         </button>
       </form>
 

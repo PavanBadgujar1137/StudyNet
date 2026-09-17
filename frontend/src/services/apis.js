@@ -82,6 +82,11 @@ export const socialPostEndpoints = {
   TRACK_SHARE_API: BASE_URL + "/social-posts", // + "/:postId/track-share"
 }
 
+// ADMIN ENDPOINTS
+export const adminEndpoints = {
+  DELETE_USER_ADMIN_API: BASE_URL + "/admin/users",
+}
+
 // SOCKET BASE URL (for Socket.io client)
 export const SOCKET_BASE_URL = process.env.REACT_APP_BASE_URL
   ? process.env.REACT_APP_BASE_URL.replace("/api/v1", "")

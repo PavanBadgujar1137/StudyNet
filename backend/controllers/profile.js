@@ -94,36 +94,38 @@ exports.updateProfile = async (req, res) => {
 exports.deleteAccount = async (req, res) => {
   try {
     const id = req.user.id
-    const user = await User.findById({ _id: id })
+    const user = await User.findById(id)
     if (!user) {
       return res.status(404).json({
         success: false,
         message: "User not found",
       })
     }
-    // Delete Assosiated Profile with the User
-    await Profile.findByIdAndDelete({
-      _id: new mongoose.Types.ObjectId(user.additionalDetails),
-    })
-    for (const courseId of user.courses) {
-      await Course.findByIdAndUpdate(
-        courseId,
-        { $pull: { studentsEnroled: id } },
-        { new: true }
-      )
-    }
-    // Now Delete User
-    await User.findByIdAndDelete({ _id: id })
-    res.status(200).json({
+
+    const scheduledAt = new Date()
+    const effectiveDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+
+    user.isDeleted = true
+    user.deletionScheduledAt = scheduledAt
+    user.deletionEffectiveDate = effectiveDate
+    user.active = false
+    user.token = null
+    await user.save()
+
+    return res.status(200).json({
       success: true,
-      message: "User deleted successfully",
+      message: "Your account is scheduled for permanent deletion in 30 days. You will be signed out now.",
+      deletionScheduledAt: scheduledAt,
+      deletionEffectiveDate: effectiveDate,
+      daysRemaining: 30,
     })
-    await CourseProgress.deleteMany({ userId: id })
   } catch (error) {
-    console.log(error)
-    res
-      .status(500)
-      .json({ success: false, message: "User Cannot be deleted successfully" })
+    console.error("deleteAccount error:", error)
+    return res.status(500).json({
+      success: false,
+      message: "Failed to schedule account deletion. Please try again.",
+      error: error.message,
+    })
   }
 }
 

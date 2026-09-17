@@ -142,7 +142,7 @@ exports.getAllClients = async (req, res) => {
 
     const [clients, total] = await Promise.all([
       User.find(query)
-        .select("firstName lastName email image createdAt accountType active trialStartedAt trialExpiresAt activePlan")
+        .select("firstName lastName email image createdAt accountType active trialStartedAt trialExpiresAt activePlan isDeleted deletionScheduledAt deletionEffectiveDate")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(Number(limit))
@@ -211,6 +211,13 @@ exports.getAllClients = async (req, res) => {
           planDisplayStatus = `${isLearner ? "7-Day" : "14-Day"} Trial (${trialDaysRemaining}d left)`
         }
 
+        const isDeleted = !!client.isDeleted
+        let deletionDaysLeft = 0
+        if (isDeleted && client.deletionEffectiveDate) {
+          const diff = new Date(client.deletionEffectiveDate).getTime() - now.getTime()
+          deletionDaysLeft = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
+        }
+
         return {
           ...client,
           subscription: subscription ? { planKey: subscription.planKey, planName: subscription.planName, status: subscription.status, endDate: subscription.endDate } : null,
@@ -220,6 +227,10 @@ exports.getAllClients = async (req, res) => {
           trialStartedAt,
           trialExpiresAt,
           planDisplayStatus,
+          isDeleted,
+          deletionScheduledAt: client.deletionScheduledAt,
+          deletionEffectiveDate: client.deletionEffectiveDate,
+          deletionDaysLeft,
           sessionsBooked: bookingsCount,
           totalPaid: totalPaid[0]?.total || 0,
         }
@@ -250,7 +261,7 @@ exports.getAllPractitioners = async (req, res) => {
 
     const [practitioners, total] = await Promise.all([
       User.find(query)
-        .select("firstName lastName email image createdAt accountType active practitionerProfile trialStartedAt trialExpiresAt activePlan")
+        .select("firstName lastName email image createdAt accountType active practitionerProfile trialStartedAt trialExpiresAt activePlan isDeleted deletionScheduledAt deletionEffectiveDate")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(Number(limit))
@@ -324,6 +335,13 @@ exports.getAllPractitioners = async (req, res) => {
           planDisplayStatus = `14-Day Trial (${trialDaysRemaining}d left)`
         }
 
+        const isDeleted = !!pract.isDeleted
+        let deletionDaysLeft = 0
+        if (isDeleted && pract.deletionEffectiveDate) {
+          const diff = new Date(pract.deletionEffectiveDate).getTime() - now.getTime()
+          deletionDaysLeft = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
+        }
+
         return {
           ...pract,
           subscription: subscription ? { planKey: subscription.planKey, planName: subscription.planName, status: subscription.status, endDate: subscription.endDate } : null,
@@ -331,6 +349,10 @@ exports.getAllPractitioners = async (req, res) => {
           isTrialActive,
           trialDaysRemaining,
           planDisplayStatus,
+          isDeleted,
+          deletionScheduledAt: pract.deletionScheduledAt,
+          deletionEffectiveDate: pract.deletionEffectiveDate,
+          deletionDaysLeft,
           profile: profile ? {
             plan: profile.plan,
             specialties: profile.specialties,
@@ -781,3 +803,160 @@ exports.updateCourseAdmin = async (req, res) => {
     return res.status(500).json({ success: false, message: error.message })
   }
 }
+
+// ─── Helper: Permanent Hard Deletion of User & Associated Records ────────────
+const hardDeleteUser = async (userId) => {
+  const user = await User.findById(userId)
+  if (!user) return null
+
+  // 1. Delete associated Profile
+  if (user.additionalDetails) {
+    try {
+      const Profile = require("../models/Profile")
+      await Profile.findByIdAndDelete(user.additionalDetails)
+    } catch (e) {
+      console.error("Error deleting Profile:", e.message)
+    }
+  }
+
+  // 2. Delete PractitionerProfile if exists
+  try {
+    const PractitionerProfile = require("../models/PractitionerProfile")
+    await PractitionerProfile.deleteMany({ user: userId })
+  } catch (e) {
+    console.error("Error deleting PractitionerProfile:", e.message)
+  }
+
+  // 3. Remove user from enrolled courses
+  try {
+    await Course.updateMany(
+      { studentsEnroled: userId },
+      { $pull: { studentsEnroled: userId } }
+    )
+  } catch (e) {
+    console.error("Error un-enrolling user from courses:", e.message)
+  }
+
+  // 4. Delete user courses (if practitioner)
+  try {
+    await Course.deleteMany({ practitioner: userId })
+    await Course.deleteMany({ instructor: userId })
+  } catch (e) {
+    console.error("Error deleting user created courses:", e.message)
+  }
+
+  // 5. Delete CourseProgress
+  try {
+    const courseProgress = mongoose.models.courseProgress || mongoose.model("courseProgress")
+    if (courseProgress) {
+      await courseProgress.deleteMany({ userId: userId })
+    }
+  } catch (e) {}
+
+  // 6. Delete Circle Memberships & remove from cohorts
+  try {
+    const CircleMembership = require("../models/CircleMembership")
+    await CircleMembership.deleteMany({ $or: [{ client: userId }, { user: userId }] })
+    const CircleCohort = require("../models/CircleCohort")
+    await CircleCohort.updateMany({ members: userId }, { $pull: { members: userId } })
+  } catch (e) {
+    console.error("Error cleaning circle memberships:", e.message)
+  }
+
+  // 7. Delete Client Connections
+  try {
+    const ClientConnection = require("../models/ClientConnection")
+    await ClientConnection.deleteMany({ $or: [{ client: userId }, { practitioner: userId }] })
+  } catch (e) {
+    console.error("Error deleting ClientConnections:", e.message)
+  }
+
+  // 8. Delete Check-ins & Reflections
+  try {
+    const CheckIn = require("../models/CheckIn")
+    await CheckIn.deleteMany({ client: userId })
+    const ReflectionPrompt = require("../models/ReflectionPrompt")
+    await ReflectionPrompt.deleteMany({ client: userId })
+  } catch (e) {
+    console.error("Error deleting CheckIns/Reflections:", e.message)
+  }
+
+  // 9. Delete Reviews & Ratings
+  try {
+    const RatingAndReview = require("../models/RatingandReview")
+    await RatingAndReview.deleteMany({ $or: [{ user: userId }, { practitioner: userId }] })
+  } catch (e) {
+    console.error("Error deleting Reviews:", e.message)
+  }
+
+  // 10. Delete Session Note Drafts
+  try {
+    const SessionNoteDraft = require("../models/SessionNoteDraft")
+    await SessionNoteDraft.deleteMany({ practitioner: userId })
+  } catch (e) {
+    console.error("Error deleting SessionNoteDrafts:", e.message)
+  }
+
+  // 11. Delete OTPs
+  try {
+    const OTP = require("../models/OTP")
+    if (user.email) {
+      await OTP.deleteMany({ email: user.email.toLowerCase() })
+    }
+  } catch (e) {
+    console.error("Error deleting OTPs:", e.message)
+  }
+
+  // 12. Delete Subscriptions
+  try {
+    await Subscription.deleteMany({ client: userId })
+  } catch (e) {
+    console.error("Error deleting Subscriptions:", e.message)
+  }
+
+  // 13. Finally Delete the User document itself
+  await User.findByIdAndDelete(userId)
+  return user
+}
+
+exports.hardDeleteUser = hardDeleteUser
+
+// ─── Admin: Completely Hard Delete User from Database ────────────────────────
+exports.deleteUserAdmin = async (req, res) => {
+  try {
+    const { id } = req.params
+    if (!id) {
+      return res.status(400).json({ success: false, message: "User ID is required" })
+    }
+
+    // Prevent admin from accidentally deleting their own currently logged-in account
+    if (String(req.user.id) === String(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "You cannot delete your own admin account while logged in.",
+      })
+    }
+
+    const user = await User.findById(id)
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found in database" })
+    }
+
+    const deletedUser = await hardDeleteUser(id)
+
+    return res.status(200).json({
+      success: true,
+      message: `User ${user.firstName} ${user.lastName} (${user.email}) and all associated records have been permanently deleted from the database.`,
+      deletedUser: {
+        _id: user._id,
+        email: user.email,
+        name: `${user.firstName} ${user.lastName}`,
+        accountType: user.accountType,
+      },
+    })
+  } catch (error) {
+    console.error("deleteUserAdmin error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+

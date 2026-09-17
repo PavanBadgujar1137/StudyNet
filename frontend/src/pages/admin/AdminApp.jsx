@@ -6,7 +6,7 @@ import {
   FiGrid, FiUsers, FiDollarSign, FiCreditCard, FiCalendar,
   FiMessageSquare, FiSearch, FiRefreshCw, FiCheck,
   FiX, FiEye, FiArrowUp, FiArrowDown,
-  FiShield, FiBookOpen, FiBell, FiUser
+  FiShield, FiBookOpen, FiBell, FiUser, FiTrash2, FiAlertTriangle
 } from 'react-icons/fi'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -275,6 +275,8 @@ function ClientsTab() {
   const [selectedPlan, setSelectedPlan] = useState('advance')
   const [extendDays, setExtendDays] = useState('7')
   const [updating, setUpdating] = useState(false)
+  const [deleteModal, setDeleteModal] = useState(null)
+  const [deletingUser, setDeletingUser] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -301,6 +303,22 @@ function ClientsTab() {
       }
     } catch (e) { toast.error('Failed to update plan') }
     setUpdating(false)
+  }
+
+  const handleHardDelete = async () => {
+    if (!deleteModal) return
+    setDeletingUser(true)
+    try {
+      const res = await apiConnector('DELETE', `/api/v1/admin/users/${deleteModal._id}`, null, { Authorization: `Bearer ${token}` })
+      if (res?.data?.success) {
+        toast.success(res.data.message || 'Learner permanently deleted from database')
+        setDeleteModal(null)
+        load()
+      }
+    } catch (e) {
+      toast.error(e?.response?.data?.message || 'Failed to hard delete learner')
+    }
+    setDeletingUser(false)
   }
 
   return (
@@ -365,6 +383,41 @@ function ClientsTab() {
         </div>
       )}
 
+      {/* Admin Hard Delete Confirmation Modal */}
+      {deleteModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.75)', backdropFilter: 'blur(5px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div style={{ background: '#FFFFFF', border: '1px solid #FECDD3', borderRadius: 24, padding: 32, width: 480, maxWidth: '90vw', boxShadow: '0 25px 60px rgba(0,0,0,0.25)', textAlign: 'left' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+              <div style={{ width: 46, height: 46, borderRadius: 14, background: '#FEE2E2', color: '#DC2626', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <FiAlertTriangle size={24} />
+              </div>
+              <div>
+                <h3 style={{ margin: 0, color: '#991B1B', fontSize: 18, fontWeight: 800 }}>Permanently Hard Delete User?</h3>
+                <p style={{ margin: '2px 0 0', color: '#DC2626', fontSize: 12, fontWeight: 600 }}>Irreversible database purge</p>
+              </div>
+            </div>
+
+            <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 12, padding: '14px 16px', marginBottom: 18, fontSize: 13, color: '#991B1B', lineHeight: 1.55 }}>
+              Are you sure you want to permanently delete <strong>{deleteModal.firstName} {deleteModal.lastName}</strong> (<code>{deleteModal.email}</code>)?
+              <div style={{ marginTop: 8, fontSize: 12, color: '#7F1D1D' }}>
+                ⚠️ This will completely erase this user's profile, enrollment progress, circle memberships, notes, and records from MongoDB. This action cannot be undone.
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setDeleteModal(null)} disabled={deletingUser}
+                style={{ flex: 1, padding: '12px', background: '#F1F5F9', border: '1px solid #E2E8F0', borderRadius: 10, color: '#475569', cursor: deletingUser ? 'not-allowed' : 'pointer', fontWeight: 600, fontSize: 13 }}>
+                Cancel
+              </button>
+              <button onClick={handleHardDelete} disabled={deletingUser}
+                style={{ flex: 1.5, padding: '12px', background: 'linear-gradient(135deg, #EF4444, #DC2626)', border: 'none', borderRadius: 10, color: '#fff', cursor: deletingUser ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, boxShadow: '0 4px 14px rgba(220,38,38,0.35)' }}>
+                <FiTrash2 size={15} /> {deletingUser ? 'Hard Deleting...' : 'Confirm Hard Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#FFFFFF', border: '1.5px solid #E2E8F0', borderRadius: 12, padding: '8px 14px', flex: 1 }}>
           <FiSearch color="#94A3B8" />
@@ -392,6 +445,16 @@ function ClientsTab() {
               </div>
             )},
             { key: 'planDisplayStatus', label: 'Subscription / Trial Status', render: r => {
+              if (r.isDeleted) {
+                return (
+                  <span style={{
+                    padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700,
+                    background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA'
+                  }}>
+                    ⚠️ Deletion in {r.deletionDaysLeft || 0}d
+                  </span>
+                )
+              }
               const isPract = r.accountType === 'Practitioner' || r.accountType === 'Instructor'
               const isLearner = !isPract
               const statusText = r.hasActiveSub 
@@ -414,10 +477,17 @@ function ClientsTab() {
             { key: 'totalPaid', label: 'Total Paid', render: r => <span style={{ color: '#10B981', fontWeight: 700 }}>{fmt(r.totalPaid)}</span> },
             { key: 'createdAt', label: 'Joined', render: r => fmtDate(r.createdAt) },
             { key: 'action', label: 'Action', render: r => (
-              <button onClick={() => { setPlanModal(r); setSelectedPlan(r.subscription?.planKey || r.activePlan || 'advance') }}
-                style={{ padding: '6px 12px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, color: '#1D4ED8', cursor: 'pointer', fontWeight: 600, fontSize: 12 }}>
-                Manage Plan
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <button onClick={() => { setPlanModal(r); setSelectedPlan(r.subscription?.planKey || r.activePlan || 'advance') }}
+                  style={{ padding: '6px 12px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, color: '#1D4ED8', cursor: 'pointer', fontWeight: 600, fontSize: 12 }}>
+                  Manage Plan
+                </button>
+                <button onClick={() => setDeleteModal(r)}
+                  title="Permanently hard delete user from database"
+                  style={{ padding: '6px 10px', background: '#FEF2F2', border: '1px solid #FECDD3', borderRadius: 8, color: '#DC2626', cursor: 'pointer', fontWeight: 700, fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <FiTrash2 size={13} /> Hard Delete
+                </button>
+              </div>
             )},
           ]}
           data={clients}
@@ -587,6 +657,8 @@ function PractitionersTab() {
   const [selectedPlan, setSelectedPlan] = useState('trial')
   const [extendDays, setExtendDays] = useState('')
   const [updatingPlan, setUpdatingPlan] = useState(false)
+  const [deleteModal, setDeleteModal] = useState(null)
+  const [deletingUser, setDeletingUser] = useState(false)
 
   // Payment History Modal state
   const [historyModal, setHistoryModal] = useState(null)
@@ -662,6 +734,22 @@ function PractitionersTab() {
       toast.error(e?.response?.data?.message || 'Payout failed')
     }
     setPayingOut(false)
+  }
+
+  const handleHardDelete = async () => {
+    if (!deleteModal) return
+    setDeletingUser(true)
+    try {
+      const res = await apiConnector('DELETE', `/api/v1/admin/users/${deleteModal._id}`, null, { Authorization: `Bearer ${token}` })
+      if (res?.data?.success) {
+        toast.success(res.data.message || 'Practitioner permanently deleted from database')
+        setDeleteModal(null)
+        load()
+      }
+    } catch (e) {
+      toast.error(e?.response?.data?.message || 'Failed to hard delete practitioner')
+    }
+    setDeletingUser(false)
   }
 
   const hasBankDetails = !!((payoutModal?.profile?.bankAccountNumber && payoutModal?.profile?.bankIfscCode) || payoutModal?.profile?.upiId)
@@ -891,6 +979,41 @@ function PractitionersTab() {
         </div>
       )}
 
+      {/* Admin Hard Delete Confirmation Modal for Practitioner */}
+      {deleteModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.75)', backdropFilter: 'blur(5px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div style={{ background: '#FFFFFF', border: '1px solid #FECDD3', borderRadius: 24, padding: 32, width: 480, maxWidth: '90vw', boxShadow: '0 25px 60px rgba(0,0,0,0.25)', textAlign: 'left' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+              <div style={{ width: 46, height: 46, borderRadius: 14, background: '#FEE2E2', color: '#DC2626', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <FiAlertTriangle size={24} />
+              </div>
+              <div>
+                <h3 style={{ margin: 0, color: '#991B1B', fontSize: 18, fontWeight: 800 }}>Permanently Hard Delete Practitioner?</h3>
+                <p style={{ margin: '2px 0 0', color: '#DC2626', fontSize: 12, fontWeight: 600 }}>Irreversible database purge</p>
+              </div>
+            </div>
+
+            <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 12, padding: '14px 16px', marginBottom: 18, fontSize: 13, color: '#991B1B', lineHeight: 1.55 }}>
+              Are you sure you want to permanently delete Dr. <strong>{deleteModal.firstName} {deleteModal.lastName}</strong> (<code>{deleteModal.email}</code>)?
+              <div style={{ marginTop: 8, fontSize: 12, color: '#7F1D1D' }}>
+                ⚠️ This will completely remove their practitioner profile, uploaded courses, circle memberships, notes, reviews, and MongoDB database records. This cannot be undone.
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setDeleteModal(null)} disabled={deletingUser}
+                style={{ flex: 1, padding: '12px', background: '#F1F5F9', border: '1px solid #E2E8F0', borderRadius: 10, color: '#475569', cursor: deletingUser ? 'not-allowed' : 'pointer', fontWeight: 600, fontSize: 13 }}>
+                Cancel
+              </button>
+              <button onClick={handleHardDelete} disabled={deletingUser}
+                style={{ flex: 1.5, padding: '12px', background: 'linear-gradient(135deg, #EF4444, #DC2626)', border: 'none', borderRadius: 10, color: '#fff', cursor: deletingUser ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, boxShadow: '0 4px 14px rgba(220,38,38,0.35)' }}>
+                <FiTrash2 size={15} /> {deletingUser ? 'Hard Deleting...' : 'Confirm Hard Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#FFFFFF', border: '1.5px solid #E2E8F0', borderRadius: 12, padding: '8px 14px', flex: 1 }}>
           <FiSearch color="#94A3B8" />
@@ -918,11 +1041,23 @@ function PractitionersTab() {
               </div>
             )},
             { key: 'specialization', label: 'Specialization', render: r => <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: '#EFF6FF', color: '#1D4ED8' }}>{r.profile?.specialties?.[0] || 'Integrative Health'}</span> },
-            { key: 'plan', label: 'Plan / Free Trial', render: r => (
-              <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: r.hasActiveSub ? '#DCFCE7' : r.isTrialActive ? '#F3E8FF' : '#FEE2E2', color: r.hasActiveSub ? '#166534' : r.isTrialActive ? '#7E22CE' : '#DC2626', border: `1px solid ${r.hasActiveSub ? '#BBF7D0' : r.isTrialActive ? '#E9D5FF' : '#FCA5A5'}` }}>
-                {r.planDisplayStatus || (r.isTrialActive ? `14-Day Trial (${r.trialDaysRemaining}d left)` : 'Trial Expired')}
-              </span>
-            )},
+            { key: 'plan', label: 'Plan / Free Trial', render: r => {
+              if (r.isDeleted) {
+                return (
+                  <span style={{
+                    padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700,
+                    background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA'
+                  }}>
+                    ⚠️ Deletion in {r.deletionDaysLeft || 0}d
+                  </span>
+                )
+              }
+              return (
+                <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: r.hasActiveSub ? '#DCFCE7' : r.isTrialActive ? '#F3E8FF' : '#FEE2E2', color: r.hasActiveSub ? '#166534' : r.isTrialActive ? '#7E22CE' : '#DC2626', border: `1px solid ${r.hasActiveSub ? '#BBF7D0' : r.isTrialActive ? '#E9D5FF' : '#FCA5A5'}` }}>
+                  {r.planDisplayStatus || (r.isTrialActive ? `14-Day Trial (${r.trialDaysRemaining}d left)` : 'Trial Expired')}
+                </span>
+              )
+            }},
             { key: 'sessions', label: 'Sessions', render: r => r.sessionsDelivered || 0 },
             { key: 'courses', label: 'Courses', render: r => r.coursesCount || 0 },
             { key: 'grossGenerated', label: 'Gross Generated', render: r => <span style={{ color: '#10B981', fontWeight: 700 }}>{fmt(r.grossGenerated || 0)}</span> },
@@ -936,6 +1071,11 @@ function PractitionersTab() {
                 <button onClick={() => setHistoryModal(r)}
                   style={{ padding: '6px 10px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, color: '#1D4ED8', cursor: 'pointer', fontWeight: 700, fontSize: 11 }}>
                   📜 History
+                </button>
+                <button onClick={() => setDeleteModal(r)}
+                  title="Permanently hard delete practitioner from database"
+                  style={{ padding: '6px 10px', background: '#FEF2F2', border: '1px solid #FECDD3', borderRadius: 8, color: '#DC2626', cursor: 'pointer', fontWeight: 700, fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <FiTrash2 size={12} /> Hard Delete
                 </button>
               </div>
             )},

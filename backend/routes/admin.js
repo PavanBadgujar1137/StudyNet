@@ -16,6 +16,7 @@ const {
   getAllCoursesAdmin,
   updateCourseAdmin,
   getPractitionerPaymentHistory,
+  deleteUserAdmin,
 } = require("../controllers/admin")
 
 // ─── Admin Account Setup (one-time, no auth required) ────────────────────────
@@ -26,9 +27,10 @@ router.post("/seed-admin", seedAdminAccount)
 // Dashboard statistics
 router.get("/stats", auth, isAdmin, getAdminDashboardStats)
 
-// Client management
+// User / Client / Practitioner Management & Hard Deletion
 router.get("/clients", auth, isAdmin, getAllClients)
 router.patch("/clients/:id/plan", auth, isAdmin, updateClientPlan)
+router.delete("/users/:id", auth, isAdmin, deleteUserAdmin)
 
 // Course Management & Plan Tier Assignment (Admin exclusive)
 router.get("/courses", auth, isAdmin, getAllCoursesAdmin)

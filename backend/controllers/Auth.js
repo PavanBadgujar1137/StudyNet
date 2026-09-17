@@ -218,6 +218,39 @@ exports.login = async (req, res) => {
       })
     }
 
+    // Check if account is scheduled for deletion or has reached permanent deletion date
+    if (user.isDeleted) {
+      const now = new Date()
+      if (user.deletionEffectiveDate && new Date(user.deletionEffectiveDate) <= now) {
+        try {
+          const { hardDeleteUser } = require("./admin")
+          await hardDeleteUser(user._id)
+        } catch (e) {
+          console.error("Auto hard-delete on login error:", e.message)
+        }
+        return res.status(403).json({
+          success: false,
+          message: "This account has been permanently deleted from our database.",
+        })
+      }
+
+      const effectiveDate = user.deletionEffectiveDate ? new Date(user.deletionEffectiveDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+      const daysRemaining = Math.max(1, Math.ceil((effectiveDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
+      const formattedDate = effectiveDate.toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
+
+      return res.status(403).json({
+        success: false,
+        isScheduledForDeletion: true,
+        deletionEffectiveDate: effectiveDate,
+        daysRemaining,
+        message: `Your account is scheduled for permanent deletion on ${formattedDate} (${daysRemaining} day${daysRemaining === 1 ? '' : 's'} remaining). Account access is disabled. Please contact support if you need assistance.`,
+      })
+    }
+
     // Auto-heal missing trial dates for users
     if (!user.trialExpiresAt) {
       const trialDays = (user.accountType === "Learner" || user.accountType === "Client") ? 7 : 14
@@ -363,6 +396,39 @@ exports.socialLogin = async (req, res) => {
 
       user = await User.findById(user._id).populate("additionalDetails")
     } else {
+      // Check if account is scheduled for deletion or has reached permanent deletion date
+      if (user.isDeleted) {
+        const now = new Date()
+        if (user.deletionEffectiveDate && new Date(user.deletionEffectiveDate) <= now) {
+          try {
+            const { hardDeleteUser } = require("./admin")
+            await hardDeleteUser(user._id)
+          } catch (e) {
+            console.error("Auto hard-delete on socialLogin error:", e.message)
+          }
+          return res.status(403).json({
+            success: false,
+            message: "This account has been permanently deleted from our database.",
+          })
+        }
+
+        const effectiveDate = user.deletionEffectiveDate ? new Date(user.deletionEffectiveDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+        const daysRemaining = Math.max(1, Math.ceil((effectiveDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
+        const formattedDate = effectiveDate.toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        })
+
+        return res.status(403).json({
+          success: false,
+          isScheduledForDeletion: true,
+          deletionEffectiveDate: effectiveDate,
+          daysRemaining,
+          message: `Your account is scheduled for permanent deletion on ${formattedDate} (${daysRemaining} day${daysRemaining === 1 ? '' : 's'} remaining). Account access is disabled. Please contact support if you need assistance.`,
+        })
+      }
+
       // User exists - update profile picture if missing or dicebear placeholder
       if (image && (!user.image || user.image.includes("dicebear"))) {
         user.image = image

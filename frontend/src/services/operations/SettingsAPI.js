@@ -3,7 +3,6 @@ import { toast } from "react-hot-toast"
 import { setUser } from "../../slices/profileSlice"
 import { apiConnector } from "../apiConnector"
 import { settingsEndpoints } from "../apis"
-import { logout } from "./authAPI"
 
 const {
   UPDATE_DISPLAY_PICTURE_API,
@@ -109,23 +108,28 @@ export async function changePassword(token, formData) {
   }
 }
 
-export function deleteProfile(token, navigate) {
+export function deleteProfile(token, onSuccess) {
   return async (dispatch) => {
-    const toastId = toast.loading("Deleting account...")
+    const toastId = toast.loading("Processing deletion request...")
     try {
       const response = await apiConnector("DELETE", DELETE_PROFILE_API, null, {
         Authorization: `Bearer ${token}`,
       })
 
       if (!response?.data?.success) {
-        throw new Error(response?.data?.message || "Could not delete profile")
+        throw new Error(response?.data?.message || "Could not schedule account deletion")
       }
-      toast.success("Profile Deleted Successfully", { id: toastId })
-      dispatch(logout(navigate))
+      toast.dismiss(toastId)
+      if (typeof onSuccess === "function") {
+        onSuccess(response.data)
+      }
+      return response.data
     } catch (error) {
       console.log("DELETE_PROFILE_API API ERROR............", error)
       const errorMsg = error?.response?.data?.message || error?.message || "Could Not Delete Profile"
       toast.error(errorMsg, { id: toastId })
+      throw error
     }
   }
 }
+

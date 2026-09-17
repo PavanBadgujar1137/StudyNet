@@ -103,6 +103,17 @@ const userSchema = new mongoose.Schema(
       enum: ["trial", "starter", "growth", "practice", "master", "none"],
       default: "trial",
     },
+    // Account deletion tracking (30-day grace period for permanent deletion)
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+    deletionScheduledAt: {
+      type: Date,
+    },
+    deletionEffectiveDate: {
+      type: Date,
+    },
   },
   { timestamps: true }
 )

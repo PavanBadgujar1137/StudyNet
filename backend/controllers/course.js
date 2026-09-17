@@ -8,6 +8,9 @@ const { PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3")
 const s3Client = require("../config/s3")
 const path = require("path")
 const mime = require("mime-types")
+const mailSender = require("../utils/mailSender")
+const { courseUpdatedEmail } = require("../mail/templates/courseUpdatedEmail")
+const ClientConnection = require("../models/ClientConnection")
 
 const BUCKET = process.env.AWS_S3_BUCKET_NAME
 const REGION = process.env.AWS_REGION || "ap-south-1"
@@ -24,6 +27,83 @@ function buildS3Key(folder, originalName) {
   const base = path.basename(originalName || "upload", ext).replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 80)
   return `${FOLDER_PREFIX}/${folder}/${ts}-${base}${ext}`
 }
+
+// ─── Notification Helper: Email Enrolled / Associated Learners ───────────────
+const notifyEnrolledLearnersOfCourseUpdate = async (courseId, practitionerId, updateSummary = "") => {
+  try {
+    const course = await Course.findById(courseId).populate("practitioner", "firstName lastName")
+    if (!course) return
+
+    const practitionerName = course.practitioner
+      ? `${course.practitioner.firstName || ""} ${course.practitioner.lastName || ""}`.trim()
+      : "Your Practitioner"
+
+    // 1. Gather all associated learner IDs:
+    const enrolledClientIds = (course.enrolledClients || []).map(id => String(id))
+
+    // Users with this course in their courses array
+    const usersWithCourse = await User.find({
+      courses: courseId,
+      isDeleted: { $ne: true },
+      accountType: { $in: ["Learner", "Client", "Student"] },
+    }).select("_id email firstName lastName").lean()
+
+    // Clients actively connected with this practitioner
+    const activeConnections = await ClientConnection.find({
+      practitioner: practitionerId,
+      status: { $in: ["approved", "active"] },
+    }).select("client").lean()
+
+    const connectedClientIds = activeConnections.map(c => String(c.client)).filter(Boolean)
+
+    // Merge unique client IDs
+    const allLearnerIds = Array.from(new Set([...enrolledClientIds, ...connectedClientIds]))
+
+    const additionalLearners = allLearnerIds.length > 0
+      ? await User.find({
+          _id: { $in: allLearnerIds },
+          isDeleted: { $ne: true },
+          accountType: { $in: ["Learner", "Client", "Student"] },
+        }).select("_id email firstName lastName").lean()
+      : []
+
+    // Map unique learners by email
+    const learnerMap = new Map()
+    usersWithCourse.forEach(u => { if (u.email) learnerMap.set(u.email.toLowerCase(), u) })
+    additionalLearners.forEach(u => { if (u.email) learnerMap.set(u.email.toLowerCase(), u) })
+
+    const uniqueLearners = Array.from(learnerMap.values())
+    if (uniqueLearners.length === 0) {
+      console.log(`[CourseUpdateNotification] No learners found to notify for courseId=${courseId}`)
+      return
+    }
+
+    console.log(`[CourseUpdateNotification] Sending update emails to ${uniqueLearners.length} learner(s) for course "${course.title}"`)
+
+    const frontendUrl = process.env.FRONTEND_URL || "https://openhand.live"
+    const courseUrl = `${frontendUrl}/courses/${courseId}`
+
+    // Send emails in background (non-blocking)
+    const emailPromises = uniqueLearners.map(async (learner) => {
+      try {
+        const learnerName = `${learner.firstName || ""} ${learner.lastName || ""}`.trim() || "Learner"
+        const html = courseUpdatedEmail(course.title, learnerName, practitionerName, updateSummary, courseUrl)
+        await mailSender(
+          learner.email,
+          `Course Updated: ${course.title}`,
+          html
+        )
+      } catch (err) {
+        console.error(`[CourseUpdateNotification] Error sending to ${learner.email}:`, err.message)
+      }
+    })
+
+    await Promise.allSettled(emailPromises)
+  } catch (err) {
+    console.error("[CourseUpdateNotification] Failed to send update notifications:", err.message)
+  }
+}
+
 
 // ─── CREATE COURSE (Practitioner) ─────────────────────────────────────────────
 exports.createCourse = async (req, res) => {
@@ -94,6 +174,14 @@ exports.updateCourse = async (req, res) => {
     }
 
     await course.save()
+
+    // Trigger notification emails to all enrolled & associated learners
+    notifyEnrolledLearnersOfCourseUpdate(
+      course._id,
+      practitionerId,
+      `Course details, syllabus, or learning overview for "${course.title}" have been updated.`
+    )
+
     return res.status(200).json({ success: true, message: "Course updated successfully", course })
   } catch (error) {
     console.error("updateCourse error:", error)
@@ -206,6 +294,12 @@ exports.confirmVideoUpload = async (req, res) => {
     course.videos.push(video._id)
     await course.save()
 
+    notifyEnrolledLearnersOfCourseUpdate(
+      courseId,
+      practitionerId,
+      `A new video lecture "${title}" has been added to the course.`
+    )
+
     console.log(`[Confirm] Video saved courseId=${courseId} videoId=${video._id}`)
     return res.status(201).json({ success: true, message: "Video added successfully", video })
   } catch (error) {
@@ -260,6 +354,12 @@ exports.addVideoToCourse = async (req, res) => {
     course.videos.push(video._id)
     await course.save()
 
+    notifyEnrolledLearnersOfCourseUpdate(
+      courseId,
+      practitionerId,
+      `A new video lecture "${title}" has been added to the course.`
+    )
+
     return res.status(201).json({ success: true, message: "Video added successfully", video })
   } catch (error) {
     console.error("addVideoToCourse error:", error)
@@ -304,6 +404,13 @@ exports.updateVideoInCourse = async (req, res) => {
     if (videoUrl !== undefined) updateFields.videoUrl = videoUrl
 
     const updatedVideo = await CourseVideo.findByIdAndUpdate(videoId, updateFields, { new: true })
+
+    notifyEnrolledLearnersOfCourseUpdate(
+      courseId,
+      practitionerId,
+      `Video lecture "${title || updatedVideo?.title || 'content'}" has been updated.`
+    )
+
     return res.status(200).json({ success: true, message: "Video updated", video: updatedVideo })
   } catch (error) {
     console.error("updateVideoInCourse error:", error)
