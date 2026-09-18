@@ -195,11 +195,11 @@ export function PractitionerDashboard() {
 
   const rawPracticeItems = [
     { id: 'dash',      label: 'Practice Cockpit', icon: <FiGrid /> },
-    { id: 'coupons',   label: 'Coupons & Grants', icon: <FiPercent /> },
     { id: 'social',    label: 'Social Posts',     icon: <FiShare2 /> },
     { id: 'community', label: 'Community Hub',    icon: <FiMessageSquare /> },
     { id: 'offers',    label: 'Offers',           icon: <FiTag /> },
     { id: 'courses',   label: 'My Courses',       icon: <FiBookOpen /> },
+    { id: 'coupons',   label: 'Coupons & Grants', icon: <FiPercent /> },
     { id: 'clients',   label: 'Learners',         icon: <FiUsers /> },
     { id: 'circles',   label: 'Circles',          icon: <FiCircle /> },
   ]
