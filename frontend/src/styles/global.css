@@ -6461,6 +6461,16 @@ textarea.oh-intake-textarea:focus,
   .login-card-wrapper { padding: 20px 16px; }
 }
 
+/* ─── High-Priority Toast & Alert Stacking ────────────────────────────── */
+div[style*="position: fixed"][style*="z-index"]:has(> div > [role="status"]),
+div:has(> [role="status"]),
+div:has(> div > [role="status"]),
+.react-hot-toast,
+[data-hot-toast] {
+  z-index: 999999999 !important;
+}
+
+
 
 
 

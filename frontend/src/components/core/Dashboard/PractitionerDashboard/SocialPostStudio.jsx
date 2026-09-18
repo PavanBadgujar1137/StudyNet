@@ -40,6 +40,7 @@ import {
 } from '../../../../services/operations/socialPostAPI'
 
 import { formatPractitionerName } from '../../../../utils/formatName'
+import { processImageForUpload, validateImageFile } from '../../../../utils/imageProcessing'
 
 export function SocialPostStudio() {
   const { token } = useSelector((state) => state.auth)
@@ -240,13 +241,25 @@ export function SocialPostStudio() {
   }
 
   // Handle File Choose
-  const handleFileChange = (e) => {
-    const file = e.target.files[0]
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0]
     if (file) {
-      setMediaFile(file)
-      setUseGradientCard(false)
-      const objectUrl = URL.createObjectURL(file)
-      setMediaPreview(objectUrl)
+      const validation = validateImageFile(file, 20)
+      if (!validation.valid) {
+        return toast.error(validation.error)
+      }
+      try {
+        const processed = await processImageForUpload(file)
+        setMediaFile(processed)
+        setUseGradientCard(false)
+        const objectUrl = URL.createObjectURL(processed)
+        setMediaPreview(objectUrl)
+      } catch (err) {
+        console.error('Photo processing error:', err)
+        setMediaFile(file)
+        setUseGradientCard(false)
+        setMediaPreview(URL.createObjectURL(file))
+      }
     }
   }
 
@@ -893,7 +906,15 @@ export function SocialPostStudio() {
                             }}
                           >
                             <FiImage /> Replace Photo
-                            <input type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+                            <input
+                              type="file"
+                              accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,image/heic,image/heif,.png,.jpg,.jpeg,.webp,.gif,.heic,.heif,image/*"
+                              onChange={(e) => {
+                                handleFileChange(e)
+                                e.target.value = ''
+                              }}
+                              style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', border: 0 }}
+                            />
                           </label>
 
                           <button
@@ -940,7 +961,15 @@ export function SocialPostStudio() {
                             }}
                           >
                             Browse Photo File
-                            <input type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+                            <input
+                              type="file"
+                              accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,image/heic,image/heif,.png,.jpg,.jpeg,.webp,.gif,.heic,.heif,image/*"
+                              onChange={(e) => {
+                                handleFileChange(e)
+                                e.target.value = ''
+                              }}
+                              style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', border: 0 }}
+                            />
                           </label>
                         </div>
                         <div style={{ fontSize: '12px', color: '#94A3B8' }}>or enter image URL:</div>

@@ -3,6 +3,8 @@ import { FiUpload, FiCamera, FiTrash2 } from "react-icons/fi"
 import { useDispatch, useSelector } from "react-redux"
 
 import { updateDisplayPicture, deleteDisplayPicture } from "../../../../services/operations/SettingsAPI"
+import { processImageForUpload, validateImageFile } from "../../../../utils/imageProcessing"
+import toast from "react-hot-toast"
 
 export default function ChangeProfilePicture() {
   const { token } = useSelector((state) => state.auth)
@@ -16,15 +18,22 @@ export default function ChangeProfilePicture() {
 
   const fileInputRef = useRef(null)
 
-  const handleClick = () => {
-    fileInputRef.current.click()
-  }
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0]
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0]
     if (file) {
-      setImageFile(file)
-      previewFile(file)
+      const validation = validateImageFile(file, 10)
+      if (!validation.valid) {
+        return toast.error(validation.error)
+      }
+      try {
+        const processed = await processImageForUpload(file)
+        setImageFile(processed)
+        previewFile(processed)
+      } catch (err) {
+        console.error("Profile picture processing error:", err)
+        setImageFile(file)
+        previewFile(file)
+      }
     }
   }
 
@@ -83,34 +92,35 @@ export default function ChangeProfilePicture() {
             alt={`profile-${user?.firstName}`}
             className="aspect-square w-20 h-20 rounded-2xl object-cover ring-4 ring-slate-100 shadow-md bg-slate-800"
           />
-          <button 
-            type="button" 
-            onClick={handleClick}
-            className="absolute -bottom-1 -right-1 p-2 rounded-xl bg-indigo-600 text-white shadow-md hover:bg-indigo-700 transition-all"
+          <label 
+            htmlFor="profile-picture-upload-input"
+            className="absolute -bottom-1 -right-1 p-2 rounded-xl bg-indigo-600 text-white shadow-md hover:bg-indigo-700 transition-all cursor-pointer"
             title="Choose new image"
           >
             <FiCamera className="text-xs" />
-          </button>
+          </label>
         </div>
 
         <div className="space-y-1">
           <h3 className="text-base font-bold text-slate-900">Profile Picture</h3>
-          <p className="text-xs text-slate-500 max-w-sm">PNG, JPG or GIF (max 5MB). Recommended square aspect ratio.</p>
+          <p className="text-xs text-slate-500 max-w-sm">PNG, JPG, WebP, GIF or HEIC (max 10MB). macOS & iOS compatible.</p>
         </div>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', maxWidth: '480px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
         <input
+          id="profile-picture-upload-input"
           type="file"
           ref={fileInputRef}
-          onChange={handleFileChange}
-          className="hidden"
-          accept="image/png, image/gif, image/jpeg"
+          onChange={(e) => {
+            handleFileChange(e)
+            e.target.value = ''
+          }}
+          style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', border: 0 }}
+          accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,image/heic,image/heif,.png,.jpg,.jpeg,.webp,.gif,.heic,.heif,image/*"
         />
-        <button
-          type="button"
-          onClick={handleClick}
-          disabled={loading || deleting}
+        <label
+          htmlFor="profile-picture-upload-input"
           style={{
             background: '#F1F5F9',
             color: '#334155',
@@ -120,11 +130,12 @@ export default function ChangeProfilePicture() {
             fontWeight: 700,
             fontSize: '12px',
             cursor: 'pointer',
-            transition: 'all 0.15s ease'
+            transition: 'all 0.15s ease',
+            display: 'inline-block'
           }}
         >
           Select Image
-        </button>
+        </label>
 
         <button
           type="button"

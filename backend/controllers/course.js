@@ -108,10 +108,14 @@ const notifyEnrolledLearnersOfCourseUpdate = async (courseId, practitionerId, up
 // ─── CREATE COURSE (Practitioner) ─────────────────────────────────────────────
 exports.createCourse = async (req, res) => {
   try {
-    const practitionerId = req.user.id
+    const practitionerId = req.user?.id || req.user?._id
+    if (!practitionerId) {
+      return res.status(401).json({ success: false, message: "User not authenticated" })
+    }
+
     const { title, description, tags, price = 0, isFree = true } = req.body
 
-    if (!title) {
+    if (!title || !String(title).trim()) {
       return res.status(400).json({ success: false, message: "Course title is required" })
     }
 
@@ -124,12 +128,25 @@ exports.createCourse = async (req, res) => {
     const numPrice = Number(price) || 0
     const courseIsFree = numPrice === 0 || isFree === true || isFree === "true"
 
+    let parsedTags = []
+    if (tags) {
+      if (typeof tags === "string") {
+        try {
+          parsedTags = JSON.parse(tags)
+        } catch {
+          parsedTags = tags.split(",").map(t => t.trim()).filter(Boolean)
+        }
+      } else if (Array.isArray(tags)) {
+        parsedTags = tags
+      }
+    }
+
     const course = await Course.create({
-      title,
+      title: String(title).trim(),
       description: description || "",
       thumbnail: thumbnailUrl,
       practitioner: practitionerId,
-      tags: tags ? (typeof tags === "string" ? JSON.parse(tags) : tags) : [],
+      tags: parsedTags,
       price: numPrice,
       isFree: courseIsFree,
       requiredPlan: null,
@@ -259,6 +276,44 @@ exports.presignVideoUpload = async (req, res) => {
   }
 }
 
+// ─── PRESIGN ATTACHMENT UPLOAD (Practitioner) ─────────────────────────────────
+// Returns a presigned PUT URL so the browser can upload lecture notes / documents directly to S3.
+exports.presignAttachmentUpload = async (req, res) => {
+  try {
+    const practitionerId = req.user.id
+    const { id: courseId } = req.params
+    const { fileName } = req.body
+
+    if (!fileName) {
+      return res.status(400).json({ success: false, message: "fileName is required" })
+    }
+    if (!BUCKET) {
+      return res.status(500).json({ success: false, message: "S3 bucket not configured" })
+    }
+
+    const course = await Course.findOne({ _id: courseId, practitioner: practitionerId })
+    if (!course) {
+      return res.status(404).json({ success: false, message: "Course not found or not authorized" })
+    }
+
+    const key = buildS3Key("course_attachments", fileName)
+
+    const command = new PutObjectCommand({
+      Bucket: BUCKET,
+      Key: key,
+    })
+
+    const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn: 14400 })
+    const publicUrl = buildFileUrl(key)
+
+    console.log(`[PresignAttachment] courseId=${courseId} key=${key}`)
+    return res.status(200).json({ success: true, presignedUrl, publicUrl, key })
+  } catch (error) {
+    console.error("presignAttachmentUpload error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
 // ─── CONFIRM VIDEO UPLOAD (Practitioner) — Step 2 of direct-to-S3 flow ─────────
 // Called after the browser has finished uploading directly to S3.
 // Creates the CourseVideo DB record and adds it to the course.
@@ -266,7 +321,7 @@ exports.confirmVideoUpload = async (req, res) => {
   try {
     const practitionerId = req.user.id
     const { id: courseId } = req.params
-    const { title, description, videoUrl, key, durationSeconds, order } = req.body
+    const { title, description, videoUrl, key, durationSeconds, order, attachments } = req.body
 
     if (!title) {
       return res.status(400).json({ success: false, message: "Video title is required" })
@@ -280,12 +335,18 @@ exports.confirmVideoUpload = async (req, res) => {
       return res.status(404).json({ success: false, message: "Course not found or not authorized" })
     }
 
+    let parsedAttachments = []
+    if (attachments) {
+      parsedAttachments = typeof attachments === "string" ? JSON.parse(attachments) : attachments
+    }
+
     const video = await CourseVideo.create({
       title,
       description: description || "",
       videoUrl,
       s3Key: key || "",
       thumbnail: "",
+      attachments: Array.isArray(parsedAttachments) ? parsedAttachments : [],
       durationSeconds: Number(durationSeconds || 0),
       order: Number(order ?? course.videos.length),
       course: courseId,
@@ -314,7 +375,7 @@ exports.addVideoToCourse = async (req, res) => {
   try {
     const practitionerId = req.user.id
     const { id: courseId } = req.params
-    const { title, description, videoUrl: bodyVideoUrl, durationSeconds, order } = req.body
+    const { title, description, videoUrl: bodyVideoUrl, durationSeconds, order, attachments } = req.body
 
     if (!title) {
       return res.status(400).json({ success: false, message: "Video title is required" })
@@ -341,11 +402,32 @@ exports.addVideoToCourse = async (req, res) => {
       thumbnailUrl = thumbResult.url
     }
 
+    let parsedAttachments = []
+    if (attachments) {
+      parsedAttachments = typeof attachments === "string" ? JSON.parse(attachments) : attachments
+    }
+
+    if (req.files?.attachment || req.files?.attachments) {
+      const rawAtt = req.files.attachment || req.files.attachments
+      const filesToUpload = Array.isArray(rawAtt) ? rawAtt : [rawAtt]
+      for (const attFile of filesToUpload) {
+        const uploadRes = await uploadFileToS3(attFile, "course_attachments")
+        parsedAttachments.push({
+          name: attFile.name,
+          url: uploadRes.url,
+          s3Key: uploadRes.key,
+          fileType: attFile.mimetype || "file",
+          size: attFile.size || 0,
+        })
+      }
+    }
+
     const video = await CourseVideo.create({
       title,
       description: description || "",
       videoUrl,
       thumbnail: thumbnailUrl,
+      attachments: Array.isArray(parsedAttachments) ? parsedAttachments : [],
       durationSeconds: Number(durationSeconds || 0),
       order: Number(order || course.videos.length),
       course: courseId,
@@ -402,6 +484,19 @@ exports.updateVideoInCourse = async (req, res) => {
     if (description !== undefined) updateFields.description = description
     if (durationSeconds !== undefined) updateFields.durationSeconds = Number(durationSeconds)
     if (videoUrl !== undefined) updateFields.videoUrl = videoUrl
+    if (req.body.attachments !== undefined) {
+      let parsedAttachments = req.body.attachments
+      if (typeof parsedAttachments === "string") {
+        try {
+          parsedAttachments = JSON.parse(parsedAttachments)
+        } catch {
+          parsedAttachments = []
+        }
+      }
+      if (Array.isArray(parsedAttachments)) {
+        updateFields.attachments = parsedAttachments
+      }
+    }
 
     const updatedVideo = await CourseVideo.findByIdAndUpdate(videoId, updateFields, { new: true })
 
@@ -458,7 +553,7 @@ exports.getPractitionerCourses = async (req, res) => {
     const practitionerId = req.user.id
 
     const courses = await Course.find({ practitioner: practitionerId })
-      .populate("videos", "title description videoUrl durationSeconds order thumbnail views")
+      .populate("videos", "title description videoUrl durationSeconds order thumbnail views attachments")
       .sort({ createdAt: -1 })
       .lean()
 
@@ -474,7 +569,7 @@ exports.getAllCourses = async (req, res) => {
   try {
     const courses = await Course.find({ status: "published" })
       .populate("practitioner", "firstName lastName image")
-      .populate("videos", "title description videoUrl durationSeconds order thumbnail")
+      .populate("videos", "title description videoUrl durationSeconds order thumbnail attachments")
       .sort({ createdAt: -1 })
       .lean()
 
@@ -526,7 +621,7 @@ exports.getCourseDetail = async (req, res) => {
 
     const course = await Course.findById(id)
       .populate("practitioner", "firstName lastName image email")
-      .populate("videos", "title description videoUrl durationSeconds order thumbnail")
+      .populate("videos", "title description videoUrl durationSeconds order thumbnail attachments")
       .lean()
 
     if (!course) return res.status(404).json({ success: false, message: "Course not found" })

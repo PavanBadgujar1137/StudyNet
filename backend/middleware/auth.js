@@ -8,33 +8,49 @@ dotenv.config();
 // This function is used as middleware to authenticate user requests
 exports.auth = async (req, res, next) => {
 	try {
-		// Extracting JWT from request cookies, body or header
-		const token =
-			req.cookies.token ||
-			req.body.token ||
-			req.header("Authorization").replace("Bearer ", "");
+		// Extracting JWT from request cookies, body, query or headers
+		const authHeader =
+			req.header("Authorization") ||
+			req.header("authorization") ||
+			req.headers?.authorization ||
+			req.headers?.Authorization;
+
+		let rawToken =
+			req.cookies?.token ||
+			req.body?.token ||
+			(authHeader ? authHeader.replace(/^Bearer\s+/i, "") : null);
+
+		if (!rawToken && req.query?.token) {
+			rawToken = req.query.token;
+		}
 
 		// If JWT is missing, return 401 Unauthorized response
-		if (!token) {
+		if (!rawToken) {
 			return res.status(401).json({ success: false, message: `Token Missing` });
+		}
+
+		// Strip any surrounding quotes or whitespace (e.g. from JSON.stringify)
+		let cleanToken = String(rawToken).trim();
+		if ((cleanToken.startsWith('"') && cleanToken.endsWith('"')) || (cleanToken.startsWith("'") && cleanToken.endsWith("'"))) {
+			cleanToken = cleanToken.slice(1, -1).trim();
 		}
 
 		try {
 			// Verifying the JWT using the secret key stored in environment variables
-			const decode = await jwt.verify(token, process.env.JWT_SECRET);
+			const decode = jwt.verify(cleanToken, process.env.JWT_SECRET);
 			// Storing the decoded JWT payload in the request object for further use
 			req.user = decode;
+			if (!req.user.id && req.user._id) req.user.id = req.user._id;
 		} catch (error) {
-			// If JWT verification fails, return 401 Unauthorized response
+			console.error("[AuthMiddleware] JWT verification failed:", error.message);
 			return res
 				.status(401)
-				.json({ success: false, message: "token is invalid" });
+				.json({ success: false, message: "token is invalid or expired" });
 		}
 
 		// If JWT is valid, move on to the next middleware or request handler
 		next();
 	} catch (error) {
-		// If there is an error during the authentication process, return 401 Unauthorized response
 		return res.status(401).json({
 			success: false,
 			message: `Something Went Wrong While Validating the Token`,
@@ -43,8 +59,14 @@ exports.auth = async (req, res, next) => {
 };
 exports.isStudent = async (req, res, next) => {
 	try {
-		const userDetails = await User.findOne({ email: req.user.email });
-		if (userDetails.accountType !== "Student" && userDetails.accountType !== "Client" && userDetails.accountType !== "Learner") {
+		const userType = String(req.user?.accountType || req.user?.role || '').toLowerCase();
+		if (userType === "student" || userType === "client" || userType === "learner" || userType === "admin") {
+			return next();
+		}
+
+		const userDetails = (req.user?.id ? await User.findById(req.user.id) : null) || (req.user?.email ? await User.findOne({ email: req.user.email }) : null);
+		const dbType = String(userDetails?.accountType || '').toLowerCase();
+		if (dbType !== "student" && dbType !== "client" && dbType !== "learner" && dbType !== "admin") {
 			return res.status(401).json({
 				success: false,
 				message: "This is a Protected Route for Learners/Students",
@@ -62,9 +84,14 @@ exports.isClient = exports.isStudent;
 
 exports.isAdmin = async (req, res, next) => {
 	try {
-		const userDetails = await User.findOne({ email: req.user.email });
+		const userType = String(req.user?.accountType || req.user?.role || '').toLowerCase();
+		if (userType === "admin") {
+			return next();
+		}
 
-		if (userDetails.accountType !== "Admin") {
+		const userDetails = (req.user?.id ? await User.findById(req.user.id) : null) || (req.user?.email ? await User.findOne({ email: req.user.email }) : null);
+
+		if (String(userDetails?.accountType || '').toLowerCase() !== "admin") {
 			return res.status(401).json({
 				success: false,
 				message: "This is a Protected Route for Admin",
@@ -80,14 +107,22 @@ exports.isAdmin = async (req, res, next) => {
 
 exports.isInstructor = async (req, res, next) => {
 	try {
-		const userAccountType = req.user?.accountType;
-		if (userAccountType === "Instructor" || userAccountType === "Practitioner") {
+		const userAccountType = String(req.user?.accountType || req.user?.role || '').toLowerCase();
+		if (userAccountType === "instructor" || userAccountType === "practitioner" || userAccountType === "admin") {
 			return next();
 		}
 
-		const userDetails = await User.findById(req.user.id) || await User.findOne({ email: req.user.email });
+		const userDetails = (req.user?.id ? await User.findById(req.user.id) : null) || (req.user?.email ? await User.findOne({ email: req.user.email }) : null);
 
-		if (!userDetails || (userDetails.accountType !== "Instructor" && userDetails.accountType !== "Practitioner")) {
+		if (!userDetails) {
+			return res.status(401).json({
+				success: false,
+				message: "User account not found",
+			});
+		}
+
+		const dbType = String(userDetails.accountType || '').toLowerCase();
+		if (dbType !== "instructor" && dbType !== "practitioner" && dbType !== "admin") {
 			return res.status(401).json({
 				success: false,
 				message: "This is a Protected Route for Practitioners/Instructors",

@@ -10,10 +10,14 @@ const {
   getDirectMessages,
   sendDirectMessage,
   getChatContacts,
+  presignChatMediaUpload,
 } = require("../controllers/chat")
 
 // All chat routes require authentication
 router.use(auth)
+
+// Direct S3 presigned upload for chat media (up to 3GB)
+router.post("/presign-media", presignChatMediaUpload)
 
 // Global Community Chat
 router.get("/global", getGlobalMessages)

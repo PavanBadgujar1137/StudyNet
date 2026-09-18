@@ -3,10 +3,13 @@ import { useSelector } from 'react-redux'
 import {
   FiBookOpen, FiPlay, FiLock, FiCheck, FiClock, FiVideo,
   FiSearch, FiX, FiChevronLeft,
-  FiRefreshCw, FiArrowRight, FiShield
+  FiRefreshCw, FiArrowRight, FiShield,
+  FiFileText, FiPaperclip, FiDownload
 } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import { apiConnector } from '../../../../services/apiConnector'
+import { formatFileSize } from '../../../../utils/imageProcessing'
+import { mediaUrl } from '../../../../utils/mediaUrl'
 import { OHPricingModal } from '../../../openhand'
 
 function formatDuration(secs) {
@@ -52,7 +55,7 @@ function VideoPlayer({ video, onClose, onNext, hasNext }) {
 
       {/* Video Content Stage */}
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-        <div style={{ width: '100%', maxWidth: '960px', maxHeight: 'calc(100vh - 160px)', aspectRatio: '16/9', background: '#000', borderRadius: 16, overflow: 'hidden', boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.1)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: '100%', maxWidth: '960px', maxHeight: 'calc(100vh - 200px)', aspectRatio: '16/9', background: '#000', borderRadius: 16, overflow: 'hidden', boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.1)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {ytEmbedUrl ? (
             <iframe
               src={ytEmbedUrl}
@@ -64,7 +67,7 @@ function VideoPlayer({ video, onClose, onNext, hasNext }) {
           ) : (
             <video
               ref={videoRef}
-              src={video.videoUrl}
+              src={mediaUrl(video.videoUrl)}
               controls
               autoPlay
               style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#000' }}
@@ -72,6 +75,39 @@ function VideoPlayer({ video, onClose, onNext, hasNext }) {
           )}
         </div>
       </div>
+
+      {/* Attached Resources Bar (if any) */}
+      {video?.attachments?.length > 0 && (
+        <div style={{ padding: '10px 28px', background: 'rgba(15, 23, 42, 0.95)', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 12, color: '#94A3B8', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <FiPaperclip size={14} color="#3B82F6" /> Lecture Notes &amp; Resources ({video.attachments.length}):
+          </span>
+          {video.attachments.map((att, idx) => (
+            <a
+              key={idx}
+              href={mediaUrl(att.url)}
+              target="_blank"
+              rel="noopener noreferrer"
+              download
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '5px 12px',
+                borderRadius: 8,
+                background: 'rgba(59, 130, 246, 0.2)',
+                border: '1px solid rgba(59, 130, 246, 0.4)',
+                color: '#93C5FD',
+                fontSize: 12,
+                textDecoration: 'none',
+                fontWeight: 600,
+              }}
+            >
+              <FiDownload size={13} /> {att.name || 'Download Resource'} {att.size > 0 && `(${formatFileSize(att.size)})`}
+            </a>
+          ))}
+        </div>
+      )}
 
       {/* Footer / Description & Actions */}
       <div style={{ padding: '16px 28px', borderTop: '1px solid rgba(255,255,255,0.08)', background: 'rgba(15, 23, 42, 0.6)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -166,33 +202,95 @@ function CourseDetailView({ course, hasAccess, onBack, subscription }) {
         /* Video List */
         <div>
           <h3 style={{ margin: '0 0 14px', color: '#1E293B', fontSize: 16, fontWeight: 700 }}>
-            Course Videos ({videos.length})
+            Course Videos &amp; Study Materials ({videos.length})
           </h3>
           {loadingVideos ? (
             <div style={{ textAlign: 'center', padding: 32, color: '#94A3B8' }}><FiRefreshCw style={{ animation: 'spin 1s linear infinite' }} /> Loading videos...</div>
           ) : videos.length === 0 ? (
             <div style={{ textAlign: 'center', padding: 32, color: '#94A3B8' }}>No videos added to this course yet.</div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {videos.map((video, idx) => (
-                <div key={video._id} onClick={() => { setPlayingVideo(video); setPlayingIndex(idx) }}
-                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', background: '#fff', borderRadius: 12, border: '1px solid #E2E8F0', cursor: 'pointer', transition: 'all 0.2s' }}
-                  onMouseEnter={e => { e.currentTarget.style.background = '#F0F9FF'; e.currentTarget.style.borderColor = '#3B82F6' }}
-                  onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#E2E8F0' }}
+                <div
+                  key={video._id}
+                  style={{
+                    background: '#fff',
+                    borderRadius: 14,
+                    border: '1px solid #E2E8F0',
+                    overflow: 'hidden',
+                    transition: 'all 0.2s',
+                  }}
                 >
-                  <div style={{ width: 44, height: 44, borderRadius: 10, background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
-                    <FiPlay size={18} />
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ color: '#1E293B', fontWeight: 600, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {idx + 1}. {video.title}
+                  <div
+                    onClick={() => { setPlayingVideo(video); setPlayingIndex(idx) }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 14,
+                      padding: '14px 18px',
+                      cursor: 'pointer',
+                      background: '#fff',
+                      transition: 'background 0.2s',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = '#F0F9FF' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = '#fff' }}
+                  >
+                    <div style={{ width: 44, height: 44, borderRadius: 10, background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
+                      <FiPlay size={18} />
                     </div>
-                    {video.description && <div style={{ color: '#64748B', fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{video.description}</div>}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ color: '#1E293B', fontWeight: 700, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {idx + 1}. {video.title}
+                      </div>
+                      {video.description && <div style={{ color: '#64748B', fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 2 }}>{video.description}</div>}
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                      {video.attachments?.length > 0 && (
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#EFF6FF', color: '#2563EB', padding: '3px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700 }}>
+                          <FiPaperclip size={12} /> {video.attachments.length} Resource{video.attachments.length > 1 ? 's' : ''}
+                        </span>
+                      )}
+                      <span style={{ color: '#94A3B8', fontSize: 12 }}>{formatDuration(video.durationSeconds)}</span>
+                      <div style={{ width: 32, height: 32, borderRadius: 8, background: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3B82F6' }}>
+                        <FiPlay size={14} />
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ color: '#94A3B8', fontSize: 12, flexShrink: 0 }}>{formatDuration(video.durationSeconds)}</div>
-                  <div style={{ width: 32, height: 32, borderRadius: 8, background: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3B82F6', flexShrink: 0 }}>
-                    <FiPlay size={14} />
-                  </div>
+
+                  {/* Attached Resources Panel in Curriculum Row */}
+                  {video.attachments?.length > 0 && (
+                    <div style={{ background: '#F8FAFC', borderTop: '1px solid #F1F5F9', padding: '10px 18px', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 11, color: '#64748B', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <FiFileText size={13} color="#3B82F6" /> Attached Notes:
+                      </span>
+                      {video.attachments.map((att, aIdx) => (
+                        <a
+                          key={aIdx}
+                          href={mediaUrl(att.url)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          download
+                          onClick={(e) => e.stopPropagation()}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 5,
+                            padding: '4px 10px',
+                            background: '#FFFFFF',
+                            border: '1px solid #CBD5E1',
+                            borderRadius: 6,
+                            fontSize: 11.5,
+                            color: '#1E293B',
+                            textDecoration: 'none',
+                            fontWeight: 600,
+                          }}
+                        >
+                          <FiDownload size={12} color="#2563EB" /> {att.name || 'Resource'} {att.size > 0 && `(${formatFileSize(att.size)})`}
+                        </a>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

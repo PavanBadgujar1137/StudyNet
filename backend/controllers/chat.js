@@ -1,6 +1,74 @@
 const ChatMessage = require("../models/ChatMessage")
 const User = require("../models/User")
 const PractitionerProfile = require("../models/PractitionerProfile")
+const { PutObjectCommand } = require("@aws-sdk/client-s3")
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner")
+const s3Client = require("../config/s3")
+const path = require("path")
+
+const BUCKET = process.env.AWS_S3_BUCKET_NAME
+const REGION = process.env.AWS_REGION || "ap-south-1"
+const FOLDER_PREFIX = process.env.AWS_S3_FOLDER || "openhand/uat"
+const CLOUDFRONT_DOMAIN = process.env.AWS_CLOUDFRONT_DOMAIN
+
+function buildFileUrl(key) {
+  if (CLOUDFRONT_DOMAIN) {
+    return `https://${CLOUDFRONT_DOMAIN}/${key}`
+  }
+  return `https://${BUCKET}.s3.${REGION}.amazonaws.com/${key}`
+}
+
+function buildS3Key(folder, originalName) {
+  const timestamp = Date.now()
+  const ext = path.extname(originalName || "file") || ""
+  const baseName = path.basename(originalName || "upload", ext)
+    .replace(/[^a-zA-Z0-9_-]/g, "_")
+    .slice(0, 80)
+  return `${FOLDER_PREFIX}/${folder}/${timestamp}-${baseName}${ext}`
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 0. DIRECT S3 PRESIGN FOR CHAT MEDIA (Images, Videos, Large Files up to 3GB)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// POST /api/v1/chat/presign-media
+exports.presignChatMediaUpload = async (req, res) => {
+  try {
+    const { fileName, size, fileSize, fileType } = req.body
+
+    if (!fileName) {
+      return res.status(400).json({ success: false, message: "fileName is required" })
+    }
+    if (!BUCKET) {
+      return res.status(500).json({ success: false, message: "S3 bucket not configured" })
+    }
+
+    const MAX_CHAT_FILE_SIZE = 3 * 1024 * 1024 * 1024 // 3 GB limit
+    const incomingSize = size || fileSize
+    if (incomingSize && Number(incomingSize) > MAX_CHAT_FILE_SIZE) {
+      return res.status(400).json({
+        success: false,
+        message: "File size exceeds the maximum limit of 3 GB.",
+      })
+    }
+
+    const key = buildS3Key("chat_attachments", fileName)
+
+    const command = new PutObjectCommand({
+      Bucket: BUCKET,
+      Key: key,
+    })
+
+    const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn: 14400 })
+    const publicUrl = buildFileUrl(key)
+
+    console.log(`[ChatPresign] user=${req.user?.id} fileName=${fileName} key=${key}`)
+    return res.status(200).json({ success: true, presignedUrl, publicUrl, key, fileType: fileType || "application/octet-stream" })
+  } catch (error) {
+    console.error("presignChatMediaUpload error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. GLOBAL COMMUNITY CHAT
@@ -31,15 +99,20 @@ exports.sendGlobalMessage = async (req, res) => {
     const senderId = req.user.id
     const { content, attachments } = req.body
 
-    if (!content || !content.trim()) {
-      return res.status(400).json({ success: false, message: "Message content cannot be empty." })
+    let parsedAttachments = []
+    if (attachments) {
+      parsedAttachments = typeof attachments === "string" ? JSON.parse(attachments) : attachments
+    }
+
+    if ((!content || !content.trim()) && (!parsedAttachments || parsedAttachments.length === 0)) {
+      return res.status(400).json({ success: false, message: "Message cannot be empty." })
     }
 
     const message = await ChatMessage.create({
       sender: senderId,
       chatType: "global",
-      content: content.trim(),
-      attachments: attachments || [],
+      content: (content || "").trim(),
+      attachments: Array.isArray(parsedAttachments) ? parsedAttachments : [],
       readBy: [senderId],
     })
 
@@ -92,16 +165,21 @@ exports.sendPractitionerGroupMessage = async (req, res) => {
     const { practitionerId } = req.params
     const { content, attachments } = req.body
 
-    if (!content || !content.trim()) {
-      return res.status(400).json({ success: false, message: "Message content cannot be empty." })
+    let parsedAttachments = []
+    if (attachments) {
+      parsedAttachments = typeof attachments === "string" ? JSON.parse(attachments) : attachments
+    }
+
+    if ((!content || !content.trim()) && (!parsedAttachments || parsedAttachments.length === 0)) {
+      return res.status(400).json({ success: false, message: "Message cannot be empty." })
     }
 
     const message = await ChatMessage.create({
       sender: senderId,
       chatType: "practitioner_group",
       practitioner: practitionerId,
-      content: content.trim(),
-      attachments: attachments || [],
+      content: (content || "").trim(),
+      attachments: Array.isArray(parsedAttachments) ? parsedAttachments : [],
       readBy: [senderId],
     })
 
@@ -159,16 +237,21 @@ exports.sendDirectMessage = async (req, res) => {
     const { targetUserId } = req.params
     const { content, attachments } = req.body
 
-    if (!content || !content.trim()) {
-      return res.status(400).json({ success: false, message: "Message content cannot be empty." })
+    let parsedAttachments = []
+    if (attachments) {
+      parsedAttachments = typeof attachments === "string" ? JSON.parse(attachments) : attachments
+    }
+
+    if ((!content || !content.trim()) && (!parsedAttachments || parsedAttachments.length === 0)) {
+      return res.status(400).json({ success: false, message: "Message cannot be empty." })
     }
 
     const message = await ChatMessage.create({
       sender: currentUserId,
       recipient: targetUserId,
       chatType: "direct",
-      content: content.trim(),
-      attachments: attachments || [],
+      content: (content || "").trim(),
+      attachments: Array.isArray(parsedAttachments) ? parsedAttachments : [],
       readBy: [currentUserId],
     })
 

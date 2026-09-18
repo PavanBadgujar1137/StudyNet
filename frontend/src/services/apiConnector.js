@@ -27,9 +27,13 @@ export const apiConnector = (method, url, bodyData, headers, params, options = {
     ...options,
   }
 
-  // Let the browser set the multipart boundary for FormData uploads
+  // Let the browser set the multipart boundary for FormData uploads across all browsers/OS
   if (typeof FormData !== "undefined" && bodyData instanceof FormData) {
-    delete config.headers["Content-Type"]
+    Object.keys(config.headers).forEach((key) => {
+      if (key.toLowerCase() === "content-type") {
+        delete config.headers[key]
+      }
+    })
   }
 
   return axiosInstance(config)

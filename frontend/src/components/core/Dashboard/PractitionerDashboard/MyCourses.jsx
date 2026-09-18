@@ -4,10 +4,14 @@ import {
   FiBookOpen, FiPlus, FiVideo, FiUpload, FiTrash2,
   FiUsers, FiClock, FiX, FiEdit2, FiPlay, FiEdit3,
   FiChevronDown, FiChevronUp, FiGlobe, FiRefreshCw,
-  FiMove, FiArrowUp, FiArrowDown, FiAlertTriangle
+  FiMove, FiArrowUp, FiArrowDown, FiAlertTriangle,
+  FiPaperclip, FiDownload, FiFileText, FiCrop
 } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import { apiConnector } from '../../../../services/apiConnector'
+import { processImageForUpload, validateImageFile, formatFileSize } from '../../../../utils/imageProcessing'
+import { mediaUrl } from '../../../../utils/mediaUrl'
+import ImageCropperModal from '../../../Common/ImageCropperModal'
 
 function formatDuration(secs) {
   if (!secs || secs <= 0) return '0:00'
@@ -293,6 +297,39 @@ function VideoPreviewModal({ video, courseId, onClose, onUpdate }) {
         </div>
       </div>
 
+      {/* Attached Resources */}
+      {video?.attachments?.length > 0 && (
+        <div style={{ padding: '12px 28px', background: 'rgba(15, 23, 42, 0.95)', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 12, color: '#94A3B8', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <FiPaperclip size={14} color="#3B82F6" /> Attached Notes &amp; Resources ({video.attachments.length}):
+          </span>
+          {video.attachments.map((att, idx) => (
+            <a
+              key={idx}
+              href={mediaUrl(att.url)}
+              target="_blank"
+              rel="noopener noreferrer"
+              download
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '5px 12px',
+                borderRadius: 8,
+                background: 'rgba(59, 130, 246, 0.15)',
+                border: '1px solid rgba(59, 130, 246, 0.35)',
+                color: '#93C5FD',
+                fontSize: 12,
+                textDecoration: 'none',
+                fontWeight: 600,
+              }}
+            >
+              <FiDownload size={13} /> {att.name || 'Download Resource'} {att.size > 0 && `(${formatFileSize(att.size)})`}
+            </a>
+          ))}
+        </div>
+      )}
+
       {/* Footer */}
       <div style={{ padding: '16px 28px', borderTop: '1px solid rgba(255,255,255,0.1)', background: 'rgba(15, 23, 42, 0.95)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
         <div style={{ color: '#CBD5E1', fontSize: 13, maxWidth: '70%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -315,10 +352,13 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
   const [videoFile, setVideoFile] = useState(null)
   const [videoUrlInput, setVideoUrlInput] = useState('')
   const [customDuration, setCustomDuration] = useState('')
+  const [attachmentFiles, setAttachmentFiles] = useState([])
+  const [isDraggingAtt, setIsDraggingAtt] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
-  const [phase, setPhase] = useState('') // 'presigning' | 's3' | 'confirming' | ''
+  const [phase, setPhase] = useState('') // 'presigning' | 's3' | 'attachments' | 'confirming' | ''
   const videoInputRef = useRef()
+  const attInputRef = useRef()
   const xhrRef = useRef(null)
 
   const handleFileChange = async (e) => {
@@ -329,6 +369,17 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
       const dur = await getVideoDuration(file)
       if (dur > 0) setCustomDuration(String(dur))
     }
+  }
+
+  const handleAddAttachments = (files) => {
+    if (!files || files.length === 0) return
+    const newFiles = Array.from(files)
+    setAttachmentFiles(prev => [...prev, ...newFiles])
+    toast.success(`${newFiles.length} file(s) attached!`)
+  }
+
+  const handleRemoveAttachment = (idx) => {
+    setAttachmentFiles(prev => prev.filter((_, i) => i !== idx))
   }
 
   const handleCancel = () => {
@@ -347,18 +398,61 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
     setProgress(0)
 
     try {
+      // 1. Upload attached documents/notes to S3 in parallel
+      let uploadedAttachments = []
+      if (attachmentFiles.length > 0) {
+        setPhase('attachments')
+        setProgress(3)
+        for (let i = 0; i < attachmentFiles.length; i++) {
+          const attFile = attachmentFiles[i]
+          try {
+            const presignAttRes = await apiConnector(
+              'POST',
+              `/api/v1/courses/${courseId}/videos/presign-attachment`,
+              { fileName: attFile.name, contentType: attFile.type || 'application/octet-stream' },
+              { Authorization: `Bearer ${token}` }
+            )
+            if (presignAttRes?.data?.success) {
+              const { presignedUrl: attPresignedUrl, publicUrl: attPublicUrl, key: attKey } = presignAttRes.data
+              await new Promise((resolve, reject) => {
+                const x = new XMLHttpRequest()
+                x.onload = () => (x.status >= 200 && x.status < 300 ? resolve() : reject(new Error('Attachment S3 fail')))
+                x.onerror = () => reject(new Error('Attachment upload error'))
+                x.open('PUT', attPresignedUrl)
+                x.send(attFile)
+              })
+              uploadedAttachments.push({
+                name: attFile.name,
+                url: attPublicUrl,
+                s3Key: attKey,
+                fileType: attFile.type || 'file',
+                size: attFile.size || 0,
+              })
+            }
+          } catch (attErr) {
+            console.error('Attachment upload failed for:', attFile.name, attErr)
+          }
+        }
+      }
+
       if (!videoFile) {
         setPhase('confirming')
         setProgress(50)
         const res = await apiConnector(
           'POST',
           `/api/v1/courses/${courseId}/videos`,
-          { title: form.title, description: form.description, videoUrl: videoUrlInput.trim(), durationSeconds: Number(customDuration) || 0 },
+          {
+            title: form.title,
+            description: form.description,
+            videoUrl: videoUrlInput.trim(),
+            durationSeconds: Number(customDuration) || 0,
+            attachments: uploadedAttachments,
+          },
           { Authorization: `Bearer ${token}` }
         )
         setProgress(100)
         if (res?.data?.success) {
-          toast.success('Video link added successfully!')
+          toast.success('Video link and resources added successfully!')
           onSuccess()
         } else {
           toast.error(res?.data?.message || 'Failed to add video')
@@ -367,7 +461,7 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
       }
 
       setPhase('presigning')
-      setProgress(2)
+      setProgress(5)
       let finalDuration = Number(customDuration) || 0
       if (!finalDuration) finalDuration = await getVideoDuration(videoFile)
 
@@ -385,7 +479,7 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
       const { presignedUrl, publicUrl, key } = presignRes.data
 
       setPhase('s3')
-      setProgress(5)
+      setProgress(8)
 
       const uploadToS3 = () =>
         new Promise((resolve, reject) => {
@@ -394,7 +488,7 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
 
           xhr.upload.onprogress = (e) => {
             if (e.lengthComputable) {
-              const pct = Math.round(5 + (e.loaded / e.total) * 85)
+              const pct = Math.round(8 + (e.loaded / e.total) * 82)
               setProgress(pct)
             }
           }
@@ -425,6 +519,7 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
         fd.append('description', form.description.slice(0, 500))
         fd.append('durationSeconds', String(finalDuration))
         fd.append('video', videoFile)
+        fd.append('attachments', JSON.stringify(uploadedAttachments))
         const res = await apiConnector(
           'POST',
           `/api/v1/courses/${courseId}/videos`,
@@ -433,7 +528,7 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
           null,
           {
             onUploadProgress: (e) => {
-              if (e.total) setProgress(Math.round(5 + (e.loaded / e.total) * 90))
+              if (e.total) setProgress(Math.round(8 + (e.loaded / e.total) * 84))
             },
           }
         )
@@ -463,6 +558,7 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
             videoUrl: publicUrl,
             key,
             durationSeconds: finalDuration,
+            attachments: uploadedAttachments,
           },
           { Authorization: `Bearer ${token}` }
         )
@@ -472,7 +568,7 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
       }
 
       setProgress(100)
-      toast.success('Video uploaded successfully!')
+      toast.success('Video and attachments uploaded successfully!')
       onSuccess()
     } catch (e) {
       if (e.message !== 'Upload cancelled') {
@@ -486,15 +582,16 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
   }
 
   const phaseLabel = {
-    presigning: 'Preparing upload...',
-    s3: 'Uploading to cloud...',
-    confirming: 'Saving video record...',
+    attachments: 'Uploading attached documents...',
+    presigning: 'Preparing video upload...',
+    s3: 'Uploading video to cloud...',
+    confirming: 'Saving video & resources...',
   }[phase] || 'Uploading...'
 
   return (
     <div style={{ background: '#F8FAFC', border: '2px dashed #CBD5E1', borderRadius: 14, padding: 20, marginTop: 12 }}>
-      <h4 style={{ margin: '0 0 16px', color: '#1E293B', fontSize: 14, fontWeight: 700 }}>Add New Video</h4>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <h4 style={{ margin: '0 0 16px', color: '#1E293B', fontSize: 14, fontWeight: 700 }}>Add New Video Lecture</h4>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
             <label style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>Video Title *</label>
@@ -525,8 +622,9 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
 
         <div>
           <label style={{ display: 'block', fontSize: 12, color: '#64748B', marginBottom: 4, fontWeight: 600 }}>Video File</label>
-          <div onClick={() => videoInputRef.current?.click()}
-            style={{ border: '2px dashed #CBD5E1', borderRadius: 10, padding: '20px', textAlign: 'center', cursor: 'pointer', background: videoFile ? '#F0FDF4' : '#F8FAFC', transition: 'all 0.2s' }}
+          <label
+            htmlFor="course-video-file-input"
+            style={{ display: 'block', border: '2px dashed #CBD5E1', borderRadius: 10, padding: '20px', textAlign: 'center', cursor: 'pointer', background: videoFile ? '#F0FDF4' : '#F8FAFC', transition: 'all 0.2s' }}
             onMouseEnter={e => e.currentTarget.style.borderColor = '#3B82F6'}
             onMouseLeave={e => e.currentTarget.style.borderColor = '#CBD5E1'}
           >
@@ -539,15 +637,24 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
             ) : (
               <div>
                 <div style={{ color: '#64748B', fontSize: 14 }}>Click to select video file</div>
-                <div style={{ color: '#94A3B8', fontSize: 12 }}>MP4, MOV, AVI, MKV (max 20GB) — uploads directly to cloud</div>
+                <div style={{ color: '#94A3B8', fontSize: 12 }}>MP4, MOV, AVI, MKV (max 20GB) — macOS & iOS compatible</div>
               </div>
             )}
-          </div>
-          <input ref={videoInputRef} type="file" accept="video/*" style={{ display: 'none' }}
-            onChange={handleFileChange} />
+          </label>
+          <input
+            id="course-video-file-input"
+            ref={videoInputRef}
+            type="file"
+            accept="video/mp4,video/quicktime,video/x-m4v,video/*,.mp4,.mov,.mkv,.avi,.webm"
+            style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', border: 0 }}
+            onChange={(e) => {
+              handleFileChange(e)
+              e.target.value = ''
+            }}
+          />
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', margin: '4px 0' }}>
+        <div style={{ display: 'flex', alignItems: 'center', margin: '2px 0' }}>
           <div style={{ flex: 1, height: 1, background: '#E2E8F0' }} />
           <span style={{ margin: '0 10px', fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase' }}>OR</span>
           <div style={{ flex: 1, height: 1, background: '#E2E8F0' }} />
@@ -577,6 +684,99 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
             placeholder="e.g. 180 for 3 minutes (auto-detected from file)"
             style={{ width: '100%', padding: '10px 14px', border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 13, color: '#1E293B', outline: 'none', boxSizing: 'border-box' }}
           />
+        </div>
+
+        {/* ─── Lecture Notes & Documents Section (Optional) ─── */}
+        <div style={{ borderTop: '1px solid #E2E8F0', paddingTop: 14 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+            <label style={{ fontSize: 12, color: '#1E293B', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <FiPaperclip size={14} color="#3B82F6" /> Lecture Notes &amp; Documents (Optional)
+            </label>
+            <span style={{ fontSize: 11, color: '#64748B' }}>
+              PDF, Word, Excel, PPT, ZIP, Images
+            </span>
+          </div>
+
+          <label
+            htmlFor="course-video-attachments-input"
+            onDragOver={(e) => { e.preventDefault(); setIsDraggingAtt(true) }}
+            onDragLeave={() => setIsDraggingAtt(false)}
+            onDrop={(e) => {
+              e.preventDefault()
+              setIsDraggingAtt(false)
+              if (e.dataTransfer.files) handleAddAttachments(e.dataTransfer.files)
+            }}
+            style={{
+              display: 'block',
+              border: isDraggingAtt ? '2px dashed #3B82F6' : '1.5px dashed #CBD5E1',
+              borderRadius: 10,
+              padding: '16px',
+              textAlign: 'center',
+              cursor: 'pointer',
+              background: isDraggingAtt ? '#EFF6FF' : '#FFFFFF',
+              transition: 'all 0.2s',
+            }}
+          >
+            <FiUpload size={20} color={isDraggingAtt ? '#3B82F6' : '#94A3B8'} style={{ marginBottom: 4 }} />
+            <div style={{ color: '#334155', fontSize: 13, fontWeight: 600 }}>Click or drag to attach notes &amp; resources</div>
+            <div style={{ color: '#94A3B8', fontSize: 11, marginTop: 2 }}>Upload PDFs, worksheets, source files, or slides for this video</div>
+          </label>
+
+          <input
+            id="course-video-attachments-input"
+            ref={attInputRef}
+            type="file"
+            multiple
+            accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.7z,.txt,.csv,image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', border: 0 }}
+            onChange={(e) => {
+              handleAddAttachments(e.target.files)
+              e.target.value = ''
+            }}
+          />
+
+          {/* Attached Files List */}
+          {attachmentFiles.length > 0 && (
+            <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {attachmentFiles.map((f, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '8px 12px',
+                    background: '#FFFFFF',
+                    borderRadius: 8,
+                    border: '1px solid #E2E8F0',
+                    fontSize: 12,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '80%' }}>
+                    <FiFileText size={15} color="#3B82F6" />
+                    <span style={{ fontWeight: 600, color: '#1E293B' }}>{f.name}</span>
+                    <span style={{ color: '#94A3B8', fontSize: 11 }}>({formatFileSize(f.size)})</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveAttachment(idx)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#EF4444',
+                      cursor: 'pointer',
+                      padding: 4,
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}
+                    title="Remove file"
+                  >
+                    <FiX size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {uploading && (
@@ -617,7 +817,16 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
 
 // ─── Edit Course Modal ────────────────────────────────────────────────────────
 function EditCourseModal({ course, onClose, onSuccess }) {
-  const { token } = useSelector(s => s.auth)
+  const { token: reduxToken } = useSelector((s) => s.auth)
+  const token = reduxToken || (() => {
+    try {
+      const stored = localStorage.getItem('token')
+      return stored ? (typeof stored === 'string' && (stored.startsWith('{') || stored.startsWith('"')) ? JSON.parse(stored) : stored) : null
+    } catch {
+      return localStorage.getItem('token')
+    }
+  })()
+
   const [form, setForm] = useState({
     title: course.title || '',
     description: course.description || '',
@@ -627,11 +836,44 @@ function EditCourseModal({ course, onClose, onSuccess }) {
     status: course.status || 'draft',
   })
   const [thumbnail, setThumbnail] = useState(null)
+  const [thumbnailPreview, setThumbnailPreview] = useState(null)
+  const [isDraggingThumb, setIsDraggingThumb] = useState(false)
   const [updating, setUpdating] = useState(false)
+  const [cropperOpen, setCropperOpen] = useState(false)
+  const [cropSrc, setCropSrc] = useState(null)
+  const [cropRawFile, setCropRawFile] = useState(null)
   const thumbRef = useRef()
+
+  const handleThumbnailChange = async (file) => {
+    if (!file) return
+    const validation = validateImageFile(file)
+    if (!validation.valid) {
+      return toast.error(validation.error)
+    }
+    try {
+      const processed = await processImageForUpload(file)
+      const src = URL.createObjectURL(processed)
+      setCropRawFile(processed)
+      setCropSrc(src)
+      setCropperOpen(true)
+    } catch (err) {
+      console.error('Thumbnail processing error:', err)
+      const src = URL.createObjectURL(file)
+      setCropRawFile(file)
+      setCropSrc(src)
+      setCropperOpen(true)
+    }
+  }
+
+  const handleCropComplete = (croppedFile, croppedPreviewUrl) => {
+    setThumbnail(croppedFile)
+    setThumbnailPreview(croppedPreviewUrl)
+    toast.success('Thumbnail framed & cropped!')
+  }
 
   const handleUpdate = async () => {
     if (!form.title.trim()) return toast.error('Course title is required')
+    if (!token) return toast.error('You must be logged in to update a course')
     setUpdating(true)
 
     try {
@@ -644,9 +886,10 @@ function EditCourseModal({ course, onClose, onSuccess }) {
       fd.append('tags', JSON.stringify(form.tags.split(',').map(t => t.trim()).filter(Boolean)))
       if (thumbnail) fd.append('thumbnail', thumbnail)
 
+      const cleanToken = String(token).replace(/^Bearer\s+/i, '').replace(/^"|"$/g, '').trim()
+
       const res = await apiConnector('PUT', `/api/v1/courses/${course._id}`, fd, {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${cleanToken}`,
       })
 
       if (res?.data?.success) {
@@ -825,11 +1068,199 @@ function EditCourseModal({ course, onClose, onSuccess }) {
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: 12, color: '#64748B', marginBottom: 4, fontWeight: 600 }}>New Thumbnail (optional)</label>
-            <div onClick={() => thumbRef.current?.click()} style={{ border: '2px dashed #CBD5E1', borderRadius: 10, padding: '16px', textAlign: 'center', cursor: 'pointer', background: '#F8FAFC' }}>
-              {thumbnail ? <div style={{ color: '#10B981', fontWeight: 600 }}>{thumbnail.name} ✓</div> : <div style={{ color: '#94A3B8', fontSize: 13 }}>Click to upload new thumbnail</div>}
-            </div>
-            <input ref={thumbRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => setThumbnail(e.target.files[0])} />
+            <label style={{ display: 'block', fontSize: 12, color: '#64748B', marginBottom: 6, fontWeight: 600 }}>New Thumbnail (optional)</label>
+            
+            {thumbnailPreview || course.thumbnail ? (
+              <div style={{
+                borderRadius: 14,
+                overflow: 'hidden',
+                border: '1.5px solid #E2E8F0',
+                background: '#FFFFFF',
+                boxShadow: '0 4px 16px -2px rgba(15, 23, 42, 0.06)',
+              }}>
+                {/* 16:9 Image Preview Frame */}
+                <div style={{
+                  position: 'relative',
+                  width: '100%',
+                  height: 190,
+                  background: '#0F172A',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <img
+                    src={thumbnailPreview || (course.thumbnail ? mediaUrl(course.thumbnail) : '')}
+                    alt="Course thumbnail preview"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  />
+                  <div style={{
+                    position: 'absolute',
+                    top: 10,
+                    left: 10,
+                    background: 'rgba(15, 23, 42, 0.75)',
+                    backdropFilter: 'blur(6px)',
+                    color: '#93C5FD',
+                    padding: '4px 10px',
+                    borderRadius: 20,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    border: '1px solid rgba(255,255,255,0.15)',
+                  }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#3B82F6', display: 'inline-block' }} />
+                    16:9 Thumbnail
+                  </div>
+                </div>
+
+                {/* Dedicated Control & Info Bar */}
+                <div style={{
+                  padding: '12px 14px',
+                  background: '#F8FAFC',
+                  borderTop: '1px solid #E2E8F0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 12,
+                  flexWrap: 'wrap',
+                }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{
+                      color: '#0F172A',
+                      fontSize: 13,
+                      fontWeight: 600,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {thumbnail ? thumbnail.name : 'Current Course Thumbnail'}
+                    </div>
+                    <div style={{ color: '#64748B', fontSize: 11, marginTop: 2 }}>
+                      {thumbnail ? `${formatFileSize(thumbnail.size)} • Ready to upload` : 'Currently active image'}
+                    </div>
+                  </div>
+
+                  {/* Actions Group */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const targetSrc = thumbnailPreview || (course.thumbnail ? mediaUrl(course.thumbnail) : null)
+                        if (targetSrc) {
+                          setCropSrc(targetSrc)
+                          setCropRawFile(thumbnail || null)
+                          setCropperOpen(true)
+                        } else {
+                          thumbRef.current?.click()
+                        }
+                      }}
+                      title="Crop & Frame Thumbnail"
+                      style={{
+                        background: '#0F172A',
+                        color: '#FFFFFF',
+                        padding: '7px 12px',
+                        borderRadius: 8,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 5,
+                        border: 'none',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                      }}
+                    >
+                      <FiCrop size={13} /> Crop / Frame
+                    </button>
+
+                    <label
+                      htmlFor="edit-course-thumb-input"
+                      title="Change image"
+                      style={{
+                        background: '#2563EB',
+                        color: '#FFFFFF',
+                        padding: '7px 12px',
+                        borderRadius: 8,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 5,
+                        boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)',
+                      }}
+                    >
+                      <FiEdit2 size={13} /> Change
+                    </label>
+
+                    {thumbnail && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setThumbnail(null)
+                          setThumbnailPreview(null)
+                        }}
+                        title="Remove selected thumbnail"
+                        style={{
+                          background: '#FEE2E2',
+                          color: '#DC2626',
+                          border: '1px solid #FECACA',
+                          padding: '7px 10px',
+                          borderRadius: 8,
+                          fontSize: 12,
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4,
+                        }}
+                      >
+                        <FiTrash2 size={13} /> Remove
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <label
+                htmlFor="edit-course-thumb-input"
+                onDragOver={(e) => { e.preventDefault(); setIsDraggingThumb(true); }}
+                onDragLeave={() => setIsDraggingThumb(false)}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  setIsDraggingThumb(false)
+                  if (e.dataTransfer.files?.[0]) handleThumbnailChange(e.dataTransfer.files[0])
+                }}
+                style={{
+                  display: 'block',
+                  border: isDraggingThumb ? '2px dashed #3B82F6' : '2px dashed #CBD5E1',
+                  borderRadius: 12,
+                  padding: '24px 16px',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  background: isDraggingThumb ? '#EFF6FF' : '#F8FAFC',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <FiUpload size={24} color={isDraggingThumb ? '#3B82F6' : '#94A3B8'} style={{ marginBottom: 6 }} />
+                <div style={{ color: '#1E293B', fontSize: 13, fontWeight: 600 }}>Click or drag to upload new thumbnail</div>
+                <div style={{ color: '#94A3B8', fontSize: 11, marginTop: 4 }}>PNG, JPG, WebP, GIF, HEIC (macOS & iOS supported)</div>
+              </label>
+            )}
+
+            <input
+              id="edit-course-thumb-input"
+              ref={thumbRef}
+              type="file"
+              accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,image/heic,image/heif,.png,.jpg,.jpeg,.webp,.gif,.heic,.heif,image/*"
+              style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', border: 0 }}
+              onChange={(e) => {
+                if (e.target.files?.[0]) handleThumbnailChange(e.target.files[0])
+                e.target.value = ''
+              }}
+            />
           </div>
         </div>
 
@@ -875,6 +1306,18 @@ function EditCourseModal({ course, onClose, onSuccess }) {
           </button>
         </div>
       </div>
+
+      {/* Image Cropper Modal */}
+      {cropperOpen && (
+        <ImageCropperModal
+          isOpen={cropperOpen}
+          imageSrc={cropSrc}
+          originalFile={cropRawFile}
+          onCropComplete={handleCropComplete}
+          onClose={() => setCropperOpen(false)}
+          defaultAspect="16/9"
+        />
+      )}
     </div>
   )
 }
@@ -1441,14 +1884,56 @@ function CourseCard({ course, onUpdate, onEdit }) {
 
 // ─── Create Course Modal ──────────────────────────────────────────────────────
 function CreateCourseModal({ onClose, onSuccess }) {
-  const { token } = useSelector(s => s.auth)
+  const { token: reduxToken } = useSelector((s) => s.auth)
+  const token = reduxToken || (() => {
+    try {
+      const stored = localStorage.getItem('token')
+      return stored ? (typeof stored === 'string' && (stored.startsWith('{') || stored.startsWith('"')) ? JSON.parse(stored) : stored) : null
+    } catch {
+      return localStorage.getItem('token')
+    }
+  })()
+
   const [form, setForm] = useState({ title: '', description: '', price: 0, isFree: true, tags: '' })
   const [thumbnail, setThumbnail] = useState(null)
+  const [thumbnailPreview, setThumbnailPreview] = useState(null)
+  const [isDraggingThumb, setIsDraggingThumb] = useState(false)
   const [creating, setCreating] = useState(false)
+  const [cropperOpen, setCropperOpen] = useState(false)
+  const [cropSrc, setCropSrc] = useState(null)
+  const [cropRawFile, setCropRawFile] = useState(null)
   const thumbRef = useRef()
+
+  const handleThumbnailChange = async (file) => {
+    if (!file) return
+    const validation = validateImageFile(file)
+    if (!validation.valid) {
+      return toast.error(validation.error)
+    }
+    try {
+      const processed = await processImageForUpload(file)
+      const src = URL.createObjectURL(processed)
+      setCropRawFile(processed)
+      setCropSrc(src)
+      setCropperOpen(true)
+    } catch (err) {
+      console.error('Thumbnail processing error:', err)
+      const src = URL.createObjectURL(file)
+      setCropRawFile(file)
+      setCropSrc(src)
+      setCropperOpen(true)
+    }
+  }
+
+  const handleCropComplete = (croppedFile, croppedPreviewUrl) => {
+    setThumbnail(croppedFile)
+    setThumbnailPreview(croppedPreviewUrl)
+    toast.success('Thumbnail framed & cropped!')
+  }
 
   const handleCreate = async () => {
     if (!form.title.trim()) return toast.error('Course title is required')
+    if (!token) return toast.error('You must be logged in to create a course')
     setCreating(true)
 
     try {
@@ -1460,9 +1945,10 @@ function CreateCourseModal({ onClose, onSuccess }) {
       fd.append('tags', JSON.stringify(form.tags.split(',').map(t => t.trim()).filter(Boolean)))
       if (thumbnail) fd.append('thumbnail', thumbnail)
 
+      const cleanToken = String(token).replace(/^Bearer\s+/i, '').replace(/^"|"$/g, '').trim()
+
       const res = await apiConnector('POST', '/api/v1/courses', fd, {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${cleanToken}`,
       })
 
       if (res?.data?.success) {
@@ -1472,7 +1958,8 @@ function CreateCourseModal({ onClose, onSuccess }) {
         toast.error(res?.data?.message || 'Create failed')
       }
     } catch (e) {
-      toast.error('Could not create course: ' + (e.message || 'Unknown error'))
+      const errMsg = e.response?.data?.message || e.message || 'Unknown error'
+      toast.error('Could not create course: ' + errMsg)
     } finally {
       setCreating(false)
     }
@@ -1595,11 +2082,196 @@ function CreateCourseModal({ onClose, onSuccess }) {
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: 12, color: '#64748B', marginBottom: 4, fontWeight: 600 }}>Thumbnail Image (optional)</label>
-            <div onClick={() => thumbRef.current?.click()} style={{ border: '2px dashed #CBD5E1', borderRadius: 10, padding: '16px', textAlign: 'center', cursor: 'pointer', background: '#F8FAFC' }}>
-              {thumbnail ? <div style={{ color: '#10B981', fontWeight: 600 }}>{thumbnail.name} ✓</div> : <div style={{ color: '#94A3B8', fontSize: 13 }}><FiUpload style={{ marginBottom: 4 }} /><br />Click to upload thumbnail</div>}
-            </div>
-            <input ref={thumbRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => setThumbnail(e.target.files[0])} />
+            <label style={{ display: 'block', fontSize: 12, color: '#64748B', marginBottom: 6, fontWeight: 600 }}>Thumbnail Image (optional)</label>
+
+            {thumbnailPreview ? (
+              <div style={{
+                borderRadius: 14,
+                overflow: 'hidden',
+                border: '1.5px solid #E2E8F0',
+                background: '#FFFFFF',
+                boxShadow: '0 4px 16px -2px rgba(15, 23, 42, 0.06)',
+              }}>
+                {/* 16:9 Image Preview Frame */}
+                <div style={{
+                  position: 'relative',
+                  width: '100%',
+                  height: 190,
+                  background: '#0F172A',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <img
+                    src={thumbnailPreview}
+                    alt="Course thumbnail preview"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  />
+                  <div style={{
+                    position: 'absolute',
+                    top: 10,
+                    left: 10,
+                    background: 'rgba(15, 23, 42, 0.75)',
+                    backdropFilter: 'blur(6px)',
+                    color: '#93C5FD',
+                    padding: '4px 10px',
+                    borderRadius: 20,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    border: '1px solid rgba(255,255,255,0.15)',
+                  }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#3B82F6', display: 'inline-block' }} />
+                    16:9 Thumbnail
+                  </div>
+                </div>
+
+                {/* Dedicated Control & Info Bar */}
+                <div style={{
+                  padding: '12px 14px',
+                  background: '#F8FAFC',
+                  borderTop: '1px solid #E2E8F0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 12,
+                  flexWrap: 'wrap',
+                }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{
+                      color: '#0F172A',
+                      fontSize: 13,
+                      fontWeight: 600,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {thumbnail?.name || 'Selected Thumbnail'}
+                    </div>
+                    <div style={{ color: '#64748B', fontSize: 11, marginTop: 2 }}>
+                      {thumbnail?.size ? `${formatFileSize(thumbnail.size)} • Ready to upload` : 'Ready to upload'}
+                    </div>
+                  </div>
+
+                  {/* Actions Group */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (thumbnailPreview) {
+                          setCropSrc(thumbnailPreview)
+                          setCropRawFile(thumbnail || null)
+                          setCropperOpen(true)
+                        } else {
+                          thumbRef.current?.click()
+                        }
+                      }}
+                      title="Crop & Frame Thumbnail"
+                      style={{
+                        background: '#0F172A',
+                        color: '#FFFFFF',
+                        padding: '7px 12px',
+                        borderRadius: 8,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 5,
+                        border: 'none',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                      }}
+                    >
+                      <FiCrop size={13} /> Crop / Frame
+                    </button>
+
+                    <label
+                      htmlFor="create-course-thumb-input"
+                      title="Change image"
+                      style={{
+                        background: '#2563EB',
+                        color: '#FFFFFF',
+                        padding: '7px 12px',
+                        borderRadius: 8,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 5,
+                        boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)',
+                      }}
+                    >
+                      <FiEdit2 size={13} /> Change
+                    </label>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setThumbnail(null)
+                        setThumbnailPreview(null)
+                      }}
+                      title="Remove thumbnail"
+                      style={{
+                        background: '#FEE2E2',
+                        color: '#DC2626',
+                        border: '1px solid #FECACA',
+                        padding: '7px 10px',
+                        borderRadius: 8,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4,
+                      }}
+                    >
+                      <FiTrash2 size={13} /> Remove
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <label
+                htmlFor="create-course-thumb-input"
+                onDragOver={(e) => { e.preventDefault(); setIsDraggingThumb(true); }}
+                onDragLeave={() => setIsDraggingThumb(false)}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  setIsDraggingThumb(false)
+                  if (e.dataTransfer.files?.[0]) handleThumbnailChange(e.dataTransfer.files[0])
+                }}
+                style={{
+                  display: 'block',
+                  border: isDraggingThumb ? '2px dashed #3B82F6' : '2px dashed #CBD5E1',
+                  borderRadius: 12,
+                  padding: '24px 16px',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  background: isDraggingThumb ? '#EFF6FF' : '#F8FAFC',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <FiUpload size={24} color={isDraggingThumb ? '#3B82F6' : '#94A3B8'} style={{ marginBottom: 6 }} />
+                <div style={{ color: '#1E293B', fontSize: 13, fontWeight: 600 }}>Click or drag to upload thumbnail</div>
+                <div style={{ color: '#94A3B8', fontSize: 11, marginTop: 4 }}>PNG, JPG, WebP, GIF, HEIC (macOS & iOS supported)</div>
+              </label>
+            )}
+
+            <input
+              id="create-course-thumb-input"
+              ref={thumbRef}
+              type="file"
+              accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,image/heic,image/heif,.png,.jpg,.jpeg,.webp,.gif,.heic,.heif,image/*"
+              style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', border: 0 }}
+              onChange={(e) => {
+                if (e.target.files?.[0]) handleThumbnailChange(e.target.files[0])
+                e.target.value = ''
+              }}
+            />
           </div>
         </div>
 
@@ -1645,6 +2317,18 @@ function CreateCourseModal({ onClose, onSuccess }) {
           </button>
         </div>
       </div>
+
+      {/* Image Cropper Modal */}
+      {cropperOpen && (
+        <ImageCropperModal
+          isOpen={cropperOpen}
+          imageSrc={cropSrc}
+          originalFile={cropRawFile}
+          onCropComplete={handleCropComplete}
+          onClose={() => setCropperOpen(false)}
+          defaultAspect="16/9"
+        />
+      )}
     </div>
   )
 }

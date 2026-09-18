@@ -17,6 +17,19 @@ const courseVideoSchema = new mongoose.Schema(
       required: true,
     },
 
+    // Attached Lecture Notes & Documents (PDF, Doc, Sheet, Zip, Images, etc.)
+    attachments: [
+      {
+        name: { type: String, required: true },
+        url: { type: String, required: true },
+        s3Key: { type: String, default: "" },
+        fileType: { type: String, default: "file" }, // "pdf", "doc", "sheet", "image", "archive", "file"
+        mimetype: { type: String, default: "" },
+        size: { type: Number, default: 0 },
+        uploadedAt: { type: Date, default: Date.now },
+      },
+    ],
+
     // Analytics
     views: { type: Number, default: 0 },
   },

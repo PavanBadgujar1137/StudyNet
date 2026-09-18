@@ -26,12 +26,18 @@ const chatMessageSchema = new mongoose.Schema(
     },
     content: {
       type: String,
-      required: true,
+      default: "",
       trim: true,
     },
     attachments: [
       {
-        type: String,
+        name: { type: String, default: "" },
+        url: { type: String, required: true },
+        s3Key: { type: String, default: "" },
+        fileType: { type: String, default: "file" }, // "image", "video", "audio", "pdf", "file"
+        mimetype: { type: String, default: "" },
+        size: { type: Number, default: 0 }, // in bytes, up to 3GB
+        uploadedAt: { type: Date, default: Date.now },
       },
     ],
     readBy: [

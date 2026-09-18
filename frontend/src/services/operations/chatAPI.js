@@ -10,6 +10,7 @@ const {
   GET_DIRECT_CHAT_API,
   SEND_DIRECT_CHAT_API,
   GET_CHAT_CONTACTS_API,
+  PRESIGN_CHAT_MEDIA_API,
 } = chatEndpoints
 
 export const fetchGlobalMessages = async (token) => {
@@ -27,12 +28,12 @@ export const fetchGlobalMessages = async (token) => {
   }
 }
 
-export const sendGlobalMessage = async (token, content) => {
+export const sendGlobalMessage = async (token, content, attachments = []) => {
   try {
     const response = await apiConnector(
       "POST",
       SEND_GLOBAL_CHAT_API,
-      { content },
+      { content, attachments },
       { Authorization: `Bearer ${token}` }
     )
     if (!response?.data?.success) {
@@ -65,12 +66,12 @@ export const fetchGroupMessages = async (token, practitionerId) => {
   }
 }
 
-export const sendGroupMessage = async (token, practitionerId, content) => {
+export const sendGroupMessage = async (token, practitionerId, content, attachments = []) => {
   try {
     const response = await apiConnector(
       "POST",
       `${SEND_GROUP_CHAT_API}/${practitionerId}`,
-      { content },
+      { content, attachments },
       { Authorization: `Bearer ${token}` }
     )
     if (!response?.data?.success) {
@@ -103,12 +104,12 @@ export const fetchDirectMessages = async (token, targetUserId) => {
   }
 }
 
-export const sendDirectMessage = async (token, targetUserId, content) => {
+export const sendDirectMessage = async (token, targetUserId, content, attachments = []) => {
   try {
     const response = await apiConnector(
       "POST",
       `${SEND_DIRECT_CHAT_API}/${targetUserId}`,
-      { content },
+      { content, attachments },
       { Authorization: `Bearer ${token}` }
     )
     if (!response?.data?.success) {
@@ -136,3 +137,23 @@ export const fetchChatContacts = async (token) => {
     return []
   }
 }
+
+export const presignChatMedia = async (token, data) => {
+  try {
+    const response = await apiConnector(
+      "POST",
+      PRESIGN_CHAT_MEDIA_API,
+      data,
+      { Authorization: `Bearer ${token}` }
+    )
+    if (!response?.data?.success) {
+      throw new Error(response?.data?.message || "Failed to prepare media upload")
+    }
+    return response?.data?.data
+  } catch (error) {
+    console.error("presignChatMedia error:", error)
+    toast.error(error.message || "Failed to initialize media upload")
+    return null
+  }
+}
+

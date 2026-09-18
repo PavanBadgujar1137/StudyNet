@@ -25,7 +25,7 @@ root.render(
         <Toaster
           position="top-center"
           gutter={8}
-          containerStyle={{ top: 20 }}
+          containerStyle={{ top: 20, zIndex: 999999999 }}
           toastOptions={{
             duration: 4000,
             style: {
@@ -35,6 +35,7 @@ root.render(
               fontSize: '13px',
               border: '1px solid #334155',
               boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
+              zIndex: 999999999,
             },
             success: {
               duration: 3500,
