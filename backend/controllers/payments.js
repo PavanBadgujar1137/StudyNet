@@ -538,16 +538,15 @@ exports.sendPaymentSuccessEmail = async (req, res) => {
 // ─── 9. BUY PAID COURSE (Learner purchases paid course created by practitioner) ─
 exports.createCourseOrder = async (req, res) => {
   try {
-    const { courseId } = req.body
+    const { courseId, couponCodes = [] } = req.body
     const userId = req.user.id
 
     const Course = require("../models/Course")
+    const { evaluateDiscounts } = require("./coupon")
+
     const course = await Course.findById(courseId).populate("practitioner", "firstName lastName email")
     if (!course) {
       return res.status(404).json({ success: false, message: "Course not found" })
-    }
-    if (course.isFree || course.price <= 0) {
-      return res.status(400).json({ success: false, message: "This course is free. No payment required." })
     }
 
     const isAlreadyEnrolled = (course.enrolledClients || []).map(String).includes(String(userId))
@@ -555,15 +554,38 @@ exports.createCourseOrder = async (req, res) => {
       return res.status(400).json({ success: false, message: "You have already purchased this course." })
     }
 
+    // Evaluate discounts
+    const discountRes = await evaluateDiscounts({
+      userId,
+      productType: "course",
+      productId: courseId,
+      couponCodes,
+    })
+
+    const finalPayable = discountRes.finalPrice
+
+    if (finalPayable === 0 || discountRes.isFree) {
+      return res.status(200).json({
+        success: true,
+        isFree: true,
+        amount: 0,
+        originalPrice: discountRes.originalPrice,
+        finalPrice: 0,
+        appliedCoupons: discountRes.appliedCoupons,
+        message: "Course is 100% discounted / Free. Direct unlock available.",
+      })
+    }
+
     const { key_id } = getRazorpayKeys()
     const options = {
-      amount: Math.round(course.price * 100),
+      amount: Math.round(finalPayable * 100),
       currency: "INR",
       receipt: `crs_${courseId.toString().slice(-6)}_${Date.now()}`,
       notes: {
         courseId: courseId.toString(),
         clientId: userId.toString(),
         practitionerId: course.practitioner?._id?.toString() || "",
+        appliedCoupons: JSON.stringify(discountRes.appliedCoupons.map((c) => ({ code: c.code, type: c.type, id: c.id }))),
       },
     }
 
@@ -573,7 +595,10 @@ exports.createCourseOrder = async (req, res) => {
       success: true,
       order,
       key: key_id,
-      amount: course.price,
+      amount: finalPayable,
+      originalPrice: discountRes.originalPrice,
+      totalDiscountAmount: discountRes.totalDiscountAmount,
+      appliedCoupons: discountRes.appliedCoupons,
       courseTitle: course.title,
       practitionerName: course.practitioner ? `${course.practitioner.firstName} ${course.practitioner.lastName}` : "Practitioner",
     })
@@ -585,10 +610,12 @@ exports.createCourseOrder = async (req, res) => {
 
 exports.verifyCourseOrder = async (req, res) => {
   try {
-    const { courseId, razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body
+    const { courseId, razorpay_order_id, razorpay_payment_id, razorpay_signature, couponCodes = [] } = req.body
     const userId = req.user.id
 
     const Course = require("../models/Course")
+    const { evaluateDiscounts, recordDiscountUsage } = require("./coupon")
+
     const course = await Course.findById(courseId).populate("practitioner", "firstName lastName email")
     if (!course) {
       return res.status(404).json({ success: false, message: "Course not found" })
@@ -608,10 +635,35 @@ exports.verifyCourseOrder = async (req, res) => {
       await course.save()
     }
 
+    // Evaluate discounts for audit log
+    const discountRes = await evaluateDiscounts({
+      userId,
+      productType: "course",
+      productId: courseId,
+      couponCodes,
+    })
+
+    const finalAmount = discountRes.finalPrice
     const practitionerId = course.practitioner?._id || course.practitioner
-    const practitionerPortion = Math.round(course.price * 0.8) // 80% to practitioner
+    const practitionerPortion = Math.round(finalAmount * 0.8) // 80% to practitioner
 
     const clientUser = await User.findById(userId).select("firstName lastName email")
+
+    // Record Coupon Usage
+    if (discountRes.appliedCoupons?.length > 0) {
+      await recordDiscountUsage({
+        userId,
+        practitionerId,
+        productType: "course",
+        courseId: course._id,
+        originalPrice: discountRes.originalPrice,
+        discountAmount: discountRes.totalDiscountAmount,
+        finalPrice: finalAmount,
+        appliedCoupons: discountRes.appliedCoupons,
+        orderId: razorpay_order_id,
+        paymentId: razorpay_payment_id,
+      })
+    }
 
     // Log in Admin Payment Ledger
     await AdminPaymentLog.create({
@@ -620,10 +672,10 @@ exports.verifyCourseOrder = async (req, res) => {
       clientName: clientUser ? `${clientUser.firstName} ${clientUser.lastName}` : "Learner",
       practitioner: practitionerId,
       practitionerName: course.practitioner ? `${course.practitioner.firstName} ${course.practitioner.lastName}` : "Practitioner",
-      description: `Paid Course Purchase: ${course.title}`,
+      description: `Paid Course Purchase: ${course.title} (Discounted: ₹${finalAmount})`,
       offerTitle: course.title,
       offerType: "course",
-      amount: course.price,
+      amount: finalAmount,
       amountOwedToPractitioner: practitionerPortion,
       paymentGateway: "razorpay",
       razorpayOrderId: razorpay_order_id,
@@ -639,6 +691,180 @@ exports.verifyCourseOrder = async (req, res) => {
     })
   } catch (error) {
     console.error("verifyCourseOrder error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// ─── 10. ENROLL IN 100% DISCOUNTED / FREE COURSE (Zero-Rupee Bypass) ───────────
+exports.enrollFreeDiscountCourse = async (req, res) => {
+  try {
+    const { courseId, couponCodes = [] } = req.body
+    const userId = req.user.id
+
+    const Course = require("../models/Course")
+    const { evaluateDiscounts, recordDiscountUsage } = require("./coupon")
+
+    const course = await Course.findById(courseId).populate("practitioner", "firstName lastName email")
+    if (!course) {
+      return res.status(404).json({ success: false, message: "Course not found" })
+    }
+
+    // Verify discount eligibility
+    const discountRes = await evaluateDiscounts({
+      userId,
+      productType: "course",
+      productId: courseId,
+      couponCodes,
+    })
+
+    if (discountRes.finalPrice > 0 && !discountRes.isFree) {
+      return res.status(400).json({
+        success: false,
+        message: `This course requires a payment of ₹${discountRes.finalPrice}. Please complete payment checkout.`,
+      })
+    }
+
+    // Enroll user into course
+    if (!course.enrolledClients.map(String).includes(String(userId))) {
+      course.enrolledClients.push(userId)
+      await course.save()
+    }
+
+    const practitionerId = course.practitioner?._id || course.practitioner
+    const clientUser = await User.findById(userId).select("firstName lastName email")
+    const fakePaymentId = `free_disc_${Date.now()}`
+
+    // Record Coupon Usage
+    if (discountRes.appliedCoupons?.length > 0) {
+      await recordDiscountUsage({
+        userId,
+        practitionerId,
+        productType: "course",
+        courseId: course._id,
+        originalPrice: discountRes.originalPrice,
+        discountAmount: discountRes.totalDiscountAmount,
+        finalPrice: 0,
+        appliedCoupons: discountRes.appliedCoupons,
+        orderId: `free_ord_${Date.now()}`,
+        paymentId: fakePaymentId,
+      })
+    }
+
+    // Log in Admin Payment Ledger
+    await AdminPaymentLog.create({
+      paymentType: "paid_course",
+      client: userId,
+      clientName: clientUser ? `${clientUser.firstName} ${clientUser.lastName}` : "Learner",
+      practitioner: practitionerId,
+      practitionerName: course.practitioner ? `${course.practitioner.firstName} ${course.practitioner.lastName}` : "Practitioner",
+      description: `Course Unlocked (100% Discount/Personal Grant): ${course.title}`,
+      offerTitle: course.title,
+      offerType: "course",
+      amount: 0,
+      amountOwedToPractitioner: 0,
+      paymentGateway: "discount_grant",
+      razorpayOrderId: null,
+      razorpayPaymentId: fakePaymentId,
+      courseId: course._id,
+      status: "received",
+    })
+
+    return res.status(200).json({
+      success: true,
+      message: `🎉 Course unlocked for free! You now have full access to ${course.title}.`,
+      course,
+    })
+  } catch (error) {
+    console.error("enrollFreeDiscountCourse error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// ─── 11. CONFIRM FREE DISCOUNT SESSION BOOKING (Zero-Rupee Bypass) ─────────────
+exports.confirmFreeDiscountBooking = async (req, res) => {
+  try {
+    const { offerId, scheduledAt, couponCodes = [] } = req.body
+    const userId = req.user.id
+
+    const { evaluateDiscounts, recordDiscountUsage } = require("./coupon")
+
+    const offer = await Offer.findById(offerId).populate("practitioner", "firstName lastName email")
+    if (!offer) {
+      return res.status(404).json({ success: false, message: "Offer not found" })
+    }
+
+    const discountRes = await evaluateDiscounts({
+      userId,
+      productType: "session",
+      productId: offerId,
+      couponCodes,
+    })
+
+    if (discountRes.finalPrice > 0 && !discountRes.isFree) {
+      return res.status(400).json({
+        success: false,
+        message: `This session requires a payment of ₹${discountRes.finalPrice}. Please complete payment checkout.`,
+      })
+    }
+
+    const practitionerId = offer.practitioner?._id || offer.practitioner
+    const fakePaymentId = `free_sess_${Date.now()}`
+
+    const booking = await Booking.create({
+      client: userId,
+      practitioner: practitionerId,
+      offer: offer._id,
+      offerType: offer.type,
+      amount: 0,
+      commission: 0,
+      netPayout: 0,
+      paymentGateway: "discount_grant",
+      razorpayPaymentId: fakePaymentId,
+      status: "confirmed",
+      settlementStatus: "settled",
+      scheduledAt: scheduledAt ? new Date(scheduledAt) : new Date(Date.now() + 86400000),
+    })
+
+    if (discountRes.appliedCoupons?.length > 0) {
+      await recordDiscountUsage({
+        userId,
+        practitionerId,
+        productType: "session",
+        offerId: offer._id,
+        originalPrice: discountRes.originalPrice,
+        discountAmount: discountRes.totalDiscountAmount,
+        finalPrice: 0,
+        appliedCoupons: discountRes.appliedCoupons,
+        orderId: `free_sess_ord_${Date.now()}`,
+        paymentId: fakePaymentId,
+      })
+    }
+
+    const [clientUser, practitionerUser] = await Promise.all([
+      User.findById(userId).select("firstName lastName email"),
+      User.findById(practitionerId).select("firstName lastName email"),
+    ])
+
+    await _createInvoiceAndAdminLog({
+      booking,
+      clientId: userId,
+      practitionerId,
+      practitionerUser,
+      offer,
+      grossAmount: 0,
+      practitionerPortion: 0,
+      gateway: "discount_grant",
+      paymentId: fakePaymentId,
+      orderId: null,
+    })
+
+    return res.status(200).json({
+      success: true,
+      message: `🎉 Free Session confirmed! Your ${offer.title} is booked.`,
+      booking,
+    })
+  } catch (error) {
+    console.error("confirmFreeDiscountBooking error:", error)
     return res.status(500).json({ success: false, message: error.message })
   }
 }

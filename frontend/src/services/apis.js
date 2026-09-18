@@ -88,10 +88,42 @@ export const adminEndpoints = {
   DELETE_USER_ADMIN_API: BASE_URL + "/admin/users",
 }
 
+// COUPON & DISCOUNT ENDPOINTS
+export const couponEndpoints = {
+  // Admin
+  ADMIN_CREATE_COUPON_API: BASE_URL + "/coupons/admin/create",
+  ADMIN_GET_ALL_COUPONS_API: BASE_URL + "/coupons/admin/all",
+  ADMIN_UPDATE_COUPON_API: BASE_URL + "/coupons/admin", // + /:couponId
+  ADMIN_DELETE_COUPON_API: BASE_URL + "/coupons/admin", // + /:couponId
+  ADMIN_ANALYTICS_API: BASE_URL + "/coupons/admin/analytics",
+  ADMIN_UPDATE_SETTINGS_API: BASE_URL + "/coupons/admin/settings",
+  ADMIN_USAGES_API: BASE_URL + "/coupons/admin/usages",
+
+  // Practitioner
+  PRACTITIONER_CREATE_COUPON_API: BASE_URL + "/coupons/practitioner/create",
+  PRACTITIONER_GET_MINE_API: BASE_URL + "/coupons/practitioner/mine",
+  PRACTITIONER_UPDATE_COUPON_API: BASE_URL + "/coupons/practitioner", // + /:couponId
+  PRACTITIONER_TOGGLE_COUPON_API: BASE_URL + "/coupons/toggle", // + /:couponId
+  PRACTITIONER_DELETE_COUPON_API: BASE_URL + "/coupons/practitioner", // + /:couponId
+
+  // Learner Personal Discount
+  CREATE_LEARNER_DISCOUNT_API: BASE_URL + "/coupons/learner-discount/create",
+  GET_MY_LEARNER_DISCOUNTS_API: BASE_URL + "/coupons/learner-discount/mine",
+  TOGGLE_LEARNER_DISCOUNT_API: BASE_URL + "/coupons/learner-discount/toggle", // + /:discountId
+  DELETE_LEARNER_DISCOUNT_API: BASE_URL + "/coupons/learner-discount", // + /:discountId
+
+  // Checkout & Validation Engine
+  CALCULATE_CHECKOUT_DISCOUNTS_API: BASE_URL + "/coupons/calculate-checkout",
+  GET_MY_PERSONAL_DISCOUNT_API: BASE_URL + "/coupons/my-personal-discount",
+  ENROLL_FREE_DISCOUNT_COURSE_API: BASE_URL + "/payments/enroll-free-discount-course",
+  CONFIRM_FREE_DISCOUNT_BOOKING_API: BASE_URL + "/payments/confirm-free-discount-booking",
+}
+
 // SOCKET BASE URL (for Socket.io client)
 export const SOCKET_BASE_URL = process.env.REACT_APP_BASE_URL
   ? process.env.REACT_APP_BASE_URL.replace("/api/v1", "")
   : "http://localhost:4000"
+
 
 
 

@@ -10,6 +10,8 @@ const {
   getPractitionerBookings,
   createCourseOrder,
   verifyCourseOrder,
+  enrollFreeDiscountCourse,
+  confirmFreeDiscountBooking,
   sendPaymentSuccessEmail,
   createPractitionerOrder,
 } = require("../controllers/payments")
@@ -26,11 +28,13 @@ router.post("/create-practitioner-order", auth, createPractitionerOrder)
 // ─── Paid Course Purchases ────────────────────────────────────────────────────
 router.post("/buy-course", auth, createCourseOrder)
 router.post("/verify-course-payment", auth, verifyCourseOrder)
+router.post("/enroll-free-discount-course", auth, enrollFreeDiscountCourse)
 
 // ─── Practitioner Offer Bookings (ALL types: session / circle / program) ───────
 // Client books any practitioner offer → payment goes to admin
 router.post("/book-offer", auth, bookOffer)
 router.post("/verify-offer-booking", auth, verifyOfferBooking)
+router.post("/confirm-free-discount-booking", auth, confirmFreeDiscountBooking)
 
 // ─── Booking Queries ──────────────────────────────────────────────────────────
 router.get("/my-bookings", auth, getMyBookings)

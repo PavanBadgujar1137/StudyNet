@@ -12,6 +12,7 @@ import OHFooter from '../../components/openhand/OHFooter'
 
 import { IntakeModal } from '../../components/openhand'
 import { formatPractitionerName } from '../../utils/formatName'
+import CheckoutCouponModal from '../../components/core/Coupons/CheckoutCouponModal'
 
 export function PractitionerPublicProfile() {
   const { handle } = useParams()
@@ -19,10 +20,10 @@ export function PractitionerPublicProfile() {
 
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [connectingOfferId, setConnectingOfferId] = useState(null)
 
   // Stage 02 — Intake Modal State
   const [showIntakeModal, setShowIntakeModal] = useState(false)
+  const [showCouponModal, setShowCouponModal] = useState(false)
   const [selectedOffer, setSelectedOffer] = useState(null)
 
   useEffect(() => {
@@ -45,17 +46,6 @@ export function PractitionerPublicProfile() {
     fetchProfile()
   }, [handle])
 
-  const loadRazorpaySDK = () => {
-    return new Promise((resolve) => {
-      if (window.Razorpay) return resolve(true)
-      const script = document.createElement('script')
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
-      script.onload = () => resolve(true)
-      script.onerror = () => resolve(false)
-      document.body.appendChild(script)
-    })
-  }
-
   // Stage 02: First trigger intake modal
   const handleBookOffer = (offer) => {
     const token = localStorage.getItem('token')
@@ -72,104 +62,11 @@ export function PractitionerPublicProfile() {
     setShowIntakeModal(true)
   }
 
-  // Triggered after 6-question intake is submitted
+  // Triggered after 6-question intake is submitted -> opens Coupon & Checkout modal
   const handleIntakeSubmitted = async (formattedAnswers) => {
     setShowIntakeModal(false)
     if (selectedOffer) {
-      await proceedToPayment(selectedOffer, formattedAnswers)
-    }
-  }
-
-  const proceedToPayment = async (offer, intakeAnswers) => {
-    try {
-      const token = localStorage.getItem('token')
-        ? JSON.parse(localStorage.getItem('token'))
-        : null
-
-      setConnectingOfferId(offer._id)
-      const isLoaded = await loadRazorpaySDK()
-      if (!isLoaded) {
-        toast.error('Razorpay Gateway failed to initialize')
-        setConnectingOfferId(null)
-        return
-      }
-
-      const pId = profile.user?._id || profile.user
-      const orderRes = await apiConnector(
-        'POST',
-        '/api/v1/payment/create-practitioner-order',
-        {
-          practitionerId: pId,
-          amount: offer.price || 2500,
-          offerId: offer._id,
-        },
-        { Authorization: `Bearer ${token}` }
-      )
-
-      if (!orderRes?.data?.success) {
-        toast.error(orderRes?.data?.message || 'Failed to initialize booking order')
-        setConnectingOfferId(null)
-        return
-      }
-
-      const { order, key, bookingId } = orderRes.data
-
-      const isRealRazorpayOrder =
-        typeof order?.id === 'string' &&
-        /^order_[A-Za-z0-9]{14,}$/.test(order.id) &&
-        !order.id.includes('pract') &&
-        !order.id.includes('mock') &&
-        !order.id.includes('fake')
-
-      const options = {
-        key: key || 'rzp_test_TDhFSRuAl18Gcb',
-        amount: order.amount,
-        currency: order.currency || 'INR',
-        name: 'OpenHand Practitioner Booking',
-        description: `Booking: ${offer.title}`,
-        ...(isRealRazorpayOrder ? { order_id: order.id } : {}),
-        prefill: {
-          name: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : '',
-          email: user?.email || '',
-          ...(
-            (() => {
-              const rawPhone = user?.additionalDetails?.contactNumber || user?.contactNumber
-              if (rawPhone && rawPhone !== 'null' && rawPhone !== 'undefined') {
-                const trimmed = String(rawPhone).trim()
-                if (trimmed.length > 0) return { contact: trimmed }
-              }
-              return {}
-            })()
-          ),
-        },
-        theme: { color: '#2563EB' },
-        handler: async (response) => {
-          // Save intake answers to booking upon payment completion
-          if (bookingId && intakeAnswers?.length) {
-            try {
-              await apiConnector(
-                'POST',
-                '/api/v1/practitioner/intake-answers',
-                { bookingId, answers: intakeAnswers },
-                { Authorization: `Bearer ${token}` }
-              )
-            } catch (err) {
-              console.warn('Failed to attach intake answers to booking:', err)
-            }
-          }
-          toast.success('🎉 Booking confirmed & Intake saved! Practitioner notified.')
-          setConnectingOfferId(null)
-        },
-        modal: {
-          ondismiss: () => setConnectingOfferId(null),
-        },
-      }
-
-      const rzp = new window.Razorpay(options)
-      rzp.open()
-    } catch (e) {
-      toast.error('Booking failed. Please try again.')
-      setConnectingOfferId(null)
+      setShowCouponModal(true)
     }
   }
 
@@ -405,7 +302,6 @@ export function PractitionerPublicProfile() {
 
                   <button
                     onClick={() => handleBookOffer(offer)}
-                    disabled={connectingOfferId === offer._id}
                     style={{
                       background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
                       color: '#ffffff',
@@ -414,7 +310,7 @@ export function PractitionerPublicProfile() {
                       borderRadius: '30px',
                       fontWeight: 700,
                       fontSize: '14.5px',
-                      cursor: connectingOfferId === offer._id ? 'not-allowed' : 'pointer',
+                      cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -423,7 +319,7 @@ export function PractitionerPublicProfile() {
                     }}
                   >
                     <FiCalendar fontSize={16} />
-                    {connectingOfferId === offer._id ? 'Opening Gateway...' : `Reserve Slot — ₹${offer.price || 2500}`}
+                    Reserve Slot — ₹{offer.price || 2500}
                   </button>
                 </div>
               ))}
@@ -469,6 +365,18 @@ export function PractitionerPublicProfile() {
         practitionerName={practitionerName}
         questions={profile.intakeQuestions || []}
         onSubmit={handleIntakeSubmitted}
+      />
+
+      {/* Session Checkout & Coupon Modal */}
+      <CheckoutCouponModal
+        isOpen={showCouponModal}
+        onClose={() => setShowCouponModal(false)}
+        productType="session"
+        product={selectedOffer}
+        onSuccess={() => {
+          toast.success('🎉 Session booked successfully!')
+          navigate('/dashboard/my-profile')
+        }}
       />
 
       <OHFooter />

@@ -18,7 +18,8 @@ import {
   FiShare2,
   FiCheckSquare,
   FiLock,
-  FiLogOut
+  FiLogOut,
+  FiPercent
 } from 'react-icons/fi'
 import Overview from './Overview'
 import MyOffers from './MyOffers'
@@ -29,6 +30,7 @@ import PayoutsInvoices from './PayoutsInvoices'
 import GrowthTools from './GrowthTools'
 import MyCourses from './MyCourses'
 import SocialPostStudio from './SocialPostStudio'
+import PractitionerCoupons from './PractitionerCoupons'
 import Settings from '../Settings'
 import CommunityChatHub from '../CommunityChatHub'
 import { PractitionerOnboarding } from '../../../../pages/PractitionerOnboarding'
@@ -193,6 +195,7 @@ export function PractitionerDashboard() {
 
   const rawPracticeItems = [
     { id: 'dash',      label: 'Practice Cockpit', icon: <FiGrid /> },
+    { id: 'coupons',   label: 'Coupons & Grants', icon: <FiPercent /> },
     { id: 'social',    label: 'Social Posts',     icon: <FiShare2 /> },
     { id: 'community', label: 'Community Hub',    icon: <FiMessageSquare /> },
     { id: 'offers',    label: 'Offers',           icon: <FiTag /> },
@@ -399,6 +402,7 @@ export function PractitionerDashboard() {
               </div>
               <h1 className="oh-viewport-title">
                 {activeSection === 'dash' && `Hello, ${practitionerName} 👋`}
+                {activeSection === 'coupons' && 'Coupons & Learner Discounts'}
                 {activeSection === 'community' && 'Community & Chat Hub'}
                 {activeSection === 'offers' && 'My Practice Offers'}
                 {activeSection === 'courses' && 'My Courses'}
@@ -477,46 +481,20 @@ export function PractitionerDashboard() {
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20, position: 'relative', zIndex: 2 }}>
                   <div style={{ maxWidth: '650px' }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(239, 68, 68, 0.2)', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#FCA5A5', padding: '6px 14px', borderRadius: 999, fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 16 }}>
-                      <FiLock size={14} />
-                      <span>Access Locked</span>
-                      <span>•</span>
-                      <span>Free Trial / Subscription Ended</span>
+                      <FiLock size={14} /> Practice Plan Expired
                     </div>
-                    <h2 style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', margin: '0 0 12px', fontFamily: 'Poppins, sans-serif', lineHeight: 1.3 }}>
-                      Your Free Trial or Subscription Has Ended
+                    <h2 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 10px', color: '#FFFFFF' }}>
+                      Your OpenHand Practice is Locked
                     </h2>
-                    <p style={{ fontSize: 14, color: '#94A3B8', margin: 0, lineHeight: 1.6 }}>
-                      Your 14-day free trial or practitioner plan subscription has expired. All practice management tools, Zoom HD session hosting, course publishing, social post studio, practice setup builder, and learner management features are locked until a plan is chosen. Select a plan below to renew and unlock full access immediately.
+                    <p style={{ fontSize: 15, color: '#94A3B8', margin: 0, lineHeight: 1.6 }}>
+                      Your subscription trial has completed. Choose a practitioner plan below to immediately regain access to your cockpit, client roster, video room, and payment payouts.
                     </p>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <button
-                      onClick={() => dispatch(logout(navigate))}
-                      style={{
-                        padding: '11px 20px',
-                        background: 'rgba(255,255,255,0.1)',
-                        border: '1px solid rgba(255,255,255,0.2)',
-                        borderRadius: 12,
-                        color: '#FFFFFF',
-                        fontWeight: 700,
-                        fontSize: 13,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 8,
-                        transition: 'all 0.2s ease'
-                      }}
-                    >
-                      <FiLogOut /> Sign Out
-                    </button>
                   </div>
                 </div>
               </div>
 
-              {/* Directly Embedded Pricing Panel */}
-              <div style={{ background: '#FFFFFF', borderRadius: 24, padding: '32px 24px', border: '1px solid #E2E8F0', boxShadow: '0 10px 30px rgba(0,0,0,0.04)' }}>
+              {/* Pricing Cards */}
+              <div style={{ background: '#FFFFFF', borderRadius: 24, padding: 32, border: '1px solid #E2E8F0', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
                 <OHPricingSection
                   defaultRole="practitioner"
                   hideRoleSwitcher={true}
@@ -536,6 +514,9 @@ export function PractitionerDashboard() {
                   telemetryData={telemetryData}
                   loading={loading}
                 />
+              )}
+              {activeSection === 'coupons' && (
+                <PractitionerCoupons />
               )}
               {activeSection === 'community' && (
                 <CommunityChatHub />

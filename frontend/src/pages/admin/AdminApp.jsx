@@ -7,7 +7,8 @@ import {
   FiMessageSquare, FiSearch, FiRefreshCw, FiCheck,
   FiX, FiEye, FiArrowUp, FiArrowDown,
   FiShield, FiBookOpen, FiBell, FiUser, FiTrash2, FiAlertTriangle,
-  FiVideo, FiDownload, FiPlay, FiClock
+  FiVideo, FiDownload, FiPlay, FiClock,
+  FiTag, FiPlus, FiEdit2, FiToggleLeft, FiToggleRight, FiSliders, FiCopy
 } from 'react-icons/fi'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -1921,9 +1922,820 @@ function OrgConversationsTab() {
   )
 }
 
+// ─── Coupons & Discounts Management Tab ───────────────────────────────────────
+function CouponsTab() {
+  const { token } = useSelector(s => s.auth)
+  const [coupons, setCoupons] = useState([])
+  const [stats, setStats] = useState(null)
+  const [usages, setUsages] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [subView, setSubView] = useState('all') // 'all' | 'settings' | 'usages'
+  const [search, setSearch] = useState('')
+  const [typeFilter, setTypeFilter] = useState('')
+  const [appFilter, setAppFilter] = useState('')
+
+  // Modal
+  const [modal, setModal] = useState(null)
+  const [formCode, setFormCode] = useState('')
+  const [formName, setFormName] = useState('')
+  const [formDesc, setFormDesc] = useState('')
+  const [formPct, setFormPct] = useState('20')
+  const [formAppTo, setFormAppTo] = useState('both')
+  const [formStartDate, setFormStartDate] = useState(new Date().toISOString().split('T')[0])
+  const [formExpiryDate, setFormExpiryDate] = useState('')
+  const [formUsageLimit, setFormUsageLimit] = useState('')
+  const [formPerUserLimit, setFormPerUserLimit] = useState('1')
+  const [formMinOrder, setFormMinOrder] = useState('')
+  const [formMaxDiscount, setFormMaxDiscount] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  // Stacking settings form
+  const [allowStacking, setAllowStacking] = useState(true)
+  const [stackingPriority, setStackingPriority] = useState('personal_first')
+  const [allowAdminPractitioner, setAllowAdminPractitioner] = useState(true)
+  const [savingSettings, setSavingSettings] = useState(false)
+
+  // Delete modal
+  const [deleteModal, setDeleteModal] = useState(null)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const [allRes, statsRes, usagesRes] = await Promise.all([
+        apiConnector('GET', `/api/v1/coupons/admin/all?search=${search}&type=${typeFilter}&applicableTo=${appFilter}`, null, { Authorization: `Bearer ${token}` }),
+        apiConnector('GET', '/api/v1/coupons/admin/analytics', null, { Authorization: `Bearer ${token}` }),
+        apiConnector('GET', '/api/v1/coupons/admin/usages', null, { Authorization: `Bearer ${token}` }),
+      ])
+      if (allRes?.data?.success) setCoupons(allRes.data.coupons || [])
+      if (statsRes?.data?.success) {
+        setStats(statsRes.data.analytics)
+        setAllowStacking(statsRes.data.settings?.allowStacking ?? true)
+        setStackingPriority(statsRes.data.settings?.stackingPriority || 'personal_first')
+        setAllowAdminPractitioner(statsRes.data.settings?.allowAdminPractitionerStacking ?? true)
+      }
+      if (usagesRes?.data?.success) setUsages(usagesRes.data.usages || [])
+    } catch (e) {
+      toast.error('Failed to load coupons')
+    }
+    setLoading(false)
+  }, [token, search, typeFilter, appFilter])
+
+  useEffect(() => { load() }, [load])
+
+  const openCreateModal = () => {
+    setFormCode('')
+    setFormName('')
+    setFormDesc('')
+    setFormPct('20')
+    setFormAppTo('both')
+    setFormStartDate(new Date().toISOString().split('T')[0])
+    setFormExpiryDate('')
+    setFormUsageLimit('')
+    setFormPerUserLimit('1')
+    setFormMinOrder('')
+    setFormMaxDiscount('')
+    setModal({ isEdit: false })
+  }
+
+  const openEditModal = (c) => {
+    setFormCode(c.code)
+    setFormName(c.name)
+    setFormDesc(c.description || '')
+    setFormPct(String(c.discountValue))
+    setFormAppTo(c.applicableTo || 'both')
+    setFormStartDate(c.startDate ? new Date(c.startDate).toISOString().split('T')[0] : '')
+    setFormExpiryDate(c.expiryDate ? new Date(c.expiryDate).toISOString().split('T')[0] : '')
+    setFormUsageLimit(c.usageLimit ? String(c.usageLimit) : '')
+    setFormPerUserLimit(String(c.perUserLimit || 1))
+    setFormMinOrder(c.minOrderAmount ? String(c.minOrderAmount) : '')
+    setFormMaxDiscount(c.maxDiscountAmount ? String(c.maxDiscountAmount) : '')
+    setModal({ isEdit: true, data: c })
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!formCode.trim() || !formName.trim() || !formPct) {
+      return toast.error('Code, Name, and Discount % are required')
+    }
+    setSubmitting(true)
+    const payload = {
+      code: formCode.trim().toUpperCase(),
+      name: formName.trim(),
+      description: formDesc.trim(),
+      discountValue: Number(formPct),
+      applicableTo: formAppTo,
+      startDate: formStartDate ? new Date(formStartDate) : new Date(),
+      expiryDate: formExpiryDate ? new Date(formExpiryDate) : null,
+      usageLimit: formUsageLimit ? Number(formUsageLimit) : null,
+      perUserLimit: Number(formPerUserLimit) || 1,
+      minOrderAmount: formMinOrder ? Number(formMinOrder) : 0,
+      maxDiscountAmount: formMaxDiscount ? Number(formMaxDiscount) : null,
+    }
+
+    try {
+      if (modal?.isEdit) {
+        const res = await apiConnector('PUT', `/api/v1/coupons/admin/${modal.data._id}`, payload, { Authorization: `Bearer ${token}` })
+        if (res?.data?.success) {
+          toast.success('Coupon updated successfully')
+          setModal(null)
+          load()
+        }
+      } else {
+        const res = await apiConnector('POST', '/api/v1/coupons/admin/create', payload, { Authorization: `Bearer ${token}` })
+        if (res?.data?.success) {
+          toast.success(res.data.message || 'Admin coupon created')
+          setModal(null)
+          load()
+        }
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to save coupon')
+    }
+    setSubmitting(false)
+  }
+
+  const handleToggle = async (c) => {
+    try {
+      const res = await apiConnector('PATCH', `/api/v1/coupons/toggle/${c._id}`, null, { Authorization: `Bearer ${token}` })
+      if (res?.data?.success) {
+        toast.success(res.data.message)
+        load()
+      }
+    } catch (e) {
+      toast.error('Failed to toggle status')
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!deleteModal) return
+    try {
+      const res = await apiConnector('DELETE', `/api/v1/coupons/admin/${deleteModal._id}`, null, { Authorization: `Bearer ${token}` })
+      if (res?.data?.success) {
+        toast.success(res.data.message || 'Coupon deleted')
+        setDeleteModal(null)
+        load()
+      }
+    } catch (e) {
+      toast.error(e?.response?.data?.message || 'Failed to delete coupon')
+    }
+  }
+
+  const handleSaveSettings = async (e) => {
+    e.preventDefault()
+    setSavingSettings(true)
+    try {
+      const res = await apiConnector('POST', '/api/v1/coupons/admin/settings', {
+        allowStacking,
+        stackingPriority,
+        allowAdminPractitionerStacking: allowAdminPractitioner,
+      }, { Authorization: `Bearer ${token}` })
+      if (res?.data?.success) {
+        toast.success('Stacking & priority rules saved!')
+      }
+    } catch (e) {
+      toast.error('Failed to save settings')
+    }
+    setSavingSettings(false)
+  }
+
+  const copyCode = (code) => {
+    navigator.clipboard.writeText(code)
+    toast.success(`Copied '${code}' to clipboard!`)
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      {/* KPI Stats Header */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
+        <KpiCard icon={<FiTag />} label="Total Coupons" value={stats?.totalCoupons || coupons.length} subLabel="Platform + Practitioner" color="#3B82F6" />
+        <KpiCard icon={<FiCheck />} label="Active Coupons" value={stats?.activeCoupons || 0} subLabel="Currently usable" color="#10B981" />
+        <KpiCard icon={<FiUsers />} label="Total Redemptions" value={stats?.totalUsages || 0} subLabel="Learners discounted" color="#F59E0B" />
+        <KpiCard icon={<FiDollarSign />} label="Discount Generated" value={fmt(stats?.totalDiscountGiven || 0)} subLabel="Learner savings" color="#8B5CF6" />
+      </div>
+
+      {/* Sub Navigation Bar & Search */}
+      <div style={{ background: '#FFFFFF', borderRadius: 16, border: '1px solid #E2E8F0', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={() => setSubView('all')}
+            style={{
+              padding: '8px 16px',
+              borderRadius: 10,
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: 13,
+              fontWeight: subView === 'all' ? 700 : 500,
+              background: subView === 'all' ? '#EFF6FF' : 'transparent',
+              color: subView === 'all' ? '#1D4ED8' : '#64748B',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <FiTag /> Coupons Catalog ({coupons.length})
+          </button>
+          <button
+            onClick={() => setSubView('settings')}
+            style={{
+              padding: '8px 16px',
+              borderRadius: 10,
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: 13,
+              fontWeight: subView === 'settings' ? 700 : 500,
+              background: subView === 'settings' ? '#F3E8FF' : 'transparent',
+              color: subView === 'settings' ? '#7C3AED' : '#64748B',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <FiSliders /> Stacking &amp; Rules
+          </button>
+          <button
+            onClick={() => setSubView('usages')}
+            style={{
+              padding: '8px 16px',
+              borderRadius: 10,
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: 13,
+              fontWeight: subView === 'usages' ? 700 : 500,
+              background: subView === 'usages' ? '#ECFDF5' : 'transparent',
+              color: subView === 'usages' ? '#059669' : '#64748B',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <FiClock /> Redemption Ledger ({usages.length})
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          {subView === 'all' && (
+            <>
+              <select
+                value={typeFilter}
+                onChange={e => setTypeFilter(e.target.value)}
+                style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13, color: '#0F172A', outline: 'none' }}
+              >
+                <option value="">All Types</option>
+                <option value="admin">Platform Admin</option>
+                <option value="practitioner">Practitioner</option>
+              </select>
+              <select
+                value={appFilter}
+                onChange={e => setAppFilter(e.target.value)}
+                style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13, color: '#0F172A', outline: 'none' }}
+              >
+                <option value="">All Products</option>
+                <option value="both">Courses &amp; Sessions</option>
+                <option value="courses">Courses Only</option>
+                <option value="sessions">Sessions Only</option>
+              </select>
+              <div style={{ position: 'relative', width: 220 }}>
+                <FiSearch style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+                <input
+                  type="text"
+                  placeholder="Search code or name..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  style={{ width: '100%', padding: '8px 12px 8px 32px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+              <button
+                onClick={openCreateModal}
+                style={{
+                  padding: '8px 18px',
+                  background: 'linear-gradient(135deg, #1F5FE0, #1D4ED8)',
+                  border: 'none',
+                  borderRadius: 10,
+                  color: '#fff',
+                  fontWeight: 700,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  boxShadow: '0 4px 12px rgba(31,95,224,0.25)',
+                }}
+              >
+                <FiPlus size={15} /> Create Admin Coupon
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Sub-view 1: Coupons Catalog Table */}
+      {subView === 'all' && (
+        <DataTable
+          loading={loading}
+          columns={[
+            {
+              key: 'code',
+              label: 'Coupon Code',
+              render: r => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontWeight: 800, color: '#1D4ED8', background: '#EFF6FF', padding: '4px 8px', borderRadius: 6, letterSpacing: 0.5 }}>
+                    {r.code}
+                  </span>
+                  <button onClick={() => copyCode(r.code)} title="Copy code" style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: 2 }}>
+                    <FiCopy size={13} />
+                  </button>
+                </div>
+              ),
+            },
+            {
+              key: 'name',
+              label: 'Campaign Name',
+              render: r => (
+                <div>
+                  <div style={{ fontWeight: 700, color: '#0F172A' }}>{r.name}</div>
+                  {r.description && <div style={{ fontSize: 11, color: '#94A3B8', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.description}</div>}
+                </div>
+              ),
+            },
+            {
+              key: 'couponType',
+              label: 'Creator Type',
+              render: r => (
+                <span style={{
+                  display: 'inline-block',
+                  padding: '3px 8px',
+                  borderRadius: 20,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  textTransform: 'capitalize',
+                  background: r.couponType === 'admin' ? '#EDE9FE' : '#FEF3C7',
+                  color: r.couponType === 'admin' ? '#6D28D9' : '#B45309',
+                }}>
+                  {r.couponType === 'admin' ? 'Platform Admin' : `Practitioner (${r.practitioner?.firstName || 'User'})`}
+                </span>
+              ),
+            },
+            {
+              key: 'discountValue',
+              label: 'Discount',
+              render: r => (
+                <span style={{ fontWeight: 800, color: '#059669', background: '#ECFDF5', padding: '3px 8px', borderRadius: 20 }}>
+                  {r.discountValue}% OFF
+                </span>
+              ),
+            },
+            {
+              key: 'applicableTo',
+              label: 'Applies To',
+              render: r => (
+                <span style={{ textTransform: 'capitalize', color: '#475569', fontWeight: 600 }}>
+                  {r.applicableTo === 'both' ? 'Courses & Sessions' : r.applicableTo}
+                </span>
+              ),
+            },
+            {
+              key: 'validity',
+              label: 'Validity',
+              render: r => (
+                <span style={{ fontSize: 12, color: '#64748B' }}>
+                  {fmtDate(r.startDate)} → {fmtDate(r.expiryDate)}
+                </span>
+              ),
+            },
+            {
+              key: 'usedCount',
+              label: 'Redemptions',
+              render: r => (
+                <span>
+                  <strong style={{ color: '#0F172A' }}>{r.usedCount || 0}</strong>
+                  <span style={{ color: '#94A3B8' }}> / {r.usageLimit || '∞'}</span>
+                </span>
+              ),
+            },
+            {
+              key: 'isActive',
+              label: 'Status',
+              render: r => (
+                <button
+                  onClick={() => handleToggle(r)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: r.isActive ? '#10B981' : '#94A3B8',
+                  }}
+                >
+                  {r.isActive ? <FiToggleRight size={22} color="#10B981" /> : <FiToggleLeft size={22} color="#94A3B8" />}
+                  {r.isActive ? 'Active' : 'Disabled'}
+                </button>
+              ),
+            },
+            {
+              key: 'actions',
+              label: 'Actions',
+              render: r => (
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {r.couponType === 'admin' && (
+                    <button onClick={() => openEditModal(r)} title="Edit Coupon" style={{ padding: '6px 10px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: 6, color: '#475569', cursor: 'pointer' }}>
+                      <FiEdit2 size={13} />
+                    </button>
+                  )}
+                  <button onClick={() => setDeleteModal(r)} title="Delete Coupon" style={{ padding: '6px 10px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 6, color: '#DC2626', cursor: 'pointer' }}>
+                    <FiTrash2 size={13} />
+                  </button>
+                </div>
+              ),
+            },
+          ]}
+          data={coupons}
+        />
+      )}
+
+      {/* Sub-view 2: Stacking & Priority Settings */}
+      {subView === 'settings' && (
+        <div style={{ background: '#FFFFFF', borderRadius: 20, padding: 32, border: '1px solid #E2E8F0', maxWidth: 700, boxShadow: '0 4px 16px rgba(0,0,0,0.03)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+            <div style={{ width: 42, height: 42, borderRadius: 12, background: '#F3E8FF', color: '#7C3AED', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
+              <FiSliders />
+            </div>
+            <div>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#0F172A' }}>Coupon Stacking &amp; Priority Engine</h3>
+              <p style={{ margin: '2px 0 0', fontSize: 13, color: '#64748B' }}>Configure how multiple discounts interact during student checkout</p>
+            </div>
+          </div>
+
+          <form onSubmit={handleSaveSettings} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {/* Allow Stacking Toggle */}
+            <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 14, padding: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 14, color: '#0F172A', marginBottom: 2 }}>Enable Coupon Stacking</div>
+                <div style={{ fontSize: 12, color: '#64748B' }}>When enabled, learners can combine Practitioner + Admin coupons or Personal Discounts</div>
+              </div>
+              <input
+                type="checkbox"
+                checked={allowStacking}
+                onChange={e => setAllowStacking(e.target.checked)}
+                style={{ width: 22, height: 22, cursor: 'pointer' }}
+              />
+            </div>
+
+            {/* Stacking Priority Dropdown */}
+            <div>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 6 }}>
+                Discount Application Priority Order
+              </label>
+              <select
+                value={stackingPriority}
+                onChange={e => setStackingPriority(e.target.value)}
+                style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: '1.5px solid #CBD5E1', fontSize: 14, outline: 'none', background: '#fff' }}
+              >
+                <option value="personal_first">Option A: Personal Learner Discount First → Practitioner Coupon → Admin Coupon (Recommended)</option>
+                <option value="admin_first">Option B: Admin Platform Coupon First → Practitioner Coupon</option>
+                <option value="best_discount">Option C: Highest Single Discount Only (Stacking Bypassed)</option>
+              </select>
+              <p style={{ fontSize: 12, color: '#94A3B8', marginTop: 6, margin: '6px 0 0' }}>
+                Example with Option A: On a ₹10,000 course with 30% Personal Grant + 20% Practitioner Coupon, the price becomes ₹10,000 - 30% = ₹7,000, then ₹7,000 - 20% = ₹5,600.
+              </p>
+            </div>
+
+            {/* Admin + Practitioner Stacking */}
+            <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 14, padding: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 14, color: '#0F172A', marginBottom: 2 }}>Allow Platform Admin &amp; Practitioner Coupon Combination</div>
+                <div style={{ fontSize: 12, color: '#64748B' }}>Permits both an Admin promotional code and a Practitioner code on the same checkout</div>
+              </div>
+              <input
+                type="checkbox"
+                checked={allowAdminPractitioner}
+                onChange={e => setAllowAdminPractitioner(e.target.checked)}
+                style={{ width: 22, height: 22, cursor: 'pointer' }}
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={savingSettings}
+              style={{
+                padding: '12px 24px',
+                background: 'linear-gradient(135deg, #1F5FE0, #1D4ED8)',
+                border: 'none',
+                borderRadius: 12,
+                color: '#fff',
+                fontWeight: 700,
+                fontSize: 14,
+                cursor: savingSettings ? 'not-allowed' : 'pointer',
+                alignSelf: 'flex-start',
+                boxShadow: '0 4px 14px rgba(31,95,224,0.3)',
+              }}
+            >
+              {savingSettings ? 'Saving...' : 'Save Stacking Rules'}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* Sub-view 3: Redemption Usages Ledger */}
+      {subView === 'usages' && (
+        <DataTable
+          loading={loading}
+          columns={[
+            {
+              key: 'usedAt',
+              label: 'Date & Time',
+              render: r => fmtDateTime(r.usedAt || r.createdAt),
+            },
+            {
+              key: 'code',
+              label: 'Coupon / Grant',
+              render: r => (
+                <span style={{ fontWeight: 800, color: '#1D4ED8', background: '#EFF6FF', padding: '3px 8px', borderRadius: 6 }}>
+                  {r.code || 'PERSONAL_GRANT'}
+                </span>
+              ),
+            },
+            {
+              key: 'learner',
+              label: 'Learner',
+              render: r => (
+                <div>
+                  <div style={{ fontWeight: 700, color: '#0F172A' }}>{r.learner?.firstName} {r.learner?.lastName}</div>
+                  <div style={{ fontSize: 11, color: '#64748B' }}>{r.learner?.email}</div>
+                </div>
+              ),
+            },
+            {
+              key: 'practitioner',
+              label: 'Practitioner',
+              render: r => r.practitioner ? `${r.practitioner.firstName} ${r.practitioner.lastName}` : 'Platform',
+            },
+            {
+              key: 'product',
+              label: 'Product / Item',
+              render: r => (
+                <span style={{ color: '#475569', fontWeight: 600 }}>
+                  {r.productType === 'course' ? `📘 ${r.course?.title || 'Course'}` : `🗓️ ${r.offer?.title || 'Session'}`}
+                </span>
+              ),
+            },
+            {
+              key: 'originalPrice',
+              label: 'Original',
+              render: r => fmt(r.originalPrice),
+            },
+            {
+              key: 'discountAmount',
+              label: 'Discount',
+              render: r => <span style={{ color: '#059669', fontWeight: 700 }}>-{fmt(r.discountAmount)}</span>,
+            },
+            {
+              key: 'finalPrice',
+              label: 'Final Paid',
+              render: r => (
+                <span style={{ color: r.finalPrice === 0 ? '#10B981' : '#0F172A', fontWeight: 800 }}>
+                  {r.finalPrice === 0 ? 'FREE (₹0)' : fmt(r.finalPrice)}
+                </span>
+              ),
+            },
+          ]}
+          data={usages}
+        />
+      )}
+
+      {/* ─── CREATE / EDIT ADMIN COUPON MODAL ────────────────────────────────── */}
+      {modal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div style={{ background: '#FFFFFF', borderRadius: 20, padding: 32, width: 560, maxWidth: '95vw', boxShadow: '0 20px 60px rgba(0,0,0,0.2)', maxHeight: '90vh', overflowY: 'auto' }}>
+            <h3 style={{ margin: '0 0 4px', fontSize: 18, fontWeight: 800, color: '#0F172A' }}>
+              {modal.isEdit ? 'Edit Admin Platform Coupon' : 'Create Admin Platform Coupon'}
+            </h3>
+            <p style={{ margin: '0 0 20px', fontSize: 13, color: '#64748B' }}>
+              Create a platform-wide promotional coupon for festivals, days, or special occasions.
+            </p>
+
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 4 }}>
+                    Coupon Code *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. DIWALI50"
+                    value={formCode}
+                    onChange={e => setFormCode(e.target.value.toUpperCase())}
+                    style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', outline: 'none', boxSizing: 'border-box' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 4 }}>
+                    Discount Percentage *
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="100"
+                    required
+                    placeholder="e.g. 50"
+                    value={formPct}
+                    onChange={e => setFormPct(e.target.value)}
+                    style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 4 }}>
+                  Campaign / Occasion Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Diwali Mega Festival Sale"
+                  value={formName}
+                  onChange={e => setFormName(e.target.value)}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 4 }}>
+                  Description (Optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Applicable on all platform courses & sessions"
+                  value={formDesc}
+                  onChange={e => setFormDesc(e.target.value)}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 4 }}>
+                  Applicable Products *
+                </label>
+                <select
+                  value={formAppTo}
+                  onChange={e => setFormAppTo(e.target.value)}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+                >
+                  <option value="both">Both Courses &amp; Sessions</option>
+                  <option value="courses">Courses Only</option>
+                  <option value="sessions">Sessions Only</option>
+                </select>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 4 }}>
+                    Start Date
+                  </label>
+                  <input
+                    type="date"
+                    value={formStartDate}
+                    onChange={e => setFormStartDate(e.target.value)}
+                    style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 4 }}>
+                    Expiry Date (Optional)
+                  </label>
+                  <input
+                    type="date"
+                    value={formExpiryDate}
+                    onChange={e => setFormExpiryDate(e.target.value)}
+                    style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 4 }}>
+                    Global Usage Limit
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 1000 (empty = unlimited)"
+                    value={formUsageLimit}
+                    onChange={e => setFormUsageLimit(e.target.value)}
+                    style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 4 }}>
+                    Per-Learner Limit
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={formPerUserLimit}
+                    onChange={e => setFormPerUserLimit(e.target.value)}
+                    style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 4 }}>
+                    Minimum Order Amount (₹)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 500"
+                    value={formMinOrder}
+                    onChange={e => setFormMinOrder(e.target.value)}
+                    style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 4 }}>
+                    Max Discount Cap (₹)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 2000 (empty = no cap)"
+                    value={formMaxDiscount}
+                    onChange={e => setFormMaxDiscount(e.target.value)}
+                    style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+                <button
+                  type="button"
+                  onClick={() => setModal(null)}
+                  style={{ flex: 1, padding: '12px', background: '#F1F5F9', border: 'none', borderRadius: 10, color: '#64748B', fontWeight: 600, cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  style={{ flex: 1, padding: '12px', background: 'linear-gradient(135deg, #1F5FE0, #1D4ED8)', border: 'none', borderRadius: 10, color: '#FFFFFF', fontWeight: 700, cursor: submitting ? 'not-allowed' : 'pointer' }}
+                >
+                  {submitting ? 'Saving...' : modal.isEdit ? 'Save Changes' : 'Create Coupon'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─── DELETE CONFIRM MODAL ────────────────────────────────────────────── */}
+      {deleteModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.7)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div style={{ background: '#FFFFFF', borderRadius: 20, padding: 28, width: 440, maxWidth: '90vw', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+              <div style={{ width: 42, height: 42, borderRadius: 12, background: '#FEE2E2', color: '#DC2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <FiTrash2 size={20} />
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: '#991B1B' }}>Delete Coupon?</h3>
+                <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748B' }}>This action cannot be undone</p>
+              </div>
+            </div>
+            <p style={{ fontSize: 13, color: '#475569', lineHeight: 1.5, marginBottom: 20 }}>
+              Are you sure you want to permanently delete coupon code <strong>{deleteModal.code}</strong>?
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => setDeleteModal(null)}
+                style={{ flex: 1, padding: '11px', background: '#F1F5F9', border: 'none', borderRadius: 10, color: '#64748B', fontWeight: 600, cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                style={{ flex: 1, padding: '11px', background: '#DC2626', border: 'none', borderRadius: 10, color: '#FFFFFF', fontWeight: 700, cursor: 'pointer' }}
+              >
+                Delete Coupon
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Main Admin Panel ─────────────────────────────────────────────────────────
 const TABS = [
   { id: 'dashboard', label: 'Dashboard', icon: <FiGrid /> },
+  { id: 'coupons', label: 'Coupons & Discounts', icon: <FiTag /> },
   { id: 'clients', label: 'Learners', icon: <FiUsers /> },
   { id: 'courses', label: 'Courses & Plans', icon: <FiBookOpen /> },
   { id: 'practitioners', label: 'Practitioners', icon: <FiUser /> },
@@ -2051,6 +2863,7 @@ export default function AdminApp() {
         {/* Tab Content (Scrolls vertically) */}
         <div style={{ flex: 1, padding: '28px 32px', overflowY: 'auto' }}>
           {activeTab === 'dashboard' && <DashboardTab stats={stats} recentPayments={recentPayments} loading={statsLoading} />}
+          {activeTab === 'coupons' && <CouponsTab />}
           {activeTab === 'clients' && <ClientsTab />}
           {activeTab === 'courses' && <CoursesTab />}
           {activeTab === 'practitioners' && <PractitionersTab />}
@@ -2063,3 +2876,4 @@ export default function AdminApp() {
     </div>
   )
 }
+

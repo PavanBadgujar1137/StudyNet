@@ -11,6 +11,7 @@ import { apiConnector } from '../../../../services/apiConnector'
 import { formatFileSize } from '../../../../utils/imageProcessing'
 import { mediaUrl } from '../../../../utils/mediaUrl'
 import { OHPricingModal } from '../../../openhand'
+import CheckoutCouponModal from '../../Coupons/CheckoutCouponModal'
 
 function formatDuration(secs) {
   if (!secs) return '0:00'
@@ -450,92 +451,11 @@ export default function Courses() {
     `${c.practitioner?.firstName} ${c.practitioner?.lastName}`.toLowerCase().includes(search.toLowerCase())
   )
 
-  const loadRazorpaySDK = () => {
-    return new Promise((resolve) => {
-      if (window.Razorpay) return resolve(true)
-      const script = document.createElement('script')
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
-      script.onload = () => resolve(true)
-      script.onerror = () => resolve(false)
-      document.body.appendChild(script)
-    })
-  }
+  const [checkoutCourse, setCheckoutCourse] = useState(null)
 
-  const handleBuyPaidCourse = async (course) => {
+  const handleBuyPaidCourse = (course) => {
     if (!token) return toast.error('Please login to purchase course.')
-    const toastId = toast.loading(`Preparing Razorpay order for ${course.title}...`)
-    try {
-      const isLoaded = await loadRazorpaySDK()
-      if (!isLoaded) {
-        toast.error('Failed to load Razorpay SDK', { id: toastId })
-        return
-      }
-
-      const res = await apiConnector('POST', '/api/v1/payments/buy-course', { courseId: course._id }, { Authorization: `Bearer ${token}` })
-      if (!res?.data?.success) {
-        toast.error(res?.data?.message || 'Failed to create course order', { id: toastId })
-        return
-      }
-
-      const { order, key, courseTitle, practitionerName } = res.data
-      toast.dismiss(toastId)
-
-      const isRealRazorpayOrder =
-        typeof order?.id === 'string' &&
-        /^order_[A-Za-z0-9]{14,}$/.test(order.id) &&
-        !order.id.includes('crs') &&
-        !order.id.includes('pract') &&
-        !order.id.includes('mock') &&
-        !order.id.includes('fake')
-
-      const options = {
-        key,
-        amount: order.amount,
-        currency: order.currency || 'INR',
-        name: `Course: ${courseTitle}`,
-        description: `By ${practitionerName}`,
-        ...(isRealRazorpayOrder ? { order_id: order.id } : {}),
-        prefill: {
-          name: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : '',
-          email: user?.email || '',
-          ...(
-            (() => {
-              const rawPhone = user?.additionalDetails?.contactNumber || user?.contactNumber
-              if (rawPhone && rawPhone !== 'null' && rawPhone !== 'undefined') {
-                const trimmed = String(rawPhone).trim()
-                if (trimmed.length > 0) return { contact: trimmed }
-              }
-              return {}
-            })()
-          ),
-        },
-        theme: { color: '#1F5FE0' },
-        handler: async (response) => {
-          const vToast = toast.loading('Verifying Razorpay payment...')
-          try {
-            const vRes = await apiConnector('POST', '/api/v1/payments/verify-course-payment', {
-              courseId: course._id,
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-            }, { Authorization: `Bearer ${token}` })
-
-            if (vRes?.data?.success) {
-              toast.success(`🎉 ${courseTitle} Unlocked!`, { id: vToast })
-              loadData()
-            } else {
-              toast.error(vRes?.data?.message || 'Verification failed', { id: vToast })
-            }
-          } catch (e) {
-            toast.error('Payment verification failed', { id: vToast })
-          }
-        }
-      }
-      const rzp = new window.Razorpay(options)
-      rzp.open()
-    } catch (e) {
-      toast.error('Failed to initiate course payment', { id: toastId })
-    }
+    setCheckoutCourse(course)
   }
 
   if (selectedCourse) {
@@ -651,6 +571,18 @@ export default function Courses() {
         isOpen={showPricingModal}
         onClose={() => setShowPricingModal(false)}
         defaultRole="learner"
+      />
+
+      {/* Checkout Coupon & Discount Modal */}
+      <CheckoutCouponModal
+        isOpen={!!checkoutCourse}
+        onClose={() => setCheckoutCourse(null)}
+        productType="course"
+        product={checkoutCourse}
+        onSuccess={() => {
+          loadData()
+          toast.success('Course unlocked successfully!')
+        }}
       />
     </div>
   )
