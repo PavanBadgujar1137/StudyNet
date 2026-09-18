@@ -375,13 +375,6 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
     toast.success(`Video "${file.name}" selected!`)
   }
 
-  const handleFileChange = async (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      await processSelectedVideo(file)
-    }
-  }
-
   const handleAddAttachments = (files) => {
     if (!files || files.length === 0) return
     const newFiles = Array.from(files)
