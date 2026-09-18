@@ -44,6 +44,10 @@ export function socialLogin(provider, socialData, navigate) {
       localStorage.setItem("token", JSON.stringify(token))
       localStorage.setItem("user", JSON.stringify(fullUser))
 
+      if (response.data.isNewRegistration) {
+        sessionStorage.setItem("showCompleteProfilePopup", "true")
+      }
+
       if (user?.accountType === "Admin") {
         navigate("/admin")
       } else {
@@ -137,6 +141,8 @@ export function signUp(
         localStorage.setItem("token", JSON.stringify(token))
         localStorage.setItem("user", JSON.stringify({ ...user, image: userImage }))
 
+        sessionStorage.setItem("showCompleteProfilePopup", "true")
+
         navigate("/dashboard")
       } else {
         navigate("/login")
@@ -160,6 +166,8 @@ export function login(email, password, navigate, expectedAccountType = null) {
       const response = await apiConnector("POST", LOGIN_API, {
         email,
         password,
+        accountType: expectedAccountType,
+        expectedAccountType,
       })
 
       console.log("LOGIN API RESPONSE............", response)
@@ -170,31 +178,28 @@ export function login(email, password, navigate, expectedAccountType = null) {
 
       const loggedUser = response.data.user
 
-      // ── Role Mismatch Guard ──────────────────────────────────────────────
-      // If this login was initiated from the Practitioner panel, the user's
-      // accountType in the database MUST be "Practitioner" or "Instructor".
-      // If not, block the login and show a helpful error.
+      // ── Role Mismatch Guard (Client-side Double Check) ────────────────────
       if (expectedAccountType === "Practitioner") {
         const isPractitioner =
           loggedUser?.accountType === "Practitioner" ||
           loggedUser?.accountType === "Instructor"
-        if (!isPractitioner) {
+        if (!isPractitioner && loggedUser?.accountType !== "Admin") {
           toast.error(
-            "This email is registered as a Learner account. Please use the Learner Sign In panel, or sign up for a Practitioner account.",
+            "This email is registered as a Learner account. Please log in using the Learner Login.",
             { id: toastId, duration: 6000 }
           )
           return
         }
       }
 
-      // (Optional) If Learner panel — block Practitioner accounts logging in from wrong side
-      if (!expectedAccountType || expectedAccountType === null) {
-        const isPractitionerTryingLearnerPanel =
-          loggedUser?.accountType === "Practitioner" ||
-          loggedUser?.accountType === "Instructor"
-        if (isPractitionerTryingLearnerPanel) {
+      if (expectedAccountType === "Learner") {
+        const isLearner =
+          loggedUser?.accountType === "Learner" ||
+          loggedUser?.accountType === "Student" ||
+          loggedUser?.accountType === "Client"
+        if (!isLearner && loggedUser?.accountType !== "Admin") {
           toast.error(
-            "This email is registered as a Practitioner account. Please use the Practitioner Sign In panel.",
+            "This email is registered as a Practitioner account. Please log in using the Practitioner Login.",
             { id: toastId, duration: 6000 }
           )
           return

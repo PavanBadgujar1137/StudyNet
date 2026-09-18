@@ -48,6 +48,8 @@ function Login() {
                 onClick={() => {
                   setMobileTab('learner')
                   setActiveSide('learner')
+                  window.__activeAuthRole = 'Learner'
+                  sessionStorage.setItem('socialAuthAccountType', 'Learner')
                 }}
               >
                 <HiAcademicCap style={{ display: 'inline', marginRight: '6px', verticalAlign: '-2px' }} size={18} /> Sign In as Learner
@@ -58,6 +60,8 @@ function Login() {
                 onClick={() => {
                   setMobileTab('practitioner')
                   setActiveSide('practitioner')
+                  window.__activeAuthRole = 'Practitioner'
+                  sessionStorage.setItem('socialAuthAccountType', 'Practitioner')
                 }}
               >
                 <HiBadgeCheck style={{ display: 'inline', marginRight: '6px', verticalAlign: '-2px' }} size={18} /> Sign In as Practitioner
@@ -70,7 +74,11 @@ function Login() {
             {/* ── LEFT COLUMN: LEARNER LOGIN ── */}
             <section
               className={`split-col split-col--learner ${activeSide === 'learner' ? 'split-col--active' : ''}`}
-              onMouseEnter={() => setActiveSide('learner')}
+              onMouseEnter={() => {
+                setActiveSide('learner')
+                window.__activeAuthRole = 'Learner'
+                sessionStorage.setItem('socialAuthAccountType', 'Learner')
+              }}
             >
               <div className="split-card-header">
                 <h2 className="split-card-title split-card-title--cyan">Learner Sign In</h2>
@@ -95,7 +103,11 @@ function Login() {
                 <LoginForm
                   roleTitle="Learner"
                   themeColor="cyan"
-                  onFormFocus={() => setActiveSide('learner')}
+                  onFormFocus={() => {
+                    setActiveSide('learner')
+                    window.__activeAuthRole = 'Learner'
+                    sessionStorage.setItem('socialAuthAccountType', 'Learner')
+                  }}
                 />
               </div>
             </section>
@@ -108,7 +120,11 @@ function Login() {
             {/* ── RIGHT COLUMN: PRACTITIONER LOGIN ── */}
             <section
               className={`split-col split-col--practitioner ${activeSide === 'practitioner' ? 'split-col--active' : ''}`}
-              onMouseEnter={() => setActiveSide('practitioner')}
+              onMouseEnter={() => {
+                setActiveSide('practitioner')
+                window.__activeAuthRole = 'Practitioner'
+                sessionStorage.setItem('socialAuthAccountType', 'Practitioner')
+              }}
             >
               <div className="split-card-header">
                 <h2 className="split-card-title split-card-title--violet">Practitioner Sign In</h2>
@@ -133,7 +149,11 @@ function Login() {
                 <LoginForm
                   roleTitle="Practitioner"
                   themeColor="violet"
-                  onFormFocus={() => setActiveSide('practitioner')}
+                  onFormFocus={() => {
+                    setActiveSide('practitioner')
+                    window.__activeAuthRole = 'Practitioner'
+                    sessionStorage.setItem('socialAuthAccountType', 'Practitioner')
+                  }}
                 />
               </div>
             </section>

@@ -17,6 +17,9 @@ const {
   updateCourseAdmin,
   getPractitionerPaymentHistory,
   deleteUserAdmin,
+  getAllAdminRatings,
+  verifyAdminRating,
+  deleteAdminRating,
 } = require("../controllers/admin")
 
 // ─── Admin Account Setup (one-time, no auth required) ────────────────────────
@@ -55,5 +58,10 @@ router.patch("/org-conversations/:id", auth, isAdmin, updateOrgConversation)
 
 // Payouts (admin manually marks salary as paid)
 router.post("/payout", auth, isAdmin, processMonthlyPayout)
+
+// Ratings & Reviews Moderation
+router.get("/ratings", auth, isAdmin, getAllAdminRatings)
+router.put("/ratings/:id/verify", auth, isAdmin, verifyAdminRating)
+router.delete("/ratings/:id", auth, isAdmin, deleteAdminRating)
 
 module.exports = router

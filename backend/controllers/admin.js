@@ -964,3 +964,237 @@ exports.deleteUserAdmin = async (req, res) => {
   }
 }
 
+// ─── Helper: Recalculate and Cache Practitioner Verified Rating ──────────────
+async function syncPractitionerVerifiedRating(practitionerId) {
+  if (!practitionerId) return null
+  try {
+    const Testimonial = require("../models/Testimonial")
+    const RatingAndReview = require("../models/RatingandReview")
+    const PractitionerProfile = require("../models/PractitionerProfile")
+
+    const approvedTestimonials = await Testimonial.find({
+      practitioner: practitionerId,
+      $or: [{ status: "approved" }, { isApproved: true }],
+    }).lean()
+
+    const approvedCourseReviews = await RatingAndReview.find({
+      practitioner: practitionerId,
+      $or: [{ status: "approved" }, { isApproved: true }],
+    }).lean()
+
+    const allApproved = [
+      ...approvedTestimonials.map(t => Number(t.adminRating !== undefined && t.adminRating !== null ? t.adminRating : (t.rating || 5))),
+      ...approvedCourseReviews.map(r => Number(r.adminRating !== undefined && r.adminRating !== null ? r.adminRating : (r.rating || 5))),
+    ]
+
+    const totalCount = allApproved.length
+    const computedAverage = totalCount > 0
+      ? Number((allApproved.reduce((sum, v) => sum + v, 0) / totalCount).toFixed(1))
+      : null
+
+    await PractitionerProfile.findOneAndUpdate(
+      { $or: [{ user: practitionerId }, { _id: practitionerId }] },
+      {
+        adminVerifiedRating: computedAverage,
+        verifiedRatingCount: totalCount,
+        rating: computedAverage,
+      }
+    )
+
+    return { average: computedAverage, count: totalCount }
+  } catch (err) {
+    console.error("syncPractitionerVerifiedRating error:", err.message)
+    return null
+  }
+}
+exports.syncPractitionerVerifiedRating = syncPractitionerVerifiedRating
+
+// ─── Admin: Get All Ratings & Reviews for Moderation ──────────────────────────
+exports.getAllAdminRatings = async (req, res) => {
+  try {
+    const Testimonial = require("../models/Testimonial")
+    const RatingAndReview = require("../models/RatingandReview")
+    const User = require("../models/User")
+
+    const testimonials = await Testimonial.find({})
+      .populate("practitioner", "firstName lastName email image")
+      .populate("user", "firstName lastName email image")
+      .populate("verifiedBy", "firstName lastName email")
+      .sort({ createdAt: -1 })
+      .lean()
+
+    const courseReviews = await RatingAndReview.find({})
+      .populate("practitioner", "firstName lastName email image")
+      .populate("user", "firstName lastName email image")
+      .populate("course", "courseName")
+      .populate("verifiedBy", "firstName lastName email")
+      .sort({ createdAt: -1 })
+      .lean()
+
+    const unifiedRatings = [
+      ...testimonials.map(t => ({
+        _id: t._id,
+        sourceType: "testimonial",
+        practitioner: t.practitioner,
+        practitionerId: t.practitioner?._id || t.practitioner,
+        practitionerName: t.practitioner ? `${t.practitioner.firstName || ''} ${t.practitioner.lastName || ''}`.trim() : "Practitioner",
+        learner: t.user,
+        learnerName: t.clientName || (t.user ? `${t.user.firstName || ''} ${t.user.lastName || ''}`.trim() : "Verified Client"),
+        learnerEmail: t.user?.email || "N/A",
+        content: t.content,
+        rating: Number(t.rating || 5),
+        adminRating: t.adminRating !== undefined ? t.adminRating : null,
+        status: t.status || (t.isApproved ? "approved" : "pending"),
+        isApproved: Boolean(t.isApproved || t.status === "approved"),
+        adminNotes: t.adminNotes || "",
+        verifiedAt: t.verifiedAt || null,
+        verifiedBy: t.verifiedBy || null,
+        createdAt: t.createdAt,
+      })),
+      ...courseReviews.map(r => ({
+        _id: r._id,
+        sourceType: "course_review",
+        practitioner: r.practitioner,
+        practitionerId: r.practitioner?._id || r.practitioner,
+        practitionerName: r.practitioner ? `${r.practitioner.firstName || ''} ${r.practitioner.lastName || ''}`.trim() : "Practitioner",
+        learner: r.user,
+        learnerName: r.user ? `${r.user.firstName || ''} ${r.user.lastName || ''}`.trim() : "Verified Client",
+        learnerEmail: r.user?.email || "N/A",
+        courseName: r.course?.courseName || "Course",
+        content: r.review,
+        rating: Number(r.rating || 5),
+        adminRating: r.adminRating !== undefined ? r.adminRating : null,
+        status: r.status || (r.isApproved ? "approved" : "pending"),
+        isApproved: Boolean(r.isApproved || r.status === "approved"),
+        adminNotes: r.adminNotes || "",
+        verifiedAt: r.verifiedAt || null,
+        verifiedBy: r.verifiedBy || null,
+        createdAt: r.createdAt,
+      })),
+    ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+
+    // Aggregate statistics
+    const total = unifiedRatings.length
+    const pending = unifiedRatings.filter(r => r.status === "pending").length
+    const approved = unifiedRatings.filter(r => r.status === "approved").length
+    const rejected = unifiedRatings.filter(r => r.status === "rejected").length
+
+    const approvedList = unifiedRatings.filter(r => r.status === "approved")
+    const platformAvg = approvedList.length > 0
+      ? Number((approvedList.reduce((s, r) => s + (r.adminRating || r.rating), 0) / approvedList.length).toFixed(1))
+      : 0
+
+    return res.status(200).json({
+      success: true,
+      ratings: unifiedRatings,
+      stats: {
+        total,
+        pending,
+        approved,
+        rejected,
+        platformAvg,
+      },
+    })
+  } catch (error) {
+    console.error("getAllAdminRatings error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// ─── Admin: Verify / Approve / Reject a Rating ────────────────────────────────
+exports.verifyAdminRating = async (req, res) => {
+  try {
+    const { id } = req.params
+    const { status, adminRating, adminNotes } = req.body
+    const adminUserId = req.user.id
+
+    if (!["approved", "rejected", "pending"].includes(status)) {
+      return res.status(400).json({ success: false, message: "Valid status (approved, rejected, pending) is required" })
+    }
+
+    const Testimonial = require("../models/Testimonial")
+    const RatingAndReview = require("../models/RatingandReview")
+
+    let item = await Testimonial.findById(id)
+    let isTestimonial = true
+
+    if (!item) {
+      item = await RatingAndReview.findById(id)
+      isTestimonial = false
+    }
+
+    if (!item) {
+      return res.status(404).json({ success: false, message: "Rating or review record not found" })
+    }
+
+    item.status = status
+    item.isApproved = status === "approved"
+    if (adminRating !== undefined && adminRating !== null) {
+      item.adminRating = Number(adminRating)
+    }
+    if (adminNotes !== undefined) {
+      item.adminNotes = adminNotes
+    }
+    if (status === "approved" || status === "rejected") {
+      item.verifiedAt = new Date()
+      item.verifiedBy = adminUserId
+    }
+
+    await item.save()
+
+    // Recalculate practitioner's verified rating
+    const practId = item.practitioner || (item.course ? (await require("../models/Course").findById(item.course))?.instructor : null)
+    if (practId) {
+      await syncPractitionerVerifiedRating(practId)
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `Rating successfully marked as ${status.toUpperCase()}!`,
+      rating: item,
+    })
+  } catch (error) {
+    console.error("verifyAdminRating error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// ─── Admin: Delete a Rating ───────────────────────────────────────────────────
+exports.deleteAdminRating = async (req, res) => {
+  try {
+    const { id } = req.params
+    const Testimonial = require("../models/Testimonial")
+    const RatingAndReview = require("../models/RatingandReview")
+
+    let item = await Testimonial.findById(id)
+    let practId = item?.practitioner
+
+    if (item) {
+      await Testimonial.findByIdAndDelete(id)
+    } else {
+      item = await RatingAndReview.findById(id)
+      practId = item?.practitioner
+      if (item) {
+        await RatingAndReview.findByIdAndDelete(id)
+      }
+    }
+
+    if (!item) {
+      return res.status(404).json({ success: false, message: "Rating record not found" })
+    }
+
+    if (practId) {
+      await syncPractitionerVerifiedRating(practId)
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Rating and review deleted successfully.",
+    })
+  } catch (error) {
+    console.error("deleteAdminRating error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+

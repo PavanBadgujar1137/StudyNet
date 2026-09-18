@@ -4,6 +4,7 @@ import LearnerDashboard from './LearnerDashboard/LearnerDashboard'
 import PractitionerDashboard from './PractitionerDashboard/PractitionerDashboard'
 import AdminApp from '../../../pages/admin/AdminApp'
 import { ACCOUNT_TYPE } from '../../../utils/constants'
+import CompleteProfileModal from '../../Common/CompleteProfileModal'
 
 export function MainDashboard() {
   const { user } = useSelector((state) => state.profile)
@@ -16,11 +17,12 @@ export function MainDashboard() {
     user?.accountType === ACCOUNT_TYPE.PRACTITIONER ||
     user?.accountType === ACCOUNT_TYPE.INSTRUCTOR
 
-  if (isPractitionerRole) {
-    return <PractitionerDashboard />
-  }
-
-  return <LearnerDashboard />
+  return (
+    <>
+      <CompleteProfileModal />
+      {isPractitionerRole ? <PractitionerDashboard /> : <LearnerDashboard />}
+    </>
+  )
 }
 
 export default MainDashboard

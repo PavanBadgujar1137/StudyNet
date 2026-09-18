@@ -72,12 +72,21 @@ function SocialAuthButtons({ accountType = "Client", mode = "login" }) {
             if (response.credential) {
               const payload = decodeJwt(response.credential)
               if (payload && payload.email) {
-                handleSocialSuccessRef.current("google", {
-                  email: payload.email,
-                  firstName: payload.given_name || payload.name || payload.email.split("@")[0],
-                  lastName: payload.family_name || "",
-                  image: payload.picture || "",
-                })
+                const targetRole = window.__activeAuthRole || accountType || "Client"
+                dispatch(
+                  socialLogin(
+                    "google",
+                    {
+                      email: payload.email,
+                      firstName: payload.given_name || payload.name || payload.email.split("@")[0],
+                      lastName: payload.family_name || "",
+                      image: payload.picture || "",
+                      accountType: targetRole,
+                      mode,
+                    },
+                    navigate
+                  )
+                )
               }
             }
           },
@@ -87,9 +96,12 @@ function SocialAuthButtons({ accountType = "Client", mode = "login" }) {
         console.warn("Google GSI init warning:", err)
       }
     }
-  }, [googleClientId])
+  }, [googleClientId, accountType, mode, dispatch, navigate])
 
   const handleGoogleSignIn = () => {
+    window.__activeAuthRole = accountType
+    sessionStorage.setItem("socialAuthAccountType", accountType)
+
     // 1. If Google GSI SDK is available, trigger native Google prompt
     if (window.google?.accounts?.id) {
       window.google.accounts.id.prompt((notification) => {
@@ -104,13 +116,17 @@ function SocialAuthButtons({ accountType = "Client", mode = "login" }) {
   }
 
   const openGooglePopup = () => {
+    window.__activeAuthRole = accountType
+    sessionStorage.setItem("socialAuthAccountType", accountType)
     const redirectUri = `${window.location.origin}/social-callback`
+    const stateParam = encodeURIComponent(JSON.stringify({ accountType, mode }))
     const googleAuthUrl =
       `https://accounts.google.com/o/oauth2/v2/auth?` +
       `client_id=${encodeURIComponent(googleClientId)}` +
       `&redirect_uri=${encodeURIComponent(redirectUri)}` +
       `&response_type=token%20id_token` +
       `&scope=${encodeURIComponent("openid profile email")}` +
+      `&state=${stateParam}` +
       `&prompt=select_account` +
       `&nonce=${Date.now()}`
 
@@ -132,14 +148,17 @@ function SocialAuthButtons({ accountType = "Client", mode = "login" }) {
   }
 
   const handleLinkedInSignIn = () => {
+    window.__activeAuthRole = accountType
+    sessionStorage.setItem("socialAuthAccountType", accountType)
     const redirectUri = `${window.location.origin}/social-callback`
+    const stateParam = encodeURIComponent(JSON.stringify({ provider: "linkedin", accountType, mode }))
     const linkedinAuthUrl =
       `https://www.linkedin.com/oauth/v2/authorization?` +
       `response_type=code` +
       `&client_id=${encodeURIComponent(linkedinClientId)}` +
       `&redirect_uri=${encodeURIComponent(redirectUri)}` +
       `&scope=${encodeURIComponent("openid profile email")}` +
-      `&state=linkedin`
+      `&state=${stateParam}`
 
     const width = 520
     const height = 650

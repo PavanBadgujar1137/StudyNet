@@ -3,27 +3,31 @@ const User = require("../models/User")
 
 exports.submitTestimonial = async (req, res) => {
   try {
-    const userId = req.user.id
-    const { practitionerId, content, rating = 5 } = req.body
+    const userId = req.user?.id || req.user?._id
+    const { practitionerId, content, review, rating = 5 } = req.body
 
-    if (!practitionerId || !content) {
-      return res.status(400).json({ success: false, message: "Practitioner ID and content are required" })
+    const textContent = content || review
+
+    if (!practitionerId || !textContent) {
+      return res.status(400).json({ success: false, message: "Practitioner ID and review content are required" })
     }
 
-    const learner = await User.findById(userId).select("firstName lastName")
-    const clientName = learner ? `${learner.firstName} ${learner.lastName}` : "Verified Learner"
+    const learner = await User.findById(userId).select("firstName lastName email image")
+    const clientName = learner ? `${learner.firstName} ${learner.lastName}`.trim() : "Verified Learner"
 
     const testimonial = await Testimonial.create({
       practitioner: practitionerId,
+      user: userId,
       clientName,
-      content,
-      rating: Number(rating),
-      isApproved: true,
+      content: textContent,
+      rating: Number(rating) || 5,
+      status: "pending",
+      isApproved: false,
     })
 
     return res.status(201).json({
       success: true,
-      message: "Testimonial submitted successfully! Thank you for sharing your transformation.",
+      message: "Thank you! Your rating and feedback have been submitted for Admin Verification. It will become visible once approved by our moderation team.",
       testimonial,
     })
   } catch (error) {
@@ -34,7 +38,12 @@ exports.submitTestimonial = async (req, res) => {
 exports.getPractitionerTestimonials = async (req, res) => {
   try {
     const { practitionerId } = req.params
-    const testimonials = await Testimonial.find({ practitioner: practitionerId, isApproved: true })
+    // Only return approved testimonials
+    const testimonials = await Testimonial.find({
+      practitioner: practitionerId,
+      $or: [{ status: "approved" }, { isApproved: true }],
+    })
+      .populate("user", "firstName lastName image")
       .sort({ createdAt: -1 })
       .lean()
 

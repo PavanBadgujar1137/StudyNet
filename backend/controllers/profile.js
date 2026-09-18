@@ -486,25 +486,32 @@ exports.getPractitionerDashboardData = async (req, res) => {
     const practitionerCourses = await Course.find({ instructor: userId }).select("_id").lean()
     const courseIds = practitionerCourses.map(c => c._id)
 
-    const testimonials = await Testimonial.find({ practitioner: userId, isApproved: true }).sort({ createdAt: -1 }).lean()
+    const testimonials = await Testimonial.find({
+      practitioner: userId,
+      $or: [{ status: "approved" }, { isApproved: true }]
+    }).sort({ createdAt: -1 }).lean()
+
     const courseReviews = await RatingAndReview.find({
       $or: [
         { practitioner: userId },
         { course: { $in: courseIds } }
+      ],
+      $and: [
+        { $or: [{ status: "approved" }, { isApproved: true }] }
       ]
     }).populate("user", "firstName lastName image").sort({ createdAt: -1 }).lean()
 
     const practitionerReviews = [
       ...testimonials.map(t => ({
         _id: t._id,
-        rating: t.rating || 5,
+        rating: t.adminRating !== undefined && t.adminRating !== null ? t.adminRating : (t.rating || 5),
         review: t.content,
         clientName: t.clientName || "Verified Client",
         createdAt: t.createdAt
       })),
       ...courseReviews.map(r => ({
         _id: r._id,
-        rating: r.rating || 5,
+        rating: r.adminRating !== undefined && r.adminRating !== null ? r.adminRating : (r.rating || 5),
         review: r.review,
         clientName: r.user ? `${r.user.firstName || ''} ${r.user.lastName || ''}`.trim() : "Verified Client",
         createdAt: r.createdAt
@@ -513,6 +520,7 @@ exports.getPractitionerDashboardData = async (req, res) => {
 
     const totalSum = practitionerReviews.reduce((sum, r) => sum + Number(r.rating || 5), 0)
     const computedRating = practitionerReviews.length > 0 ? Number((totalSum / practitionerReviews.length).toFixed(1)) : null
+    const finalRating = profile?.adminVerifiedRating !== undefined && profile?.adminVerifiedRating !== null ? profile.adminVerifiedRating : computedRating
 
     const nameSlug = `${user?.firstName || ''}-${user?.lastName || ''}`
       .toLowerCase()
@@ -541,7 +549,7 @@ exports.getPractitionerDashboardData = async (req, res) => {
           image: user?.image || "",
           credentials: profile?.credentials || "Licensed Practitioner",
           handle: currentHandle || nameSlug,
-          rating: computedRating || profile?.rating || null,
+          rating: finalRating,
         },
         stats: {
           monthlyEarnings: monthlyEarnings,

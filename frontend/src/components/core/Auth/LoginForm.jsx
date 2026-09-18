@@ -14,7 +14,7 @@ function LoginForm({ themeColor = "blue", onFormFocus = null, roleTitle = null }
   const { email, password } = formData
 
   // Map display roleTitle → actual accountType string expected in DB
-  const expectedAccountType = roleTitle === "Practitioner" ? "Practitioner" : null
+  const expectedAccountType = roleTitle === "Practitioner" ? "Practitioner" : (roleTitle === "Learner" ? "Learner" : null)
 
   const handleOnChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
@@ -26,6 +26,10 @@ function LoginForm({ themeColor = "blue", onFormFocus = null, roleTitle = null }
   }
 
   const handleFocus = () => {
+    if (expectedAccountType) {
+      window.__activeAuthRole = expectedAccountType
+      sessionStorage.setItem("socialAuthAccountType", expectedAccountType)
+    }
     if (onFormFocus) {
       onFormFocus()
     }

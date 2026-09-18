@@ -8,7 +8,7 @@ import {
   FiX, FiEye, FiArrowUp, FiArrowDown,
   FiShield, FiBookOpen, FiBell, FiUser, FiTrash2, FiAlertTriangle,
   FiVideo, FiDownload, FiPlay, FiClock,
-  FiTag, FiPlus, FiEdit2, FiToggleLeft, FiToggleRight, FiSliders, FiCopy
+  FiTag, FiPlus, FiEdit2, FiToggleLeft, FiToggleRight, FiSliders, FiCopy, FiStar
 } from 'react-icons/fi'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -2732,9 +2732,567 @@ function CouponsTab() {
   )
 }
 
+// ─── Ratings & Reviews Moderation Tab ─────────────────────────────────────────
+function RatingsTab() {
+  const { token } = useSelector(s => s.auth)
+  const [ratings, setRatings] = useState([])
+  const [stats, setStats] = useState({ total: 0, pending: 0, approved: 0, rejected: 0, platformAvg: 0 })
+  const [loading, setLoading] = useState(true)
+  const [statusFilter, setStatusFilter] = useState('all') // 'all' | 'pending' | 'approved' | 'rejected'
+  const [search, setSearch] = useState('')
+  const [selectedPractitioner, setSelectedPractitioner] = useState('all')
+  const [actionModal, setActionModal] = useState(null) // { isOpen: true, type: 'approve'|'reject'|'delete', item: {...} }
+  const [overrideRating, setOverrideRating] = useState(5)
+  const [adminNotes, setAdminNotes] = useState('')
+  const [isProcessing, setIsProcessing] = useState(false)
+
+  const loadRatings = useCallback(async () => {
+    if (!token) return
+    setLoading(true)
+    try {
+      const res = await apiConnector('GET', '/api/v1/admin/ratings', null, { Authorization: `Bearer ${token}` })
+      if (res?.data?.success) {
+        setRatings(res.data.ratings || [])
+        setStats(res.data.stats || { total: 0, pending: 0, approved: 0, rejected: 0, platformAvg: 0 })
+      }
+    } catch (err) {
+      toast.error('Failed to load ratings & reviews')
+    } finally {
+      setLoading(false)
+    }
+  }, [token])
+
+  useEffect(() => {
+    loadRatings()
+  }, [loadRatings])
+
+  const handleVerify = async (id, status, assignedRating = null, notes = '') => {
+    setIsProcessing(true)
+    const toastId = toast.loading(`Updating rating status to ${status}...`)
+    try {
+      const res = await apiConnector('PUT', `/api/v1/admin/ratings/${id}/verify`, {
+        status,
+        adminRating: assignedRating !== null ? Number(assignedRating) : undefined,
+        adminNotes: notes,
+      }, { Authorization: `Bearer ${token}` })
+
+      if (res?.data?.success) {
+        toast.success(res.data.message || 'Rating updated successfully!', { id: toastId })
+        setActionModal(null)
+        loadRatings()
+      } else {
+        toast.error(res?.data?.message || 'Failed to update rating', { id: toastId })
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Error updating rating', { id: toastId })
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to permanently delete this rating/review?')) return
+    setIsProcessing(true)
+    const toastId = toast.loading('Deleting rating...')
+    try {
+      const res = await apiConnector('DELETE', `/api/v1/admin/ratings/${id}`, null, { Authorization: `Bearer ${token}` })
+      if (res?.data?.success) {
+        toast.success('Rating deleted successfully', { id: toastId })
+        setActionModal(null)
+        loadRatings()
+      } else {
+        toast.error(res?.data?.message || 'Failed to delete rating', { id: toastId })
+      }
+    } catch (err) {
+      toast.error('Error deleting rating', { id: toastId })
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  // Filter list
+  const uniquePractitioners = Array.from(
+    new Map(ratings.map(r => [r.practitionerId, { id: r.practitionerId, name: r.practitionerName }])).values()
+  ).filter(p => p.id && p.name)
+
+  const filteredRatings = ratings.filter(r => {
+    const matchesStatus = statusFilter === 'all' || r.status === statusFilter
+    const matchesPractitioner = selectedPractitioner === 'all' || String(r.practitionerId) === String(selectedPractitioner)
+    const q = search.toLowerCase().trim()
+    const matchesSearch = !q ||
+      r.learnerName?.toLowerCase().includes(q) ||
+      r.learnerEmail?.toLowerCase().includes(q) ||
+      r.practitionerName?.toLowerCase().includes(q) ||
+      r.content?.toLowerCase().includes(q)
+
+    return matchesStatus && matchesPractitioner && matchesSearch
+  })
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      {/* KPI Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 16, padding: '20px 24px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+          <div style={{ color: '#64748B', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', marginBottom: 6 }}>Total Submissions</div>
+          <div style={{ color: '#0F172A', fontSize: 28, fontWeight: 900 }}>{stats.total}</div>
+          <div style={{ color: '#64748B', fontSize: 12, marginTop: 4 }}>All learner feedback records</div>
+        </div>
+
+        <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 16, padding: '20px 24px' }}>
+          <div style={{ color: '#B45309', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#F59E0B' }} />
+            Pending Verification
+          </div>
+          <div style={{ color: '#92400E', fontSize: 28, fontWeight: 900 }}>{stats.pending}</div>
+          <div style={{ color: '#B45309', fontSize: 12, marginTop: 4 }}>Awaiting admin approval</div>
+        </div>
+
+        <div style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: 16, padding: '20px 24px' }}>
+          <div style={{ color: '#047857', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10B981' }} />
+            Approved &amp; Live
+          </div>
+          <div style={{ color: '#065F46', fontSize: 28, fontWeight: 900 }}>{stats.approved}</div>
+          <div style={{ color: '#047857', fontSize: 12, marginTop: 4 }}>Visible on practitioner profiles</div>
+        </div>
+
+        <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 16, padding: '20px 24px' }}>
+          <div style={{ color: '#B91C1C', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#EF4444' }} />
+            Rejected / Hidden
+          </div>
+          <div style={{ color: '#991B1B', fontSize: 28, fontWeight: 900 }}>{stats.rejected}</div>
+          <div style={{ color: '#B91C1C', fontSize: 12, marginTop: 4 }}>Filtered out of public view</div>
+        </div>
+
+        <div style={{ background: 'linear-gradient(135deg, #1E1B4B 0%, #312E81 100%)', borderRadius: 16, padding: '20px 24px', color: '#FFFFFF' }}>
+          <div style={{ color: '#A5B4FC', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <FiStar color="#FBBF24" /> Platform Avg Rating
+          </div>
+          <div style={{ color: '#FFFFFF', fontSize: 28, fontWeight: 900, display: 'flex', alignItems: 'center', gap: 6 }}>
+            {stats.platformAvg > 0 ? stats.platformAvg : '5.0'} <span style={{ color: '#FBBF24', fontSize: 20 }}>★</span>
+          </div>
+          <div style={{ color: '#C7D2FE', fontSize: 12, marginTop: 4 }}>Verified score average</div>
+        </div>
+      </div>
+
+      {/* Action & Filter Bar */}
+      <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 16, padding: '18px 24px', display: 'flex', flexWrap: 'wrap', gap: 14, alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+        {/* Status Tabs */}
+        <div style={{ display: 'flex', gap: 6, background: '#F1F5F9', padding: 4, borderRadius: 12 }}>
+          {[
+            { id: 'all', label: 'All Reviews', count: stats.total },
+            { id: 'pending', label: 'Pending Moderation', count: stats.pending, highlight: stats.pending > 0 },
+            { id: 'approved', label: 'Approved & Live', count: stats.approved },
+            { id: 'rejected', label: 'Rejected', count: stats.rejected },
+          ].map(tab => {
+            const isTabActive = statusFilter === tab.id
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setStatusFilter(tab.id)}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: 8,
+                  border: 'none',
+                  background: isTabActive ? '#FFFFFF' : 'transparent',
+                  color: isTabActive ? '#0F172A' : '#64748B',
+                  fontWeight: isTabActive ? 800 : 600,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  boxShadow: isTabActive ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
+                  transition: 'all 0.15s'
+                }}
+              >
+                {tab.label}
+                <span style={{
+                  padding: '2px 7px',
+                  borderRadius: 10,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  background: tab.highlight ? '#F59E0B' : (isTabActive ? '#E2E8F0' : '#E2E8F0'),
+                  color: tab.highlight ? '#FFFFFF' : '#475569'
+                }}>
+                  {tab.count}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Search & Practitioner Filter */}
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', flex: 1, justifyContent: 'flex-end' }}>
+          <div style={{ position: 'relative', minWidth: 220 }}>
+            <FiSearch style={{ position: 'absolute', left: 12, top: 12, color: '#94A3B8' }} />
+            <input
+              type="text"
+              placeholder="Search learner, practitioner, or text..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '9px 12px 9px 34px',
+                background: '#F8FAFC',
+                border: '1px solid #E2E8F0',
+                borderRadius: 10,
+                fontSize: 13,
+                color: '#0F172A',
+                outline: 'none'
+              }}
+            />
+          </div>
+
+          <select
+            value={selectedPractitioner}
+            onChange={e => setSelectedPractitioner(e.target.value)}
+            style={{
+              padding: '9px 12px',
+              background: '#F8FAFC',
+              border: '1px solid #E2E8F0',
+              borderRadius: 10,
+              fontSize: 13,
+              color: '#0F172A',
+              fontWeight: 600,
+              outline: 'none'
+            }}
+          >
+            <option value="all">All Practitioners ({uniquePractitioners.length})</option>
+            {uniquePractitioners.map(p => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+
+          <button
+            onClick={loadRatings}
+            style={{
+              padding: '9px 14px',
+              background: '#F1F5F9',
+              border: '1px solid #CBD5E1',
+              borderRadius: 10,
+              color: '#334155',
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
+            }}
+          >
+            <FiRefreshCw size={13} /> Refresh
+          </button>
+        </div>
+      </div>
+
+      {/* Ratings Table */}
+      <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 16, overflow: 'hidden', boxShadow: '0 4px 14px rgba(0,0,0,0.03)' }}>
+        {loading ? (
+          <div style={{ padding: '60px 0', textAlign: 'center', color: '#64748B' }}>
+            <FiRefreshCw className="animate-spin" size={24} style={{ margin: '0 auto 12px' }} />
+            <div>Loading rating records...</div>
+          </div>
+        ) : filteredRatings.length === 0 ? (
+          <div style={{ padding: '60px 0', textAlign: 'center', color: '#64748B' }}>
+            <FiCheck size={32} style={{ color: '#10B981', margin: '0 auto 12px' }} />
+            <h3 style={{ fontSize: 16, fontWeight: 700, color: '#0F172A', margin: '0 0 6px' }}>No Ratings Found</h3>
+            <p style={{ margin: 0, fontSize: 13 }}>There are no rating submissions matching your current filter criteria.</p>
+          </div>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 13 }}>
+              <thead>
+                <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#475569', fontSize: 11.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  <th style={{ padding: '14px 20px' }}>Learner</th>
+                  <th style={{ padding: '14px 20px' }}>Practitioner</th>
+                  <th style={{ padding: '14px 20px' }}>Rating</th>
+                  <th style={{ padding: '14px 20px', minWidth: 260 }}>Review &amp; Feedback</th>
+                  <th style={{ padding: '14px 20px' }}>Date</th>
+                  <th style={{ padding: '14px 20px' }}>Status</th>
+                  <th style={{ padding: '14px 20px', textAlign: 'right' }}>Moderation Actions</th>
+                </tr>
+              </thead>
+              <tbody style={{ divideY: '1px solid #E2E8F0' }}>
+                {filteredRatings.map((item) => {
+                  const isPending = item.status === 'pending'
+                  const isApproved = item.status === 'approved'
+                  const isRejected = item.status === 'rejected'
+
+                  return (
+                    <tr key={item._id} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                      {/* Learner */}
+                      <td style={{ padding: '16px 20px', verticalAlign: 'top' }}>
+                        <div style={{ fontWeight: 700, color: '#0F172A' }}>{item.learnerName}</div>
+                        <div style={{ fontSize: 12, color: '#64748B' }}>{item.learnerEmail}</div>
+                      </td>
+
+                      {/* Practitioner */}
+                      <td style={{ padding: '16px 20px', verticalAlign: 'top' }}>
+                        <div style={{ fontWeight: 700, color: '#1E293B' }}>{item.practitionerName}</div>
+                        {item.courseName && (
+                          <div style={{ fontSize: 11, color: '#6366F1', fontWeight: 600 }}>Course: {item.courseName}</div>
+                        )}
+                      </td>
+
+                      {/* Rating */}
+                      <td style={{ padding: '16px 20px', verticalAlign: 'top' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#F59E0B', fontWeight: 800, fontSize: 14 }}>
+                          {'★'.repeat(item.adminRating !== null ? item.adminRating : item.rating)}
+                          {'☆'.repeat(5 - (item.adminRating !== null ? item.adminRating : item.rating))}
+                        </div>
+                        <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>
+                          {item.adminRating !== null ? `Assigned: ${item.adminRating}★ (Raw: ${item.rating}★)` : `Submitted: ${item.rating}★`}
+                        </div>
+                      </td>
+
+                      {/* Review text */}
+                      <td style={{ padding: '16px 20px', verticalAlign: 'top' }}>
+                        <p style={{ margin: 0, color: '#334155', lineHeight: 1.5, fontSize: 13 }}>
+                          "{item.content}"
+                        </p>
+                        {item.adminNotes && (
+                          <div style={{ marginTop: 6, fontSize: 11, color: '#4F46E5', background: '#EEF2FF', padding: '4px 8px', borderRadius: 6 }}>
+                            <strong>Admin Note:</strong> {item.adminNotes}
+                          </div>
+                        )}
+                      </td>
+
+                      {/* Date */}
+                      <td style={{ padding: '16px 20px', verticalAlign: 'top', color: '#64748B', fontSize: 12, whiteSpace: 'nowrap' }}>
+                        {fmtDate(item.createdAt)}
+                      </td>
+
+                      {/* Status */}
+                      <td style={{ padding: '16px 20px', verticalAlign: 'top' }}>
+                        {isPending && (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: '#FFFBEB', color: '#B45309', border: '1px solid #FDE68A', fontSize: 11.5, fontWeight: 800 }}>
+                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#F59E0B' }} />
+                            Pending Admin Verification
+                          </span>
+                        )}
+                        {isApproved && (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: '#ECFDF5', color: '#047857', border: '1px solid #A7F3D0', fontSize: 11.5, fontWeight: 800 }}>
+                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10B981' }} />
+                            Approved &amp; Live
+                          </span>
+                        )}
+                        {isRejected && (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: '#FEF2F2', color: '#B91C1C', border: '1px solid #FECACA', fontSize: 11.5, fontWeight: 800 }}>
+                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#EF4444' }} />
+                            Rejected
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Actions */}
+                      <td style={{ padding: '16px 20px', verticalAlign: 'top', textAlign: 'right' }}>
+                        <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                          <button
+                            onClick={() => {
+                              setActionModal({ isOpen: true, type: 'approve', item })
+                              setOverrideRating(item.adminRating || item.rating || 5)
+                              setAdminNotes(item.adminNotes || '')
+                            }}
+                            title="Verify and Approve"
+                            style={{
+                              padding: '6px 12px',
+                              background: isApproved ? '#F1F5F9' : '#10B981',
+                              color: isApproved ? '#334155' : '#FFFFFF',
+                              border: isApproved ? '1px solid #CBD5E1' : 'none',
+                              borderRadius: 8,
+                              fontSize: 12,
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 4
+                            }}
+                          >
+                            <FiCheck size={13} /> {isApproved ? 'Edit Rating' : 'Approve'}
+                          </button>
+
+                          {item.status !== 'rejected' && (
+                            <button
+                              onClick={() => {
+                                setActionModal({ isOpen: true, type: 'reject', item })
+                                setAdminNotes(item.adminNotes || '')
+                              }}
+                              title="Reject rating"
+                              style={{
+                                padding: '6px 10px',
+                                background: '#FFF1F2',
+                                color: '#BE123C',
+                                border: '1px solid #FECDD3',
+                                borderRadius: 8,
+                                fontSize: 12,
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 4
+                              }}
+                            >
+                              <FiX size={13} /> Reject
+                            </button>
+                          )}
+
+                          <button
+                            onClick={() => handleDelete(item._id)}
+                            title="Delete rating"
+                            style={{
+                              padding: '6px 8px',
+                              background: '#F8FAFC',
+                              color: '#94A3B8',
+                              border: '1px solid #E2E8F0',
+                              borderRadius: 8,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <FiTrash2 size={13} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Verification & Approval Action Modal */}
+      {actionModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ background: '#FFFFFF', borderRadius: 20, width: '100%', maxWidth: 500, padding: 28, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#0F172A' }}>
+                {actionModal.type === 'approve' ? 'Verify & Publish Rating' : 'Reject Rating'}
+              </h3>
+              <button onClick={() => setActionModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B' }}>
+                <FiX size={20} />
+              </button>
+            </div>
+
+            {/* Review Snapshot Card */}
+            <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12, padding: 16, marginBottom: 20 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                <span style={{ fontWeight: 700, color: '#0F172A', fontSize: 13 }}>{actionModal.item.learnerName}</span>
+                <span style={{ color: '#F59E0B', fontWeight: 800, fontSize: 13 }}>Raw: {actionModal.item.rating}★</span>
+              </div>
+              <p style={{ margin: 0, color: '#475569', fontSize: 13, fontStyle: 'italic', lineHeight: 1.4 }}>
+                "{actionModal.item.content}"
+              </p>
+              <div style={{ marginTop: 8, fontSize: 11.5, color: '#64748B' }}>
+                For Practitioner: <strong>{actionModal.item.practitionerName}</strong>
+              </div>
+            </div>
+
+            {actionModal.type === 'approve' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#0F172A', marginBottom: 6 }}>
+                    Assigned Published Rating (Stars)
+                  </label>
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setOverrideRating(star)}
+                        style={{
+                          flex: 1,
+                          padding: '10px 0',
+                          borderRadius: 10,
+                          border: overrideRating === star ? '2px solid #F59E0B' : '1px solid #CBD5E1',
+                          background: overrideRating === star ? '#FFFBEB' : '#FFFFFF',
+                          color: overrideRating === star ? '#B45309' : '#475569',
+                          fontWeight: 800,
+                          fontSize: 14,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 4
+                        }}
+                      >
+                        {star} ★
+                      </button>
+                    ))}
+                  </div>
+                  <span style={{ fontSize: 11.5, color: '#64748B', marginTop: 4, display: 'block' }}>
+                    Keep original submitted score ({actionModal.item.rating}★) or override with admin-approved value.
+                  </span>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#0F172A', marginBottom: 6 }}>
+                    Admin Notes (Optional, internal audit)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Verified authentic client session."
+                    value={adminNotes}
+                    onChange={e => setAdminNotes(e.target.value)}
+                    style={{ width: '100%', padding: '10px 14px', border: '1px solid #CBD5E1', borderRadius: 10, fontSize: 13 }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {actionModal.type === 'reject' && (
+              <div>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#0F172A', marginBottom: 6 }}>
+                  Reason for Rejection (Optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g., Inappropriate content, spam, unverified."
+                  value={adminNotes}
+                  onChange={e => setAdminNotes(e.target.value)}
+                  style={{ width: '100%', padding: '10px 14px', border: '1px solid #CBD5E1', borderRadius: 10, fontSize: 13 }}
+                />
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+              <button
+                onClick={() => setActionModal(null)}
+                style={{ flex: 1, padding: '11px', background: '#F1F5F9', border: '1px solid #CBD5E1', borderRadius: 10, color: '#475569', fontWeight: 700, cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              {actionModal.type === 'approve' && (
+                <button
+                  onClick={() => handleVerify(actionModal.item._id, 'approved', overrideRating, adminNotes)}
+                  disabled={isProcessing}
+                  style={{ flex: 1, padding: '11px', background: 'linear-gradient(135deg, #10B981, #059669)', border: 'none', borderRadius: 10, color: '#FFFFFF', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(16,185,129,0.25)' }}
+                >
+                  {isProcessing ? 'Publishing...' : 'Approve & Publish'}
+                </button>
+              )}
+              {actionModal.type === 'reject' && (
+                <button
+                  onClick={() => handleVerify(actionModal.item._id, 'rejected', null, adminNotes)}
+                  disabled={isProcessing}
+                  style={{ flex: 1, padding: '11px', background: '#DC2626', border: 'none', borderRadius: 10, color: '#FFFFFF', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  {isProcessing ? 'Rejecting...' : 'Reject Rating'}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Main Admin Panel ─────────────────────────────────────────────────────────
 const TABS = [
   { id: 'dashboard', label: 'Dashboard', icon: <FiGrid /> },
+  { id: 'ratings', label: 'Ratings & Reviews', icon: <FiCheck /> },
   { id: 'coupons', label: 'Coupons & Discounts', icon: <FiTag /> },
   { id: 'clients', label: 'Learners', icon: <FiUsers /> },
   { id: 'courses', label: 'Courses & Plans', icon: <FiBookOpen /> },
@@ -2863,6 +3421,7 @@ export default function AdminApp() {
         {/* Tab Content (Scrolls vertically) */}
         <div style={{ flex: 1, padding: '28px 32px', overflowY: 'auto' }}>
           {activeTab === 'dashboard' && <DashboardTab stats={stats} recentPayments={recentPayments} loading={statsLoading} />}
+          {activeTab === 'ratings' && <RatingsTab />}
           {activeTab === 'coupons' && <CouponsTab />}
           {activeTab === 'clients' && <ClientsTab />}
           {activeTab === 'courses' && <CoursesTab />}

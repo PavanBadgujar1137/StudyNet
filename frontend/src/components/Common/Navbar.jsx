@@ -89,7 +89,7 @@ function Navbar() {
             <div className="hidden sm:flex items-center gap-x-3">
               <Link to="/login">
                 <button className="min-h-[44px] rounded-full border border-royal-blue/30 bg-white/80 px-5 py-2 text-sm font-bold text-navy hover:bg-royal-blue/5 hover:border-royal-blue transition-all duration-300 hover:scale-95 shadow-sm">
-                  Log in
+                  Sign In
                 </button>
               </Link>
               <Link to="/signup">
@@ -146,7 +146,7 @@ function Navbar() {
               <div className="pt-5 mt-4 border-t border-slate-100 flex flex-col sm:flex-row gap-3">
                 <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="w-full">
                   <button className="w-full min-h-[44px] rounded-xl border border-royal-blue/30 bg-white py-2.5 text-center text-sm font-bold text-navy hover:bg-royal-blue/5">
-                    Log in
+                    Sign In
                   </button>
                 </Link>
                 <Link to="/signup" onClick={() => setIsMobileMenuOpen(false)} className="w-full">

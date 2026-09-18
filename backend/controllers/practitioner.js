@@ -251,25 +251,32 @@ exports.getPractitionerByHandle = async (req, res) => {
     const practitionerCourses = await Course.find({ instructor: practUserId }).select("_id").lean()
     const courseIds = practitionerCourses.map(c => c._id)
 
-    const testimonials = await Testimonial.find({ practitioner: practUserId, isApproved: true }).sort({ createdAt: -1 }).lean()
+    const testimonials = await Testimonial.find({
+      practitioner: practUserId,
+      $or: [{ status: "approved" }, { isApproved: true }]
+    }).sort({ createdAt: -1 }).lean()
+
     const courseReviews = await RatingAndReview.find({
       $or: [
         { practitioner: practUserId },
         { course: { $in: courseIds } }
+      ],
+      $and: [
+        { $or: [{ status: "approved" }, { isApproved: true }] }
       ]
     }).populate("user", "firstName lastName image").sort({ createdAt: -1 }).lean()
 
     const practitionerReviews = [
       ...testimonials.map(t => ({
         _id: t._id,
-        rating: t.rating || 5,
+        rating: t.adminRating !== undefined && t.adminRating !== null ? t.adminRating : (t.rating || 5),
         review: t.content,
         clientName: t.clientName || "Verified Client",
         createdAt: t.createdAt
       })),
       ...courseReviews.map(r => ({
         _id: r._id,
-        rating: r.rating || 5,
+        rating: r.adminRating !== undefined && r.adminRating !== null ? r.adminRating : (r.rating || 5),
         review: r.review,
         clientName: r.user ? `${r.user.firstName || ''} ${r.user.lastName || ''}`.trim() : "Verified Client",
         createdAt: r.createdAt
@@ -278,12 +285,14 @@ exports.getPractitionerByHandle = async (req, res) => {
 
     const totalSum = practitionerReviews.reduce((sum, r) => sum + Number(r.rating || 5), 0)
     const computedRating = practitionerReviews.length > 0 ? Number((totalSum / practitionerReviews.length).toFixed(1)) : null
+    const finalRating = profile.adminVerifiedRating !== undefined && profile.adminVerifiedRating !== null ? profile.adminVerifiedRating : computedRating
 
     const profileObj = profile.toObject()
     profileObj.offers = userOffers || []
     profileObj.userOffers = userOffers || []
     profileObj.reviews = practitionerReviews || []
-    profileObj.rating = computedRating
+    profileObj.rating = finalRating
+    profileObj.reviewCount = practitionerReviews.length
 
     return res.status(200).json({
       success: true,
@@ -363,25 +372,32 @@ exports.getPractitionerDashboard = async (req, res) => {
     const practitionerCourses = await Course.find({ instructor: userId }).select("_id").lean()
     const courseIds = practitionerCourses.map(c => c._id)
 
-    const testimonials = await Testimonial.find({ practitioner: userId, isApproved: true }).sort({ createdAt: -1 }).lean()
+    const testimonials = await Testimonial.find({
+      practitioner: userId,
+      $or: [{ status: "approved" }, { isApproved: true }]
+    }).sort({ createdAt: -1 }).lean()
+
     const courseReviews = await RatingAndReview.find({
       $or: [
         { practitioner: userId },
         { course: { $in: courseIds } }
+      ],
+      $and: [
+        { $or: [{ status: "approved" }, { isApproved: true }] }
       ]
     }).populate("user", "firstName lastName image").sort({ createdAt: -1 }).lean()
 
     const practitionerReviews = [
       ...testimonials.map(t => ({
         _id: t._id,
-        rating: t.rating || 5,
+        rating: t.adminRating !== undefined && t.adminRating !== null ? t.adminRating : (t.rating || 5),
         review: t.content,
         clientName: t.clientName || "Verified Client",
         createdAt: t.createdAt
       })),
       ...courseReviews.map(r => ({
         _id: r._id,
-        rating: r.rating || 5,
+        rating: r.adminRating !== undefined && r.adminRating !== null ? r.adminRating : (r.rating || 5),
         review: r.review,
         clientName: r.user ? `${r.user.firstName || ''} ${r.user.lastName || ''}`.trim() : "Verified Client",
         createdAt: r.createdAt
@@ -390,9 +406,10 @@ exports.getPractitionerDashboard = async (req, res) => {
 
     const totalSum = practitionerReviews.reduce((sum, r) => sum + Number(r.rating || 5), 0)
     const computedRating = practitionerReviews.length > 0 ? Number((totalSum / practitionerReviews.length).toFixed(1)) : null
+    const finalRating = profile?.adminVerifiedRating !== undefined && profile?.adminVerifiedRating !== null ? profile.adminVerifiedRating : computedRating
 
     const profileObj = profile ? profile.toObject() : {}
-    profileObj.rating = computedRating
+    profileObj.rating = finalRating
     profileObj.reviews = practitionerReviews
 
     return res.status(200).json({
@@ -406,7 +423,7 @@ exports.getPractitionerDashboard = async (req, res) => {
         commissionPercentage: profile?.planCommission || 8,
         circles,
         reviews: practitionerReviews,
-        rating: computedRating,
+        rating: finalRating,
       },
       practitioner: profileObj,
       reviews: practitionerReviews,
@@ -802,9 +819,13 @@ exports.updatePractitionerProfile = async (req, res) => {
       specialties,
       languages,
       sessionRate,
+      experienceYears,
+      availabilityText,
+      formats,
       bankAccountName,
       bankAccountNumber,
       bankIfscCode,
+      bankName,
     } = req.body
 
     let profile = await PractitionerProfile.findOne({ user: userId })
@@ -838,9 +859,13 @@ exports.updatePractitionerProfile = async (req, res) => {
     if (Array.isArray(specialties)) profile.specialties = specialties
     if (Array.isArray(languages)) profile.languages = languages
     if (sessionRate !== undefined) profile.sessionRate = Number(sessionRate)
+    if (experienceYears !== undefined) profile.experienceYears = Number(experienceYears)
+    if (availabilityText !== undefined) profile.availabilityText = availabilityText
+    if (Array.isArray(formats)) profile.formats = formats
     if (bankAccountName !== undefined) profile.bankAccountName = bankAccountName
     if (bankAccountNumber !== undefined) profile.bankAccountNumber = bankAccountNumber
     if (bankIfscCode !== undefined) profile.bankIfscCode = bankIfscCode
+    if (bankName !== undefined) profile.bankName = bankName
 
     await profile.save()
 

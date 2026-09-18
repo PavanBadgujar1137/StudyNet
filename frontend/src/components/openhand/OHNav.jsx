@@ -110,7 +110,7 @@ export function OHNav({ dark = false }) {
             </div>
           ) : (
             <>
-              <Link to="/login" className="oh-nav__link oh-nav__link--login">Log in</Link>
+              <Link to="/login" className="oh-nav__link oh-nav__link--login">Sign In</Link>
               {/* <OHButton href="/start-free" size="sm">
                 Start free
               </OHButton> */}
@@ -149,7 +149,7 @@ export function OHNav({ dark = false }) {
               </button>
             ) : (
               <>
-                <Link to="/login" className="oh-btn oh-btn--ghost oh-btn--full">Log in</Link>
+                <Link to="/login" className="oh-btn oh-btn--ghost oh-btn--full">Sign In</Link>
                 {/* <OHButton href="/start-free" fullWidth>Start free</OHButton> */}
               </>
             )}

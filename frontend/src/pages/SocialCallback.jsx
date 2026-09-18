@@ -34,6 +34,21 @@ function SocialCallback() {
     const code = searchParams.get('code')
     const state = searchParams.get('state')
 
+    // Extract accountType from state or sessionStorage
+    let savedAccountType = undefined
+    if (state) {
+      try {
+        const parsedState = JSON.parse(decodeURIComponent(state))
+        if (parsedState?.accountType) savedAccountType = parsedState.accountType
+      } catch (e) {
+        if (state.includes("Practitioner")) savedAccountType = "Practitioner"
+        else if (state.includes("Learner")) savedAccountType = "Learner"
+      }
+    }
+    if (!savedAccountType) {
+      savedAccountType = sessionStorage.getItem("socialAuthAccountType") || undefined
+    }
+
     if (idToken) {
       const payload = decodeJwt(idToken)
       if (payload && payload.email) {
@@ -42,6 +57,7 @@ function SocialCallback() {
           firstName: payload.given_name || payload.name || payload.email.split('@')[0],
           lastName: payload.family_name || '',
           image: payload.picture || '',
+          accountType: savedAccountType,
         }
 
         if (window.opener) {
@@ -62,6 +78,7 @@ function SocialCallback() {
         code,
         email: searchParams.get('email') || undefined,
         redirectUri: `${window.location.origin}/social-callback`,
+        accountType: savedAccountType,
       }
 
       if (window.opener) {

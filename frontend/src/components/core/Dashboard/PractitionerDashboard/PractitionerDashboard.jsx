@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { useSelector, useDispatch } from 'react-redux'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useSelector } from 'react-redux'
+import { useSearchParams } from 'react-router-dom'
 import { 
   FiGrid, 
   FiTag, 
@@ -18,7 +18,6 @@ import {
   FiShare2,
   FiCheckSquare,
   FiLock,
-  FiLogOut,
   FiPercent
 } from 'react-icons/fi'
 import Overview from './Overview'
@@ -36,15 +35,12 @@ import CommunityChatHub from '../CommunityChatHub'
 import { PractitionerOnboarding } from '../../../../pages/PractitionerOnboarding'
 import OHPricingSection from '../../../openhand/OHPricingSection'
 import { toast } from 'react-hot-toast'
-import { logout } from '../../../../services/operations/authAPI'
 import { apiConnector } from '../../../../services/apiConnector'
 import { fetchPractitionerDashboardData } from '../../../../services/operations/dashboardAPI'
 
 import { formatPractitionerName } from '../../../../utils/formatName'
 
 export function PractitionerDashboard() {
-  const dispatch = useDispatch()
-  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const activeSection = searchParams.get('tab') || 'dash'
 

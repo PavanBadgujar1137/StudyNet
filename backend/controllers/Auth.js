@@ -159,6 +159,7 @@ exports.signup = async (req, res) => {
       success: true,
       token,
       user: userObj,
+      isNewRegistration: true,
       message: "User registered successfully",
     })
   } catch (error) {
@@ -216,6 +217,27 @@ exports.login = async (req, res) => {
         success: false,
         message: `User is not Registered with Us Please SignUp to Continue`,
       })
+    }
+
+    // Role-based login validation (Learner vs Practitioner panels)
+    const requestedRole = accountType || role || expectedAccountType
+    if (requestedRole && user.accountType !== "Admin") {
+      const isUserPractitioner = user.accountType === "Practitioner" || user.accountType === "Instructor"
+      const isUserLearner = user.accountType === "Learner" || user.accountType === "Student" || user.accountType === "Client"
+
+      if ((requestedRole === "Learner" || requestedRole === "Student" || requestedRole === "Client") && isUserPractitioner) {
+        return res.status(400).json({
+          success: false,
+          message: "This email is registered as a Practitioner account. Please log in using the Practitioner Login.",
+        })
+      }
+
+      if ((requestedRole === "Practitioner" || requestedRole === "Instructor") && isUserLearner) {
+        return res.status(400).json({
+          success: false,
+          message: "This email is registered as a Learner account. Please log in using the Learner Login.",
+        })
+      }
     }
 
     // Check if account is scheduled for deletion or has reached permanent deletion date
@@ -351,6 +373,8 @@ exports.socialLogin = async (req, res) => {
     const emailLower = String(email).toLowerCase().trim()
     let user = await User.findOne({ email: emailLower }).populate("additionalDetails")
 
+    const isNewRegistration = !user
+
     if (!user) {
       // Create new account for social registration
       const Profile = require("../models/Profile")
@@ -396,6 +420,27 @@ exports.socialLogin = async (req, res) => {
 
       user = await User.findById(user._id).populate("additionalDetails")
     } else {
+      // Role-based login validation (Learner vs Practitioner panels)
+      const requestedRole = accountType || req.body.expectedAccountType || req.body.role
+      if (requestedRole && user.accountType !== "Admin") {
+        const isUserPractitioner = user.accountType === "Practitioner" || user.accountType === "Instructor"
+        const isUserLearner = user.accountType === "Learner" || user.accountType === "Student" || user.accountType === "Client"
+
+        if ((requestedRole === "Learner" || requestedRole === "Student" || requestedRole === "Client") && isUserPractitioner) {
+          return res.status(400).json({
+            success: false,
+            message: "This email is registered as a Practitioner account. Please log in using the Practitioner Login.",
+          })
+        }
+
+        if ((requestedRole === "Practitioner" || requestedRole === "Instructor") && isUserLearner) {
+          return res.status(400).json({
+            success: false,
+            message: "This email is registered as a Learner account. Please log in using the Learner Login.",
+          })
+        }
+      }
+
       // Check if account is scheduled for deletion or has reached permanent deletion date
       if (user.isDeleted) {
         const now = new Date()
@@ -462,7 +507,10 @@ exports.socialLogin = async (req, res) => {
       success: true,
       token,
       user,
-      message: `Successfully authenticated via ${provider === "google" ? "Google" : "LinkedIn"}!`,
+      isNewRegistration,
+      message: isNewRegistration
+        ? "Registration successful! Welcome to OpenHand."
+        : `Successfully authenticated via ${provider === "google" ? "Google" : "LinkedIn"}!`,
     })
   } catch (error) {
     console.error("socialLogin error:", error)

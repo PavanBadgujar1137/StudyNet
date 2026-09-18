@@ -26,6 +26,53 @@ export function PractitionerPublicProfile() {
   const [showCouponModal, setShowCouponModal] = useState(false)
   const [selectedOffer, setSelectedOffer] = useState(null)
 
+  // Review & Rating Modal State
+  const [showReviewModal, setShowReviewModal] = useState(false)
+  const [userRating, setUserRating] = useState(5)
+  const [reviewContent, setReviewContent] = useState('')
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false)
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault()
+    const token = localStorage.getItem('token')
+      ? JSON.parse(localStorage.getItem('token'))
+      : null
+
+    if (!token) {
+      toast.error('Please sign in as a learner to submit feedback.')
+      navigate('/login')
+      return
+    }
+
+    if (!reviewContent.trim()) {
+      toast.error('Please enter your review text.')
+      return
+    }
+
+    setIsSubmittingReview(true)
+    const toastId = toast.loading('Submitting feedback for Admin Verification...')
+    try {
+      const practUserId = profile?.user?._id || profile?.user?.id || profile?.user
+      const res = await apiConnector('POST', '/api/v1/testimonials', {
+        practitionerId: practUserId,
+        rating: userRating,
+        content: reviewContent,
+      }, { Authorization: `Bearer ${token}` })
+
+      if (res?.data?.success) {
+        toast.success(res.data.message || '⭐ Submitted for Admin Verification! It will appear once approved.', { id: toastId, duration: 6000 })
+        setShowReviewModal(false)
+        setReviewContent('')
+      } else {
+        toast.error(res?.data?.message || 'Failed to submit review', { id: toastId })
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Error submitting review', { id: toastId })
+    } finally {
+      setIsSubmittingReview(false)
+    }
+  }
+
   useEffect(() => {
     const fetchProfile = async () => {
       setLoading(true)
@@ -328,14 +375,44 @@ export function PractitionerPublicProfile() {
         </div>
 
         {/* Verified Client Reviews Section */}
-        {reviews.length > 0 && (
-          <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '24px', padding: '32px', boxShadow: '0 10px 25px rgba(15, 23, 42, 0.04)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '24px', padding: '32px', boxShadow: '0 10px 25px rgba(15, 23, 42, 0.04)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14, marginBottom: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#0F172A', margin: 0 }}>
                 Verified Client Feedback ({reviews.length})
               </h2>
+              {profile.rating && (
+                <span style={{ background: '#FEF3C7', color: '#B45309', padding: '4px 10px', borderRadius: 20, fontSize: 13, fontWeight: 800 }}>
+                  ★ {profile.rating}
+                </span>
+              )}
             </div>
 
+            <button
+              onClick={() => setShowReviewModal(true)}
+              style={{
+                padding: '9px 18px',
+                borderRadius: '20px',
+                background: '#F1F5F9',
+                border: '1px solid #CBD5E1',
+                color: '#1E293B',
+                fontWeight: 700,
+                fontSize: '13px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              ★ Leave Feedback / Review
+            </button>
+          </div>
+
+          {reviews.length === 0 ? (
+            <div style={{ padding: '24px', textAlign: 'center', background: '#F8FAFC', borderRadius: '16px', color: '#64748B', fontSize: '13.5px' }}>
+              No reviews published yet. Be the first client to book a session and share your experience!
+            </div>
+          ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
               {reviews.map((rev, i) => (
                 <div key={rev._id || i} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '20px' }}>
@@ -344,7 +421,7 @@ export function PractitionerPublicProfile() {
                       {'★'.repeat(rev.rating || 5)}
                     </span>
                     <span style={{ fontWeight: 700, fontSize: '13.5px', color: '#0F172A' }}>
-                      — {rev.user?.firstName ? `${rev.user.firstName} ${rev.user.lastName || ''}` : 'Verified Client'}
+                      — {rev.clientName || (rev.user?.firstName ? `${rev.user.firstName} ${rev.user.lastName || ''}` : 'Verified Client')}
                     </span>
                   </div>
                   <p style={{ margin: 0, fontSize: '13.5px', color: '#334155', lineHeight: '1.5' }}>
@@ -353,10 +430,91 @@ export function PractitionerPublicProfile() {
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
       </div>
+
+      {/* Leave Feedback Modal */}
+      {showReviewModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ background: '#FFFFFF', borderRadius: 24, width: '100%', maxWidth: 480, padding: 28, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#0F172A' }}>
+                Rate &amp; Review {practitionerName}
+              </h3>
+              <button onClick={() => setShowReviewModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B', fontSize: 20 }}>
+                ✕
+              </button>
+            </div>
+
+            <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 12, padding: 12, marginBottom: 16, fontSize: 12.5, color: '#1E40AF', lineHeight: 1.4 }}>
+              ℹ️ <strong>Admin Verification Notice:</strong> All feedback and ratings are reviewed by our platform moderation team before being published live.
+            </div>
+
+            <form onSubmit={handleReviewSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#0F172A', marginBottom: 8 }}>
+                  Your Rating
+                </label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setUserRating(star)}
+                      style={{
+                        flex: 1,
+                        padding: '10px 0',
+                        borderRadius: 10,
+                        border: userRating >= star ? '2px solid #F59E0B' : '1px solid #CBD5E1',
+                        background: userRating >= star ? '#FFFBEB' : '#FFFFFF',
+                        color: userRating >= star ? '#B45309' : '#64748B',
+                        fontWeight: 800,
+                        fontSize: 14,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {star} ★
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#0F172A', marginBottom: 6 }}>
+                  Your Feedback / Experience <sup>*</sup>
+                </label>
+                <textarea
+                  required
+                  rows={4}
+                  value={reviewContent}
+                  onChange={e => setReviewContent(e.target.value)}
+                  placeholder="Share details about your consultation, recovery, or learning experience..."
+                  style={{ width: '100%', padding: '12px', borderRadius: 12, border: '1px solid #CBD5E1', fontSize: 13.5, resize: 'vertical', outline: 'none' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: 12, marginTop: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => setShowReviewModal(false)}
+                  style={{ flex: 1, padding: '12px', background: '#F1F5F9', border: '1px solid #CBD5E1', borderRadius: 12, color: '#475569', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingReview}
+                  style={{ flex: 1, padding: '12px', background: 'linear-gradient(135deg, #10B981, #059669)', border: 'none', borderRadius: 12, color: '#FFFFFF', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(16,185,129,0.25)' }}
+                >
+                  {isSubmittingReview ? 'Submitting...' : 'Submit Feedback'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Pre-Session 6-Question Intake Modal (Stage 02) */}
       <IntakeModal
