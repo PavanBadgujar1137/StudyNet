@@ -353,6 +353,7 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
   const [videoUrlInput, setVideoUrlInput] = useState('')
   const [customDuration, setCustomDuration] = useState('')
   const [attachmentFiles, setAttachmentFiles] = useState([])
+  const [isDraggingVideo, setIsDraggingVideo] = useState(false)
   const [isDraggingAtt, setIsDraggingAtt] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -361,13 +362,23 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
   const attInputRef = useRef()
   const xhrRef = useRef(null)
 
+  const processSelectedVideo = async (file) => {
+    if (!file) return
+    setVideoFile(file)
+    setVideoUrlInput('')
+    if (!form.title.trim()) {
+      const cleanName = file.name.replace(/\.[^/.]+$/, '').replace(/[_-]/g, ' ')
+      setForm(f => ({ ...f, title: f.title || cleanName }))
+    }
+    const dur = await getVideoDuration(file)
+    if (dur > 0) setCustomDuration(String(dur))
+    toast.success(`Video "${file.name}" selected!`)
+  }
+
   const handleFileChange = async (e) => {
     const file = e.target.files[0]
     if (file) {
-      setVideoFile(file)
-      setVideoUrlInput('')
-      const dur = await getVideoDuration(file)
-      if (dur > 0) setCustomDuration(String(dur))
+      await processSelectedVideo(file)
     }
   }
 
@@ -621,26 +632,154 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
         </div>
 
         <div>
-          <label style={{ display: 'block', fontSize: 12, color: '#64748B', marginBottom: 4, fontWeight: 600 }}>Video File</label>
-          <label
-            htmlFor="course-video-file-input"
-            style={{ display: 'block', border: '2px dashed #CBD5E1', borderRadius: 10, padding: '20px', textAlign: 'center', cursor: 'pointer', background: videoFile ? '#F0FDF4' : '#F8FAFC', transition: 'all 0.2s' }}
-            onMouseEnter={e => e.currentTarget.style.borderColor = '#3B82F6'}
-            onMouseLeave={e => e.currentTarget.style.borderColor = '#CBD5E1'}
-          >
-            <FiVideo size={24} color={videoFile ? '#10B981' : '#94A3B8'} style={{ marginBottom: 8 }} />
-            {videoFile ? (
-              <div>
-                <div style={{ color: '#10B981', fontWeight: 600, fontSize: 14 }}>{videoFile.name}</div>
-                <div style={{ color: '#64748B', fontSize: 12 }}>{(videoFile.size / 1024 / 1024).toFixed(1)} MB {customDuration > 0 && `• ${formatDuration(customDuration)}`}</div>
-              </div>
-            ) : (
-              <div>
-                <div style={{ color: '#64748B', fontSize: 14 }}>Click to select video file</div>
-                <div style={{ color: '#94A3B8', fontSize: 12 }}>MP4, MOV, AVI, MKV (max 20GB) — macOS & iOS compatible</div>
-              </div>
-            )}
+          <label style={{ display: 'block', fontSize: 12, color: '#64748B', marginBottom: 6, fontWeight: 600 }}>
+            Video File (Direct Cloud Upload)
           </label>
+
+          {videoFile ? (
+            <div
+              onDragOver={(e) => { e.preventDefault(); setIsDraggingVideo(true); }}
+              onDragLeave={() => setIsDraggingVideo(false)}
+              onDrop={(e) => {
+                e.preventDefault()
+                setIsDraggingVideo(false)
+                if (e.dataTransfer.files?.[0]) processSelectedVideo(e.dataTransfer.files[0])
+              }}
+              style={{
+                border: isDraggingVideo ? '2px dashed #2563EB' : '1.5px solid #E2E8F0',
+                borderRadius: 12,
+                background: isDraggingVideo ? '#EFF6FF' : '#FFFFFF',
+                padding: '16px 18px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 14,
+                boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0, flex: 1 }}>
+                <div style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 10,
+                  background: '#DCFCE7',
+                  color: '#16A34A',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}>
+                  <FiVideo size={22} />
+                </div>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{
+                    color: '#0F172A',
+                    fontWeight: 700,
+                    fontSize: 14,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    {videoFile.name}
+                  </div>
+                  <div style={{ color: '#64748B', fontSize: 12, marginTop: 2, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <span>{(videoFile.size / 1024 / 1024).toFixed(1)} MB</span>
+                    {customDuration > 0 && <span>• {formatDuration(customDuration)}</span>}
+                    <span style={{ color: '#16A34A', fontWeight: 700, background: '#DCFCE7', padding: '1px 7px', borderRadius: 4, fontSize: 10.5 }}>
+                      ✓ Video Ready
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                <label
+                  htmlFor="course-video-file-input"
+                  style={{
+                    background: '#2563EB',
+                    color: '#FFFFFF',
+                    padding: '7px 13px',
+                    borderRadius: 8,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)',
+                  }}
+                >
+                  <FiRefreshCw size={12} /> Change
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setVideoFile(null)
+                    setCustomDuration('')
+                  }}
+                  style={{
+                    background: '#FEE2E2',
+                    color: '#DC2626',
+                    border: '1px solid #FECACA',
+                    padding: '7px 10px',
+                    borderRadius: 8,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
+                >
+                  <FiTrash2 size={12} /> Remove
+                </button>
+              </div>
+            </div>
+          ) : (
+            <label
+              htmlFor="course-video-file-input"
+              onDragOver={(e) => { e.preventDefault(); setIsDraggingVideo(true); }}
+              onDragLeave={() => setIsDraggingVideo(false)}
+              onDrop={(e) => {
+                e.preventDefault()
+                setIsDraggingVideo(false)
+                if (e.dataTransfer.files?.[0]) processSelectedVideo(e.dataTransfer.files[0])
+              }}
+              style={{
+                display: 'block',
+                border: isDraggingVideo ? '2px dashed #2563EB' : '2px dashed #CBD5E1',
+                borderRadius: 12,
+                padding: '28px 20px',
+                textAlign: 'center',
+                cursor: 'pointer',
+                background: isDraggingVideo ? '#EFF6FF' : '#FFFFFF',
+                boxShadow: isDraggingVideo ? '0 0 0 4px rgba(37, 99, 235, 0.15)' : 'none',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <div style={{
+                width: 48,
+                height: 48,
+                borderRadius: 12,
+                background: isDraggingVideo ? '#DBEAFE' : '#F1F5F9',
+                color: isDraggingVideo ? '#2563EB' : '#64748B',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 10px',
+              }}>
+                <FiVideo size={24} />
+              </div>
+              <div style={{ color: '#0F172A', fontSize: 14, fontWeight: 700 }}>
+                {isDraggingVideo ? 'Drop video file here' : 'Drag & drop video here, or click to browse'}
+              </div>
+              <div style={{ color: '#64748B', fontSize: 12, marginTop: 4 }}>
+                MP4, MOV, AVI, MKV, WebM (up to 20 GB) • Fast direct cloud upload
+              </div>
+            </label>
+          )}
+
           <input
             id="course-video-file-input"
             ref={videoInputRef}
@@ -648,7 +787,7 @@ function VideoUploadForm({ courseId, onSuccess, onCancel }) {
             accept="video/mp4,video/quicktime,video/x-m4v,video/*,.mp4,.mov,.mkv,.avi,.webm"
             style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', border: 0 }}
             onChange={(e) => {
-              handleFileChange(e)
+              if (e.target.files?.[0]) processSelectedVideo(e.target.files[0])
               e.target.value = ''
             }}
           />
@@ -1071,13 +1210,23 @@ function EditCourseModal({ course, onClose, onSuccess }) {
             <label style={{ display: 'block', fontSize: 12, color: '#64748B', marginBottom: 6, fontWeight: 600 }}>New Thumbnail (optional)</label>
             
             {thumbnailPreview || course.thumbnail ? (
-              <div style={{
-                borderRadius: 14,
-                overflow: 'hidden',
-                border: '1.5px solid #E2E8F0',
-                background: '#FFFFFF',
-                boxShadow: '0 4px 16px -2px rgba(15, 23, 42, 0.06)',
-              }}>
+              <div
+                onDragOver={(e) => { e.preventDefault(); setIsDraggingThumb(true); }}
+                onDragLeave={() => setIsDraggingThumb(false)}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  setIsDraggingThumb(false)
+                  if (e.dataTransfer.files?.[0]) handleThumbnailChange(e.dataTransfer.files[0])
+                }}
+                style={{
+                  borderRadius: 14,
+                  overflow: 'hidden',
+                  border: isDraggingThumb ? '2px dashed #2563EB' : '1.5px solid #E2E8F0',
+                  background: isDraggingThumb ? '#EFF6FF' : '#FFFFFF',
+                  boxShadow: isDraggingThumb ? '0 0 0 4px rgba(37, 99, 235, 0.15)' : '0 4px 16px -2px rgba(15, 23, 42, 0.06)',
+                  transition: 'all 0.2s ease',
+                }}
+              >
                 {/* 16:9 Image Preview Frame */}
                 <div style={{
                   position: 'relative',
@@ -1138,7 +1287,7 @@ function EditCourseModal({ course, onClose, onSuccess }) {
                       {thumbnail ? thumbnail.name : 'Current Course Thumbnail'}
                     </div>
                     <div style={{ color: '#64748B', fontSize: 11, marginTop: 2 }}>
-                      {thumbnail ? `${formatFileSize(thumbnail.size)} • Ready to upload` : 'Currently active image'}
+                      {thumbnail ? `${formatFileSize(thumbnail.size)} • Ready to upload` : 'Currently active image (drag new image here to replace)'}
                     </div>
                   </div>
 
@@ -1235,18 +1384,35 @@ function EditCourseModal({ course, onClose, onSuccess }) {
                 }}
                 style={{
                   display: 'block',
-                  border: isDraggingThumb ? '2px dashed #3B82F6' : '2px dashed #CBD5E1',
-                  borderRadius: 12,
-                  padding: '24px 16px',
+                  border: isDraggingThumb ? '2px dashed #2563EB' : '2px dashed #CBD5E1',
+                  borderRadius: 14,
+                  padding: '28px 20px',
                   textAlign: 'center',
                   cursor: 'pointer',
                   background: isDraggingThumb ? '#EFF6FF' : '#F8FAFC',
+                  boxShadow: isDraggingThumb ? '0 0 0 4px rgba(37, 99, 235, 0.15)' : 'none',
                   transition: 'all 0.2s ease',
                 }}
               >
-                <FiUpload size={24} color={isDraggingThumb ? '#3B82F6' : '#94A3B8'} style={{ marginBottom: 6 }} />
-                <div style={{ color: '#1E293B', fontSize: 13, fontWeight: 600 }}>Click or drag to upload new thumbnail</div>
-                <div style={{ color: '#94A3B8', fontSize: 11, marginTop: 4 }}>PNG, JPG, WebP, GIF, HEIC (macOS & iOS supported)</div>
+                <div style={{
+                  width: 46,
+                  height: 46,
+                  borderRadius: 12,
+                  background: isDraggingThumb ? '#DBEAFE' : '#F1F5F9',
+                  color: isDraggingThumb ? '#2563EB' : '#64748B',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 10px',
+                }}>
+                  <FiUpload size={22} />
+                </div>
+                <div style={{ color: '#0F172A', fontSize: 13.5, fontWeight: 700 }}>
+                  {isDraggingThumb ? 'Drop thumbnail image here' : 'Drag & drop thumbnail image here, or click to browse'}
+                </div>
+                <div style={{ color: '#64748B', fontSize: 11.5, marginTop: 4 }}>
+                  PNG, JPG, WebP, GIF, HEIC (macOS & iOS supported) • Auto-triggers 16:9 crop & frame
+                </div>
               </label>
             )}
 
@@ -2085,13 +2251,23 @@ function CreateCourseModal({ onClose, onSuccess }) {
             <label style={{ display: 'block', fontSize: 12, color: '#64748B', marginBottom: 6, fontWeight: 600 }}>Thumbnail Image (optional)</label>
 
             {thumbnailPreview ? (
-              <div style={{
-                borderRadius: 14,
-                overflow: 'hidden',
-                border: '1.5px solid #E2E8F0',
-                background: '#FFFFFF',
-                boxShadow: '0 4px 16px -2px rgba(15, 23, 42, 0.06)',
-              }}>
+              <div
+                onDragOver={(e) => { e.preventDefault(); setIsDraggingThumb(true); }}
+                onDragLeave={() => setIsDraggingThumb(false)}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  setIsDraggingThumb(false)
+                  if (e.dataTransfer.files?.[0]) handleThumbnailChange(e.dataTransfer.files[0])
+                }}
+                style={{
+                  borderRadius: 14,
+                  overflow: 'hidden',
+                  border: isDraggingThumb ? '2px dashed #2563EB' : '1.5px solid #E2E8F0',
+                  background: isDraggingThumb ? '#EFF6FF' : '#FFFFFF',
+                  boxShadow: isDraggingThumb ? '0 0 0 4px rgba(37, 99, 235, 0.15)' : '0 4px 16px -2px rgba(15, 23, 42, 0.06)',
+                  transition: 'all 0.2s ease',
+                }}
+              >
                 {/* 16:9 Image Preview Frame */}
                 <div style={{
                   position: 'relative',
@@ -2152,7 +2328,7 @@ function CreateCourseModal({ onClose, onSuccess }) {
                       {thumbnail?.name || 'Selected Thumbnail'}
                     </div>
                     <div style={{ color: '#64748B', fontSize: 11, marginTop: 2 }}>
-                      {thumbnail?.size ? `${formatFileSize(thumbnail.size)} • Ready to upload` : 'Ready to upload'}
+                      {thumbnail?.size ? `${formatFileSize(thumbnail.size)} • Ready (drag new image to replace)` : 'Ready to upload'}
                     </div>
                   </div>
 
@@ -2246,18 +2422,35 @@ function CreateCourseModal({ onClose, onSuccess }) {
                 }}
                 style={{
                   display: 'block',
-                  border: isDraggingThumb ? '2px dashed #3B82F6' : '2px dashed #CBD5E1',
-                  borderRadius: 12,
-                  padding: '24px 16px',
+                  border: isDraggingThumb ? '2px dashed #2563EB' : '2px dashed #CBD5E1',
+                  borderRadius: 14,
+                  padding: '28px 20px',
                   textAlign: 'center',
                   cursor: 'pointer',
                   background: isDraggingThumb ? '#EFF6FF' : '#F8FAFC',
+                  boxShadow: isDraggingThumb ? '0 0 0 4px rgba(37, 99, 235, 0.15)' : 'none',
                   transition: 'all 0.2s ease',
                 }}
               >
-                <FiUpload size={24} color={isDraggingThumb ? '#3B82F6' : '#94A3B8'} style={{ marginBottom: 6 }} />
-                <div style={{ color: '#1E293B', fontSize: 13, fontWeight: 600 }}>Click or drag to upload thumbnail</div>
-                <div style={{ color: '#94A3B8', fontSize: 11, marginTop: 4 }}>PNG, JPG, WebP, GIF, HEIC (macOS & iOS supported)</div>
+                <div style={{
+                  width: 46,
+                  height: 46,
+                  borderRadius: 12,
+                  background: isDraggingThumb ? '#DBEAFE' : '#F1F5F9',
+                  color: isDraggingThumb ? '#2563EB' : '#64748B',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 10px',
+                }}>
+                  <FiUpload size={22} />
+                </div>
+                <div style={{ color: '#0F172A', fontSize: 13.5, fontWeight: 700 }}>
+                  {isDraggingThumb ? 'Drop thumbnail image here' : 'Drag & drop thumbnail image here, or click to browse'}
+                </div>
+                <div style={{ color: '#64748B', fontSize: 11.5, marginTop: 4 }}>
+                  PNG, JPG, WebP, GIF, HEIC (macOS & iOS supported) • Auto-triggers 16:9 crop & frame
+                </div>
               </label>
             )}
 
