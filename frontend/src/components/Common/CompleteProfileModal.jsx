@@ -31,17 +31,8 @@ const CompleteProfileModal = () => {
     sessionStorage.removeItem('showCompleteProfilePopup')
     setIsOpen(false)
 
-    const isPractitioner =
-      user?.accountType === 'Practitioner' ||
-      user?.accountType === 'Instructor'
-
-    if (isPractitioner) {
-      // Navigate to Practice Setup Wizard
-      navigate('/practice?tab=setup')
-    } else {
-      // Navigate to Learner Profile / Settings
-      navigate('/dashboard/settings')
-    }
+    // Direct Profile Page Open
+    navigate('/dashboard?tab=profile')
   }
 
   if (!isOpen) return null
