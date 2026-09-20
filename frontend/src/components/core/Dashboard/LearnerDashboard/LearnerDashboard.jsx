@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import {
   FiMapPin,
   FiCheckSquare,
@@ -33,8 +33,25 @@ import { fetchClientDashboardData } from '../../../../services/operations/dashbo
 export function LearnerDashboard() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
-  const activeTab = searchParams.get('tab') || 'journey'
+
+  const getActiveTab = () => {
+    const tabParam = searchParams.get('tab')
+    if (tabParam) return tabParam
+    const path = decodeURIComponent(location.pathname.toLowerCase())
+    if (path.includes('profile') || path.includes('settings')) return 'profile'
+    if (path.includes('courses')) return 'courses'
+    if (path.includes('checkin')) return 'checkin'
+    if (path.includes('practitioner')) return 'practitioners'
+    if (path.includes('circle')) return 'circle'
+    if (path.includes('community') || path.includes('chat')) return 'community'
+    if (path.includes('session')) return 'sessions'
+    if (path.includes('reflection')) return 'reflections'
+    return 'journey'
+  }
+
+  const activeTab = getActiveTab()
 
   const setActiveTab = useCallback((tab) => {
     setSearchParams({ tab })

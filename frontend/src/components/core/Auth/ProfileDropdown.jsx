@@ -1,6 +1,7 @@
 import { useRef, useState } from "react"
 import { AiOutlineCaretDown } from "react-icons/ai"
 import { VscDashboard, VscSignOut } from "react-icons/vsc"
+import { FiUser } from "react-icons/fi"
 import { useDispatch, useSelector } from "react-redux"
 import { Link, useNavigate } from "react-router-dom"
 
@@ -43,9 +44,15 @@ export default function ProfileDropdown() {
           ref={ref}
         >
           <Link to={user?.accountType === "Admin" ? "/admin" : "/dashboard"} onClick={() => setOpen(false)}>
-            <div className="flex w-full items-center gap-x-1 py-[10px] px-[12px] text-sm text-richblack-100 hover:bg-richblack-700 hover:text-richblack-25">
+            <div className="flex w-full items-center gap-x-2 py-[10px] px-[12px] text-sm text-richblack-100 hover:bg-richblack-700 hover:text-richblack-25">
               <VscDashboard className="text-lg" />
               Dashboard
+            </div>
+          </Link>
+          <Link to="/dashboard?tab=profile" onClick={() => setOpen(false)}>
+            <div className="flex w-full items-center gap-x-2 py-[10px] px-[12px] text-sm text-richblack-100 hover:bg-richblack-700 hover:text-richblack-25">
+              <FiUser className="text-lg" />
+              Profile &amp; Settings
             </div>
           </Link>
           <div
@@ -53,7 +60,7 @@ export default function ProfileDropdown() {
               dispatch(logout(navigate))
               setOpen(false)
             }}
-            className="flex w-full items-center gap-x-1 py-[10px] px-[12px] text-sm text-richblack-100 hover:bg-richblack-700 hover:text-richblack-25"
+            className="flex w-full items-center gap-x-2 py-[10px] px-[12px] text-sm text-richblack-100 hover:bg-richblack-700 hover:text-richblack-25 cursor-pointer"
           >
             <VscSignOut className="text-lg" />
             Logout

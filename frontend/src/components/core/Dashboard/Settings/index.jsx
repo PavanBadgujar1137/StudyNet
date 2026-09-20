@@ -31,13 +31,13 @@ export default function Settings() {
   const [copiedId, setCopiedId] = useState(false)
   const hasFetchedRef = useRef(false)
 
-  // Ensure latest user details & learnerId are loaded once on mount
+  // Ensure latest user details & learnerId are loaded if missing
   useEffect(() => {
-    if (token && !hasFetchedRef.current) {
+    if (token && !user?.learnerId && !hasFetchedRef.current) {
       hasFetchedRef.current = true
       dispatch(getUserDetails(token, navigate))
     }
-  }, [dispatch, token, navigate])
+  }, [dispatch, token, navigate, user?.learnerId])
 
   const fullName = `${user?.firstName || 'User'} ${user?.lastName || ''}`.trim()
   const isLearner = user?.accountType === "Learner" || user?.accountType === "Client" || user?.accountType === "Student"

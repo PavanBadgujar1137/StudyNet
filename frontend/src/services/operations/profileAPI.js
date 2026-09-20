@@ -11,8 +11,11 @@ const {
 } = profileEndpoints
 
 export function getUserDetails(token, navigate) {
-  return async (dispatch) => {
-    dispatch(setLoading(true))
+  return async (dispatch, getState) => {
+    const currentUser = getState()?.profile?.user
+    if (!currentUser) {
+      dispatch(setLoading(true))
+    }
     try {
       const response = await apiConnector("GET", GET_USER_DETAILS_API, null, {
         Authorization: `Bearer ${token}`,
@@ -28,11 +31,12 @@ export function getUserDetails(token, navigate) {
       dispatch(setUser({ ...userData, image: userImage }))
     } catch (error) {
       console.log("GET_USER_DETAILS API ERROR............", error)
-      if (error?.response?.status === 401 || error?.response?.status === 403 || error?.response?.status === 404 || !error?.response) {
+      if (error?.response?.status === 401 || error?.response?.status === 403) {
         dispatch(logout(navigate, false))
-        toast.error("Session expired or user not found. Please log in again.", { id: "session-expired-toast" })
+        toast.error("Session expired. Please log in again.", { id: "session-expired-toast" })
       }
+    } finally {
+      dispatch(setLoading(false))
     }
-    dispatch(setLoading(false))
   }
 }

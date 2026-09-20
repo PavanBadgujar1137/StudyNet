@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useSelector } from 'react-redux'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useLocation } from 'react-router-dom'
 import { 
   FiGrid, 
   FiTag, 
@@ -41,8 +41,28 @@ import { fetchPractitionerDashboardData } from '../../../../services/operations/
 import { formatPractitionerName } from '../../../../utils/formatName'
 
 export function PractitionerDashboard() {
+  const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
-  const activeSection = searchParams.get('tab') || 'dash'
+
+  const getActiveSection = () => {
+    const tabParam = searchParams.get('tab')
+    if (tabParam) return tabParam
+    const path = decodeURIComponent(location.pathname.toLowerCase())
+    if (path.includes('profile') || path.includes('settings')) return 'profile'
+    if (path.includes('coupon')) return 'coupons'
+    if (path.includes('community') || path.includes('chat')) return 'community'
+    if (path.includes('offer')) return 'offers'
+    if (path.includes('course')) return 'courses'
+    if (path.includes('client') || path.includes('learner')) return 'clients'
+    if (path.includes('circle')) return 'circles'
+    if (path.includes('room')) return 'room'
+    if (path.includes('payout')) return 'payouts'
+    if (path.includes('growth')) return 'growth'
+    if (path.includes('social')) return 'social'
+    return 'dash'
+  }
+
+  const activeSection = getActiveSection()
 
   const setActiveSection = useCallback((section) => {
     setSearchParams({ tab: section })

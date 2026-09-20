@@ -252,6 +252,13 @@ function App() {
             </OpenRoute>
           }
         />
+        {/* Dashboard Route Aliases & Redirects */}
+        <Route path="/dashboard/my-profile" element={<Navigate to="/dashboard?tab=profile" replace />} />
+        <Route path="/dashboard/my profile" element={<Navigate to="/dashboard?tab=profile" replace />} />
+        <Route path="/dashboard/profile" element={<Navigate to="/dashboard?tab=profile" replace />} />
+        <Route path="/dashboard/settings" element={<Navigate to="/dashboard?tab=profile" replace />} />
+        <Route path="/dashboard/my%20profile" element={<Navigate to="/dashboard?tab=profile" replace />} />
+
         {/* Private Route - Client & Practitioner Dashboard */}
         <Route
           path="/dashboard"
