@@ -355,11 +355,27 @@ export default function OHPricingSection({ defaultRole = "practitioner", title, 
         {/* ─── LEARNER 100% FREE SHOWCASE CARD ─── */}
         {activeTab === "learner" ? (
           <div className="max-w-4xl mx-auto pt-4">
-            <div className="bg-white rounded-3xl border-2 border-emerald-500 shadow-2xl p-8 sm:p-12 relative overflow-hidden">
+            <div className="bg-white rounded-3xl shadow-2xl p-8 sm:p-12 relative overflow-hidden" style={{ border: '2px solid #10B981' }}>
               {/* Header Badge */}
               <div className="flex flex-wrap items-center justify-between gap-4 mb-8 pb-6 border-b border-slate-100">
                 <div>
-                  <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 font-extrabold text-xs uppercase tracking-wider py-1.5 px-4 rounded-full border border-emerald-200 mb-3">
+                  <div
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      background: "#ECFDF5",
+                      color: "#047857",
+                      fontWeight: 800,
+                      fontSize: "12px",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                      padding: "6px 16px",
+                      borderRadius: "9999px",
+                      border: "1px solid #A7F3D0",
+                      marginBottom: "12px",
+                    }}
+                  >
                     <HiSparkles /> 100% FREE FOR ALL LEARNERS
                   </div>
                   <h3 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
@@ -370,8 +386,10 @@ export default function OHPricingSection({ defaultRole = "practitioner", title, 
                   </p>
                 </div>
                 <div className="text-right">
-                  <div className="text-5xl sm:text-6xl font-black text-emerald-600 tracking-tight">₹0</div>
-                  <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mt-1">Free Forever</div>
+                  <div style={{ fontSize: "48px", fontWeight: 900, color: "#059669", lineHeight: 1 }}>₹0</div>
+                  <div style={{ fontSize: "12px", fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: "4px" }}>
+                    Free Forever
+                  </div>
                 </div>
               </div>
 
@@ -388,7 +406,20 @@ export default function OHPricingSection({ defaultRole = "practitioner", title, 
                   const Icon = feat.icon
                   return (
                     <div key={idx} className="flex items-start gap-3.5 p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
-                      <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 text-lg">
+                      <div
+                        style={{
+                          width: "40px",
+                          height: "40px",
+                          borderRadius: "12px",
+                          background: "#D1FAE5",
+                          color: "#047857",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          fontSize: "18px",
+                        }}
+                      >
                         <Icon />
                       </div>
                       <div>
@@ -406,25 +437,85 @@ export default function OHPricingSection({ defaultRole = "practitioner", title, 
                   <button
                     type="button"
                     onClick={() => navigate("/app/courses")}
-                    className="w-full sm:w-auto px-8 py-4 rounded-full font-extrabold text-base bg-emerald-600 text-white hover:bg-emerald-700 transition-all shadow-lg hover:shadow-emerald-500/25 flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 cursor-pointer"
+                    style={{
+                      background: "#059669",
+                      color: "#FFFFFF",
+                      padding: "14px 32px",
+                      borderRadius: "9999px",
+                      border: "none",
+                      fontWeight: 800,
+                      fontSize: "15px",
+                      boxShadow: "0 4px 14px rgba(5, 150, 105, 0.4)",
+                      transition: "all 0.2s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = "#047857"
+                      e.currentTarget.style.transform = "translateY(-2px)"
+                      e.currentTarget.style.boxShadow = "0 6px 20px rgba(5, 150, 105, 0.5)"
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "#059669"
+                      e.currentTarget.style.transform = "none"
+                      e.currentTarget.style.boxShadow = "0 4px 14px rgba(5, 150, 105, 0.4)"
+                    }}
                   >
                     <span>Go to Courses Library</span>
-                    <FiArrowRight />
+                    <FiArrowRight size={18} />
                   </button>
                 ) : (
                   <>
                     <button
                       type="button"
                       onClick={() => navigate("/signup")}
-                      className="w-full sm:w-auto px-8 py-4 rounded-full font-extrabold text-base bg-emerald-600 text-white hover:bg-emerald-700 transition-all shadow-lg hover:shadow-emerald-500/25 flex items-center justify-center gap-2 cursor-pointer"
+                      className="w-full sm:w-auto flex items-center justify-center gap-2 cursor-pointer"
+                      style={{
+                        background: "#059669",
+                        color: "#FFFFFF",
+                        padding: "14px 32px",
+                        borderRadius: "9999px",
+                        border: "none",
+                        fontWeight: 800,
+                        fontSize: "15px",
+                        boxShadow: "0 4px 14px rgba(5, 150, 105, 0.4)",
+                        transition: "all 0.2s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "#047857"
+                        e.currentTarget.style.transform = "translateY(-2px)"
+                        e.currentTarget.style.boxShadow = "0 6px 20px rgba(5, 150, 105, 0.5)"
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "#059669"
+                        e.currentTarget.style.transform = "none"
+                        e.currentTarget.style.boxShadow = "0 4px 14px rgba(5, 150, 105, 0.4)"
+                      }}
                     >
                       <span>Create Free Account</span>
-                      <FiArrowRight />
+                      <FiArrowRight size={18} />
                     </button>
                     <button
                       type="button"
                       onClick={() => navigate("/login")}
-                      className="w-full sm:w-auto px-8 py-4 rounded-full font-extrabold text-base bg-slate-100 text-slate-800 hover:bg-slate-200 transition-all border border-slate-300 flex items-center justify-center cursor-pointer"
+                      className="w-full sm:w-auto flex items-center justify-center cursor-pointer"
+                      style={{
+                        background: "#F1F5F9",
+                        color: "#0F172A",
+                        padding: "14px 32px",
+                        borderRadius: "9999px",
+                        border: "1.5px solid #CBD5E1",
+                        fontWeight: 800,
+                        fontSize: "15px",
+                        transition: "all 0.2s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "#E2E8F0"
+                        e.currentTarget.style.borderColor = "#94A3B8"
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "#F1F5F9"
+                        e.currentTarget.style.borderColor = "#CBD5E1"
+                      }}
                     >
                       <span>Learner Login</span>
                     </button>
@@ -437,7 +528,10 @@ export default function OHPricingSection({ defaultRole = "practitioner", title, 
           <>
             {/* All Plans 0% Commission Callout for Practitioners */}
             <div className="text-center mb-6">
-              <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs sm:text-sm font-extrabold text-blue-700 bg-blue-50 border border-blue-200 shadow-xs">
+              <span
+                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs sm:text-sm font-extrabold shadow-xs"
+                style={{ color: "#1D4ED8", backgroundColor: "#EFF6FF", border: "1px solid #BFDBFE" }}
+              >
                 <span>✨</span>
                 <span>All plans: 0% commission on your session &amp; Circle earnings.</span>
               </span>
@@ -458,7 +552,10 @@ export default function OHPricingSection({ defaultRole = "practitioner", title, 
                     }`}
                   >
                     {plan.featured && (
-                      <span className="featured-badge absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white text-[11px] font-extrabold tracking-wider uppercase py-1.5 px-5 rounded-full shadow-lg whitespace-nowrap">
+                      <span
+                        className="featured-badge absolute -top-4 left-1/2 -translate-x-1/2 text-[11px] font-extrabold tracking-wider uppercase py-1.5 px-5 rounded-full shadow-lg whitespace-nowrap"
+                        style={{ background: "linear-gradient(90deg, #2563EB, #4F46E5, #9333EA)", color: "#FFFFFF" }}
+                      >
                         {plan.badge}
                       </span>
                     )}
@@ -485,12 +582,18 @@ export default function OHPricingSection({ defaultRole = "practitioner", title, 
                       </div>
 
                       {!plan.featured && (
-                        <div className="cut-badge bg-blue-50 text-blue-700 font-bold text-[11px] uppercase tracking-wider py-1.5 px-3 rounded-xl mb-6 inline-flex items-center gap-1.5 border border-blue-100">
+                        <div
+                          className="cut-badge font-bold text-[11px] uppercase tracking-wider py-1.5 px-3 rounded-xl mb-6 inline-flex items-center gap-1.5"
+                          style={{ backgroundColor: "#EFF6FF", color: "#1D4ED8", border: "1px solid #DBEAFE" }}
+                        >
                           {plan.badge}
                         </div>
                       )}
                       {plan.featured && (
-                        <div className="cut-badge bg-indigo-900/60 text-sky-300 font-bold text-[11px] uppercase tracking-wider py-1.5 px-3 rounded-xl mb-6 inline-flex items-center gap-1.5 border border-indigo-500/30">
+                        <div
+                          className="cut-badge font-bold text-[11px] uppercase tracking-wider py-1.5 px-3 rounded-xl mb-6 inline-flex items-center gap-1.5"
+                          style={{ backgroundColor: "rgba(49, 46, 129, 0.6)", color: "#7DD3FC", border: "1px solid rgba(99, 102, 241, 0.3)" }}
+                        >
                           FULL UNLOCK + RAZORPAY SECURE
                         </div>
                       )}
@@ -503,7 +606,8 @@ export default function OHPricingSection({ defaultRole = "practitioner", title, 
                         {plan.features.map((feat, idx) => (
                           <li key={idx} className="flex items-start gap-2.5 font-medium text-xs leading-snug">
                             <span
-                              className={`font-bold text-sm ${plan.featured ? "text-sky-400" : "text-emerald-600"}`}
+                              className="font-bold text-sm"
+                              style={{ color: plan.featured ? "#38BDF8" : "#059669" }}
                             >
                               ✓
                             </span>
