@@ -62,17 +62,20 @@ function SocialAuthButtons({ accountType = "Client", mode = "login" }) {
     return () => window.removeEventListener("message", handleMessage)
   }, [])
 
-  // Initialize Google Identity Services (GSI) One-Tap / Prompt if available (only once)
+  // Initialize Google Identity Services (GSI) One-Tap / Prompt if available (only once globally)
   useEffect(() => {
-    if (window.google?.accounts?.id && googleClientId && !initializedRef.current) {
+    if (window.google?.accounts?.id && googleClientId && !window.__openhand_gsi_initialized) {
       try {
         window.google.accounts.id.initialize({
           client_id: googleClientId,
+          use_fedcm_for_prompt: true,
+          auto_select: false,
+          cancel_on_tap_outside: true,
           callback: (response) => {
             if (response.credential) {
               const payload = decodeJwt(response.credential)
               if (payload && payload.email) {
-                const targetRole = window.__activeAuthRole || accountType || "Client"
+                const targetRole = window.__activeAuthRole || sessionStorage.getItem("socialAuthAccountType") || accountType || "Client"
                 dispatch(
                   socialLogin(
                     "google",
@@ -91,9 +94,10 @@ function SocialAuthButtons({ accountType = "Client", mode = "login" }) {
             }
           },
         })
+        window.__openhand_gsi_initialized = true
         initializedRef.current = true
       } catch (err) {
-        console.warn("Google GSI init warning:", err)
+        // GSI initialization warning suppressed
       }
     }
   }, [googleClientId, accountType, mode, dispatch, navigate])
@@ -101,18 +105,8 @@ function SocialAuthButtons({ accountType = "Client", mode = "login" }) {
   const handleGoogleSignIn = () => {
     window.__activeAuthRole = accountType
     sessionStorage.setItem("socialAuthAccountType", accountType)
-
-    // 1. If Google GSI SDK is available, trigger native Google prompt
-    if (window.google?.accounts?.id) {
-      window.google.accounts.id.prompt((notification) => {
-        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          // Fallback to opening official Google OAuth Account Chooser popup
-          openGooglePopup()
-        }
-      })
-    } else {
-      openGooglePopup()
-    }
+    // Directly open Google OAuth Account Chooser popup for reliable cross-origin sign-in
+    openGooglePopup()
   }
 
   const openGooglePopup = () => {

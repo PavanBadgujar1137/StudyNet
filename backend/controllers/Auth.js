@@ -131,8 +131,19 @@ exports.signup = async (req, res) => {
         .replace(/[^a-z0-9-]/gi, '-')
         .replace(/-+/g, '-')
         .replace(/^-|-$/g, '')
-      const defaultHandle = nameSlug || `practitioner-${user._id.toString().slice(-4)}`
-      await PractitionerProfile.create({
+      let defaultHandle = nameSlug || `practitioner-${user._id.toString().slice(-4)}`
+
+      // Ensure handle is strictly unique across all practitioner profiles
+      const existingHandle = await PractitionerProfile.findOne({ handle: defaultHandle })
+      if (existingHandle) {
+        defaultHandle = `${defaultHandle}-${user._id.toString().slice(-4)}`
+        const secondCheck = await PractitionerProfile.findOne({ handle: defaultHandle })
+        if (secondCheck) {
+          defaultHandle = `${defaultHandle}-${Date.now().toString().slice(-4)}`
+        }
+      }
+
+      const practitionerProfile = await PractitionerProfile.create({
         user: user._id,
         handle: defaultHandle,
         credentials: req.body.credentials || "",
@@ -143,6 +154,9 @@ exports.signup = async (req, res) => {
         bankName: bankName || "",
         upiId: upiId || "",
       })
+
+      user.practitionerProfile = practitionerProfile._id
+      await user.save()
     }
 
     const token = jwt.sign(
@@ -163,10 +177,20 @@ exports.signup = async (req, res) => {
       message: "User registered successfully",
     })
   } catch (error) {
-    console.error(error)
+    console.error("Signup error:", error)
+    if (user && user._id) {
+      try {
+        await User.findByIdAndDelete(user._id)
+        if (profileDetails && profileDetails._id) {
+          await Profile.findByIdAndDelete(profileDetails._id)
+        }
+      } catch (cleanupErr) {
+        console.error("Cleanup error after failed signup:", cleanupErr)
+      }
+    }
     return res.status(500).json({
       success: false,
-      message: "User cannot be registered. Please try again.",
+      message: error?.message || "User cannot be registered. Please try again.",
     })
   }
 }
@@ -412,10 +436,12 @@ exports.socialLogin = async (req, res) => {
       })
 
       if (userAccountType === "Practitioner" || userAccountType === "Instructor") {
-        await PractitionerProfile.create({
+        const pProf = await PractitionerProfile.create({
           user: user._id,
           bio: "Verified practitioner registered via social login",
         })
+        user.practitionerProfile = pProf._id
+        await user.save()
       }
 
       user = await User.findById(user._id).populate("additionalDetails")

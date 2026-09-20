@@ -22,7 +22,9 @@ export const fetchClientDashboardData = async (token) => {
       checkInCount: 0,
     }
   } catch (error) {
-    console.error("fetchClientDashboardData error:", error)
+    if (error?.response?.status !== 404) {
+      console.error("fetchClientDashboardData error:", error)
+    }
     return {
       checkIns: [],
       reflections: [],

@@ -19,18 +19,19 @@ export function getUserDetails(token, navigate) {
       })
       console.log("GET_USER_DETAILS API RESPONSE............", response)
 
-      if (!response.data.success) {
-        throw new Error(response.data.message)
+      if (!response?.data?.success || !response?.data?.data) {
+        throw new Error(response?.data?.message || "Failed to fetch user details")
       }
-      const userImage = (response.data.data.image && !response.data.data.image.includes("dicebear"))
-        ? response.data.data.image
-        : getInitialsAvatar(response.data.data.firstName, response.data.data.lastName)
-      dispatch(setUser({ ...response.data.data, image: userImage }))
+      const userData = response.data.data
+      const userImage = (userData.image && !userData.image.includes("dicebear"))
+        ? userData.image
+        : getInitialsAvatar(userData.firstName, userData.lastName)
+      dispatch(setUser({ ...userData, image: userImage }))
     } catch (error) {
       console.log("GET_USER_DETAILS API ERROR............", error)
-      if (error?.response?.status === 401 || error?.response?.status === 403) {
+      if (error?.response?.status === 401 || error?.response?.status === 403 || error?.response?.status === 404 || !error?.response) {
         dispatch(logout(navigate, false))
-        toast.error("Session expired. Please log in again.", { id: "session-expired-toast" })
+        toast.error("Session expired or user not found. Please log in again.", { id: "session-expired-toast" })
       }
     }
     dispatch(setLoading(false))
