@@ -244,7 +244,7 @@ export function SocialPostStudio() {
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0]
     if (file) {
-      const validation = validateImageFile(file, 20)
+      const validation = validateImageFile(file, 1024)
       if (!validation.valid) {
         return toast.error(validation.error)
       }

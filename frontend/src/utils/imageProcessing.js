@@ -7,23 +7,27 @@
 /**
  * Validates whether a file is an acceptable image
  * @param {File} file 
- * @param {number} maxMb 
+ * @param {number} maxMb - Maximum size in MB (defaults to 1024MB = 1GB)
  * @returns {{ valid: boolean, error?: string }}
  */
-export const validateImageFile = (file, maxMb = 15) => {
+export const validateImageFile = (file, maxMb = 1024) => {
   if (!file) return { valid: false, error: 'No file selected' };
 
-  const validExtensions = /\.(jpg|jpeg|png|webp|gif|heic|heif|bmp|svg)$/i;
+  const validExtensions = /\.(jpg|jpeg|png|webp|gif|heic|heif|bmp|svg|tiff|avif)$/i;
   const isImageMime = file.type.startsWith('image/') || file.type === '';
   const hasValidExt = validExtensions.test(file.name);
 
   if (!isImageMime && !hasValidExt) {
-    return { valid: false, error: 'Please select a valid image file (JPG, PNG, WebP, GIF, HEIC)' };
+    return { valid: false, error: 'Please select a valid image file (JPG, PNG, WebP, GIF, HEIC, SVG)' };
   }
 
   const maxBytes = maxMb * 1024 * 1024;
   if (file.size > maxBytes) {
-    return { valid: false, error: `Image size must be less than ${maxMb}MB (selected ${(file.size / (1024 * 1024)).toFixed(1)}MB)` };
+    const limitText = maxMb >= 1024 ? `${(maxMb / 1024).toFixed(maxMb % 1024 === 0 ? 0 : 1)}GB` : `${maxMb}MB`;
+    const selectedText = file.size >= 1024 * 1024 * 1024 
+      ? `${(file.size / (1024 * 1024 * 1024)).toFixed(1)}GB` 
+      : `${(file.size / (1024 * 1024)).toFixed(1)}MB`;
+    return { valid: false, error: `Image size must be less than ${limitText} (selected ${selectedText})` };
   }
 
   return { valid: true };
