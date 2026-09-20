@@ -15,9 +15,7 @@ import {
   FiCheck,
   FiPhone,
   FiMail,
-  FiUser,
-  FiGift,
-  FiAward
+  FiGift
 } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import { apiConnector } from '../../../../services/apiConnector'

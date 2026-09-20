@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from "react"
 import { useForm } from "react-hook-form"
 import { useDispatch, useSelector } from "react-redux"
-import { FiUser, FiCalendar, FiPhone, FiInfo, FiCheck, FiCreditCard, FiChevronDown, FiSearch, FiLock, FiCopy, FiTag } from "react-icons/fi"
+import { FiUser, FiCalendar, FiPhone, FiInfo, FiCheck, FiCreditCard, FiChevronDown, FiSearch, FiLock, FiCopy, FiTag, FiShare2 } from "react-icons/fi"
 import { updateProfile } from "../../../../services/operations/SettingsAPI"
 import { apiConnector } from "../../../../services/apiConnector"
 import { countryCodes } from "../../../../data/countryCodes"
+import { getUserDetails } from "../../../../services/operations/profileAPI"
 import toast from "react-hot-toast"
 
 const genders = ["Male", "Female", "Non-Binary", "Prefer not to say", "Other"]
@@ -16,13 +17,29 @@ export default function EditProfile() {
   const [copiedId, setCopiedId] = useState(false)
 
   const isLearner = user?.accountType === "Learner" || user?.accountType === "Client" || user?.accountType === "Student"
+  const fullName = `${user?.firstName || 'User'} ${user?.lastName || ''}`.trim()
 
   const handleCopyLearnerId = () => {
-    if (!user?.learnerId) return
+    if (!user?.learnerId) {
+      toast.error("Learner ID is syncing, please wait...")
+      if (token) dispatch(getUserDetails(token))
+      return
+    }
     navigator.clipboard.writeText(user.learnerId)
     setCopiedId(true)
-    toast.success("Learner ID copied to clipboard!")
+    toast.success(`Learner ID ${user.learnerId} copied to clipboard!`)
     setTimeout(() => setCopiedId(false), 2500)
+  }
+
+  const handleShareWithPractitioner = () => {
+    if (!user?.learnerId) {
+      toast.error("Learner ID is syncing, please wait...")
+      if (token) dispatch(getUserDetails(token))
+      return
+    }
+    const message = `Hello! My OpenHand Learner ID is ${user.learnerId} (${fullName}). Please use this ID to find my profile and apply my personalized discount or scholarship.`
+    navigator.clipboard.writeText(message)
+    toast.success("Share message copied! You can paste this to your Practitioner.", { duration: 4000 })
   }
 
   const parseInitialPhone = (contactStr) => {
@@ -157,9 +174,9 @@ export default function EditProfile() {
           </div>
         </div>
 
-        {/* Unique Learner ID (Immutable) */}
-        {isLearner && user?.learnerId && (
-          <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50/50 p-4 md:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        {/* Unique Learner ID (Immutable & Always Visible for Learners) */}
+        {isLearner && (
+          <div className="rounded-2xl border border-emerald-200/90 bg-gradient-to-r from-emerald-50/80 to-teal-50/50 p-4 md:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
             <div className="flex items-start gap-3.5">
               <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-lg flex-shrink-0 shadow-sm shadow-emerald-500/20">
                 <FiTag />
@@ -169,35 +186,45 @@ export default function EditProfile() {
                   <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider">
                     Unique Learner ID
                   </span>
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-100/90 px-2 py-0.5 rounded-md">
                     <FiLock className="text-[10px]" /> Permanent
                   </span>
                 </div>
-                <div className="text-lg font-extrabold text-slate-900 font-mono mt-0.5">
-                  {user.learnerId}
+                <div className="text-xl font-extrabold text-slate-900 font-mono mt-0.5 tracking-tight">
+                  {user?.learnerId || 'Syncing ID...'}
                 </div>
                 <p className="text-[12px] text-slate-600 mt-0.5">
-                  Share this unique ID with Practitioners to receive personalized discounts, scholarships, and course access.
+                  Give this Unique ID to your Practitioner so they can verify your details (Name, Email, Phone, Photo) and apply your personal discounts or scholarships.
                 </p>
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={handleCopyLearnerId}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-sm transition-all flex-shrink-0"
-              title="Copy Learner ID"
-            >
-              {copiedId ? (
-                <>
-                  <FiCheck className="text-sm" /> Copied!
-                </>
-              ) : (
-                <>
-                  <FiCopy className="text-sm" /> Copy ID
-                </>
-              )}
-            </button>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                type="button"
+                onClick={handleCopyLearnerId}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-sm transition-all"
+                title="Copy Learner ID"
+              >
+                {copiedId ? (
+                  <>
+                    <FiCheck className="text-sm" /> Copied!
+                  </>
+                ) : (
+                  <>
+                    <FiCopy className="text-sm" /> Copy ID
+                  </>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={handleShareWithPractitioner}
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-emerald-300 bg-white hover:bg-emerald-50 text-emerald-800 font-semibold text-xs shadow-xs transition-all"
+                title="Copy friendly message to send to your Practitioner"
+              >
+                <FiShare2 className="text-sm" /> Share
+              </button>
+            </div>
           </div>
         )}
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { useSelector } from "react-redux"
 import { useNavigate } from "react-router-dom"
-import { FiShield, FiCheck, FiArrowRight, FiHeart, FiBookOpen, FiUsers, FiMessageSquare } from "react-icons/fi"
+import { FiShield, FiArrowRight, FiHeart, FiBookOpen, FiUsers, FiMessageSquare } from "react-icons/fi"
 import { HiSparkles } from "react-icons/hi"
 import toast from "react-hot-toast"
 import OHEyebrow from "./OHEyebrow"

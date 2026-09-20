@@ -73,9 +73,21 @@ exports.updateProfile = async (req, res) => {
     await User.findByIdAndUpdate(id, updateUserData, { new: true })
 
     // Find the updated user details
-    const updatedUserDetails = await User.findById(id)
+    let updatedUserDetails = await User.findById(id)
       .populate("additionalDetails")
       .exec()
+
+    // Auto-generate & assign learnerId if learner account is missing one
+    const isLearner = updatedUserDetails.accountType === "Learner" || updatedUserDetails.accountType === "Client" || updatedUserDetails.accountType === "Student"
+    if (isLearner && !updatedUserDetails.learnerId) {
+      try {
+        const { generateUniqueLearnerId } = require("../utils/learnerIdGenerator")
+        updatedUserDetails.learnerId = await generateUniqueLearnerId(User)
+        await updatedUserDetails.save()
+      } catch (err) {
+        console.error("Error auto-generating learnerId in updateProfile:", err.message)
+      }
+    }
 
     return res.json({
       success: true,
@@ -351,15 +363,29 @@ exports.getClientDashboardData = async (req, res) => {
       { id: "circle_joined", label: joinedCircles.length ? `Joined ${joinedCircles.length} Circle(s)` : "Joined a circle", date: (joinedCircles.length || memberships.length) ? "Active" : "Not yet", achieved: (joinedCircles.length > 0 || memberships.length > 0) },
     ]
 
+    // Auto-generate & assign learnerId if learner account is missing one
+    const isLearner = user.accountType === "Learner" || user.accountType === "Client" || user.accountType === "Student"
+    if (isLearner && !user.learnerId) {
+      try {
+        const { generateUniqueLearnerId } = require("../utils/learnerIdGenerator")
+        user.learnerId = await generateUniqueLearnerId(User)
+        await user.save()
+      } catch (err) {
+        console.error("Error auto-generating learnerId in getClientDashboardData:", err.message)
+      }
+    }
+
     return res.status(200).json({
       success: true,
       data: {
         user: {
           id: user._id,
+          learnerId: user.learnerId,
           firstName: user.firstName,
           lastName: user.lastName,
           email: user.email,
           image: user.image,
+          accountType: user.accountType,
           daysActive,
           createdAt: user.createdAt,
           activePlan: user.activePlan,

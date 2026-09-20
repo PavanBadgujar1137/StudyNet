@@ -4,7 +4,7 @@ import toast from 'react-hot-toast'
 import {
   FiTag, FiGift, FiPlus, FiEdit2, FiTrash2,
   FiToggleLeft, FiToggleRight, FiSearch, FiCopy,
-  FiCheck, FiUser, FiPhone, FiMail, FiCheckCircle, FiAlertCircle
+  FiPhone, FiMail, FiCheckCircle, FiAlertCircle
 } from 'react-icons/fi'
 import { apiConnector } from '../../../../services/apiConnector'
 import {
@@ -597,7 +597,13 @@ export default function PractitionerCoupons() {
             overflow: 'hidden',
           }}
         >
-          {filteredCoupons.length === 0 ? (
+          {loading ? (
+            <div style={{ padding: 48, textAlign: 'center', color: '#94A3B8' }}>
+              <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: '#64748B' }}>
+                Loading coupons data...
+              </p>
+            </div>
+          ) : filteredCoupons.length === 0 ? (
             <div style={{ padding: 48, textAlign: 'center', color: '#94A3B8' }}>
               <FiTag size={36} style={{ marginBottom: 12, opacity: 0.5 }} />
               <p style={{ margin: '0 0 12px', fontSize: 15, fontWeight: 600, color: '#475569' }}>
@@ -714,7 +720,13 @@ export default function PractitionerCoupons() {
             overflow: 'hidden',
           }}
         >
-          {filteredDiscounts.length === 0 ? (
+          {loading ? (
+            <div style={{ padding: 48, textAlign: 'center', color: '#94A3B8' }}>
+              <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: '#64748B' }}>
+                Loading personalized grants...
+              </p>
+            </div>
+          ) : filteredDiscounts.length === 0 ? (
             <div style={{ padding: 48, textAlign: 'center', color: '#94A3B8' }}>
               <FiGift size={36} style={{ marginBottom: 12, opacity: 0.5 }} />
               <p style={{ margin: '0 0 12px', fontSize: 15, fontWeight: 600, color: '#475569' }}>

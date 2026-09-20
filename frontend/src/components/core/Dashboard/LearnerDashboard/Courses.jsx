@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import {
-  FiBookOpen, FiPlay, FiLock, FiCheck, FiClock, FiVideo,
+  FiBookOpen, FiPlay, FiCheck, FiClock, FiVideo,
   FiSearch, FiX, FiChevronLeft,
   FiRefreshCw, FiArrowRight, FiShield,
   FiFileText, FiPaperclip, FiDownload

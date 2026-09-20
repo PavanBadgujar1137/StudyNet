@@ -1,5 +1,6 @@
-import React, { useState } from "react"
-import { useSelector } from "react-redux"
+import React, { useState, useEffect, useRef } from "react"
+import { useSelector, useDispatch } from "react-redux"
+import { useNavigate } from "react-router-dom"
 import { 
   FiUser, 
   FiCamera, 
@@ -10,7 +11,8 @@ import {
   FiZap,
   FiCopy,
   FiCheck,
-  FiTag
+  FiTag,
+  FiShare2
 } from "react-icons/fi"
 import toast from "react-hot-toast"
 import ChangeProfilePicture from "./ChangeProfilePicture"
@@ -18,22 +20,50 @@ import DeleteAccount from "./DeleteAccount"
 import EditProfile from "./EditProfile"
 import UpdatePassword from "./UpdatePassword"
 import MySubscription from "./MySubscription"
+import { getUserDetails } from "../../../../services/operations/profileAPI"
 
 export default function Settings() {
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
   const { user } = useSelector((state) => state.profile)
+  const { token } = useSelector((state) => state.auth)
   const [activeSubTab, setActiveSubTab] = useState("profile")
   const [copiedId, setCopiedId] = useState(false)
+  const hasFetchedRef = useRef(false)
+
+  // Ensure latest user details & learnerId are loaded once on mount
+  useEffect(() => {
+    if (token && !hasFetchedRef.current) {
+      hasFetchedRef.current = true
+      dispatch(getUserDetails(token, navigate))
+    }
+  }, [dispatch, token, navigate])
 
   const fullName = `${user?.firstName || 'User'} ${user?.lastName || ''}`.trim()
   const isLearner = user?.accountType === "Learner" || user?.accountType === "Client" || user?.accountType === "Student"
   const roleName = user?.accountType === "Instructor" || user?.accountType === "Practitioner" ? "Practitioner" : "Learner"
 
   const handleCopyLearnerId = () => {
-    if (!user?.learnerId) return
+    if (!user?.learnerId) {
+      toast.error("Learner ID is syncing, please wait...")
+      if (token) dispatch(getUserDetails(token, navigate))
+      return
+    }
     navigator.clipboard.writeText(user.learnerId)
     setCopiedId(true)
-    toast.success("Learner ID copied to clipboard!")
+    toast.success(`Learner ID ${user.learnerId} copied to clipboard!`)
     setTimeout(() => setCopiedId(false), 2500)
+  }
+
+  const handleShareWithPractitioner = () => {
+    if (!user?.learnerId) {
+      toast.error("Learner ID is syncing, please wait...")
+      if (token) dispatch(getUserDetails(token, navigate))
+      return
+    }
+    const message = `Hello! My OpenHand Learner ID is ${user.learnerId} (${fullName}). Please use this ID to find my profile and apply my personalized discount or scholarship.`
+    navigator.clipboard.writeText(message)
+    toast.success("Share message copied! You can paste this to your Practitioner.", { duration: 4000 })
   }
 
   return (
@@ -76,7 +106,7 @@ export default function Settings() {
                 </span>
 
                 {/* Unique Learner ID Badge */}
-                {isLearner && user?.learnerId && (
+                {isLearner && (
                   <button
                     onClick={handleCopyLearnerId}
                     title="Click to copy your unique Learner ID"
@@ -97,7 +127,7 @@ export default function Settings() {
                     }}
                   >
                     <FiTag style={{ fontSize: '12px' }} />
-                    ID: {user.learnerId}
+                    ID: {user?.learnerId || 'Syncing ID...'}
                     {copiedId ? <FiCheck style={{ color: '#34D399' }} /> : <FiCopy style={{ opacity: 0.8 }} />}
                   </button>
                 )}
@@ -109,12 +139,12 @@ export default function Settings() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            {isLearner && user?.learnerId && (
+            {isLearner && (
               <div
                 style={{
-                  background: 'rgba(30, 41, 59, 0.8)',
-                  border: '1px solid rgba(148, 163, 184, 0.2)',
-                  borderRadius: '12px',
+                  background: 'rgba(30, 41, 59, 0.9)',
+                  border: '1px solid rgba(148, 163, 184, 0.25)',
+                  borderRadius: '14px',
                   padding: '8px 14px',
                   display: 'flex',
                   alignItems: 'center',
@@ -126,28 +156,49 @@ export default function Settings() {
                     Unique Learner ID
                   </div>
                   <div style={{ fontSize: '14px', fontWeight: 800, color: '#38BDF8', fontFamily: 'monospace' }}>
-                    {user.learnerId}
+                    {user?.learnerId || 'Generating...'}
                   </div>
                 </div>
-                <button
-                  onClick={handleCopyLearnerId}
-                  style={{
-                    background: copiedId ? '#10B981' : '#3B82F6',
-                    color: '#FFF',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '6px 10px',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}
-                  title="Copy Learner ID for scholarships & Practitioner discounts"
-                >
-                  {copiedId ? <><FiCheck size={12} /> Copied</> : <><FiCopy size={12} /> Copy</>}
-                </button>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <button
+                    onClick={handleCopyLearnerId}
+                    style={{
+                      background: copiedId ? '#10B981' : '#3B82F6',
+                      color: '#FFF',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '6px 10px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                    title="Copy Learner ID for scholarships & Practitioner discounts"
+                  >
+                    {copiedId ? <><FiCheck size={12} /> Copied</> : <><FiCopy size={12} /> Copy ID</>}
+                  </button>
+                  <button
+                    onClick={handleShareWithPractitioner}
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      color: '#E2E8F0',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      borderRadius: '8px',
+                      padding: '6px 10px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                    title="Copy friendly message to share with your Practitioner"
+                  >
+                    <FiShare2 size={12} /> Share
+                  </button>
+                </div>
               </div>
             )}
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, padding: '6px 14px', borderRadius: '10px', background: 'rgba(255, 255, 255, 0.1)', color: '#FFFFFF', border: '1px solid rgba(255, 255, 255, 0.15)' }}>

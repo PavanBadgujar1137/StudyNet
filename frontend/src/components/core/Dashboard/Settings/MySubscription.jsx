@@ -8,7 +8,6 @@ import {
   FiClock,
   FiCreditCard,
   FiArrowRight,
-  FiShield,
   FiAward,
   FiHeart
 } from "react-icons/fi"

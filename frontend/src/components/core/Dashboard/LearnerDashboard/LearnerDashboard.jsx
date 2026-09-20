@@ -28,8 +28,6 @@ import Reflections from './Reflections'
 import Courses from './Courses'
 import Settings from '../Settings'
 import CommunityChatHub from '../CommunityChatHub'
-import { logout } from '../../../../services/operations/authAPI'
-import { apiConnector } from '../../../../services/apiConnector'
 import { fetchClientDashboardData } from '../../../../services/operations/dashboardAPI'
 
 export function LearnerDashboard() {
@@ -74,10 +72,6 @@ export function LearnerDashboard() {
   useEffect(() => {
     loadData()
   }, [loadData])
-
-  const handleLogout = () => {
-    dispatch(logout(navigate))
-  }
 
   const handleCheckInSuccess = () => {
     loadData()
@@ -223,7 +217,14 @@ export function LearnerDashboard() {
             {clientName.slice(0, 1)}{user?.lastName?.slice(0, 1) || ''}
           </div>
           <div>
-            <h4 className="oh-sidebar-user-name">{clientName}</h4>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <h4 className="oh-sidebar-user-name">{clientName}</h4>
+              {user?.learnerId && (
+                <span style={{ fontSize: '10px', background: '#EEF2FF', color: '#4338CA', padding: '1px 6px', borderRadius: '4px', fontFamily: 'monospace', fontWeight: 700 }}>
+                  {user.learnerId}
+                </span>
+              )}
+            </div>
             <p className="oh-sidebar-user-meta">Edit Profile &amp; Settings →</p>
           </div>
         </div>
@@ -263,31 +264,29 @@ export function LearnerDashboard() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-            {user?.learnerId && (
-              <button
-                onClick={handleCopyLearnerId}
-                title="Your Unique Learner ID (Click to copy)"
-                style={{
-                  padding: '5px 14px',
-                  borderRadius: 20,
-                  fontSize: 12,
-                  fontWeight: 700,
-                  fontFamily: 'monospace',
-                  background: 'rgba(238, 242, 255, 0.9)',
-                  color: '#4338CA',
-                  border: '1px solid #C7D2FE',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                <FiTag style={{ fontSize: 13 }} />
-                ID: {user.learnerId}
-                {copiedId ? <FiCheck style={{ color: '#16A34A', fontSize: 13 }} /> : <FiCopy style={{ opacity: 0.7, fontSize: 13 }} />}
-              </button>
-            )}
+            <button
+              onClick={handleCopyLearnerId}
+              title="Your Unique Learner ID (Click to copy)"
+              style={{
+                padding: '5px 14px',
+                borderRadius: 20,
+                fontSize: 12,
+                fontWeight: 700,
+                fontFamily: 'monospace',
+                background: 'rgba(238, 242, 255, 0.95)',
+                color: '#4338CA',
+                border: '1px solid #C7D2FE',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <FiTag style={{ fontSize: 13 }} />
+              ID: {user?.learnerId || 'Syncing ID...'}
+              {copiedId ? <FiCheck style={{ color: '#16A34A', fontSize: 13 }} /> : <FiCopy style={{ opacity: 0.7, fontSize: 13 }} />}
+            </button>
             <span style={{ padding: '5px 14px', borderRadius: 20, fontSize: 12, fontWeight: 700, background: '#DCFCE7', color: '#166534', border: '1px solid #BBF7D0', display: 'flex', alignItems: 'center', gap: 6 }}>
               <span>✨</span> Free Learner Account (100% Free)
             </span>
