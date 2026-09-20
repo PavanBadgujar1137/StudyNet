@@ -380,43 +380,43 @@ function ClientsTab() {
             <h3 style={{ margin: '0 0 4px', color: '#0F172A', fontSize: 18, fontWeight: 800 }}>Manage Plan &amp; Trial — {planModal.firstName} {planModal.lastName}</h3>
             <p style={{ margin: '0 0 16px', color: '#64748B', fontSize: 13 }}>
               Current status: <strong style={{ color: '#1F5FE0' }}>
-                {planModal.hasActiveSub 
+                {(planModal.accountType !== 'Practitioner' && planModal.accountType !== 'Instructor')
+                  ? 'Free Learner Account (100% Free Lifetime Access)'
+                  : planModal.hasActiveSub 
                   ? `Subscribed (${planModal.subscription?.planName || planModal.subscription?.planKey || 'Active Plan'})` 
                   : planModal.isTrialActive 
-                  ? `${(planModal.accountType === 'Practitioner' || planModal.accountType === 'Instructor') ? '14-Day' : '7-Day'} Trial (${Math.min((planModal.accountType === 'Practitioner' || planModal.accountType === 'Instructor') ? 14 : 7, planModal.trialDaysRemaining || 7)}d left)` 
+                  ? `14-Day Trial (${Math.min(14, planModal.trialDaysRemaining || 14)}d left)` 
                   : 'Trial Expired'}
               </strong>
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 20 }}>
               <div>
-                <label style={{ display: 'block', color: '#475569', fontSize: 12, marginBottom: 6, fontWeight: 600 }}>Assign Subscription Plan</label>
+                <label style={{ display: 'block', color: '#475569', fontSize: 12, marginBottom: 6, fontWeight: 600 }}>Account Access Tier</label>
                 <select value={selectedPlan} onChange={e => setSelectedPlan(e.target.value)}
                   style={{ width: '100%', background: '#FFFFFF', border: '1.5px solid #CBD5E1', borderRadius: 10, padding: '10px 14px', color: '#0F172A', fontSize: 14, outline: 'none' }}>
-                  <option value="trial">Keep Active Free Trial</option>
                   {(planModal.accountType === 'Practitioner' || planModal.accountType === 'Instructor') ? (
                     <>
+                      <option value="trial">Keep Active Free Trial</option>
                       <option value="starter">Starter Plan (₹999/mo)</option>
                       <option value="growth">Growth Plan (₹2,999/mo)</option>
                       <option value="master">Master Plan (₹5,999/mo)</option>
+                      <option value="none">No Active Plan (Trial Expired)</option>
                     </>
                   ) : (
-                    <>
-                      <option value="beginner">Beginner Plan (₹51/mo)</option>
-                      <option value="advance">Advance Plan (₹151/mo)</option>
-                      <option value="champion">Champion Plan (₹1,500/mo)</option>
-                    </>
+                    <option value="free">Free Learner (100% Free Lifetime Access)</option>
                   )}
-                  <option value="none">No Active Plan (Trial Expired)</option>
                 </select>
               </div>
 
-              <div>
-                <label style={{ display: 'block', color: '#475569', fontSize: 12, marginBottom: 6, fontWeight: 600 }}>Extend Trial (Days)</label>
-                <input type="number" value={extendDays} onChange={e => setExtendDays(e.target.value)}
-                  placeholder="e.g. 7"
-                  style={{ width: '100%', background: '#FFFFFF', border: '1.5px solid #CBD5E1', borderRadius: 10, padding: '10px 14px', color: '#0F172A', fontSize: 14, outline: 'none' }} />
-              </div>
+              {(planModal.accountType === 'Practitioner' || planModal.accountType === 'Instructor') && (
+                <div>
+                  <label style={{ display: 'block', color: '#475569', fontSize: 12, marginBottom: 6, fontWeight: 600 }}>Extend Trial (Days)</label>
+                  <input type="number" value={extendDays} onChange={e => setExtendDays(e.target.value)}
+                    placeholder="e.g. 7"
+                    style={{ width: '100%', background: '#FFFFFF', border: '1.5px solid #CBD5E1', borderRadius: 10, padding: '10px 14px', color: '#0F172A', fontSize: 14, outline: 'none' }} />
+                </div>
+              )}
             </div>
 
             <div style={{ display: 'flex', gap: 10 }}>
@@ -507,17 +507,19 @@ function ClientsTab() {
               }
               const isPract = r.accountType === 'Practitioner' || r.accountType === 'Instructor'
               const isLearner = !isPract
-              const statusText = r.hasActiveSub 
+              const statusText = isLearner
+                ? 'Free Learner (100% Free)'
+                : r.hasActiveSub 
                 ? `Subscribed (${r.subscription?.planName || r.subscription?.planKey || 'Active Plan'})` 
                 : r.isTrialActive 
-                ? `${isLearner ? '7-Day' : '14-Day'} Trial (${Math.min(isLearner ? 7 : 14, r.trialDaysRemaining || (isLearner ? 7 : 14))}d left)` 
+                ? `14-Day Trial (${Math.min(14, r.trialDaysRemaining || 14)}d left)` 
                 : 'Trial Expired'
               return (
                 <span style={{
                   padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700,
-                  background: r.hasActiveSub ? '#DCFCE7' : r.isTrialActive ? '#F3E8FF' : '#FEE2E2',
-                  color: r.hasActiveSub ? '#166534' : r.isTrialActive ? '#7E22CE' : '#DC2626',
-                  border: `1px solid ${r.hasActiveSub ? '#BBF7D0' : r.isTrialActive ? '#E9D5FF' : '#FCA5A5'}`
+                  background: (isLearner || r.hasActiveSub) ? '#DCFCE7' : r.isTrialActive ? '#F3E8FF' : '#FEE2E2',
+                  color: (isLearner || r.hasActiveSub) ? '#166534' : r.isTrialActive ? '#7E22CE' : '#DC2626',
+                  border: `1px solid ${(isLearner || r.hasActiveSub) ? '#BBF7D0' : r.isTrialActive ? '#E9D5FF' : '#FCA5A5'}`
                 }}>
                   {statusText}
                 </span>
@@ -528,7 +530,7 @@ function ClientsTab() {
             { key: 'createdAt', label: 'Joined', render: r => fmtDate(r.createdAt) },
             { key: 'action', label: 'Action', render: r => (
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                <button onClick={() => { setPlanModal(r); setSelectedPlan(r.subscription?.planKey || r.activePlan || 'advance') }}
+                <button onClick={() => { setPlanModal(r); setSelectedPlan(r.subscription?.planKey || r.activePlan || 'free') }}
                   style={{ padding: '6px 12px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, color: '#1D4ED8', cursor: 'pointer', fontWeight: 600, fontSize: 12 }}>
                   Manage Plan
                 </button>
@@ -612,21 +614,18 @@ function CoursesTab() {
       {assignModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 20, padding: 32, width: 480, maxWidth: '90vw', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
-            <h3 style={{ margin: '0 0 4px', color: '#0F172A', fontSize: 18, fontWeight: 800 }}>Assign Subscription Plan Tier</h3>
+            <h3 style={{ margin: '0 0 4px', color: '#0F172A', fontSize: 18, fontWeight: 800 }}>Manage Course Access &amp; Status</h3>
             <p style={{ margin: '0 0 16px', color: '#64748B', fontSize: 13 }}>Course: <strong>{assignModal.title}</strong> by Dr. {assignModal.practitioner?.firstName} {assignModal.practitioner?.lastName}</p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 24 }}>
               <div>
-                <label style={{ display: 'block', color: '#475569', fontSize: 12, marginBottom: 6, fontWeight: 600 }}>Required Subscription Plan</label>
+                <label style={{ display: 'block', color: '#475569', fontSize: 12, marginBottom: 6, fontWeight: 600 }}>Learner Access</label>
                 <select value={selectedPlan} onChange={e => setSelectedPlan(e.target.value)}
                   style={{ width: '100%', background: '#FFFFFF', border: '1.5px solid #CBD5E1', borderRadius: 10, padding: '10px 14px', color: '#0F172A', fontSize: 14, outline: 'none' }}>
-                  <option value="">Free Access (No subscription needed)</option>
-                  <option value="beginner">Beginner Plan &amp; above (₹51/mo)</option>
-                  <option value="advance">Advance Plan &amp; above (₹151/mo)</option>
-                  <option value="champion">Champion Plan (₹1,500/mo)</option>
+                  <option value="">100% Free Access for All Learners</option>
                 </select>
                 <p style={{ margin: '4px 0 0', color: '#94A3B8', fontSize: 11 }}>
-                  Clients must have an active subscription or trial matching this tier to access videos.
+                  All registered learners have 100% unrestricted free access to this course.
                 </p>
               </div>
 
@@ -1091,13 +1090,9 @@ function CoursesTab() {
                 <div style={{ color: '#64748B', fontSize: 11 }}>{r.practitioner?.email}</div>
               </div>
             )},
-            { key: 'requiredPlan', label: 'Assigned Subscription Plan', render: r => r.requiredPlan ? (
-              <span style={{ padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: '#F3E8FF', color: '#7E22CE', border: '1px solid #E9D5FF' }}>
-                {r.requiredPlan === 'beginner' ? 'Beginner Plan (₹51)' : r.requiredPlan === 'advance' ? 'Advance Plan (₹151)' : r.requiredPlan === 'champion' ? 'Champion Plan (₹1,500)' : `${r.requiredPlan} Plan`}
-              </span>
-            ) : (
+            { key: 'requiredPlan', label: 'Learner Access', render: () => (
               <span style={{ padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: '#DCFCE7', color: '#166534', border: '1px solid #BBF7D0' }}>
-                Free Access
+                100% Free
               </span>
             )},
             { key: 'status', label: 'Status', render: r => <StatusBadge status={r.status} /> },

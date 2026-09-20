@@ -1,8 +1,27 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useSelector } from 'react-redux'
-import { FiSearch, FiMessageSquare, FiVideo, FiX, FiCheckCircle, FiClock, FiFeather, FiSend, FiBookOpen } from 'react-icons/fi'
+import { 
+  FiSearch, 
+  FiMessageSquare, 
+  FiVideo, 
+  FiX, 
+  FiCheckCircle, 
+  FiClock, 
+  FiFeather, 
+  FiSend, 
+  FiBookOpen,
+  FiTag,
+  FiCopy,
+  FiCheck,
+  FiPhone,
+  FiMail,
+  FiUser,
+  FiGift,
+  FiAward
+} from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import { apiConnector } from '../../../../services/apiConnector'
+import { lookupLearnerById } from '../../../../services/operations/couponAPI'
 
 export function MyLearners({ setActiveSection, telemetryData, onUpdate }) {
   const { token } = useSelector((state) => state.auth)
@@ -12,6 +31,37 @@ export function MyLearners({ setActiveSection, telemetryData, onUpdate }) {
   const [submitting, setSubmitting] = useState(false)
   const [pendingApprovals, setPendingApprovals] = useState([])
   const [approvingId, setApprovingId] = useState(null)
+  const [copiedId, setCopiedId] = useState(null)
+
+  // Quick Learner ID Lookup State
+  const [lookupIdInput, setLookupIdInput] = useState('')
+  const [lookupLoading, setLookupLoading] = useState(false)
+  const [lookedUpLearner, setLookedUpLearner] = useState(null)
+
+  const handleCopyId = (id) => {
+    if (!id) return
+    navigator.clipboard.writeText(id)
+    setCopiedId(id)
+    toast.success('Learner ID copied!')
+    setTimeout(() => setCopiedId(null), 2000)
+  }
+
+  const handleLookupLearner = async (e) => {
+    if (e) e.preventDefault()
+    if (!lookupIdInput.trim()) {
+      return toast.error('Please enter a Learner ID (e.g. LRN-102938)')
+    }
+    setLookupLoading(true)
+    const res = await lookupLearnerById(lookupIdInput.trim(), token)
+    setLookupLoading(false)
+    if (res?.success && res?.learner) {
+      setLookedUpLearner(res.learner)
+      toast.success(`Found learner: ${res.learner.name}`)
+    } else {
+      toast.error(res?.message || 'No learner found with that ID.')
+      setLookedUpLearner(null)
+    }
+  }
 
   // Reflections state
   const [reflectionModalLearner, setReflectionModalLearner] = useState(null)
@@ -149,8 +199,10 @@ export function MyLearners({ setActiveSection, telemetryData, onUpdate }) {
   const filteredClients = clients.filter((c) => {
     const fullName = `${c.firstName || ''} ${c.lastName || ''}`.toLowerCase()
     const email = (c.email || '').toLowerCase()
+    const lId = (c.learnerId || '').toLowerCase()
+    const phone = (c.contactNumber || c.additionalDetails?.contactNumber || '').toLowerCase()
     const query = searchTerm.toLowerCase()
-    return fullName.includes(query) || email.includes(query)
+    return fullName.includes(query) || email.includes(query) || lId.includes(query) || phone.includes(query)
   })
 
   // Filter reflections for currently selected learner in modal
@@ -166,6 +218,192 @@ export function MyLearners({ setActiveSection, telemetryData, onUpdate }) {
           <div className="crumb">My learners &amp; Connection Requests</div>
           <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#0F172A' }}>{clients.length} Active Learner(s) &amp; Students</h1>
         </div>
+      </div>
+
+      {/* QUICK LEARNER ID LOOKUP CARD */}
+      <div style={{ background: 'linear-gradient(135deg, #1E1B4B 0%, #312E81 100%)', borderRadius: '16px', padding: '22px 24px', marginBottom: '24px', color: '#FFF', boxShadow: '0 10px 25px -5px rgba(30, 27, 75, 0.3)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '14px', marginBottom: '16px' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '17px', fontWeight: 800, color: '#FFFFFF' }}>
+              <FiTag style={{ color: '#38BDF8' }} /> Learner ID Directory Lookup
+            </div>
+            <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#C7D2FE' }}>
+              Enter any learner's unique Learner ID to immediately view their complete profile (Name, Email, Phone Number, Photo) and grant discounts.
+            </p>
+          </div>
+        </div>
+
+        <form onSubmit={handleLookupLearner} style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', maxWidth: '600px' }}>
+          <div style={{ position: 'relative', flex: '1 1 280px' }}>
+            <FiTag style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+            <input
+              type="text"
+              placeholder="Enter Learner ID (e.g. LRN-102938)..."
+              value={lookupIdInput}
+              onChange={(e) => setLookupIdInput(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 12px 10px 36px',
+                borderRadius: '10px',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                background: 'rgba(15, 23, 42, 0.6)',
+                color: '#FFF',
+                fontSize: '13px',
+                fontWeight: 600,
+                outline: 'none',
+                fontFamily: 'monospace',
+                boxSizing: 'border-box',
+              }}
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={lookupLoading}
+            style={{
+              background: '#38BDF8',
+              color: '#0F172A',
+              border: 'none',
+              padding: '10px 20px',
+              borderRadius: '10px',
+              fontWeight: 800,
+              fontSize: '13px',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s',
+            }}
+          >
+            {lookupLoading ? 'Searching...' : <><FiSearch size={14} /> Search Learner</>}
+          </button>
+
+          {lookedUpLearner && (
+            <button
+              type="button"
+              onClick={() => {
+                setLookedUpLearner(null)
+                setLookupIdInput('')
+              }}
+              style={{
+                background: 'rgba(255, 255, 255, 0.1)',
+                color: '#E2E8F0',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                padding: '10px 14px',
+                borderRadius: '10px',
+                fontWeight: 700,
+                fontSize: '13px',
+                cursor: 'pointer',
+              }}
+            >
+              Clear
+            </button>
+          )}
+        </form>
+
+        {/* LOOKED UP LEARNER FULL PROFILE CARD */}
+        {lookedUpLearner && (
+          <div
+            style={{
+              marginTop: '18px',
+              background: '#FFFFFF',
+              borderRadius: '14px',
+              padding: '18px 20px',
+              color: '#0F172A',
+              border: '2px solid #38BDF8',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '16px',
+              boxShadow: '0 10px 20px rgba(0,0,0,0.15)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div
+                style={{
+                  width: '52px',
+                  height: '52px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #4F46E5, #7C3AED)',
+                  color: '#FFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 800,
+                  fontSize: '18px',
+                  overflow: 'hidden',
+                  flexShrink: 0,
+                  border: '2px solid #E0E7FF',
+                }}
+              >
+                {lookedUpLearner.image ? (
+                  <img
+                    src={lookedUpLearner.image}
+                    alt={lookedUpLearner.name}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  `${lookedUpLearner.firstName?.[0] || 'L'}${lookedUpLearner.lastName?.[0] || ''}`.toUpperCase()
+                )}
+              </div>
+
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 800, color: '#0F172A' }}>
+                    {lookedUpLearner.name}
+                  </h3>
+                  <span
+                    style={{
+                      background: '#EFF6FF',
+                      color: '#1D4ED8',
+                      border: '1px solid #BFDBFE',
+                      padding: '2px 8px',
+                      borderRadius: '6px',
+                      fontSize: '11px',
+                      fontWeight: 800,
+                      fontFamily: 'monospace',
+                    }}
+                  >
+                    ID: {lookedUpLearner.learnerId}
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '6px', flexWrap: 'wrap', fontSize: '13px', color: '#475569' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                    <FiMail style={{ color: '#6366F1' }} /> {lookedUpLearner.email}
+                  </span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                    <FiPhone style={{ color: '#10B981' }} /> {lookedUpLearner.contactNumber || 'No Phone Number'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <button
+                onClick={() => {
+                  if (setActiveSection) setActiveSection('coupons')
+                }}
+                style={{
+                  background: '#4F46E5',
+                  color: '#FFF',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '8px 16px',
+                  fontWeight: 700,
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <FiGift size={14} /> Give Discount / Free Access
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* PENDING PAYMENT APPROVALS SECTION */}
@@ -214,9 +452,16 @@ export function MyLearners({ setActiveSection, telemetryData, onUpdate }) {
                       {cName.slice(0, 2).toUpperCase()}
                     </div>
                     <div>
-                      <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 800, color: '#0F172A' }}>{cName}</h4>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 800, color: '#0F172A' }}>{cName}</h4>
+                        {cl.learnerId && (
+                          <span style={{ fontSize: '11px', background: '#EEF2FF', color: '#4338CA', border: '1px solid #C7D2FE', padding: '1px 6px', borderRadius: '4px', fontWeight: 700, fontFamily: 'monospace' }}>
+                            {cl.learnerId}
+                          </span>
+                        )}
+                      </div>
                       <p style={{ margin: 0, fontSize: '12px', color: '#64748B' }}>
-                        {cl.email} • Paid: <b style={{ color: '#166534' }}>₹{pa.amountPaid || 2500}</b> • Ref: {pa.paymentId || 'Razorpay Verified'}
+                        {cl.email} • {cl.contactNumber || cl.additionalDetails?.contactNumber || 'No Phone'} • Paid: <b style={{ color: '#166534' }}>₹{pa.amountPaid || 2500}</b> • Ref: {pa.paymentId || 'Razorpay Verified'}
                       </p>
                     </div>
                   </div>
@@ -269,11 +514,11 @@ export function MyLearners({ setActiveSection, telemetryData, onUpdate }) {
       <div className="card" style={{ padding: '24px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
           <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#0F172A' }}>Learners Booked With You</h3>
-          <div style={{ position: 'relative', width: '260px' }}>
+          <div style={{ position: 'relative', width: '280px' }}>
             <FiSearch style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
             <input
               type="text"
-              placeholder="Search learners..."
+              placeholder="Search by name, email, or Learner ID..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               style={{
@@ -293,7 +538,8 @@ export function MyLearners({ setActiveSection, telemetryData, onUpdate }) {
             <thead>
               <tr style={{ borderBottom: '1px solid #E2E8F0', background: '#F8FAFC' }}>
                 <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700, color: '#64748B', fontSize: '12.5px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Learner</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700, color: '#64748B', fontSize: '12.5px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Email</th>
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700, color: '#64748B', fontSize: '12.5px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Learner ID</th>
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700, color: '#64748B', fontSize: '12.5px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Email / Phone</th>
                 <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700, color: '#64748B', fontSize: '12.5px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Enrolled Date</th>
                 <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700, color: '#64748B', fontSize: '12.5px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</th>
                 <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700, color: '#64748B', fontSize: '12.5px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Actions</th>
@@ -331,7 +577,42 @@ export function MyLearners({ setActiveSection, telemetryData, onUpdate }) {
                           </div>
                         </div>
                       </td>
-                      <td style={{ padding: '14px 16px', color: '#64748B', fontSize: '13px' }}>{client.email}</td>
+                      <td style={{ padding: '14px 16px' }}>
+                        {client.learnerId ? (
+                          <button
+                            onClick={() => handleCopyId(client.learnerId)}
+                            title="Click to copy Learner ID"
+                            style={{
+                              background: '#EEF2FF',
+                              color: '#4338CA',
+                              border: '1px solid #C7D2FE',
+                              padding: '4px 8px',
+                              borderRadius: '6px',
+                              fontWeight: 700,
+                              fontFamily: 'monospace',
+                              fontSize: '12px',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                            }}
+                          >
+                            <FiTag size={12} />
+                            {client.learnerId}
+                            {copiedId === client.learnerId ? <FiCheck size={12} color="#16A34A" /> : <FiCopy size={11} style={{ opacity: 0.7 }} />}
+                          </button>
+                        ) : (
+                          <span style={{ color: '#94A3B8', fontSize: '12px' }}>LRN-PENDING</span>
+                        )}
+                      </td>
+                      <td style={{ padding: '14px 16px', fontSize: '13px' }}>
+                        <div style={{ color: '#0F172A', fontWeight: 500 }}>{client.email}</div>
+                        {(client.contactNumber || client.additionalDetails?.contactNumber) && (
+                          <div style={{ color: '#64748B', fontSize: '12px', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <FiPhone size={11} style={{ color: '#10B981' }} /> {client.contactNumber || client.additionalDetails?.contactNumber}
+                          </div>
+                        )}
+                      </td>
                       <td style={{ padding: '14px 16px', color: '#64748B', fontSize: '13px' }}>
                         {client.createdAt ? new Date(client.createdAt).toLocaleDateString() : 'Active Member'}
                       </td>
@@ -369,7 +650,7 @@ export function MyLearners({ setActiveSection, telemetryData, onUpdate }) {
                 })
               ) : (
                 <tr>
-                  <td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: '#64748B' }}>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: '#64748B' }}>
                     {searchTerm ? `No learners matching "${searchTerm}".` : 'No connected learners found.'}
                   </td>
                 </tr>

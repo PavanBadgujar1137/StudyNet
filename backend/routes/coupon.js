@@ -17,6 +17,7 @@ const {
   getMyLearnerDiscounts,
   toggleLearnerDiscount,
   deleteLearnerDiscount,
+  lookupLearner,
   calculateCheckoutDiscounts,
   getLearnerActivePersonalDiscount,
 } = require("../controllers/coupon")
@@ -39,7 +40,9 @@ router.put("/practitioner/:couponId", auth, isInstructor, updatePractitionerCoup
 router.patch("/toggle/:couponId", auth, toggleCouponStatus)
 router.delete("/practitioner/:couponId", auth, isInstructor, deleteCoupon)
 
-// ─── Practitioner Personalized Learner Discounts ──────────────────────────────
+// ─── Practitioner Personalized Learner Discounts & Lookup ────────────────────
+router.post("/lookup-learner", auth, isInstructor, lookupLearner)
+router.get("/lookup-learner/:query", auth, isInstructor, lookupLearner)
 router.post("/learner-discount/create", auth, isInstructor, createLearnerDiscount)
 router.get("/learner-discount/mine", auth, isInstructor, getMyLearnerDiscounts)
 router.patch("/learner-discount/toggle/:discountId", auth, isInstructor, toggleLearnerDiscount)

@@ -30,14 +30,14 @@ export function PricingPage() {
   const allFaqs = [
     {
       category: 'learner',
-      categoryTag: 'LEARNERS',
+      categoryTag: 'FOR LEARNERS',
       icon: FiUserCheck,
-      q: "How does the Learner 7-Day Free Trial work?",
-      a: "When you sign up as a Learner, you automatically receive 7 days of free access to practitioner free courses, guided check-ins, and AURA AI tools. After 7 days, you can choose to subscribe to a Learner plan (Beginner ₹51/mo, Advance ₹151/mo, or Champion ₹1,500/mo) securely via Razorpay."
+      q: "Is OpenHand completely free for Learners?",
+      a: "Yes! OpenHand is 100% free for all learners forever. When you sign up, you get immediate, unrestricted access to practitioner free courses, live growth circles, daily mood check-ins, self-reflection journals, and our consent-first AURA AI reflection companion. No credit card, no subscription, and no trial expiration."
     },
     {
       category: 'practitioner',
-      categoryTag: 'PRACTITIONERS',
+      categoryTag: 'FOR PRACTITIONERS',
       icon: FiBriefcase,
       q: "Do Practitioners get a free trial to set up their practice?",
       a: "Yes! All Practitioners get a 14-day free trial to explore the practice dashboard, set up 1:1 session offerings, draft courses, and test live circle containers. To publish live and accept client bookings, choose a Practitioner Plan (Starter ₹999/mo, Growth ₹2,999/mo, or Master ₹5,999/mo)."
@@ -47,21 +47,21 @@ export function PricingPage() {
       categoryTag: 'PAYMENTS & SECURITY',
       icon: FiCreditCard,
       q: "How are payments processed and secured?",
-      a: "All payments and monthly plan subscriptions are processed through Razorpay, India's leading PCI-DSS compliant payment gateway. We support UPI, Credit/Debit Cards, Net Banking, and Wallets with 256-bit encryption and instant subscription activation."
+      a: "All payments and monthly plan subscriptions are processed through Razorpay, India's leading PCI-DSS compliant payment gateway. We support UPI, Credit/Debit Cards, Net Banking, and Wallets with 256-bit encryption and instant activation."
     },
     {
       category: 'payment',
       categoryTag: 'BILLING & CANCELLATION',
       icon: FiRefreshCw,
-      q: "Can I switch, upgrade, or cancel my plan at any time?",
-      a: "Yes, you can upgrade, downgrade, or cancel your subscription at any time directly from your account dashboard. Upgrades apply immediately, while downgrades or cancellations take effect at the end of your current billing period."
+      q: "Can Practitioners switch, upgrade, or cancel their plan at any time?",
+      a: "Yes, practitioners can upgrade, downgrade, or cancel their platform subscription at any time directly from the dashboard. Upgrades apply immediately, while downgrades or cancellations take effect at the end of the current billing period."
     },
     {
       category: 'practitioner',
       categoryTag: 'PRACTITIONER EARNINGS',
       icon: FiZap,
       q: "How do Practitioner earnings and payouts work?",
-      a: "Earnings from paid 1:1 sessions and paid courses are automatically recorded in your financial dashboard. The platform credits your earnings ledger, and salary disbursements are transferred directly to your bank account."
+      a: "Earnings from paid 1:1 sessions and paid courses are automatically recorded in your financial dashboard with 0% platform commission. The platform credits your earnings ledger, and salary disbursements are transferred directly to your bank account."
     },
     {
       category: 'payment',
@@ -85,42 +85,42 @@ export function PricingPage() {
         {/* ========================================================================= */}
         <header className="oh-pricing-hero pt-14 pb-12 text-center bg-gradient-to-b from-white via-slate-50 to-slate-100/60 border-b border-slate-200/70 relative overflow-hidden">
           {/* Subtle Ambient Background Gradient */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[320px] bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[320px] bg-gradient-to-r from-emerald-500/10 via-blue-500/10 to-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
           
           <div className="oh-wrap max-w-5xl mx-auto px-4 relative z-10">
-            <OHEyebrow>OpenHand Transparent Pricing</OHEyebrow>
+            <OHEyebrow>OpenHand Transparent Plans</OHEyebrow>
 
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight my-4 leading-tight">
-              Simple, transparent plans for <br className="hidden sm:inline" />
+              100% Free for Learners <br className="hidden sm:inline" />
               <span className="oh-grad-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                Learners &amp; Practitioners
+                Platform Plans for Practitioners
               </span>
             </h1>
 
             <p className="sub text-slate-600 text-base sm:text-lg max-w-2xl mx-auto font-medium leading-relaxed">
-              Whether you are here to learn and transform your health or a practitioner growing your care practice, we have tailored plans built for you via <strong>Razorpay</strong>.
+              Learners enjoy complete, unrestricted free access to courses, circles, check-ins, and AURA AI. Practitioners get powerful practice tools with <strong>0% platform commission</strong>.
             </p>
 
             {/* Key Trust Highlights */}
             <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 mt-8 text-xs sm:text-sm font-bold text-slate-700">
-              <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-xs">
-                <FiShield className="text-emerald-600 text-base" />
-                <span>100% Razorpay Secure</span>
+              <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-emerald-200 text-emerald-700 shadow-xs">
+                <FiUserCheck className="text-emerald-600 text-base" />
+                <span>100% Free for Learners</span>
               </div>
               <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-xs">
-                <FiZap className="text-amber-500 text-base" />
-                <span>Free Trial Included</span>
+                <FiZap className="text-blue-600 text-base" />
+                <span>0% Commission for Practitioners</span>
               </div>
               <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-xs">
-                <FiRefreshCw className="text-blue-600 text-base" />
-                <span>Cancel Anytime</span>
+                <FiShield className="text-purple-600 text-base" />
+                <span>Razorpay 256-bit Secure</span>
               </div>
             </div>
           </div>
         </header>
 
         {/* ========================================================================= */}
-        {/* INTERACTIVE PRICING SECTION (LEARNER & PRACTITIONER TOGGLE & CARDS) */}
+        {/* INTERACTIVE PRICING SECTION (LEARNER FREE SHOWCASE & PRACTITIONER PLANS) */}
         {/* ========================================================================= */}
         <OHPricingSection defaultRole="learner" />
 

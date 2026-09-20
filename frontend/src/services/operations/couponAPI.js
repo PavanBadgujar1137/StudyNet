@@ -15,6 +15,7 @@ const {
   PRACTITIONER_UPDATE_COUPON_API,
   PRACTITIONER_TOGGLE_COUPON_API,
   PRACTITIONER_DELETE_COUPON_API,
+  LOOKUP_LEARNER_API,
   CREATE_LEARNER_DISCOUNT_API,
   GET_MY_LEARNER_DISCOUNTS_API,
   TOGGLE_LEARNER_DISCOUNT_API,
@@ -188,7 +189,28 @@ export const deletePractitionerCoupon = async (couponId, token) => {
   }
 }
 
-// ─── LEARNER PERSONAL DISCOUNT OPERATIONS ─────────────────────────────────────
+// ─── LEARNER PERSONAL DISCOUNT & LOOKUP OPERATIONS ────────────────────────────
+
+export const lookupLearnerById = async (learnerId, token) => {
+  try {
+    const res = await apiConnector(
+      "POST",
+      LOOKUP_LEARNER_API,
+      { learnerId },
+      { Authorization: `Bearer ${token}` }
+    )
+    if (!res?.data?.success) {
+      throw new Error(res?.data?.message || "Learner not found")
+    }
+    return res.data
+  } catch (error) {
+    console.error("LOOKUP_LEARNER_API ERROR:", error)
+    return {
+      success: false,
+      message: error?.response?.data?.message || error.message || "Failed to look up learner",
+    }
+  }
+}
 
 export const createLearnerDiscount = async (data, token) => {
   try {

@@ -7,8 +7,12 @@ import {
   FiCheckCircle, 
   FiMail, 
   FiTrash2,
-  FiZap
+  FiZap,
+  FiCopy,
+  FiCheck,
+  FiTag
 } from "react-icons/fi"
+import toast from "react-hot-toast"
 import ChangeProfilePicture from "./ChangeProfilePicture"
 import DeleteAccount from "./DeleteAccount"
 import EditProfile from "./EditProfile"
@@ -18,9 +22,19 @@ import MySubscription from "./MySubscription"
 export default function Settings() {
   const { user } = useSelector((state) => state.profile)
   const [activeSubTab, setActiveSubTab] = useState("profile")
+  const [copiedId, setCopiedId] = useState(false)
 
   const fullName = `${user?.firstName || 'User'} ${user?.lastName || ''}`.trim()
+  const isLearner = user?.accountType === "Learner" || user?.accountType === "Client" || user?.accountType === "Student"
   const roleName = user?.accountType === "Instructor" || user?.accountType === "Practitioner" ? "Practitioner" : "Learner"
+
+  const handleCopyLearnerId = () => {
+    if (!user?.learnerId) return
+    navigator.clipboard.writeText(user.learnerId)
+    setCopiedId(true)
+    toast.success("Learner ID copied to clipboard!")
+    setTimeout(() => setCopiedId(false), 2500)
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', textAlign: 'left', maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
@@ -33,7 +47,7 @@ export default function Settings() {
         <div style={{ height: '120px', width: '100%', background: 'linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #0F172A 100%)', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }} />
 
         {/* User Info Container */}
-        <div style={{ position: 'relative', padding: '0 32px 24px', marginTop: '-50px', display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyBetween: 'space-between', gap: '20px' }}>
+        <div style={{ position: 'relative', padding: '0 32px 24px', marginTop: '-50px', display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: '20px' }}>
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: '20px' }}>
             {/* Avatar */}
             <div style={{ position: 'relative' }}>
@@ -55,11 +69,38 @@ export default function Settings() {
 
             {/* Title & Email */}
             <div style={{ marginBottom: '4px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                 <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#FFFFFF', margin: 0, letterSpacing: '-0.02em' }}>{fullName}</h1>
                 <span style={{ background: 'rgba(99, 102, 241, 0.2)', color: '#A5B4FC', border: '1px solid rgba(99, 102, 241, 0.4)', padding: '3px 10px', borderRadius: '999px', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase' }}>
                   {roleName}
                 </span>
+
+                {/* Unique Learner ID Badge */}
+                {isLearner && user?.learnerId && (
+                  <button
+                    onClick={handleCopyLearnerId}
+                    title="Click to copy your unique Learner ID"
+                    style={{
+                      background: 'rgba(16, 185, 129, 0.15)',
+                      color: '#34D399',
+                      border: '1px solid rgba(16, 185, 129, 0.35)',
+                      padding: '4px 12px',
+                      borderRadius: '999px',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      fontFamily: 'monospace',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    <FiTag style={{ fontSize: '12px' }} />
+                    ID: {user.learnerId}
+                    {copiedId ? <FiCheck style={{ color: '#34D399' }} /> : <FiCopy style={{ opacity: 0.8 }} />}
+                  </button>
+                )}
               </div>
               <p style={{ color: '#94A3B8', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px', margin: '4px 0 0', fontWeight: 500 }}>
                 <FiMail style={{ color: '#818CF8' }} /> {user?.email}
@@ -67,7 +108,48 @@ export default function Settings() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            {isLearner && user?.learnerId && (
+              <div
+                style={{
+                  background: 'rgba(30, 41, 59, 0.8)',
+                  border: '1px solid rgba(148, 163, 184, 0.2)',
+                  borderRadius: '12px',
+                  padding: '8px 14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: '10px', textTransform: 'uppercase', color: '#94A3B8', fontWeight: 700, letterSpacing: '0.05em' }}>
+                    Unique Learner ID
+                  </div>
+                  <div style={{ fontSize: '14px', fontWeight: 800, color: '#38BDF8', fontFamily: 'monospace' }}>
+                    {user.learnerId}
+                  </div>
+                </div>
+                <button
+                  onClick={handleCopyLearnerId}
+                  style={{
+                    background: copiedId ? '#10B981' : '#3B82F6',
+                    color: '#FFF',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '6px 10px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                  title="Copy Learner ID for scholarships & Practitioner discounts"
+                >
+                  {copiedId ? <><FiCheck size={12} /> Copied</> : <><FiCopy size={12} /> Copy</>}
+                </button>
+              </div>
+            )}
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, padding: '6px 14px', borderRadius: '10px', background: 'rgba(255, 255, 255, 0.1)', color: '#FFFFFF', border: '1px solid rgba(255, 255, 255, 0.15)' }}>
               <FiCheckCircle style={{ color: '#34D399' }} /> Account Verified
             </span>

@@ -3,7 +3,8 @@ import { useSelector } from 'react-redux'
 import toast from 'react-hot-toast'
 import {
   FiTag, FiGift, FiPlus, FiEdit2, FiTrash2,
-  FiToggleLeft, FiToggleRight, FiSearch, FiCopy
+  FiToggleLeft, FiToggleRight, FiSearch, FiCopy,
+  FiCheck, FiUser, FiPhone, FiMail, FiCheckCircle, FiAlertCircle
 } from 'react-icons/fi'
 import { apiConnector } from '../../../../services/apiConnector'
 import {
@@ -16,6 +17,7 @@ import {
   getMyLearnerDiscounts,
   toggleLearnerDiscount,
   deleteLearnerDiscount,
+  lookupLearnerById,
 } from '../../../../services/operations/couponAPI'
 
 const fmt = (n) =>
@@ -70,6 +72,10 @@ export default function PractitionerCoupons() {
 
   // Form states for Personal Discount
   const [pLearnerId, setPLearnerId] = useState('')
+  const [lookupLearnerData, setLookupLearnerData] = useState(null)
+  const [lookupLearnerLoading, setLookupLearnerLoading] = useState(false)
+  const [lookupLearnerError, setLookupLearnerError] = useState('')
+
   const [pProductType, setPProductType] = useState('all')
   const [pCourseId, setPCourseId] = useState('')
   const [pOfferId, setPOfferId] = useState('')
@@ -78,6 +84,56 @@ export default function PractitionerCoupons() {
   const [pExpiryDate, setPExpiryDate] = useState('')
   const [pUsageLimit, setPUsageLimit] = useState('1')
   const [pNotes, setPNotes] = useState('')
+
+  const handleLookupLearner = async (idToLookup) => {
+    const val = String(idToLookup !== undefined ? idToLookup : pLearnerId).trim()
+    if (!val) {
+      setLookupLearnerData(null)
+      setLookupLearnerError('')
+      return
+    }
+    setLookupLearnerLoading(true)
+    setLookupLearnerError('')
+    const res = await lookupLearnerById(val, token)
+    setLookupLearnerLoading(false)
+    if (res?.success && res?.learner) {
+      setLookupLearnerData(res.learner)
+      setPLearnerId(res.learner.learnerId || res.learner._id)
+      setLookupLearnerError('')
+    } else {
+      setLookupLearnerData(null)
+      setLookupLearnerError(res?.message || 'No learner found with that ID or email.')
+    }
+  }
+
+  // ─── Submit Personal Learner Discount ───────────────────────────────────────
+  const handleSubmitPersonalDiscount = async (e) => {
+    e.preventDefault()
+    const targetId = lookupLearnerData?.learnerId || lookupLearnerData?._id || pLearnerId
+    if (!targetId) {
+      return toast.error('Please enter and verify the target Learner ID.')
+    }
+
+    setSubmitting(true)
+    const payload = {
+      learnerId: targetId,
+      productType: pProductType,
+      courseId: pProductType === 'course' ? pCourseId : null,
+      offerId: pProductType === 'session' ? pOfferId : null,
+      discountPercentage: pIsFree ? 100 : Number(pDiscountPct),
+      isFreeAccess: pIsFree,
+      expiryDate: pExpiryDate ? new Date(pExpiryDate) : null,
+      usageLimit: Number(pUsageLimit) || 1,
+      notes: pNotes.trim(),
+    }
+
+    const res = await createLearnerDiscount(payload, token)
+    if (res?.success) {
+      setPersonalModal(false)
+      loadData()
+    }
+    setSubmitting(false)
+  }
 
   // ─── Fetch Practitioner Data ────────────────────────────────────────────────
   const loadData = useCallback(async () => {
@@ -184,34 +240,6 @@ export default function PractitionerCoupons() {
         setCouponModal(null)
         loadData()
       }
-    }
-    setSubmitting(false)
-  }
-
-  // ─── Submit Personal Learner Discount ───────────────────────────────────────
-  const handleSubmitPersonalDiscount = async (e) => {
-    e.preventDefault()
-    if (!pLearnerId) {
-      return toast.error('Please select a learner.')
-    }
-
-    setSubmitting(true)
-    const payload = {
-      learnerId: pLearnerId,
-      productType: pProductType,
-      courseId: pProductType === 'course' ? pCourseId : null,
-      offerId: pProductType === 'session' ? pOfferId : null,
-      discountPercentage: pIsFree ? 100 : Number(pDiscountPct),
-      isFreeAccess: pIsFree,
-      expiryDate: pExpiryDate ? new Date(pExpiryDate) : null,
-      usageLimit: Number(pUsageLimit) || 1,
-      notes: pNotes.trim(),
-    }
-
-    const res = await createLearnerDiscount(payload, token)
-    if (res?.success) {
-      setPersonalModal(false)
-      loadData()
     }
     setSubmitting(false)
   }
@@ -349,7 +377,13 @@ export default function PractitionerCoupons() {
           </button>
           <button
             onClick={() => {
-              setPLearnerId(learnersList[0]?._id || '')
+              const defaultLId = learnersList[0]?.learnerId || learnersList[0]?._id || ''
+              setPLearnerId(defaultLId)
+              setLookupLearnerData(null)
+              setLookupLearnerError('')
+              if (defaultLId) {
+                handleLookupLearner(defaultLId)
+              }
               setPProductType('all')
               setPCourseId(myCourses[0]?._id || '')
               setPOfferId(myOffers[0]?._id || '')
@@ -688,7 +722,13 @@ export default function PractitionerCoupons() {
               </p>
               <button
                 onClick={() => {
-                  setPLearnerId(learnersList[0]?._id || '')
+                  const defaultLId = learnersList[0]?.learnerId || learnersList[0]?._id || ''
+                  setPLearnerId(defaultLId)
+                  setLookupLearnerData(null)
+                  setLookupLearnerError('')
+                  if (defaultLId) {
+                    handleLookupLearner(defaultLId)
+                  }
                   setPProductType('all')
                   setPCourseId(myCourses[0]?._id || '')
                   setPOfferId(myOffers[0]?._id || '')
@@ -732,10 +772,33 @@ export default function PractitionerCoupons() {
                   {filteredDiscounts.map((d) => (
                     <tr key={d._id} style={{ borderBottom: '1px solid #F1F5F9' }}>
                       <td style={{ padding: '14px 20px' }}>
-                        <div style={{ fontWeight: 700, color: '#0F172A' }}>
-                          {d.learner?.firstName} {d.learner?.lastName}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                          <span style={{ fontWeight: 700, color: '#0F172A' }}>
+                            {d.learner?.firstName} {d.learner?.lastName}
+                          </span>
+                          {d.learner?.learnerId && (
+                            <span
+                              style={{
+                                fontSize: 10,
+                                background: '#EEF2FF',
+                                color: '#4338CA',
+                                border: '1px solid #C7D2FE',
+                                padding: '1px 6px',
+                                borderRadius: 4,
+                                fontWeight: 700,
+                                fontFamily: 'monospace',
+                              }}
+                            >
+                              {d.learner.learnerId}
+                            </span>
+                          )}
                         </div>
-                        <div style={{ fontSize: 11, color: '#64748B' }}>{d.learner?.email}</div>
+                        <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>
+                          {d.learner?.email}
+                          {(d.learner?.contactNumber || d.learner?.additionalDetails?.contactNumber) && (
+                            <span> • {d.learner.contactNumber || d.learner.additionalDetails?.contactNumber}</span>
+                          )}
+                        </div>
                       </td>
                       <td style={{ padding: '14px 16px', color: '#475569' }}>
                         {d.productType === 'all'
@@ -1104,47 +1167,212 @@ export default function PractitionerCoupons() {
 
             <form onSubmit={handleSubmitPersonalDiscount} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 4 }}>
-                  Select Target Learner *
+                <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 6 }}>
+                  <span>Target Learner (Enter Learner ID) *</span>
+                  {learnersList.length > 0 && (
+                    <span style={{ fontSize: 11, fontWeight: 500, color: '#6366F1' }}>
+                      Or pick from active learners
+                    </span>
+                  )}
                 </label>
-                {learnersList.length > 0 ? (
-                  <select
-                    value={pLearnerId}
-                    onChange={(e) => setPLearnerId(e.target.value)}
-                    required
+
+                {/* Learner ID Input with Verify Button */}
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <div style={{ position: 'relative', flex: 1 }}>
+                    <FiTag style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+                    <input
+                      type="text"
+                      required
+                      placeholder="Enter Learner ID (e.g. LRN-102938) or Email..."
+                      value={pLearnerId}
+                      onChange={(e) => {
+                        setPLearnerId(e.target.value)
+                        setLookupLearnerData(null)
+                        setLookupLearnerError('')
+                      }}
+                      onBlur={() => {
+                        if (pLearnerId.trim() && !lookupLearnerData) {
+                          handleLookupLearner(pLearnerId.trim())
+                        }
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px 10px 36px',
+                        borderRadius: 10,
+                        border: lookupLearnerData ? '2px solid #10B981' : lookupLearnerError ? '2px solid #EF4444' : '1px solid #CBD5E1',
+                        fontSize: 13,
+                        fontWeight: 600,
+                        fontFamily: 'monospace',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        background: lookupLearnerData ? '#F0FDF4' : '#FFF',
+                      }}
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={lookupLearnerLoading || !pLearnerId.trim()}
+                    onClick={() => handleLookupLearner(pLearnerId.trim())}
                     style={{
-                      width: '100%',
-                      padding: '9px 12px',
-                      borderRadius: 8,
-                      border: '1px solid #CBD5E1',
-                      fontSize: 13,
-                      outline: 'none',
-                      boxSizing: 'border-box',
+                      padding: '10px 16px',
+                      background: '#4F46E5',
+                      color: '#FFF',
+                      border: 'none',
+                      borderRadius: 10,
+                      fontWeight: 700,
+                      fontSize: 12,
+                      cursor: pLearnerId.trim() ? 'pointer' : 'not-allowed',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      opacity: pLearnerId.trim() ? 1 : 0.6,
+                      flexShrink: 0,
                     }}
                   >
-                    {learnersList.map((l) => (
-                      <option key={l._id} value={l._id}>
-                        {l.firstName} {l.lastName} ({l.email})
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    type="text"
-                    required
-                    placeholder="Enter Learner User ID"
-                    value={pLearnerId}
-                    onChange={(e) => setPLearnerId(e.target.value)}
+                    {lookupLearnerLoading ? 'Verifying...' : <><FiSearch size={13} /> Verify ID</>}
+                  </button>
+                </div>
+
+                {/* Quick Select Dropdown from Connected Learners */}
+                {learnersList.length > 0 && (
+                  <div style={{ marginTop: 8 }}>
+                    <select
+                      onChange={(e) => {
+                        const selVal = e.target.value
+                        if (!selVal) return
+                        const selLearner = learnersList.find((l) => l._id === selVal || l.learnerId === selVal)
+                        const idToUse = selLearner?.learnerId || selLearner?._id || selVal
+                        setPLearnerId(idToUse)
+                        handleLookupLearner(idToUse)
+                      }}
+                      value={lookupLearnerData?.learnerId || lookupLearnerData?._id || pLearnerId || ""}
+                      style={{
+                        width: '100%',
+                        padding: '7px 10px',
+                        borderRadius: 8,
+                        border: '1px dashed #CBD5E1',
+                        fontSize: 12,
+                        color: '#64748B',
+                        outline: 'none',
+                        background: '#F8FAFC',
+                        cursor: 'pointer',
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      <option value="">-- Or pick from your active learners --</option>
+                      {learnersList.map((l) => (
+                        <option key={l._id} value={l.learnerId || l._id}>
+                          {l.firstName} {l.lastName} ({l.learnerId ? `ID: ${l.learnerId}` : l.email})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* COMPLETE LEARNER INFORMATION PREVIEW CARD */}
+                {lookupLearnerData && (
+                  <div
                     style={{
-                      width: '100%',
-                      padding: '9px 12px',
-                      borderRadius: 8,
-                      border: '1px solid #CBD5E1',
-                      fontSize: 13,
-                      outline: 'none',
-                      boxSizing: 'border-box',
+                      marginTop: 10,
+                      background: 'linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 100%)',
+                      border: '1.5px solid #86EFAC',
+                      borderRadius: 12,
+                      padding: '12px 16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                      boxShadow: '0 2px 8px rgba(16, 185, 129, 0.1)',
                     }}
-                  />
+                  >
+                    <div
+                      style={{
+                        width: 46,
+                        height: 46,
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #10B981, #059669)',
+                        color: '#FFF',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 800,
+                        fontSize: 16,
+                        overflow: 'hidden',
+                        flexShrink: 0,
+                        border: '2px solid #FFF',
+                        boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+                      }}
+                    >
+                      {lookupLearnerData.image ? (
+                        <img
+                          src={lookupLearnerData.image}
+                          alt={lookupLearnerData.name}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      ) : (
+                        `${lookupLearnerData.firstName?.[0] || 'L'}${lookupLearnerData.lastName?.[0] || ''}`.toUpperCase()
+                      )}
+                    </div>
+
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span style={{ fontWeight: 800, fontSize: 14, color: '#0F172A' }}>
+                          {lookupLearnerData.name}
+                        </span>
+                        <span
+                          style={{
+                            background: '#DCFCE7',
+                            color: '#15803D',
+                            border: '1px solid #86EFAC',
+                            padding: '1px 6px',
+                            borderRadius: 6,
+                            fontSize: 11,
+                            fontWeight: 800,
+                            fontFamily: 'monospace',
+                          }}
+                        >
+                          {lookupLearnerData.learnerId}
+                        </span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, color: '#059669', fontWeight: 700 }}>
+                          <FiCheckCircle size={12} /> Verified
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 4, fontSize: 12, color: '#475569' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <FiMail size={12} style={{ color: '#4F46E5', flexShrink: 0 }} />
+                          <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                            {lookupLearnerData.email}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <FiPhone size={12} style={{ color: '#10B981', flexShrink: 0 }} />
+                          <span>{lookupLearnerData.contactNumber || 'Phone not provided'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Error Banner if not found */}
+                {lookupLearnerError && (
+                  <div
+                    style={{
+                      marginTop: 8,
+                      background: '#FEF2F2',
+                      border: '1px solid #FECACA',
+                      borderRadius: 8,
+                      padding: '8px 12px',
+                      color: '#B91C1C',
+                      fontSize: 12,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                    }}
+                  >
+                    <FiAlertCircle size={14} style={{ flexShrink: 0 }} />
+                    <span>{lookupLearnerError}</span>
+                  </div>
                 )}
               </div>
 

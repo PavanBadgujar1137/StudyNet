@@ -526,12 +526,89 @@ exports.toggleCouponStatus = async (req, res) => {
 
 // ─── Practitioner-to-Learner Personalized Discounts ───────────────────────────
 
+// Lookup Learner by Learner ID, User ID, or Email for Practitioner Preview
+exports.lookupLearner = async (req, res) => {
+  try {
+    const rawQuery = req.body.learnerId || req.params.query || req.query.q || req.query.learnerId || ""
+    const query = String(rawQuery).trim()
+
+    if (!query) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a Learner ID, User ID, or Email to look up.",
+      })
+    }
+
+    let learnerUser = null
+
+    // 1. Try finding by unique learnerId (case-insensitive)
+    learnerUser = await User.findOne({
+      learnerId: { $regex: new RegExp(`^${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
+    }).populate("additionalDetails")
+
+    // 2. Try by ObjectId if valid Mongo ID
+    if (!learnerUser && mongoose.Types.ObjectId.isValid(query)) {
+      learnerUser = await User.findById(query).populate("additionalDetails")
+    }
+
+    // 3. Try by email
+    if (!learnerUser) {
+      learnerUser = await User.findOne({
+        email: { $regex: new RegExp(`^${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
+      }).populate("additionalDetails")
+    }
+
+    if (!learnerUser) {
+      return res.status(404).json({
+        success: false,
+        message: `No learner found matching "${query}". Please check the Learner ID.`,
+      })
+    }
+
+    // Auto-generate learnerId if missing on a learner account
+    const isLearner = learnerUser.accountType === "Learner" || learnerUser.accountType === "Client" || learnerUser.accountType === "Student"
+    if (isLearner && !learnerUser.learnerId) {
+      try {
+        const { generateUniqueLearnerId } = require("../utils/learnerIdGenerator")
+        learnerUser.learnerId = await generateUniqueLearnerId(User)
+        await learnerUser.save()
+      } catch (idErr) {
+        console.error("Error auto-generating learnerId in lookup:", idErr.message)
+      }
+    }
+
+    const contactNumber =
+      learnerUser.contactNumber ||
+      learnerUser.additionalDetails?.contactNumber ||
+      ""
+
+    return res.status(200).json({
+      success: true,
+      learner: {
+        _id: learnerUser._id,
+        learnerId: learnerUser.learnerId || "LRN-PENDING",
+        firstName: learnerUser.firstName || "",
+        lastName: learnerUser.lastName || "",
+        name: `${learnerUser.firstName || ""} ${learnerUser.lastName || ""}`.trim() || "Learner",
+        email: learnerUser.email,
+        contactNumber: contactNumber || "Not Provided",
+        image: learnerUser.image || "",
+        accountType: learnerUser.accountType,
+        createdAt: learnerUser.createdAt,
+      },
+    })
+  } catch (error) {
+    console.error("lookupLearner error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
 // Create Learner-Specific Personal Discount
 exports.createLearnerDiscount = async (req, res) => {
   try {
     const practitionerId = req.user.id
     const {
-      learnerId,
+      learnerId, // Can be MongoDB _id, custom learnerId (e.g. LRN-123456), or email
       productType = "all", // "course" | "session" | "all"
       courseId,
       offerId,
@@ -550,9 +627,39 @@ exports.createLearnerDiscount = async (req, res) => {
       })
     }
 
-    const learnerUser = await User.findById(learnerId)
+    const rawId = String(learnerId).trim()
+    let learnerUser = null
+
+    // 1. Check if learnerId matches a custom learnerId (case-insensitive)
+    learnerUser = await User.findOne({
+      learnerId: { $regex: new RegExp(`^${rawId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
+    })
+
+    // 2. Check if valid ObjectId
+    if (!learnerUser && mongoose.Types.ObjectId.isValid(rawId)) {
+      learnerUser = await User.findById(rawId)
+    }
+
+    // 3. Check by email
     if (!learnerUser) {
-      return res.status(404).json({ success: false, message: "Learner not found." })
+      learnerUser = await User.findOne({
+        email: { $regex: new RegExp(`^${rawId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
+      })
+    }
+
+    if (!learnerUser) {
+      return res.status(404).json({ success: false, message: `Learner not found with ID "${learnerId}".` })
+    }
+
+    // Ensure learner has learnerId generated if missing
+    if (!learnerUser.learnerId && (learnerUser.accountType === "Learner" || learnerUser.accountType === "Client" || learnerUser.accountType === "Student")) {
+      try {
+        const { generateUniqueLearnerId } = require("../utils/learnerIdGenerator")
+        learnerUser.learnerId = await generateUniqueLearnerId(User)
+        await learnerUser.save()
+      } catch (idErr) {
+        console.error("Error auto-assigning learnerId on discount creation:", idErr.message)
+      }
     }
 
     // Validate course ownership if course specific
@@ -587,7 +694,7 @@ exports.createLearnerDiscount = async (req, res) => {
 
     const discount = await LearnerDiscount.create({
       practitioner: practitionerId,
-      learner: learnerId,
+      learner: learnerUser._id,
       productType,
       course: courseId || null,
       offer: offerId || null,
@@ -601,13 +708,17 @@ exports.createLearnerDiscount = async (req, res) => {
     })
 
     const populated = await LearnerDiscount.findById(discount._id)
-      .populate("learner", "firstName lastName email image")
+      .populate({
+        path: "learner",
+        select: "firstName lastName email image learnerId contactNumber additionalDetails",
+        populate: { path: "additionalDetails", select: "contactNumber" },
+      })
       .populate("course", "title price")
       .populate("offer", "title price type")
 
     return res.status(201).json({
       success: true,
-      message: `Personal discount of ${finalPct}% granted to ${learnerUser.firstName} ${learnerUser.lastName}!`,
+      message: `Personal discount of ${finalPct}% granted to ${learnerUser.firstName} ${learnerUser.lastName} (${learnerUser.learnerId || "Learner"})!`,
       discount: populated,
     })
   } catch (error) {
@@ -621,7 +732,11 @@ exports.getMyLearnerDiscounts = async (req, res) => {
   try {
     const practitionerId = req.user.id
     const discounts = await LearnerDiscount.find({ practitioner: practitionerId })
-      .populate("learner", "firstName lastName email image")
+      .populate({
+        path: "learner",
+        select: "firstName lastName email image learnerId contactNumber additionalDetails",
+        populate: { path: "additionalDetails", select: "contactNumber" },
+      })
       .populate("course", "title price")
       .populate("offer", "title price type")
       .sort({ createdAt: -1 })

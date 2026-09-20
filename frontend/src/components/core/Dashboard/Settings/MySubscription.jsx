@@ -9,11 +9,11 @@ import {
   FiCreditCard,
   FiArrowRight,
   FiShield,
-  FiAward
+  FiAward,
+  FiHeart
 } from "react-icons/fi"
 
-const PLAN_DETAILS = {
-  // Practitioner Plans
+const PRACTITIONER_PLANS = {
   master: {
     name: "Master VIP Plan",
     price: "₹5,999 / month",
@@ -57,60 +57,17 @@ const PLAN_DETAILS = {
       "Razorpay direct payment gateway integration"
     ]
   },
-  // Learner Plans
-  champion: {
-    name: "Champion Plan",
-    price: "₹1,500 / month",
-    type: "Learner VIP Tier",
-    badgeColor: "linear-gradient(135deg, #F59E0B 0%, #D97706 100%)",
-    textColor: "#FBBF24",
-    features: [
-      "Everything in Advance Plan",
-      "1 Free 1:1 private session included per month",
-      "25% discount on all additional 1:1 practitioner sessions",
-      "Dedicated personal care manager & concierge support",
-      "24/7 Priority health helpline & instant AURA access"
-    ]
-  },
-  advance: {
-    name: "Advance Plan",
-    price: "₹151 / month",
-    type: "Learner Advance Tier",
-    badgeColor: "linear-gradient(135deg, #6366F1 0%, #4338CA 100%)",
-    textColor: "#818CF8",
-    features: [
-      "Everything in Beginner Plan",
-      "Unlimited access to ALL free practitioner courses",
-      "Unlimited access to live group circles",
-      "15% discount on all 1:1 practitioner sessions",
-      "Live in-session AURA companion & real-time insights"
-    ]
-  },
-  beginner: {
-    name: "Beginner Plan",
-    price: "₹51 / month",
-    type: "Learner Starter Tier",
-    badgeColor: "linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%)",
-    textColor: "#38BDF8",
-    features: [
-      "Access to core free practitioner courses & library",
-      "1 Monthly live group circle pass included",
-      "Daily mood check-ins & guided reflection prompts",
-      "Personal AI health & reflection assistant (AURA)",
-      "Secure digital health record vault"
-    ]
-  },
   trial: {
     name: "14-Day Free Trial",
-    price: "Free Access",
-    type: "Trial Pass",
+    price: "Free Setup Trial",
+    type: "Practitioner Trial",
     badgeColor: "linear-gradient(135deg, #A855F7 0%, #7E22CE 100%)",
     textColor: "#C084FC",
     features: [
-      "Full preview access to platform features",
-      "Explore practitioner directory & courses",
-      "AURA AI assistant trial session",
-      "Live circle pass preview"
+      "Full preview access to practice cockpit",
+      "Set up 1:1 session offerings",
+      "Test live circle containers",
+      "Draft courses and upload materials"
     ]
   }
 }
@@ -121,15 +78,182 @@ export default function MySubscription() {
 
   const isPractitioner =
     user?.accountType === "Practitioner" || user?.accountType === "Instructor"
-  
+
+  // ─── LEARNER VIEW (100% FREE FOREVER) ───
+  if (!isPractitioner) {
+    const learnerFeatures = [
+      "Unlimited access to all practitioner free video courses",
+      "Join and participate in peer growth & support Circles",
+      "Daily mood check-ins & guided reflection journal",
+      "Personal AI health & reflection companion (AURA)",
+      "Direct 1:1 session bookings with verified practitioners",
+      "Encrypted digital health record & notes vault",
+      "Zero subscriptions or credit card needed — 100% Free Forever",
+    ]
+
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+        {/* Active Free Account Banner */}
+        <div
+          style={{
+            background: "linear-gradient(135deg, #064E3B 0%, #065F46 50%, #047857 100%)",
+            borderRadius: "20px",
+            border: "1px solid rgba(255, 255, 255, 0.15)",
+            padding: "28px",
+            color: "#FFFFFF",
+            position: "relative",
+            overflow: "hidden",
+            boxShadow: "0 10px 25px -5px rgba(6, 78, 59, 0.3)"
+          }}
+        >
+          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-start", gap: "20px" }}>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+                <span
+                  style={{
+                    background: "rgba(255, 255, 255, 0.2)",
+                    color: "#FFFFFF",
+                    padding: "4px 12px",
+                    borderRadius: "999px",
+                    fontSize: "11px",
+                    fontWeight: 800,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.5px"
+                  }}
+                >
+                  100% FREE LIFETIME
+                </span>
+                <span style={{ color: "#A7F3D0", fontSize: "13px", fontWeight: 600 }}>
+                  Learner Account
+                </span>
+              </div>
+
+              <h2 style={{ fontSize: "28px", fontWeight: 800, color: "#FFFFFF", margin: "4px 0 8px", letterSpacing: "-0.02em" }}>
+                Free Learner Account
+              </h2>
+
+              <p style={{ color: "#D1FAE5", fontSize: "14px", margin: 0, maxWidth: "600px" }}>
+                Your account is completely free. You have lifetime access to all practitioner free courses, live group circles, reflection journals, and AURA AI co-pilot tools.
+              </p>
+            </div>
+
+            <button
+              onClick={() => navigate("/app/courses")}
+              style={{
+                background: "#FFFFFF",
+                color: "#065F46",
+                border: "none",
+                padding: "12px 20px",
+                borderRadius: "12px",
+                fontWeight: 800,
+                fontSize: "14px",
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+                boxShadow: "0 4px 14px rgba(0, 0, 0, 0.15)",
+                transition: "transform 0.15s ease"
+              }}
+            >
+              <FiHeart /> Explore Free Courses <FiArrowRight />
+            </button>
+          </div>
+
+          {/* Details Grid */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+              gap: "16px",
+              marginTop: "24px",
+              paddingTop: "20px",
+              borderTop: "1px solid rgba(255, 255, 255, 0.15)"
+            }}
+          >
+            {/* Price */}
+            <div style={{ background: "rgba(255, 255, 255, 0.08)", borderRadius: "14px", padding: "14px 16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#A7F3D0", fontSize: "12px", fontWeight: 600 }}>
+                <FiCreditCard /> Monthly Fee
+              </div>
+              <div style={{ color: "#FFFFFF", fontSize: "18px", fontWeight: 800, marginTop: "4px" }}>
+                ₹0 (Free Forever)
+              </div>
+            </div>
+
+            {/* Status */}
+            <div style={{ background: "rgba(255, 255, 255, 0.08)", borderRadius: "14px", padding: "14px 16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#A7F3D0", fontSize: "12px", fontWeight: 600 }}>
+                <FiClock /> Account Status
+              </div>
+              <div style={{ color: "#FFFFFF", fontSize: "16px", fontWeight: 700, marginTop: "4px" }}>
+                Active Forever ✓
+              </div>
+            </div>
+
+            {/* Renewal */}
+            <div style={{ background: "rgba(255, 255, 255, 0.08)", borderRadius: "14px", padding: "14px 16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#A7F3D0", fontSize: "12px", fontWeight: 600 }}>
+                <FiCalendar /> Renewal Date
+              </div>
+              <div style={{ color: "#FFFFFF", fontSize: "15px", fontWeight: 700, marginTop: "4px" }}>
+                No Renewal Required
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Free Features Included */}
+        <div
+          style={{
+            background: "#FFFFFF",
+            borderRadius: "20px",
+            border: "1px solid #E2E8F0",
+            padding: "28px",
+            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)"
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "18px" }}>
+            <FiAward style={{ fontSize: "20px", color: "#059669" }} />
+            <h3 style={{ fontSize: "18px", fontWeight: 800, color: "#0F172A", margin: 0 }}>
+              Features Unlocked in Your Free Account
+            </h3>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "14px" }}>
+            {learnerFeatures.map((feat, idx) => (
+              <div
+                key={idx}
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "10px",
+                  background: "#F0FDF4",
+                  padding: "12px 14px",
+                  borderRadius: "12px",
+                  border: "1px solid #BBF7D0"
+                }}
+              >
+                <FiCheckCircle style={{ color: "#10B981", fontSize: "16px", flexShrink: 0, marginTop: "2px" }} />
+                <span style={{ color: "#166534", fontSize: "13px", fontWeight: 600 }}>
+                  {feat}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ─── PRACTITIONER VIEW ───
   const rawPlanKey = (user?.activePlan || "trial").toLowerCase()
-  const planInfo = PLAN_DETAILS[rawPlanKey] || {
+  const planInfo = PRACTITIONER_PLANS[rawPlanKey] || {
     name: `${user?.activePlan?.toUpperCase() || "ACTIVE"} PLAN`,
     price: "Active Plan",
-    type: isPractitioner ? "Practitioner Tier" : "Learner Tier",
+    type: "Practitioner Tier",
     badgeColor: "linear-gradient(135deg, #3B82F6, #1D4ED8)",
     textColor: "#60A5FA",
-    features: ["Access to core platform features and services"]
+    features: ["Access to practice cockpit and booking management"]
   }
 
   const trialExpiresAt = user?.trialExpiresAt ? new Date(user.trialExpiresAt) : null
@@ -178,18 +302,6 @@ export default function MySubscription() {
           boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.2)"
         }}
       >
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            right: 0,
-            width: "300px",
-            height: "300px",
-            background: "radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)",
-            pointerEvents: "none"
-          }}
-        />
-
         <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-start", gap: "20px" }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
@@ -217,9 +329,7 @@ export default function MySubscription() {
             </h2>
 
             <p style={{ color: "#94A3B8", fontSize: "14px", margin: 0 }}>
-              {isPractitioner
-                ? "Manage your practice tools, live circle capacity, and platform publishing status."
-                : "Enjoy full access to courses, live circles, and AURA AI co-pilot insights."}
+              Manage your practice tools, live circle capacity, and platform publishing status.
             </p>
           </div>
 
@@ -259,7 +369,7 @@ export default function MySubscription() {
           {/* Price */}
           <div style={{ background: "rgba(255, 255, 255, 0.04)", borderRadius: "14px", padding: "14px 16px", border: "1px solid rgba(255, 255, 255, 0.08)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#94A3B8", fontSize: "12px", fontWeight: 600 }}>
-              <FiCreditCard style={{ color: "#818CF8" }} /> Membership Fee
+              <FiCreditCard style={{ color: "#818CF8" }} /> Platform Fee
             </div>
             <div style={{ color: "#FFFFFF", fontSize: "18px", fontWeight: 800, marginTop: "4px" }}>
               {planInfo.price}
@@ -301,7 +411,7 @@ export default function MySubscription() {
         <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "18px" }}>
           <FiAward style={{ fontSize: "20px", color: "#4F46E5" }} />
           <h3 style={{ fontSize: "18px", fontWeight: 800, color: "#0F172A", margin: 0 }}>
-            Features Included in Your Plan
+            Features Included in Your Practitioner Plan
           </h3>
         </div>
 
@@ -325,45 +435,6 @@ export default function MySubscription() {
               </span>
             </div>
           ))}
-        </div>
-
-        <div
-          style={{
-            marginTop: "24px",
-            padding: "16px",
-            background: "#EFF6FF",
-            borderRadius: "14px",
-            border: "1px solid #BFDBFE",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: "12px"
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <FiShield style={{ color: "#1D4ED8", fontSize: "20px" }} />
-            <div>
-              <div style={{ color: "#1E40AF", fontWeight: 700, fontSize: "14px" }}>Need more features or team access?</div>
-              <div style={{ color: "#3B82F6", fontSize: "12px" }}>Compare all plans and switch anytime instantly.</div>
-            </div>
-          </div>
-
-          <button
-            onClick={() => navigate("/pricing")}
-            style={{
-              background: "#1D4ED8",
-              color: "#FFFFFF",
-              border: "none",
-              padding: "8px 16px",
-              borderRadius: "10px",
-              fontWeight: 700,
-              fontSize: "13px",
-              cursor: "pointer"
-            }}
-          >
-            View All Plans
-          </button>
         </div>
       </div>
     </div>

@@ -102,8 +102,16 @@ exports.signup = async (req, res) => {
       contactNumber: contactNumber || "",
     })
     const now = new Date()
-    const trialDays = (accountType === "Learner" || accountType === "Client") ? 7 : 14
-    const trialExpiresAt = new Date(now.getTime() + trialDays * 24 * 60 * 60 * 1000)
+    const isPractitioner = accountType === "Practitioner" || accountType === "Instructor"
+    const isLearner = accountType === "Learner" || accountType === "Client" || accountType === "Student"
+    const trialDays = 14
+    const trialExpiresAt = isPractitioner ? new Date(now.getTime() + trialDays * 24 * 60 * 60 * 1000) : null
+
+    let learnerId = null
+    if (isLearner) {
+      const { generateUniqueLearnerId } = require("../utils/learnerIdGenerator")
+      learnerId = await generateUniqueLearnerId(User)
+    }
 
     const user = await User.create({
       title: title || "",
@@ -113,12 +121,13 @@ exports.signup = async (req, res) => {
       contactNumber: contactNumber || "",
       password: hashedPassword,
       accountType: accountType,
+      learnerId: learnerId,
       approved: approved,
       additionalDetails: profileDetails._id,
       image: "",
       trialStartedAt: now,
       trialExpiresAt: trialExpiresAt,
-      activePlan: "trial",
+      activePlan: isPractitioner ? "trial" : "none",
     })
 
     // If Practitioner / Instructor, auto-create PractitionerProfile with bank payout details & default handle
@@ -308,6 +317,18 @@ exports.login = async (req, res) => {
 
     // Generate JWT token and Compare Password
     if (await bcrypt.compare(password, user.password)) {
+      // Check if learner account has learnerId; auto-assign if missing
+      const isLearner = user.accountType === "Learner" || user.accountType === "Client" || user.accountType === "Student"
+      if (isLearner && !user.learnerId) {
+        try {
+          const { generateUniqueLearnerId } = require("../utils/learnerIdGenerator")
+          user.learnerId = await generateUniqueLearnerId(User)
+          await User.findByIdAndUpdate(user._id, { learnerId: user.learnerId })
+        } catch (idErr) {
+          console.error("Error auto-assigning learnerId on login:", idErr.message)
+        }
+      }
+
       const token = jwt.sign(
         { email: user.email, id: user._id, accountType: user.accountType, role: user.accountType },
         process.env.JWT_SECRET,
@@ -417,8 +438,15 @@ exports.socialLogin = async (req, res) => {
 
       const userAccountType = ["Client", "Learner", "Practitioner", "Student", "Instructor"].includes(accountType) ? accountType : "Client"
       const now = new Date()
-      const trialDays = (userAccountType === "Learner" || userAccountType === "Client" || userAccountType === "Student") ? 7 : 14
+      const isLearner = userAccountType === "Learner" || userAccountType === "Client" || userAccountType === "Student"
+      const trialDays = isLearner ? 7 : 14
       const trialExpiresAt = new Date(now.getTime() + trialDays * 24 * 60 * 60 * 1000)
+
+      let learnerId = null
+      if (isLearner) {
+        const { generateUniqueLearnerId } = require("../utils/learnerIdGenerator")
+        learnerId = await generateUniqueLearnerId(User)
+      }
 
       user = await User.create({
         firstName: fName,
@@ -426,6 +454,8 @@ exports.socialLogin = async (req, res) => {
         email: emailLower,
         password: dummyPassword,
         accountType: userAccountType,
+        learnerId: learnerId,
+        contactNumber: "",
         additionalDetails: profileDetails._id,
         image: image || `https://api.dicebear.com/5.x/initials/svg?seed=${encodeURIComponent(fName + " " + lName)}`,
         approved: true,
@@ -504,6 +534,18 @@ exports.socialLogin = async (req, res) => {
       if (image && (!user.image || user.image.includes("dicebear"))) {
         user.image = image
         await user.save()
+      }
+
+      // Auto-assign learnerId if missing
+      const isLearner = user.accountType === "Learner" || user.accountType === "Client" || user.accountType === "Student"
+      if (isLearner && !user.learnerId) {
+        try {
+          const { generateUniqueLearnerId } = require("../utils/learnerIdGenerator")
+          user.learnerId = await generateUniqueLearnerId(User)
+          await user.save()
+        } catch (idErr) {
+          console.error("Error assigning learnerId in socialLogin:", idErr.message)
+        }
       }
 
       if (!user.trialExpiresAt) {

@@ -363,8 +363,8 @@ export function LearnerJourney() {
           </p>
 
           <div className="oh-journey-close__cta-row">
-            <OHButton href="#pricing" size="lg">
-              Choose Your Plan →
+            <OHButton href="/signup" size="lg">
+              Start for Free →
             </OHButton>
             <OHButton href="/find-a-practitioner" variant="ghost" size="lg">
               Find a Practitioner →

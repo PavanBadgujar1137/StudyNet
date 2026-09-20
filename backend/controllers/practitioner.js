@@ -727,7 +727,11 @@ exports.getConnectedClients = async (req, res) => {
       practitioner: userId,
       status: { $in: ["approved", "active", "pending_approval"] },
     })
-      .populate("client", "firstName lastName email image createdAt")
+      .populate({
+        path: "client",
+        select: "firstName lastName email image createdAt learnerId contactNumber additionalDetails",
+        populate: { path: "additionalDetails", select: "contactNumber" },
+      })
       .sort({ createdAt: -1 })
       .lean()
 
@@ -735,7 +739,13 @@ exports.getConnectedClients = async (req, res) => {
     const activeApprovedConnections = connections.filter((c) => c.status === "approved" || c.status === "active")
 
     const connectedClientList = activeApprovedConnections.map((c) => c.client).filter(Boolean)
-    const bookings = await Booking.find({ practitioner: userId }).populate("client", "firstName lastName email image createdAt").lean()
+    const bookings = await Booking.find({ practitioner: userId })
+      .populate({
+        path: "client",
+        select: "firstName lastName email image createdAt learnerId contactNumber additionalDetails",
+        populate: { path: "additionalDetails", select: "contactNumber" },
+      })
+      .lean()
     const bookedClients = bookings.map((b) => b.client).filter(Boolean)
 
     const clientMap = new Map()

@@ -580,32 +580,40 @@ exports.getAllCourses = async (req, res) => {
   }
 }
 
-const PLAN_RANKS = { beginner: 1, advance: 2, champion: 3, starter: 1, growth: 2, practice: 3, master: 3 }
+const PLAN_RANKS = { starter: 1, growth: 2, practice: 3, master: 3 }
 
 async function getUserAccessContext(userId) {
-  if (!userId) return { planKey: null, isTrialActive: false, isExpired: true }
+  if (!userId) return { planKey: null, isTrialActive: false, isExpired: true, isFreeLearner: false }
+
+  const userObj = await User.findById(userId).select("trialStartedAt trialExpiresAt createdAt activePlan accountType").lean()
+  const isLearner = userObj?.accountType === "Learner" || userObj?.accountType === "Client" || !["Practitioner", "Instructor", "Admin"].includes(userObj?.accountType)
+
+  // Learners have 100% unrestricted free lifetime access
+  if (isLearner) {
+    return { planKey: "free", isTrialActive: false, isExpired: false, isFreeLearner: true }
+  }
 
   const now = new Date()
   const sub = await Subscription.findOne({ client: userId, status: "active" }).sort({ createdAt: -1 }).lean()
 
   if (sub && new Date(sub.endDate) > now) {
-    return { planKey: sub.planKey, isTrialActive: false, isExpired: false }
+    return { planKey: sub.planKey, isTrialActive: false, isExpired: false, isFreeLearner: false }
   }
 
-  const userObj = await User.findById(userId).select("trialStartedAt trialExpiresAt createdAt activePlan accountType").lean()
-  const trialDays = (userObj?.accountType === "Learner" || userObj?.accountType === "Client") ? 7 : 14
+  const trialDays = 14
   const trialExpiresAt = userObj?.trialExpiresAt || (userObj?.createdAt ? new Date(new Date(userObj.createdAt).getTime() + trialDays * 24 * 60 * 60 * 1000) : null)
 
   const isTrialActive = trialExpiresAt && now < new Date(trialExpiresAt)
   if (isTrialActive) {
-    return { planKey: "advance", isTrialActive: true, isExpired: false }
+    return { planKey: "growth", isTrialActive: true, isExpired: false, isFreeLearner: false }
   }
 
-  return { planKey: "none", isTrialActive: false, isExpired: true }
+  return { planKey: "none", isTrialActive: false, isExpired: true, isFreeLearner: false }
 }
 
 function checkAccess(accessCtx, requiredPlanKey) {
   if (!requiredPlanKey) return true // Free course open to all
+  if (accessCtx.isFreeLearner) return true // Free learner has full access
   if (accessCtx.isExpired && accessCtx.planKey === "none") return false // Trial expired & no subscription
 
   const userRank = PLAN_RANKS[String(accessCtx.planKey).toLowerCase()] || 0
@@ -640,15 +648,8 @@ exports.getCourseDetail = async (req, res) => {
         hasAccess = false
         accessNotice = `This is a premium paid course (₹${course.price}). Please purchase to unlock access.`
       } else {
-        // Free Course created by practitioner:
-        // Available during 14-day free trial OR with an active Learner subscription plan
-        const accessCtx = await getUserAccessContext(userId)
-        if (!accessCtx.isExpired || accessCtx.planKey !== "none") {
-          hasAccess = true
-        } else {
-          hasAccess = false
-          accessNotice = "Your free trial has expired. Subscribe to a Learner Plan to unlock practitioner free courses."
-        }
+        // Free Course created by practitioner: 100% Free for all registered learners
+        hasAccess = true
       }
     }
 
@@ -681,15 +682,8 @@ exports.getCourseVideos = async (req, res) => {
         })
       }
 
-      const accessCtx = await getUserAccessContext(userId)
-      if (!accessCtx.isExpired || accessCtx.planKey !== "none") {
-        hasAccess = true
-      } else {
-        return res.status(403).json({
-          success: false,
-          message: "Your 7-day free trial has expired. Please subscribe to a Learner Plan to access practitioner free courses.",
-        })
-      }
+      // Free course: All learners get 100% free access
+      hasAccess = true
     }
 
     const videos = await CourseVideo.find({ course: courseId }).sort({ order: 1 }).lean()

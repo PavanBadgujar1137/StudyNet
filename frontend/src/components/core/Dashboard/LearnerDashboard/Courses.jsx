@@ -10,7 +10,6 @@ import toast from 'react-hot-toast'
 import { apiConnector } from '../../../../services/apiConnector'
 import { formatFileSize } from '../../../../utils/imageProcessing'
 import { mediaUrl } from '../../../../utils/mediaUrl'
-import { OHPricingModal } from '../../../openhand'
 import CheckoutCouponModal from '../../Coupons/CheckoutCouponModal'
 
 function formatDuration(secs) {
@@ -126,7 +125,7 @@ function VideoPlayer({ video, onClose, onNext, hasNext }) {
 }
 
 // ─── Course Detail View ────────────────────────────────────────────────────────
-function CourseDetailView({ course, hasAccess, onBack, subscription }) {
+function CourseDetailView({ course, hasAccess, onBack, onBuyPaid }) {
   const { token } = useSelector(s => s.auth)
   const [videos, setVideos] = useState([])
   const [loadingVideos, setLoadingVideos] = useState(false)
@@ -185,19 +184,20 @@ function CourseDetailView({ course, hasAccess, onBack, subscription }) {
         </div>
       </div>
 
-      {/* Access Gate */}
+      {/* Access Gate for Paid Courses */}
       {!hasAccess ? (
         <div style={{ background: 'linear-gradient(135deg, #EFF6FF, #F5F3FF)', border: '1px solid #BFDBFE', borderRadius: 16, padding: '32px', textAlign: 'center' }}>
           <FiShield size={40} color="#3B82F6" style={{ marginBottom: 12 }} />
-          <h3 style={{ margin: '0 0 8px', color: '#1E293B' }}>Subscription Required</h3>
+          <h3 style={{ margin: '0 0 8px', color: '#1E293B' }}>Premium Paid Course</h3>
           <p style={{ margin: '0 0 20px', color: '#64748B' }}>
-            {course.requiredPlan
-              ? `This course requires a ${course.requiredPlan === 'beginner' ? 'Beginner Plan (₹51/mo)' : course.requiredPlan === 'advance' ? 'Advance Plan (₹151/mo)' : course.requiredPlan === 'champion' ? 'Champion Plan (₹1,500/mo)' : `${course.requiredPlan} Plan`} or above.`
-              : 'Subscribe to access all courses from our practitioners.'}
+            This course is priced at ₹{course.price}. Purchase this course to unlock all video modules and resources.
           </p>
-          <a href="/pricing" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', background: 'linear-gradient(135deg, #3B82F6, #1D4ED8)', borderRadius: 10, color: '#fff', textDecoration: 'none', fontWeight: 700, fontSize: 14 }}>
-            View Plans & Subscribe <FiArrowRight />
-          </a>
+          <button
+            onClick={() => onBuyPaid && onBuyPaid(course)}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', background: 'linear-gradient(135deg, #10B981, #059669)', border: 'none', borderRadius: 10, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}
+          >
+            Buy Course for ₹{course.price} <FiArrowRight />
+          </button>
         </div>
       ) : (
         /* Video List */
@@ -230,13 +230,9 @@ function CourseDetailView({ course, hasAccess, onBack, subscription }) {
                       gap: 14,
                       padding: '14px 18px',
                       cursor: 'pointer',
-                      background: '#fff',
-                      transition: 'background 0.2s',
                     }}
-                    onMouseEnter={e => { e.currentTarget.style.background = '#F0F9FF' }}
-                    onMouseLeave={e => { e.currentTarget.style.background = '#fff' }}
                   >
-                    <div style={{ width: 44, height: 44, borderRadius: 10, background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB', flexShrink: 0 }}>
                       <FiPlay size={18} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -303,7 +299,7 @@ function CourseDetailView({ course, hasAccess, onBack, subscription }) {
 }
 
 // ─── Course Card (Grid) ────────────────────────────────────────────────────────
-function CourseCard({ course, hasAccess, subscription, onClick, onBuyPaid }) {
+function CourseCard({ course, hasAccess, onClick, onBuyPaid }) {
   const totalDuration = course.videos?.reduce((s, v) => s + (v.durationSeconds || 0), 0) || 0
   const isPaidCourse = course.price > 0 && !course.isFree
 
@@ -323,15 +319,15 @@ function CourseCard({ course, hasAccess, subscription, onClick, onBuyPaid }) {
         <div style={{ position: 'absolute', top: 10, right: 10 }}>
           {hasAccess ? (
             <span style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 20, background: 'rgba(16,185,129,0.95)', color: '#fff', fontSize: 11, fontWeight: 700 }}>
-              <FiCheck size={10} /> Unlocked
+              <FiCheck size={10} /> {course.isFree || !course.price ? 'Free • Unlocked' : 'Unlocked'}
             </span>
           ) : isPaidCourse ? (
             <span style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 20, background: 'linear-gradient(135deg, #D97706, #B45309)', color: '#fff', fontSize: 11, fontWeight: 700 }}>
               ₹{course.price} • Paid
             </span>
           ) : (
-            <span style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 20, background: 'rgba(15,23,42,0.85)', color: '#fff', fontSize: 11, fontWeight: 600 }}>
-              <FiLock size={10} /> Free Plan Course
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 20, background: 'rgba(16,185,129,0.95)', color: '#fff', fontSize: 11, fontWeight: 700 }}>
+              <FiCheck size={10} /> 100% Free
             </span>
           )}
         </div>
@@ -376,9 +372,9 @@ function CourseCard({ course, hasAccess, subscription, onClick, onBuyPaid }) {
           ) : (
             <button
               onClick={onClick}
-              style={{ width: '100%', padding: '8px 12px', background: hasAccess ? '#F0FDF4' : '#EFF6FF', border: `1px solid ${hasAccess ? '#BBF7D0' : '#BFDBFE'}`, borderRadius: 8, color: hasAccess ? '#166534' : '#1D4ED8', fontWeight: 700, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+              style={{ width: '100%', padding: '8px 12px', background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 8, color: '#166534', fontWeight: 700, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
             >
-              {hasAccess ? 'Watch Videos' : 'Unlock Course'} <FiArrowRight size={12} />
+              Watch Videos <FiArrowRight size={12} />
             </button>
           )}
         </div>
@@ -392,33 +388,19 @@ export default function Courses() {
   const { token } = useSelector(s => s.auth)
   const { user } = useSelector(s => s.profile)
   const [courses, setCourses] = useState([])
-  const [subscription, setSubscription] = useState(null)
-  const [subInfo, setSubInfo] = useState(null)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [selectedCourse, setSelectedCourse] = useState(null)
   const [accessMap, setAccessMap] = useState({})
-  const [showPricingModal, setShowPricingModal] = useState(false)
 
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
-      const [coursesRes, subRes] = await Promise.all([
-        apiConnector('GET', '/api/v1/courses').catch(() => null),
-        token ? apiConnector('GET', '/api/v1/payments/subscription/mine', null, { Authorization: `Bearer ${token}` }).catch(() => null) : Promise.resolve(null),
-      ])
-
+      const coursesRes = await apiConnector('GET', '/api/v1/courses').catch(() => null)
       const courseList = coursesRes?.data?.success ? (coursesRes.data.courses || []) : []
       setCourses(courseList)
 
-      const sData = subRes?.data || {}
-      const sub = sData.subscription || null
-      setSubscription(sub)
-      setSubInfo(sData)
-
-      // Access Rules:
-      // Free courses (price = 0) accessible if trial active OR subscription active
-      // Paid courses (price > 0) accessible if user enrolled or creator
+      // All free courses (price = 0 or isFree) are 100% accessible to every learner
       const map = {}
       const userId = user?._id || user?.id
 
@@ -426,21 +408,16 @@ export default function Courses() {
         const isEnrolled = (c.enrolledClients || []).map(String).includes(String(userId))
         const isCreator = String(c.practitioner?._id || c.practitioner) === String(userId)
 
-        if (isCreator || isEnrolled) {
+        if (isCreator || isEnrolled || c.isFree || !c.price || c.price === 0) {
           map[c._id] = true
-        } else if (c.price > 0 && !c.isFree) {
-          map[c._id] = false
         } else {
-          // Free course: available during trial or active subscription
-          const hasAccess = sData.hasActiveSubscription || sData.isTrialActive
-          map[c._id] = hasAccess
+          map[c._id] = false
         }
       })
       setAccessMap(map)
     } catch (e) {}
     setLoading(false)
-
-  }, [token, user])
+  }, [user])
 
   useEffect(() => { loadData() }, [loadData])
 
@@ -463,8 +440,8 @@ export default function Courses() {
       <CourseDetailView
         course={selectedCourse}
         hasAccess={accessMap[selectedCourse._id]}
-        subscription={subscription}
         onBack={() => setSelectedCourse(null)}
+        onBuyPaid={handleBuyPaidCourse}
       />
     )
   }
@@ -477,61 +454,15 @@ export default function Courses() {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h2 style={{ margin: '0 0 4px', color: '#1E293B', fontSize: 22, fontWeight: 800 }}>Courses Library</h2>
-          <p style={{ margin: 0, color: '#64748B', fontSize: 14 }}>Video courses from your practitioners — subscribe to unlock free courses or buy paid courses</p>
+          <p style={{ margin: 0, color: '#64748B', fontSize: 14 }}>Video courses from verified practitioners — 100% free access to all practitioner free courses</p>
         </div>
-        {subInfo?.hasActiveSubscription ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: '#DCFCE7', borderRadius: 20, border: '1px solid #BBF7D0' }}>
-            <FiCheck size={14} color="#166534" />
-            <span style={{ color: '#166534', fontWeight: 600, fontSize: 13 }}>
-              {subscription?.planName || subscription?.planKey} — Active
-            </span>
-          </div>
-        ) : subInfo?.isTrialActive ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: '#F3E8FF', borderRadius: 20, border: '1px solid #E9D5FF' }}>
-            <span style={{ color: '#7E22CE', fontWeight: 700, fontSize: 13 }}>
-              ⚡ 7-Day Free Trial Active ({subInfo.trialDaysRemaining} days remaining)
-            </span>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: '#FEE2E2', borderRadius: 20, border: '1px solid #FCA5A5' }}>
-            <span style={{ color: '#DC2626', fontWeight: 700, fontSize: 13 }}>
-              ⚠️ Free Trial Expired — Subscribe to Unlock Free Courses
-            </span>
-          </div>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: '#DCFCE7', borderRadius: 20, border: '1px solid #BBF7D0' }}>
+          <FiCheck size={14} color="#166534" />
+          <span style={{ color: '#166534', fontWeight: 700, fontSize: 13 }}>
+            Free Learner Account — Unlimited Access
+          </span>
+        </div>
       </div>
-
-      {/* Subscription / Trial Banner */}
-      {!subInfo?.hasActiveSubscription && (
-        <div style={{
-          background: subInfo?.isTrialActive ? 'linear-gradient(135deg, #F3E8FF, #EFF6FF)' : 'linear-gradient(135deg, #FEF2F2, #FFF7ED)',
-          border: `1px solid ${subInfo?.isTrialActive ? '#C084FC' : '#FCA5A5'}`,
-          borderRadius: 14, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <FiShield size={22} color={subInfo?.isTrialActive ? '#8B5CF6' : '#EF4444'} />
-            <div>
-              <div style={{ color: '#1E293B', fontWeight: 700, fontSize: 14 }}>
-                {subInfo?.isTrialActive
-                  ? `Your 7-Day Free Trial is Active (${subInfo.trialDaysRemaining} days remaining)`
-                  : 'Your 7-Day Free Trial has Expired!'}
-              </div>
-              <div style={{ color: '#64748B', fontSize: 12 }}>
-                {subInfo?.isTrialActive
-                  ? 'Enjoy full free practitioner courses during your trial. Subscribe anytime to keep uninterrupted access.'
-                  : 'Subscribe to a Learner Plan (Beginner ₹51, Advance ₹151, Champion ₹1,500) to unlock all practitioner free courses.'}
-              </div>
-            </div>
-          </div>
-          <button onClick={() => setShowPricingModal(true)} style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 18px',
-            background: subInfo?.isTrialActive ? 'linear-gradient(135deg, #8B5CF6, #6D28D9)' : 'linear-gradient(135deg, #EF4444, #DC2626)',
-            borderRadius: 8, color: '#fff', border: 'none', fontWeight: 700, fontSize: 13, cursor: 'pointer'
-          }}>
-            {subInfo?.isTrialActive ? 'Upgrade Plan' : 'Subscribe Now'} <FiArrowRight size={13} />
-          </button>
-        </div>
-      )}
 
       {/* Search */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '1.5px solid #E2E8F0', borderRadius: 12, padding: '10px 16px', maxWidth: 440 }}>
@@ -558,7 +489,6 @@ export default function Courses() {
               key={course._id}
               course={course}
               hasAccess={accessMap[course._id]}
-              subscription={subscription}
               onClick={() => setSelectedCourse(course)}
               onBuyPaid={handleBuyPaidCourse}
             />
@@ -566,14 +496,7 @@ export default function Courses() {
         </div>
       )}
 
-      {/* Pricing Modal Overlay */}
-      <OHPricingModal
-        isOpen={showPricingModal}
-        onClose={() => setShowPricingModal(false)}
-        defaultRole="learner"
-      />
-
-      {/* Checkout Coupon & Discount Modal */}
+      {/* Checkout Coupon & Discount Modal (for paid courses) */}
       <CheckoutCouponModal
         isOpen={!!checkoutCourse}
         onClose={() => setCheckoutCourse(null)}

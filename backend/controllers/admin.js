@@ -172,43 +172,51 @@ exports.getAllClients = async (req, res) => {
         const hasSubscriptionRecord = !!subscription && new Date(subscription.endDate) > now
         const isPractitioner = client.accountType === "Practitioner" || client.accountType === "Instructor"
         const isLearner = !isPractitioner
-        const trialDays = isLearner ? 7 : 14
-        const trialStartedAt = client.createdAt || client.trialStartedAt || now
-        const calculatedExpiresAt = new Date(new Date(trialStartedAt).getTime() + trialDays * 24 * 60 * 60 * 1000)
-        const trialExpiresAt = client.trialExpiresAt || calculatedExpiresAt
 
-        const userPlanKey = (client.activePlan || subscription?.planKey || "").toLowerCase()
-        const isDirectPlanActive = ["starter", "growth", "master", "beginner", "advance", "champion"].includes(userPlanKey)
-        const isLifetime = trialExpiresAt && new Date(trialExpiresAt).getFullYear() > 2050
+        let planDisplayStatus = "Free Learner (100% Free)"
+        let hasActiveSub = true
+        let isTrialActive = false
+        let trialDaysRemaining = 0
+        let trialStartedAt = client.createdAt || now
+        let trialExpiresAt = null
 
-        const hasActiveSub = hasSubscriptionRecord || isDirectPlanActive || isLifetime
+        if (isPractitioner) {
+          const trialDays = 14
+          trialStartedAt = client.createdAt || client.trialStartedAt || now
+          const calculatedExpiresAt = new Date(new Date(trialStartedAt).getTime() + trialDays * 24 * 60 * 60 * 1000)
+          trialExpiresAt = client.trialExpiresAt || calculatedExpiresAt
 
-        const msRemaining = new Date(trialExpiresAt).getTime() - now.getTime()
-        const isTrialActive = !hasActiveSub && msRemaining > 0
-        const trialDaysRemaining = isTrialActive
-          ? Math.min(trialDays, Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24))))
-          : 0
+          const userPlanKey = (client.activePlan || subscription?.planKey || "").toLowerCase()
+          const isDirectPlanActive = ["starter", "growth", "master", "practice"].includes(userPlanKey)
+          const isLifetime = trialExpiresAt && new Date(trialExpiresAt).getFullYear() > 2050
 
-        const PLAN_LABELS = {
-          starter: "Starter Plan",
-          growth: "Growth Plan",
-          master: "Master VIP",
-          beginner: "Beginner Plan",
-          advance: "Advance Plan",
-          champion: "Champion Plan",
-        }
+          hasActiveSub = hasSubscriptionRecord || isDirectPlanActive || isLifetime
 
-        let planDisplayStatus = "Trial Expired"
-        if (isLifetime && isDirectPlanActive) {
-          planDisplayStatus = `${PLAN_LABELS[userPlanKey] || userPlanKey} (Lifetime)`
-        } else if (isLifetime) {
-          planDisplayStatus = "Lifetime Access"
-        } else if (isDirectPlanActive) {
-          planDisplayStatus = `${PLAN_LABELS[userPlanKey] || userPlanKey} (Active)`
-        } else if (hasSubscriptionRecord) {
-          planDisplayStatus = `Subscribed (${subscription.planName || subscription.planKey})`
-        } else if (isTrialActive) {
-          planDisplayStatus = `${isLearner ? "7-Day" : "14-Day"} Trial (${trialDaysRemaining}d left)`
+          const msRemaining = new Date(trialExpiresAt).getTime() - now.getTime()
+          isTrialActive = !hasActiveSub && msRemaining > 0
+          trialDaysRemaining = isTrialActive
+            ? Math.min(trialDays, Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24))))
+            : 0
+
+          const PLAN_LABELS = {
+            starter: "Starter Plan",
+            growth: "Growth Plan",
+            master: "Master VIP",
+            practice: "Practice Plan",
+          }
+
+          planDisplayStatus = "Trial Expired"
+          if (isLifetime && isDirectPlanActive) {
+            planDisplayStatus = `${PLAN_LABELS[userPlanKey] || userPlanKey} (Lifetime)`
+          } else if (isLifetime) {
+            planDisplayStatus = "Lifetime Access"
+          } else if (isDirectPlanActive) {
+            planDisplayStatus = `${PLAN_LABELS[userPlanKey] || userPlanKey} (Active)`
+          } else if (hasSubscriptionRecord) {
+            planDisplayStatus = `Subscribed (${subscription.planName || subscription.planKey})`
+          } else if (isTrialActive) {
+            planDisplayStatus = `14-Day Trial (${trialDaysRemaining}d left)`
+          }
         }
 
         const isDeleted = !!client.isDeleted
@@ -302,7 +310,7 @@ exports.getAllPractitioners = async (req, res) => {
         const trialExpiresAt = pract.trialExpiresAt || new Date(new Date(trialStartedAt).getTime() + trialDays * 24 * 60 * 60 * 1000)
 
         const userPlanKey = (pract.activePlan || subscription?.planKey || "").toLowerCase()
-        const isDirectPlanActive = ["starter", "growth", "master", "beginner", "advance", "champion"].includes(userPlanKey)
+        const isDirectPlanActive = ["starter", "growth", "master", "practice"].includes(userPlanKey)
         const isLifetime = trialExpiresAt && new Date(trialExpiresAt).getFullYear() > 2050
 
         const hasActiveSub = hasSubscriptionRecord || isDirectPlanActive || isLifetime
@@ -317,9 +325,7 @@ exports.getAllPractitioners = async (req, res) => {
           starter: "Starter Plan",
           growth: "Growth Plan",
           master: "Master VIP",
-          beginner: "Beginner Plan",
-          advance: "Advance Plan",
-          champion: "Champion Plan",
+          practice: "Practice Plan",
         }
 
         let planDisplayStatus = "Trial Expired"
@@ -721,18 +727,15 @@ exports.updateClientPlan = async (req, res) => {
     if (planKey !== undefined) {
       user.activePlan = planKey
 
-      if (["beginner", "advance", "champion", "starter", "growth", "practice", "master"].includes(planKey)) {
+      if (["starter", "growth", "practice", "master"].includes(planKey)) {
         const planNameMap = {
-          beginner: "Beginner Plan",
-          advance: "Advance Plan",
-          champion: "Champion Plan",
           starter: "Starter Plan",
           growth: "Growth Plan",
           practice: "Practice Plan",
           master: "Master VIP Plan",
         }
 
-        // Create manual subscription record for client
+        // Create manual subscription record for user
         await Subscription.updateMany({ client: id, status: "active" }, { status: "expired" })
         const startDate = new Date()
         const endDate = new Date()

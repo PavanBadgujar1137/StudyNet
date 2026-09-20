@@ -16,7 +16,15 @@ exports.connect = () => {
 
   mongoose
     .connect(mongoUrl)
-    .then(() => console.log(`DB Connection Success`))
+    .then(async () => {
+      console.log(`DB Connection Success`)
+      try {
+        const { backfillLearnerIds } = require("../utils/learnerIdGenerator")
+        await backfillLearnerIds()
+      } catch (err) {
+        console.error("Auto-backfill Learner IDs error:", err.message)
+      }
+    })
     .catch((err) => {
       console.log(`DB Connection Failed`)
       console.error(err)

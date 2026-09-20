@@ -38,6 +38,19 @@ const userSchema = new mongoose.Schema(
       enum: ["Admin", "Client", "Learner", "Practitioner", "OrgAdmin", "Student", "Instructor"],
       required: true,
     },
+    // Unique Immutable Learner ID (e.g. LRN-749201)
+    learnerId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+      uppercase: true,
+    },
+    contactNumber: {
+      type: String,
+      default: "",
+      trim: true,
+    },
     active: {
       type: Boolean,
       default: true,

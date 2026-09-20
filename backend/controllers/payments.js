@@ -27,18 +27,12 @@ exports.createSubscriptionOrder = async (req, res) => {
     const userId = req.user.id
 
     const planPrices = {
-      beginner: 51,
-      advance: 151,
-      champion: 1500,
       starter: 999,
       growth: 2999,
       practice: 5999,
       master: 5999,
     }
     const planNames = {
-      beginner: "Beginner Plan",
-      advance: "Advance Plan",
-      champion: "Champion Plan",
       starter: "Starter Plan",
       growth: "Growth Plan",
       practice: "Practice Plan",
@@ -46,7 +40,7 @@ exports.createSubscriptionOrder = async (req, res) => {
     }
 
     if (!planKey || !planPrices[planKey]) {
-      return res.status(400).json({ success: false, message: "Invalid plan key" })
+      return res.status(400).json({ success: false, message: "Invalid practitioner plan key" })
     }
 
     const amount = planPrices[planKey]
@@ -94,11 +88,11 @@ exports.verifySubscriptionPayment = async (req, res) => {
       return res.status(400).json({ success: false, message: "Payment verification failed" })
     }
 
-    const planPrices = { beginner: 51, advance: 151, champion: 1500, starter: 999, growth: 2999, practice: 5999, master: 5999 }
-    const planNames = { beginner: "Beginner Plan", advance: "Advance Plan", champion: "Champion Plan", starter: "Starter Plan", growth: "Growth Plan", practice: "Practice Plan", master: "Master VIP Plan" }
+    const planPrices = { starter: 999, growth: 2999, practice: 5999, master: 5999 }
+    const planNames = { starter: "Starter Plan", growth: "Growth Plan", practice: "Practice Plan", master: "Master VIP Plan" }
     const amount = planPrices[planKey] || 0
 
-    // Deactivate any existing active subscription for this client
+    // Deactivate any existing active subscription for this user
     await Subscription.updateMany({ client: userId, status: "active" }, { status: "expired" })
 
     // Create new subscription record
@@ -109,7 +103,7 @@ exports.verifySubscriptionPayment = async (req, res) => {
     const subscription = await Subscription.create({
       client: userId,
       planKey,
-      planName: planNames[planKey],
+      planName: planNames[planKey] || planKey,
       amount,
       status: "active",
       startDate,
@@ -125,7 +119,7 @@ exports.verifySubscriptionPayment = async (req, res) => {
       paymentType: "subscription",
       client: userId,
       clientName: `${clientUser.firstName} ${clientUser.lastName}`,
-      description: `${planNames[planKey]} Subscription`,
+      description: `${planNames[planKey] || planKey} Subscription`,
       planKey,
       amount,
       currency: "INR",
@@ -145,7 +139,7 @@ exports.verifySubscriptionPayment = async (req, res) => {
     try {
       await mailSender(
         clientUser.email,
-        `Welcome to OpenHand ${planNames[planKey]}!`,
+        `Welcome to OpenHand ${planNames[planKey] || planKey}!`,
         paymentSuccessEmail(
           `${clientUser.firstName} ${clientUser.lastName}`,
           amount,
@@ -159,7 +153,7 @@ exports.verifySubscriptionPayment = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: `${planNames[planKey]} activated successfully!`,
+      message: `${planNames[planKey] || planKey} activated successfully!`,
       subscription,
     })
   } catch (error) {
@@ -184,10 +178,27 @@ exports.getMySubscription = async (req, res) => {
     ])
 
     const now = new Date()
-    const hasActiveSubscription = !!subscription && new Date(subscription.endDate) > now
+    const isLearner = user?.accountType === "Learner" || user?.accountType === "Client" || !["Practitioner", "Instructor", "Admin"].includes(user?.accountType)
 
-    const isLearner = user?.accountType === "Learner" || user?.accountType === "Client"
-    const trialDays = isLearner ? 7 : 14
+    // Learners are 100% free with unlimited access forever
+    if (isLearner) {
+      return res.status(200).json({
+        success: true,
+        subscription: null,
+        hasActiveSubscription: true,
+        isTrialActive: false,
+        trialDaysRemaining: 0,
+        trialStartedAt: user?.createdAt || now,
+        trialExpiresAt: null,
+        effectivePlan: "free",
+        status: "free_learner",
+        isFreeLearner: true,
+      })
+    }
+
+    // Practitioner trial / subscription check
+    const hasActiveSubscription = !!subscription && new Date(subscription.endDate) > now
+    const trialDays = 14
     const trialStartedAt = user?.createdAt || user?.trialStartedAt || now
     const trialExpiresAt = user?.trialExpiresAt || new Date(new Date(trialStartedAt).getTime() + trialDays * 24 * 60 * 60 * 1000)
 
@@ -221,6 +232,7 @@ exports.getMySubscription = async (req, res) => {
       trialExpiresAt,
       effectivePlan,
       status,
+      isFreeLearner: false,
     })
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message })

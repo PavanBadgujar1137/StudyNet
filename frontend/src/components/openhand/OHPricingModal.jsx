@@ -68,9 +68,9 @@ export default function OHPricingModal({ isOpen, onClose, defaultRole, hideRoleS
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '18px' }}>💳</span>
+            <span style={{ fontSize: '18px' }}>✨</span>
             <span style={{ fontWeight: 800, fontSize: '16px', color: '#0F172A' }}>
-              {resolvedRole === 'practitioner' ? 'Select Practitioner Plan' : 'Select Subscription Plan'}
+              {resolvedRole === 'practitioner' ? 'Select Practitioner Plan' : 'OpenHand Learner Access'}
             </span>
           </div>
 
@@ -110,10 +110,10 @@ export default function OHPricingModal({ isOpen, onClose, defaultRole, hideRoleS
         <div style={{ padding: '20px 24px 48px' }}>
           <OHPricingSection
             defaultRole={resolvedRole}
-            title={resolvedRole === 'practitioner' ? 'Unlock More for Your Practice' : 'Choose Your Subscription Plan'}
+            title={resolvedRole === 'practitioner' ? 'Unlock More for Your Practice' : 'OpenHand is 100% Free for Learners'}
             subtitle={resolvedRole === 'practitioner'
               ? 'Free tier: 1 offer, directory listing, AURA Aftercare Notes. Upgrade to add Circles, automations, the live AURA panel, and more.'
-              : 'Subscribe via Razorpay to instantly unlock all platform features and practitioner courses.'}
+              : 'Enjoy full free access to practitioner courses, live growth circles, daily check-ins, and AURA AI.'}
             isModal={true}
             hideRoleSwitcher={hideRoleSwitcher}
           />

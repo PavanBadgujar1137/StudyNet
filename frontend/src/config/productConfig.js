@@ -95,58 +95,25 @@ export const AURA_POLICY = {
 }
 
 // ─────────────────────────────────────────────
-// Learner Plans
+// Learner Access Policy — 100% Free Forever
 // ─────────────────────────────────────────────
 export const LEARNER_PLANS = [
   {
-    key: 'beginner',
-    name: 'Beginner',
-    price: '₹51',
-    period: '/month',
-    tagline: 'Start your wellbeing journey with practitioner-led tools and community.',
-    badge: 'ESSENTIAL MEMBERSHIP',
-    featured: false,
-    features: [
-      'Access to practitioner course library',
-      '1 monthly live Circle pass',
-      'Daily mood check-ins & reflection prompts',
-      'AURA Aftercare Notes (free on every plan)',
-      '1:1 Session booking access',
-      'Secure digital health record vault',
-    ],
-  },
-  {
-    key: 'advance',
-    name: 'Advance',
-    price: '₹151',
-    period: '/month',
-    tagline: 'Full access to Circles, courses, and session discounts for active learners.',
-    badge: 'MOST POPULAR',
+    key: 'free',
+    name: 'Free Learner Account',
+    price: '₹0',
+    period: 'Free Forever',
+    tagline: 'Complete and unrestricted free access for all learners across OpenHand.',
+    badge: '100% FREE LIFETIME ACCESS',
     featured: true,
     features: [
-      'Everything in Beginner',
-      'Unlimited practitioner courses',
-      'Unlimited live Circles',
-      '15% discount on all 1:1 Sessions',
-      'AURA Live Prompts (in-session) access',
-      'Priority session scheduling',
-    ],
-  },
-  {
-    key: 'champion',
-    name: 'Champion',
-    price: '₹1,500',
-    period: '/month',
-    tagline: 'Complete wellbeing coverage with a free monthly Session and dedicated support.',
-    badge: 'COMPLETE COVERAGE',
-    featured: false,
-    features: [
-      'Everything in Advance',
-      '1 free 1:1 Session per month',
-      '25% discount on additional Sessions',
-      'Dedicated care manager & concierge support',
-      'Family sharing (up to 3 sub-accounts)',
-      '24/7 priority support & instant AURA access',
+      'Unlimited access to all practitioner free courses',
+      'Join and participate in growth & support Circles',
+      'Daily mood check-ins & guided reflection prompts',
+      'AURA AI health companion & reflection assistant',
+      '1:1 Practitioner Session booking access',
+      'Secure digital health record vault',
+      'Zero recurring fees or subscriptions required',
     ],
   },
 ]

@@ -63,7 +63,7 @@ exports.updateProfile = async (req, res) => {
       await profile.save()
     }
 
-    // Update user details
+    // Update user details (learnerId is strictly immutable and cannot be modified)
     const updateUserData = {}
     if (title !== undefined) updateUserData.title = title
     if (firstName !== undefined) updateUserData.firstName = firstName
@@ -132,7 +132,7 @@ exports.deleteAccount = async (req, res) => {
 exports.getAllUserDetails = async (req, res) => {
   try {
     const id = req.user.id
-    const userDetails = await User.findById(id)
+    let userDetails = await User.findById(id)
       .populate("additionalDetails")
       .exec()
     if (!userDetails) {
@@ -141,6 +141,19 @@ exports.getAllUserDetails = async (req, res) => {
         message: "User not found",
       })
     }
+
+    // Auto-generate & assign learnerId if learner account is missing one
+    const isLearner = userDetails.accountType === "Learner" || userDetails.accountType === "Client" || userDetails.accountType === "Student"
+    if (isLearner && !userDetails.learnerId) {
+      try {
+        const { generateUniqueLearnerId } = require("../utils/learnerIdGenerator")
+        userDetails.learnerId = await generateUniqueLearnerId(User)
+        await userDetails.save()
+      } catch (err) {
+        console.error("Error auto-generating learnerId in getAllUserDetails:", err.message)
+      }
+    }
+
     res.status(200).json({
       success: true,
       message: "User Data fetched successfully",
@@ -338,25 +351,6 @@ exports.getClientDashboardData = async (req, res) => {
       { id: "circle_joined", label: joinedCircles.length ? `Joined ${joinedCircles.length} Circle(s)` : "Joined a circle", date: (joinedCircles.length || memberships.length) ? "Active" : "Not yet", achieved: (joinedCircles.length > 0 || memberships.length > 0) },
     ]
 
-    let activeSub = null
-    try {
-      activeSub = await Subscription.findOne({ client: userId, status: "active" }).sort({ createdAt: -1 }).lean()
-    } catch (e) { activeSub = null }
-
-    const hasActiveSubscription = !!activeSub && activeSub.endDate && new Date(activeSub.endDate) > new Date()
-
-    const isLearner = user.accountType === "Learner" || user.accountType === "Client"
-    const trialDays = isLearner ? 7 : 14
-    const regDate = user.createdAt || user.trialStartedAt || new Date()
-    const effectiveTrialExpiresAt = user.trialExpiresAt || new Date(new Date(regDate).getTime() + trialDays * 24 * 60 * 60 * 1000)
-
-    const now = new Date()
-    const msRemaining = effectiveTrialExpiresAt.getTime() - now.getTime()
-    const isTrialActive = !hasActiveSubscription && msRemaining > 0
-    const trialDaysRemaining = isTrialActive
-      ? Math.min(trialDays, Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24))))
-      : 0
-
     return res.status(200).json({
       success: true,
       data: {
@@ -387,11 +381,14 @@ exports.getClientDashboardData = async (req, res) => {
         joinedCircles,
         milestones,
         subscriptionStatus: {
-          subscription: activeSub,
-          hasActiveSubscription,
-          isTrialActive,
-          trialDaysRemaining,
-          trialExpiresAt: effectiveTrialExpiresAt,
+          subscription: null,
+          hasActiveSubscription: true,
+          isTrialActive: false,
+          isFreeLearner: true,
+          trialDaysRemaining: 0,
+          trialExpiresAt: null,
+          status: "free_learner",
+          planName: "Free Learner Account",
         },
       },
     })
@@ -419,7 +416,13 @@ exports.getPractitionerDashboardData = async (req, res) => {
     // Payouts & Invoices
     const payouts = await Payout.find({ practitioner: userId }).sort({ createdAt: -1 })
     const invoices = await Invoice.find({ practitioner: userId }).sort({ createdAt: -1 })
-    const bookingsList = await Booking.find({ practitioner: userId }).populate("client", "firstName lastName email image createdAt").lean()
+    const bookingsList = await Booking.find({ practitioner: userId })
+      .populate({
+        path: "client",
+        select: "firstName lastName email image createdAt learnerId contactNumber additionalDetails",
+        populate: { path: "additionalDetails", select: "contactNumber" },
+      })
+      .lean()
 
     // Compute earnings dynamically
     const bookingEarnings = bookingsList.reduce((sum, b) => sum + (b.netPayout || b.amount * 0.92 || 0), 0)
@@ -440,7 +443,11 @@ exports.getPractitionerDashboardData = async (req, res) => {
 
     // Dynamic Enrolled & Connected Clients — include both approved and active
     const connections = await ClientConnection.find({ practitioner: userId, status: { $in: ["approved", "active"] } })
-      .populate("client", "firstName lastName email image createdAt")
+      .populate({
+        path: "client",
+        select: "firstName lastName email image createdAt learnerId contactNumber additionalDetails",
+        populate: { path: "additionalDetails", select: "contactNumber" },
+      })
       .lean()
 
     const connectedClients = connections.map((c) => c.client).filter(Boolean)

@@ -2,57 +2,6 @@ const PlanConfig = require("../models/PlanConfig")
 
 const DEFAULT_PLANS = [
   {
-    planKey: "beginner",
-    name: "Beginner Plan",
-    tagline: "Essential membership for individuals starting their mental health & wellbeing journey.",
-    monthlyFee: 51,
-    commissionPercentage: 0,
-    defaultMembershipPrice: 51,
-    razorpayButtonId: "pl_beginner",
-    features: [
-      "Access to core free practitioner courses & library",
-      "1 Monthly live group circle pass included",
-      "Daily mood check-ins & guided reflection prompts",
-      "Personal AI health & reflection assistant (AURA)",
-      "Standard 1:1 session booking access",
-      "Secure digital health record vault",
-    ],
-  },
-  {
-    planKey: "advance",
-    name: "Advance Plan",
-    tagline: "For active wellness seekers wanting full access to courses, circles, and session discounts.",
-    monthlyFee: 151,
-    commissionPercentage: 0,
-    defaultMembershipPrice: 151,
-    razorpayButtonId: "pl_advance",
-    features: [
-      "Everything in Beginner Plan",
-      "Unlimited access to ALL free practitioner courses",
-      "Unlimited access to live group circles",
-      "15% discount on all 1:1 practitioner sessions",
-      "Live in-session AURA companion & real-time insights",
-      "Priority session scheduling & waitlist bypass",
-    ],
-  },
-  {
-    planKey: "champion",
-    name: "Champion Plan",
-    tagline: "Complete wellbeing coverage with dedicated care, free monthly session, and VIP perks.",
-    monthlyFee: 1500,
-    commissionPercentage: 0,
-    defaultMembershipPrice: 1500,
-    razorpayButtonId: "pl_champion",
-    features: [
-      "Everything in Advance Plan",
-      "1 Free 1:1 private session included per month",
-      "25% discount on all additional 1:1 practitioner sessions",
-      "Dedicated personal care manager & concierge support",
-      "Family sharing (up to 3 family sub-accounts included)",
-      "24/7 Priority health helpline & instant AURA access",
-    ],
-  },
-  {
     planKey: "starter",
     name: "Starter Plan",
     tagline: "For practitioners starting & building their online therapy or coaching practice.",
@@ -145,9 +94,6 @@ const crypto = require("crypto")
 const User = require("../models/User")
 
 const PLAN_DETAILS = {
-  beginner: { price: 51, name: "Beginner Plan", buttonId: "pl_beginner" },
-  advance: { price: 151, name: "Advance Plan", buttonId: "pl_advance" },
-  champion: { price: 1500, name: "Champion Plan", buttonId: "pl_champion" },
   starter: { price: 999, name: "Starter Plan", buttonId: "pl_TIp5rKJwNIOFhi" },
   growth: { price: 2999, name: "Growth Plan", buttonId: "pl_TIpGvgepbsigNC" },
   practice: { price: 5999, name: "Practice Plan", buttonId: "pl_TIpJ8iM19tFFtf" },
@@ -218,18 +164,12 @@ exports.verifyPlanPayment = async (req, res) => {
 
     if (generated_signature === razorpay_signature) {
       const planPrices = {
-        beginner: 51,
-        advance: 151,
-        champion: 1500,
         starter: 999,
         growth: 2999,
         practice: 5999,
         master: 5999,
       }
       const planNames = {
-        beginner: "Beginner Plan",
-        advance: "Advance Plan",
-        champion: "Champion Plan",
         starter: "Starter Plan",
         growth: "Growth Plan",
         practice: "Practice Plan",

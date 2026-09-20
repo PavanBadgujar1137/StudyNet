@@ -106,7 +106,8 @@ export const couponEndpoints = {
   PRACTITIONER_TOGGLE_COUPON_API: BASE_URL + "/coupons/toggle", // + /:couponId
   PRACTITIONER_DELETE_COUPON_API: BASE_URL + "/coupons/practitioner", // + /:couponId
 
-  // Learner Personal Discount
+  // Learner Personal Discount & Lookup
+  LOOKUP_LEARNER_API: BASE_URL + "/coupons/lookup-learner",
   CREATE_LEARNER_DISCOUNT_API: BASE_URL + "/coupons/learner-discount/create",
   GET_MY_LEARNER_DISCOUNTS_API: BASE_URL + "/coupons/learner-discount/mine",
   TOGGLE_LEARNER_DISCOUNT_API: BASE_URL + "/coupons/learner-discount/toggle", // + /:discountId
