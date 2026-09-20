@@ -390,6 +390,9 @@ exports.socialLogin = async (req, res) => {
         })
         const tokenJson = await tokenRes.json()
         const accessToken = tokenJson?.access_token
+        if (!accessToken) {
+          console.error("LinkedIn token exchange failure response:", tokenJson)
+        }
         if (accessToken) {
           const userinfoRes = await fetch("https://api.linkedin.com/v2/userinfo", {
             headers: { Authorization: `Bearer ${accessToken}` },
@@ -401,6 +404,8 @@ exports.socialLogin = async (req, res) => {
             lastName = linkedinProfile.family_name || linkedinProfile.name?.split(" ").slice(1).join(" ") || ""
             image = linkedinProfile.picture || ""
             provider = "linkedin"
+          } else {
+            console.error("LinkedIn userinfo response missing email:", linkedinProfile)
           }
         }
       } catch (oauthErr) {
@@ -436,9 +441,15 @@ exports.socialLogin = async (req, res) => {
         contactNumber: null,
       })
 
-      const userAccountType = ["Client", "Learner", "Practitioner", "Student", "Instructor"].includes(accountType) ? accountType : "Client"
+      let userAccountType = "Client"
+      if (accountType === "Practitioner" || accountType === "Instructor") {
+        userAccountType = "Practitioner"
+      } else {
+        userAccountType = "Client"
+      }
+
       const now = new Date()
-      const isLearner = userAccountType === "Learner" || userAccountType === "Client" || userAccountType === "Student"
+      const isLearner = userAccountType === "Client"
       const trialDays = isLearner ? 7 : 14
       const trialExpiresAt = new Date(now.getTime() + trialDays * 24 * 60 * 60 * 1000)
 
@@ -465,7 +476,7 @@ exports.socialLogin = async (req, res) => {
         activePlan: "trial",
       })
 
-      if (userAccountType === "Practitioner" || userAccountType === "Instructor") {
+      if (userAccountType === "Practitioner") {
         const pProf = await PractitionerProfile.create({
           user: user._id,
           bio: "Verified practitioner registered via social login",
@@ -478,7 +489,22 @@ exports.socialLogin = async (req, res) => {
     } else {
       // Role-based login validation (Learner vs Practitioner panels)
       const requestedRole = accountType || req.body.expectedAccountType || req.body.role
-      if (requestedRole && user.accountType !== "Admin") {
+      const mode = req.body.mode
+
+      // If existing user registered as Learner but explicitly registers via Practitioner sign-up, upgrade their account
+      if (mode === "signup" && (requestedRole === "Practitioner" || requestedRole === "Instructor") && (user.accountType === "Client" || user.accountType === "Learner" || user.accountType === "Student")) {
+        const PractitionerProfile = require("../models/PractitionerProfile")
+        user.accountType = "Practitioner"
+        user.learnerId = null
+        if (!user.practitionerProfile) {
+          const pProf = await PractitionerProfile.create({
+            user: user._id,
+            bio: "Verified practitioner registered via social login",
+          })
+          user.practitionerProfile = pProf._id
+        }
+        await user.save()
+      } else if (requestedRole && user.accountType !== "Admin") {
         const isUserPractitioner = user.accountType === "Practitioner" || user.accountType === "Instructor"
         const isUserLearner = user.accountType === "Learner" || user.accountType === "Student" || user.accountType === "Client"
 
@@ -492,7 +518,7 @@ exports.socialLogin = async (req, res) => {
         if ((requestedRole === "Practitioner" || requestedRole === "Instructor") && isUserLearner) {
           return res.status(400).json({
             success: false,
-            message: "This email is registered as a Learner account. Please log in using the Learner Login.",
+            message: "This email is registered as a Learner account. Please log in using the Learner Login, or register as a Practitioner on the Sign Up page.",
           })
         }
       }

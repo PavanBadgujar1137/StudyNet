@@ -31,12 +31,13 @@ function SocialAuthButtons({ accountType = "Client", mode = "login" }) {
 
   const handleSocialSuccess = useCallback(
     (provider, data) => {
+      const resolvedRole = data?.accountType || window.__activeAuthRole || localStorage.getItem("socialAuthAccountType") || accountType || "Client"
       dispatch(
         socialLogin(
           provider,
           {
             ...data,
-            accountType,
+            accountType: resolvedRole,
           },
           navigate
         )
@@ -75,7 +76,7 @@ function SocialAuthButtons({ accountType = "Client", mode = "login" }) {
             if (response.credential) {
               const payload = decodeJwt(response.credential)
               if (payload && payload.email) {
-                const targetRole = window.__activeAuthRole || sessionStorage.getItem("socialAuthAccountType") || accountType || "Client"
+                const targetRole = window.__activeAuthRole || localStorage.getItem("socialAuthAccountType") || sessionStorage.getItem("socialAuthAccountType") || accountType || "Client"
                 dispatch(
                   socialLogin(
                     "google",
@@ -105,6 +106,7 @@ function SocialAuthButtons({ accountType = "Client", mode = "login" }) {
   const handleGoogleSignIn = () => {
     window.__activeAuthRole = accountType
     sessionStorage.setItem("socialAuthAccountType", accountType)
+    localStorage.setItem("socialAuthAccountType", accountType)
     // Directly open Google OAuth Account Chooser popup for reliable cross-origin sign-in
     openGooglePopup()
   }
@@ -112,8 +114,9 @@ function SocialAuthButtons({ accountType = "Client", mode = "login" }) {
   const openGooglePopup = () => {
     window.__activeAuthRole = accountType
     sessionStorage.setItem("socialAuthAccountType", accountType)
+    localStorage.setItem("socialAuthAccountType", accountType)
     const redirectUri = `${window.location.origin}/social-callback`
-    const stateParam = encodeURIComponent(JSON.stringify({ accountType, mode }))
+    const stateParam = encodeURIComponent(JSON.stringify({ accountType, mode, provider: "google" }))
     const googleAuthUrl =
       `https://accounts.google.com/o/oauth2/v2/auth?` +
       `client_id=${encodeURIComponent(googleClientId)}` +
@@ -144,7 +147,7 @@ function SocialAuthButtons({ accountType = "Client", mode = "login" }) {
   const handleLinkedInSignIn = () => {
     window.__activeAuthRole = accountType
     sessionStorage.setItem("socialAuthAccountType", accountType)
-    const redirectUri = `${window.location.origin}/social-callback`
+    const redirectUri = process.env.REACT_APP_LINKEDIN_REDIRECT_URI || `${window.location.origin}/social-callback`
     const stateParam = encodeURIComponent(JSON.stringify({ provider: "linkedin", accountType, mode }))
     const linkedinAuthUrl =
       `https://www.linkedin.com/oauth/v2/authorization?` +
