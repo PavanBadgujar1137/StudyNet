@@ -13,6 +13,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 // Signup Controller for Registering USers
 
 exports.signup = async (req, res) => {
+  let user, profileDetails
   try {
     // Destructure fields from the request body
     const {
@@ -95,7 +96,7 @@ exports.signup = async (req, res) => {
     approved === "Instructor" ? (approved = false) : (approved = true)
 
     // Create the Additional Profile For User
-    const profileDetails = await Profile.create({
+    profileDetails = await Profile.create({
       gender: null,
       dateOfBirth: null,
       about: null,
@@ -107,13 +108,16 @@ exports.signup = async (req, res) => {
     const trialDays = 14
     const trialExpiresAt = isPractitioner ? new Date(now.getTime() + trialDays * 24 * 60 * 60 * 1000) : null
 
-    let learnerId = null
+    let learnerId = undefined
     if (isLearner) {
       const { generateUniqueLearnerId } = require("../utils/learnerIdGenerator")
       learnerId = await generateUniqueLearnerId(User)
     }
 
-    const user = await User.create({
+    // NOTE: Do NOT include learnerId in the create payload when it's undefined/null.
+    // Sparse unique index only ignores ABSENT fields — storing explicit null still
+    // triggers E11000 duplicate key when a second practitioner registers.
+    const userCreatePayload = {
       title: title || "",
       firstName,
       lastName,
@@ -121,14 +125,16 @@ exports.signup = async (req, res) => {
       contactNumber: contactNumber || "",
       password: hashedPassword,
       accountType: accountType,
-      learnerId: learnerId,
       approved: approved,
       additionalDetails: profileDetails._id,
       image: "",
       trialStartedAt: now,
       trialExpiresAt: trialExpiresAt,
       activePlan: isPractitioner ? "trial" : "none",
-    })
+    }
+    if (learnerId) userCreatePayload.learnerId = learnerId
+
+    user = await User.create(userCreatePayload)
 
     // If Practitioner / Instructor, auto-create PractitionerProfile with bank payout details & default handle
     if (accountType === "Practitioner" || accountType === "Instructor") {
@@ -453,19 +459,20 @@ exports.socialLogin = async (req, res) => {
       const trialDays = isLearner ? 7 : 14
       const trialExpiresAt = new Date(now.getTime() + trialDays * 24 * 60 * 60 * 1000)
 
-      let learnerId = null
+      let learnerId = undefined
       if (isLearner) {
         const { generateUniqueLearnerId } = require("../utils/learnerIdGenerator")
         learnerId = await generateUniqueLearnerId(User)
       }
 
-      user = await User.create({
+      // Only include learnerId when it has a real value — sparse unique index
+      // only skips ABSENT fields, not explicit null.
+      const socialCreatePayload = {
         firstName: fName,
         lastName: lName,
         email: emailLower,
         password: dummyPassword,
         accountType: userAccountType,
-        learnerId: learnerId,
         contactNumber: "",
         additionalDetails: profileDetails._id,
         image: image || `https://api.dicebear.com/5.x/initials/svg?seed=${encodeURIComponent(fName + " " + lName)}`,
@@ -474,7 +481,10 @@ exports.socialLogin = async (req, res) => {
         trialStartedAt: now,
         trialExpiresAt: trialExpiresAt,
         activePlan: "trial",
-      })
+      }
+      if (learnerId) socialCreatePayload.learnerId = learnerId
+
+      user = await User.create(socialCreatePayload)
 
       if (userAccountType === "Practitioner") {
         const pProf = await PractitionerProfile.create({
@@ -495,7 +505,10 @@ exports.socialLogin = async (req, res) => {
       if (mode === "signup" && (requestedRole === "Practitioner" || requestedRole === "Instructor") && (user.accountType === "Client" || user.accountType === "Learner" || user.accountType === "Student")) {
         const PractitionerProfile = require("../models/PractitionerProfile")
         user.accountType = "Practitioner"
-        user.learnerId = null
+        // Use $unset to REMOVE learnerId from the document entirely so the sparse
+        // unique index doesn't see a null value and throw E11000.
+        await User.findByIdAndUpdate(user._id, { $unset: { learnerId: "" } })
+        user.learnerId = undefined
         if (!user.practitionerProfile) {
           const pProf = await PractitionerProfile.create({
             user: user._id,

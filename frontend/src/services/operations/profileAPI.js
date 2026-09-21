@@ -3,7 +3,7 @@ import { toast } from "react-hot-toast"
 import { setLoading, setUser } from "../../slices/profileSlice"
 import { apiConnector } from "../apiConnector"
 import { profileEndpoints } from "../apis"
-import { logout } from "./authAPI"
+import { clearAllCache } from "../../utils/clearAllCache"
 import { getInitialsAvatar } from "../../utils/getInitialsAvatar"
 
 const {
@@ -32,11 +32,16 @@ export function getUserDetails(token, navigate) {
     } catch (error) {
       console.log("GET_USER_DETAILS API ERROR............", error)
       if (error?.response?.status === 401 || error?.response?.status === 403) {
-        dispatch(logout(navigate, false))
+        // Session expired — nuke everything and force re-login
+        await clearAllCache()
+        dispatch({ type: "auth/RESET_ALL_STATE" })
         toast.error("Session expired. Please log in again.", { id: "session-expired-toast" })
+        // Hard reload to "/" — clears all in-memory state
+        window.location.href = "/"
       }
     } finally {
       dispatch(setLoading(false))
     }
   }
 }
+

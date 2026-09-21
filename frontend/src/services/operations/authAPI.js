@@ -5,6 +5,7 @@ import { setUser } from "../../slices/profileSlice"
 import { apiConnector } from "../apiConnector"
 import { endpoints } from "../apis"
 import { getInitialsAvatar } from "../../utils/getInitialsAvatar"
+import { clearAllCache } from "../../utils/clearAllCache"
 
 const {
   SENDOTP_API,
@@ -293,21 +294,31 @@ export function resetPassword(password, confirmPassword, token, navigate) {
 }
 
 export function logout(navigate, showToast = true) {
-  return (dispatch) => {
-    dispatch(setToken(null))
-    dispatch(setUser(null))
-    localStorage.removeItem("token")
-    localStorage.removeItem("user")
-    try {
-      Object.keys(localStorage).forEach((key) => {
-        if (key.startsWith("oh_onboarding_")) {
-          localStorage.removeItem(key)
-        }
-      })
-    } catch (e) {}
+  return async (dispatch) => {
+    // ── Step 1: Nuke all browser-side storage ──────────────────────────────
+    // Clears: localStorage, sessionStorage, cookies, Service Worker cache,
+    // TanStack Query cache, and IndexedDB. Works on all browsers + mobile.
+    await clearAllCache()
+
+    // ── Step 2: Reset ALL Redux slices to their initial state ───────────────
+    // The special "auth/RESET_ALL_STATE" action is handled by the root reducer
+    // and passes `undefined` to every slice → they all re-init from scratch.
+    // This ensures no stale Learner / Practitioner data bleeds through.
+    dispatch({ type: "auth/RESET_ALL_STATE" })
+
+    // ── Step 3: Show toast ──────────────────────────────────────────────────
     if (showToast) {
-      toast.success("Logged Out")
+      toast.success("Logged out successfully")
     }
-    if (navigate) navigate("/")
+
+    // ── Step 4: Navigate to home + force hard reload ────────────────────────
+    // The hard reload is CRITICAL. Without it, the browser keeps in-memory React
+    // state (component tree, hooks, context) from the previous session, which
+    // can show the old dashboard to the next user on shared/public devices.
+    //
+    // window.location.href instead of navigate() guarantees a full page reload
+    // across Chrome, Safari, Firefox, Edge, iOS WebView, and Android WebView.
+    window.location.href = "/"
   }
 }
+

@@ -1,12 +1,13 @@
 // Load env before any other app modules
-// UAT -> .env.uat | Production -> .env
+// UAT -> .env.uat | Production -> .env.production | fallback -> .env
 const path = require("path")
 const fs = require("fs")
 const dotenv = require("dotenv")
 
 const appEnvName = String(process.env.APP_ENV || "uat").toLowerCase()
 const isUat = appEnvName === "uat" || appEnvName === "development"
-const envFile = isUat ? ".env.uat" : ".env"
+const isProd = appEnvName === "production" || appEnvName === "prod"
+const envFile = isUat ? ".env.uat" : isProd ? ".env.production" : ".env"
 const envPath = path.join(__dirname, envFile)
 
 if (fs.existsSync(envPath)) {
