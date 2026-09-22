@@ -22,24 +22,23 @@ import { setUser } from '../slices/profileSlice'
 import OHFooter from '../components/openhand/OHFooter'
 import toast from 'react-hot-toast'
 
-const POPULAR_SPECIALTIES = [
-  'Holistic Care',
-  'Wellness Coaching',
-  'Mindfulness & Meditation',
-  'Stress Management',
-  'Functional Medicine',
-  'Ayurveda & Herbology',
-  'Sound Healing',
-  'Breathwork',
-  'Somatic Therapy',
-  'Nutrition & Gut Health',
-  'Trauma-Informed Yoga',
-  'Cognitive Behavioral',
-  'Life Transitions',
-  'Executive Performance',
-  'Integrative Recovery',
-  'Relationship Counseling'
+// The 10 official OpenHand practitioner categories.
+// Practitioners can select a MAXIMUM of 2.
+const PRACTITIONER_CATEGORIES = [
+  'Emotional Intelligence',
+  'Career Coaching',
+  'Leadership Coaching',
+  'Legal Advisors',
+  'Finance Advisors',
+  'Health & Fitness Coaches',
+  'Relationship Coaching',
+  'Parenting',
+  'Spiritual',
+  'NLP Coaching (Neurolinguistic Programming)',
 ]
+
+const MAX_SPECIALTIES = 2
+
 
 const POPULAR_LANGUAGES = [
   'English',
@@ -96,7 +95,7 @@ export function PractitionerOnboarding({ embedded = false, telemetryData, onUpda
       handle: validServerHandle,
       credentials: existingP.credentials || user?.credentials || 'Certified Holistic Practitioner',
       bio: existingP.bio || user?.bio || 'Welcome to my practice space! I offer personalized consultations, wellness circles, and tailored health guidance.',
-      specialties: existingP.specialties?.length ? existingP.specialties : ['Holistic Care', 'Wellness Coaching', 'Mindfulness & Meditation'],
+      specialties: existingP.specialties?.length ? existingP.specialties : ['Emotional Intelligence'],
       languages: existingP.languages?.length ? existingP.languages : ['English', 'Hindi'],
       experienceYears: existingP.experienceYears || 5,
       sessionRate: existingP.sessionRate || 2500,
@@ -153,7 +152,7 @@ export function PractitionerOnboarding({ embedded = false, telemetryData, onUpda
         handle: prev.handle || validServerHandle,
         credentials: prev.credentials || existingP.credentials || user?.credentials || 'Certified Holistic Practitioner',
         bio: prev.bio || existingP.bio || user?.bio || 'Welcome to my practice space!',
-        specialties: prev.specialties?.length ? prev.specialties : (existingP.specialties?.length ? existingP.specialties : ['Holistic Care', 'Wellness Coaching']),
+        specialties: prev.specialties?.length ? prev.specialties : (existingP.specialties?.length ? existingP.specialties : ['Emotional Intelligence']),
         languages: prev.languages?.length ? prev.languages : (existingP.languages?.length ? existingP.languages : ['English', 'Hindi']),
         sessionRate: prev.sessionRate || existingP.sessionRate || 2500,
         experienceYears: prev.experienceYears || existingP.experienceYears || 5,
@@ -173,16 +172,34 @@ export function PractitionerOnboarding({ embedded = false, telemetryData, onUpda
 
   const toggleSpecialty = (spec) => {
     const current = formData.specialties || []
-    const updated = current.includes(spec) ? current.filter(s => s !== spec) : [...current, spec]
-    const updatedData = { ...formData, specialties: updated }
-    setFormData(updatedData)
-    localStorage.setItem(storageKeyData, JSON.stringify(updatedData))
+    if (current.includes(spec)) {
+      // Deselect
+      const updated = current.filter(s => s !== spec)
+      const updatedData = { ...formData, specialties: updated }
+      setFormData(updatedData)
+      localStorage.setItem(storageKeyData, JSON.stringify(updatedData))
+    } else {
+      // Select — enforce max 2
+      if (current.length >= MAX_SPECIALTIES) {
+        toast.error(`You can select a maximum of ${MAX_SPECIALTIES} categories. Please deselect one first.`)
+        return
+      }
+      const updated = [...current, spec]
+      const updatedData = { ...formData, specialties: updated }
+      setFormData(updatedData)
+      localStorage.setItem(storageKeyData, JSON.stringify(updatedData))
+    }
   }
 
   const handleAddCustomSpecialty = () => {
     if (!customSpecialty.trim()) return
     const tag = customSpecialty.trim()
     const current = formData.specialties || []
+    if (current.length >= MAX_SPECIALTIES) {
+      toast.error(`You can select a maximum of ${MAX_SPECIALTIES} categories.`)
+      setCustomSpecialty('')
+      return
+    }
     if (!current.includes(tag)) {
       const updated = [...current, tag]
       const updatedData = { ...formData, specialties: updated }
@@ -278,7 +295,7 @@ export function PractitionerOnboarding({ embedded = false, telemetryData, onUpda
     // Step 2 Validation
     if (step === 2) {
       if (!formData.specialties || formData.specialties.length === 0) {
-        toast.error('Please select at least one focus specialty.')
+        toast.error('Please select at least 1 category (max 2).')
         return
       }
       if (!formData.languages || formData.languages.length === 0) {
@@ -565,32 +582,43 @@ export function PractitionerOnboarding({ embedded = false, telemetryData, onUpda
                 </p>
               </div>
 
-              {/* Specialties / Focus Tags */}
+              {/* Categories / Focus Tags — max 2 */}
               <div>
-                <label style={{ display: 'block', fontSize: 13.5, fontWeight: 700, color: '#0F172A', marginBottom: 8 }}>
+                <label style={{ display: 'block', fontSize: 13.5, fontWeight: 700, color: '#0F172A', marginBottom: 4 }}>
                   Specialties &amp; Focus Areas <sup style={{ color: '#EF4444' }}>*</sup>
                 </label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-                  {POPULAR_SPECIALTIES.map((spec) => {
+                <p style={{ margin: '0 0 10px', fontSize: 12, color: '#64748B' }}>
+                  Select <strong>up to 2 categories</strong> that best describe your practice.
+                  {(formData.specialties || []).length > 0 && (
+                    <span style={{ marginLeft: 8, color: (formData.specialties || []).length >= MAX_SPECIALTIES ? '#EF4444' : '#10B981', fontWeight: 700 }}>
+                      {(formData.specialties || []).length}/{MAX_SPECIALTIES} selected
+                    </span>
+                  )}
+                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {PRACTITIONER_CATEGORIES.map((spec) => {
                     const isSelected = (formData.specialties || []).includes(spec)
+                    const isDisabled = !isSelected && (formData.specialties || []).length >= MAX_SPECIALTIES
                     return (
                       <button
                         key={spec}
                         type="button"
                         onClick={() => toggleSpecialty(spec)}
+                        disabled={isDisabled}
                         style={{
-                          padding: '7px 14px',
+                          padding: '8px 16px',
                           borderRadius: 20,
-                          border: isSelected ? '1.5px solid #2563EB' : '1px solid #CBD5E1',
-                          background: isSelected ? '#EFF6FF' : '#FFFFFF',
-                          color: isSelected ? '#1D4ED8' : '#475569',
+                          border: isSelected ? '2px solid #2563EB' : '1px solid #CBD5E1',
+                          background: isSelected ? '#EFF6FF' : isDisabled ? '#F8FAFC' : '#FFFFFF',
+                          color: isSelected ? '#1D4ED8' : isDisabled ? '#CBD5E1' : '#475569',
                           fontWeight: isSelected ? 800 : 600,
-                          fontSize: 12.5,
-                          cursor: 'pointer',
+                          fontSize: 13,
+                          cursor: isDisabled ? 'not-allowed' : 'pointer',
                           display: 'flex',
                           alignItems: 'center',
                           gap: 6,
-                          transition: 'all 0.15s ease'
+                          transition: 'all 0.15s ease',
+                          opacity: isDisabled ? 0.5 : 1,
                         }}
                       >
                         {isSelected && <FiCheck size={13} />}
@@ -598,24 +626,6 @@ export function PractitionerOnboarding({ embedded = false, telemetryData, onUpda
                       </button>
                     )
                   })}
-                </div>
-
-                {/* Custom Specialty Adder */}
-                <div style={{ display: 'flex', gap: 8, maxWidth: 400 }}>
-                  <input
-                    type="text"
-                    value={customSpecialty}
-                    onChange={(e) => setCustomSpecialty(e.target.value)}
-                    placeholder="Add custom specialty tag..."
-                    style={{ flex: 1, padding: '8px 12px', borderRadius: 10, border: '1px solid #CBD5E1', fontSize: 13 }}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddCustomSpecialty}
-                    style={{ padding: '8px 16px', borderRadius: 10, background: '#2563EB', color: '#FFFFFF', border: 'none', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
-                  >
-                    + Add
-                  </button>
                 </div>
               </div>
 

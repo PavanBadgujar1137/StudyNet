@@ -236,7 +236,7 @@ export function PractitionerPublicProfile() {
                   Specialties:
                 </span>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  {(profile.specialties && profile.specialties.length > 0 ? profile.specialties : ['Holistic Care', 'Wellness Coaching']).map((spec, i) => (
+                  {(profile.specialties && profile.specialties.length > 0 ? profile.specialties : ['Emotional Intelligence']).map((spec, i) => (
                     <span key={i} style={{ background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE', padding: '5px 12px', borderRadius: '20px', fontWeight: 600 }}>
                       {spec}
                     </span>
@@ -330,11 +330,20 @@ export function PractitionerPublicProfile() {
                 >
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                      <span style={{ background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE', padding: '4px 12px', borderRadius: '12px', fontSize: '12px', fontWeight: 700, textTransform: 'capitalize' }}>
-                        {offer.type || '1:1 Session'}
+                      <span style={{ 
+                        background: offer.isDummy ? '#F0FDF4' : '#EFF6FF', 
+                        color: offer.isDummy ? '#15803D' : '#1D4ED8', 
+                        border: offer.isDummy ? '1px solid #BBF7D0' : '1px solid #BFDBFE', 
+                        padding: '4px 12px', 
+                        borderRadius: '12px', 
+                        fontSize: '12px', 
+                        fontWeight: 700, 
+                        textTransform: 'capitalize' 
+                      }}>
+                        {offer.isDummy ? '🌱 1:1 Consultation (Upcoming)' : (offer.type || '1:1 Session')}
                       </span>
-                      <span style={{ fontSize: '20px', fontWeight: 800, color: '#059669' }}>
-                        ₹{offer.price || 2500}
+                      <span style={{ fontSize: '18px', fontWeight: 800, color: (offer.isDummy || offer.price == null) ? '#64748B' : '#059669' }}>
+                        {offer.isDummy || offer.price == null ? 'Price NA' : `₹${offer.price}`}
                       </span>
                     </div>
 
@@ -343,31 +352,52 @@ export function PractitionerPublicProfile() {
                     </h3>
 
                     <p style={{ fontSize: '14px', color: '#475569', lineHeight: '1.5', margin: 0 }}>
-                      {offer.description || offer.details || 'Includes direct live consultation, personalized action plan, and follow-up support.'}
+                      {offer.description || offer.details || (offer.isDummy ? 'Standard 1:1 introductory consultation session. Personalized booking schedule and custom pricing will be live shortly.' : 'Includes direct live consultation, personalized action plan, and follow-up support.')}
                     </p>
                   </div>
 
-                  <button
-                    onClick={() => handleBookOffer(offer)}
-                    style={{
-                      background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-                      color: '#ffffff',
-                      border: 'none',
-                      padding: '14px',
-                      borderRadius: '30px',
-                      fontWeight: 700,
-                      fontSize: '14.5px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      boxShadow: '0 4px 14px rgba(16, 185, 129, 0.25)'
-                    }}
-                  >
-                    <FiCalendar fontSize={16} />
-                    Reserve Slot — ₹{offer.price || 2500}
-                  </button>
+                  {offer.isDummy || offer.price == null ? (
+                    <div
+                      style={{
+                        background: '#F8FAFC',
+                        color: '#64748B',
+                        border: '1px dashed #CBD5E1',
+                        padding: '12px 16px',
+                        borderRadius: '20px',
+                        fontWeight: 600,
+                        fontSize: '13.5px',
+                        textAlign: 'center',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <span>🌱 Custom pricing & booking coming soon</span>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleBookOffer(offer)}
+                      style={{
+                        background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                        color: '#ffffff',
+                        border: 'none',
+                        padding: '14px',
+                        borderRadius: '30px',
+                        fontWeight: 700,
+                        fontSize: '14.5px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        boxShadow: '0 4px 14px rgba(16, 185, 129, 0.25)'
+                      }}
+                    >
+                      <FiCalendar fontSize={16} />
+                      Reserve Slot — ₹{offer.price}
+                    </button>
+                  )}
                 </div>
               ))}
             </div>

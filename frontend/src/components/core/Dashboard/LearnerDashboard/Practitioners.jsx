@@ -41,7 +41,7 @@ export function Practitioners({ onUpdate, setActiveTab }) {
         list.forEach((p) => {
           const pId = p.user?._id || p._id
           const offers = (p.offers || p.userOffers || []).filter(
-            (o) => o.status === 'published' || (!o.status && o.status !== 'draft')
+            (o) => (o.status === 'published' || (!o.status && o.status !== 'draft')) && !o.isDummy && o.price != null
           )
           if (offers.length > 0) {
             initialMap[pId] = [offers[0]._id]
@@ -99,14 +99,14 @@ export function Practitioners({ onUpdate, setActiveTab }) {
   const getSelectedFeeForPractitioner = (p) => {
     const pId = p.user?._id || p._id
     const offers = (p.offers || p.userOffers || []).filter(
-      (o) => o.status === 'published' || (!o.status && o.status !== 'draft')
+      (o) => (o.status === 'published' || (!o.status && o.status !== 'draft')) && !o.isDummy && o.price != null
     )
     const selectedIds = selectedOffersMap[pId] || []
 
-    if (offers.length === 0) return p.sessionRate || 0
+    if (offers.length === 0) return 0
 
     const selectedOffers = offers.filter((o) => selectedIds.includes(o._id))
-    if (selectedOffers.length === 0) return p.sessionRate || (offers[0]?.price || 0)
+    if (selectedOffers.length === 0) return (offers[0]?.price || 0)
 
     return selectedOffers.reduce((sum, o) => sum + (o.price || 0), 0)
   }
@@ -299,19 +299,18 @@ export function Practitioners({ onUpdate, setActiveTab }) {
 
   const specialtyCategories = [
     'All Specialties',
-    'Anxiety & Stress',
-    'CBT',
-    'Mindfulness',
-    'Career & Burnout',
-    'Relationships',
-    'Trauma & Recovery',
-    'Grief & Loss',
-    'Holistic Care',
-    'Wellness Coaching',
+    'Emotional Intelligence',
+    'Career Coaching',
+    'Leadership Coaching',
+    'Legal Advisors',
+    'Finance Advisors',
+    'Health & Fitness Coaches',
+    'Relationship Coaching',
     'Parenting',
-    'Nutrition',
-    'Inner Child Healing',
+    'Spiritual',
+    'NLP Coaching (Neurolinguistic Programming)',
   ]
+
 
   return (
     <div id="practitioners" style={{ width: '100%' }}>
@@ -408,9 +407,11 @@ export function Practitioners({ onUpdate, setActiveTab }) {
 
             const conn = getConnectionForPractitioner(pId)
             const connStatus = conn?.status // 'active' | 'approved' | 'pending_approval'
-            const offers = (p.offers || p.userOffers || []).filter(
-              (o) => o.status === 'published' || (!o.status && o.status !== 'draft')
+            const realOffers = (p.offers || p.userOffers || []).filter(
+              (o) => (o.status === 'published' || (!o.status && o.status !== 'draft')) && !o.isDummy && o.price != null
             )
+            const isDummyOnly = p.hasDummyOffer || realOffers.length === 0
+            const offers = isDummyOnly ? (p.offers || p.userOffers || []) : realOffers
 
             const selectedIds = selectedOffersMap[pId] || []
             const selectedFee = getSelectedFeeForPractitioner(p)
@@ -507,7 +508,18 @@ export function Practitioners({ onUpdate, setActiveTab }) {
                 )}
 
                 {/* Interactive Published Offers Section with Checkboxes */}
-                {offers.length > 0 ? (
+                {isDummyOnly ? (
+                  <div style={{ background: '#F0FDF4', borderRadius: '12px', padding: '12px 14px', border: '1px dashed #86EFAC', textAlign: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '4px' }}>
+                      <span style={{ fontSize: '11.5px', fontWeight: 800, color: '#15803D', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                        🌱 1:1 Consultation (Upcoming)
+                      </span>
+                    </div>
+                    <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 600, display: 'block' }}>
+                      Pricing &amp; booking coming soon • Price NA
+                    </span>
+                  </div>
+                ) : offers.length > 0 ? (
                   <div style={{ background: '#F8FAFC', borderRadius: '12px', padding: '12px', border: '1px solid #E2E8F0' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                       <span style={{ fontSize: '11px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
@@ -567,8 +579,8 @@ export function Practitioners({ onUpdate, setActiveTab }) {
                   </div>
                 )}
 
-                {/* Selected Fee Info (Only when offers exist) */}
-                {offers.length > 0 && (
+                {/* Selected Fee Info (Only when real offers exist) */}
+                {!isDummyOnly && offers.length > 0 && (
                   <div
                     style={{
                       paddingTop: '10px',
@@ -655,6 +667,26 @@ export function Practitioners({ onUpdate, setActiveTab }) {
                       }}
                     >
                       <FiClock size={15} /> Awaiting Practitioner Approval
+                    </button>
+                  ) : isDummyOnly ? (
+                    <button
+                      disabled
+                      style={{
+                        width: '100%',
+                        padding: '11px',
+                        borderRadius: '10px',
+                        background: '#F1F5F9',
+                        color: '#64748B',
+                        border: '1px dashed #CBD5E1',
+                        fontWeight: 700,
+                        fontSize: '12.5px',
+                        cursor: 'not-allowed',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      Pricing &amp; Booking Soon
                     </button>
                   ) : offers.length > 0 ? (
                     <button

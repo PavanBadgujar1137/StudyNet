@@ -47,6 +47,7 @@ export function socialLogin(provider, socialData, navigate) {
 
       if (response.data.isNewRegistration) {
         sessionStorage.setItem("showCompleteProfilePopup", "true")
+        localStorage.setItem("showCompleteProfilePopup", "true")
       }
 
       if (user?.accountType === "Admin") {
@@ -143,6 +144,7 @@ export function signUp(
         localStorage.setItem("user", JSON.stringify({ ...user, image: userImage }))
 
         sessionStorage.setItem("showCompleteProfilePopup", "true")
+        localStorage.setItem("showCompleteProfilePopup", "true")
 
         navigate("/dashboard")
       } else {

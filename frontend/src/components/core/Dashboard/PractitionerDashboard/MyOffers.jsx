@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useSelector } from 'react-redux'
+import { useSearchParams } from 'react-router-dom'
 import {
   FiPlus,
   FiTag,
@@ -106,9 +107,25 @@ export function MyOffers({ telemetryData, onUpdate }) {
     }
   }, [token])
 
+  const [searchParams, setSearchParams] = useSearchParams()
+
   useEffect(() => {
     loadOffers()
   }, [loadOffers])
+
+  // Auto-open create modal when navigated from popup with ?create=true
+  useEffect(() => {
+    if (searchParams.get('create') === 'true') {
+      handleOpenCreateModal()
+      // Remove the query param so refresh doesn't re-open
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev)
+        next.delete('create')
+        return next
+      })
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleOpenCreateModal = () => {
     setEditingOffer(null)

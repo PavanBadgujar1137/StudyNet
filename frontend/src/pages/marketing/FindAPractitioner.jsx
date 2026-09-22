@@ -428,8 +428,10 @@ export function FindAPractitioner() {
               <div className="dir-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {practitioners
                   .filter((p) => {
+                    // Include practitioners with real published offers OR with the dummy placeholder offer
+                    if (p.hasDummyOffer) return true
                     const rawOffers = p.offers || p.userOffers || []
-                    const publishedOffers = rawOffers.filter((o) => o.status === 'published' || (!o.status && o.status !== 'draft'))
+                    const publishedOffers = rawOffers.filter((o) => !o.isDummy && (o.status === 'published' || (!o.status && o.status !== 'draft')))
                     return publishedOffers.length > 0
                   })
                   .filter((p) => {
@@ -445,8 +447,12 @@ export function FindAPractitioner() {
                   const isVerified = p.verificationStatus === 'verified' || true
                   const userImg = p.user?.image || p.image || p.avatar || null
                   const rawOffers = p.offers || p.userOffers || []
-                  const publishedOffers = rawOffers.filter((o) => o.status === 'published' || (!o.status && o.status !== 'draft'))
-                  const minPrice = publishedOffers.length > 0 ? Math.min(...publishedOffers.map((o) => o.price || 0)) : (p.sessionRate || 0)
+                  const realOffers = rawOffers.filter((o) => !o.isDummy && (o.status === 'published' || (!o.status && o.status !== 'draft')))
+                  const isDummyOnly = p.hasDummyOffer || realOffers.length === 0
+                  const publishedOffers = isDummyOnly ? rawOffers : realOffers
+                  const minPrice = !isDummyOnly && realOffers.length > 0
+                    ? Math.min(...realOffers.map((o) => o.price || 0))
+                    : null
 
                   return (
                     <article key={p._id} className="practitioner-card">
@@ -500,11 +506,11 @@ export function FindAPractitioner() {
                       {/* Bio */}
                       <p className="p-bio-text">{p.bio}</p>
 
-                      {/* Published Offers Section */}
+                      {/* Offers Section — real or dummy placeholder */}
                       {publishedOffers.length > 0 && (
-                        <div style={{ marginBottom: '12px', background: '#F8FAFC', padding: '10px 12px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
-                          <span style={{ fontSize: '11px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '6px' }}>
-                            Published Offers ({publishedOffers.length})
+                        <div style={{ marginBottom: '12px', background: isDummyOnly ? 'linear-gradient(135deg, #F0FDF4, #ECFDF5)' : '#F8FAFC', padding: '10px 12px', borderRadius: '12px', border: isDummyOnly ? '1px solid #A7F3D0' : '1px solid #E2E8F0' }}>
+                          <span style={{ fontSize: '11px', fontWeight: 800, color: isDummyOnly ? '#065F46' : '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '6px' }}>
+                            {isDummyOnly ? '🌱 Getting Started' : `Published Offers (${publishedOffers.length})`}
                           </span>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                             {publishedOffers.map((o, oIdx) => (
@@ -525,7 +531,11 @@ export function FindAPractitioner() {
                                   <span style={{ fontWeight: 700, color: '#0F172A', display: 'block' }}>{o.title}</span>
                                   <span style={{ fontSize: '10.5px', color: '#64748B' }}>{o.type === 'circle' ? 'Circle' : '1:1 Session'} • {o.durationMinutes || 50}m</span>
                                 </div>
-                                <span style={{ fontWeight: 800, color: '#2563EB' }}>₹{o.price}</span>
+                                {o.isDummy || o.price == null ? (
+                                  <span style={{ fontWeight: 800, color: '#94A3B8', fontSize: '11px' }}>Price NA</span>
+                                ) : (
+                                  <span style={{ fontWeight: 800, color: '#2563EB' }}>₹{o.price}</span>
+                                )}
                               </div>
                             ))}
                           </div>
@@ -541,14 +551,18 @@ export function FindAPractitioner() {
                       {/* Footer: Price & Availability */}
                       <div className="p-card-foot">
                         <div className="p-rate-box">
-                          {minPrice > 0 ? (
+                          {isDummyOnly ? (
+                            <span className="p-rate-amount" style={{ fontSize: '13px', color: '#94A3B8', fontStyle: 'italic' }}>
+                              Pricing coming soon
+                            </span>
+                          ) : minPrice > 0 ? (
                             <>
                               <span className="p-rate-amount">₹{minPrice.toLocaleString('en-IN')}</span>
                               <span className="p-rate-unit"> /session</span>
                             </>
                           ) : (
                             <span className="p-rate-amount" style={{ fontSize: '13px', color: '#64748B' }}>
-                              No published offers yet
+                              Contact for pricing
                             </span>
                           )}
                         </div>
@@ -559,18 +573,25 @@ export function FindAPractitioner() {
 
                       {/* CTA Buttons: Connect & Book & View Profile */}
                       <div className="flex gap-2 w-full mt-3">
-                        <button
-                          type="button"
-                          onClick={() => handleConnectPractitioner(p)}
-                          disabled={connectingId === (p._id || p.id)}
-                          className="flex-1 py-2.5 px-3 rounded-xl border border-indigo-200 text-indigo-700 bg-indigo-50/70 hover:bg-indigo-100 font-bold text-xs transition-all flex items-center justify-center gap-1"
-                        >
-                          {connectingId === (p._id || p.id) ? 'Connecting...' : '🤝 Connect & Book'}
-                        </button>
-                        <OHButton href={`/practitioner/${p.handle || p._id || ''}`} className="flex-1 p-book-btn">
-                          View Profile →
-                        </OHButton>
-
+                        {isDummyOnly ? (
+                          <OHButton href={`/practitioner/${p.handle || p._id || ''}`} className="flex-1 p-book-btn">
+                            View Profile →
+                          </OHButton>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => handleConnectPractitioner(p)}
+                              disabled={connectingId === (p._id || p.id)}
+                              className="flex-1 py-2.5 px-3 rounded-xl border border-indigo-200 text-indigo-700 bg-indigo-50/70 hover:bg-indigo-100 font-bold text-xs transition-all flex items-center justify-center gap-1"
+                            >
+                              {connectingId === (p._id || p.id) ? 'Connecting...' : '🤝 Connect & Book'}
+                            </button>
+                            <OHButton href={`/practitioner/${p.handle || p._id || ''}`} className="flex-1 p-book-btn">
+                              View Profile →
+                            </OHButton>
+                          </>
+                        )}
                       </div>
                     </article>
                   )

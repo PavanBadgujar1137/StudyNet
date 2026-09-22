@@ -32,7 +32,7 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
   // ITEM 27 FIX: Inline Specialties & Languages Editing State
   const [editingSpecLang, setEditingSpecLang] = useState(false)
   const [specialties, setSpecialties] = useState(
-    practitioner.specialties?.length ? practitioner.specialties : ['Holistic Care', 'Wellness Coaching']
+    practitioner.specialties?.length ? practitioner.specialties : ['Emotional Intelligence']
   )
   const [languages, setLanguages] = useState(
     practitioner.languages?.length ? practitioner.languages : ['English', 'Hindi']

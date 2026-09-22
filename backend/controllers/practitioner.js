@@ -64,9 +64,26 @@ exports.getPractitioners = async (req, res) => {
         profile.sessionRate = minPrice > 0 ? minPrice : 0
         const offerFormats = [...new Set(userOffers.map((o) => (o.type === "circle" ? "Group Circles" : "1:1 Sessions")))]
         profile.formats = offerFormats.length > 0 ? offerFormats : []
+        profile.hasDummyOffer = false
       } else {
-        // Skip practitioners who have not published any offers yet
-        continue
+        // Show practitioners with no real offers yet using a placeholder dummy offer.
+        // This ensures newly registered practitioners appear on the directory immediately.
+        // The dummy is auto-replaced the moment they create a real offer.
+        const dummyOffer = {
+          _id: `dummy_${u._id}`,
+          title: "1:1 consultation",
+          type: "session",
+          price: null,
+          durationMinutes: 50,
+          status: "published",
+          isDummy: true,
+          description: "1:1 consultation session with this verified practitioner. Pricing will be listed soon.",
+        }
+        profile.offers = [dummyOffer]
+        profile.userOffers = [dummyOffer]
+        profile.sessionRate = null
+        profile.formats = ["1:1 Sessions"]
+        profile.hasDummyOffer = true
       }
 
       // Apply category/need filter
@@ -120,13 +137,21 @@ exports.getPractitioners = async (req, res) => {
       results.push(profile)
     }
 
-    // Sort results
+    // Sort results — null/NA sessionRate (dummy offer) always sorts to the end
     if (sort === "rating") {
       results.sort((a, b) => (b.rating || 5) - (a.rating || 5))
     } else if (sort === "rate_low") {
-      results.sort((a, b) => (a.sessionRate || 0) - (b.sessionRate || 0))
+      results.sort((a, b) => {
+        if (a.sessionRate == null) return 1
+        if (b.sessionRate == null) return -1
+        return (a.sessionRate || 0) - (b.sessionRate || 0)
+      })
     } else if (sort === "rate_high") {
-      results.sort((a, b) => (b.sessionRate || 0) - (a.sessionRate || 0))
+      results.sort((a, b) => {
+        if (a.sessionRate == null) return 1
+        if (b.sessionRate == null) return -1
+        return (b.sessionRate || 0) - (a.sessionRate || 0)
+      })
     }
 
     // Calculate pagination
@@ -288,11 +313,30 @@ exports.getPractitionerByHandle = async (req, res) => {
     const finalRating = profile.adminVerifiedRating !== undefined && profile.adminVerifiedRating !== null ? profile.adminVerifiedRating : computedRating
 
     const profileObj = profile.toObject()
-    profileObj.offers = userOffers || []
-    profileObj.userOffers = userOffers || []
     profileObj.reviews = practitionerReviews || []
     profileObj.rating = finalRating
     profileObj.reviewCount = practitionerReviews.length
+
+    if (userOffers.length > 0) {
+      profileObj.offers = userOffers
+      profileObj.userOffers = userOffers
+      profileObj.hasDummyOffer = false
+    } else {
+      // No real offers yet — attach dummy placeholder so the public profile is not empty
+      const dummyOffer = {
+        _id: `dummy_${profileObj._id}`,
+        title: "1:1 consultation",
+        type: "session",
+        price: null,
+        durationMinutes: 50,
+        status: "published",
+        isDummy: true,
+        description: "1:1 consultation session with this verified practitioner. Pricing details will be listed soon.",
+      }
+      profileObj.offers = [dummyOffer]
+      profileObj.userOffers = [dummyOffer]
+      profileObj.hasDummyOffer = true
+    }
 
     return res.status(200).json({
       success: true,
