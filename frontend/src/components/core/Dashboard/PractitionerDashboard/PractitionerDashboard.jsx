@@ -32,6 +32,7 @@ import SocialPostStudio from './SocialPostStudio'
 import PractitionerCoupons from './PractitionerCoupons'
 import Settings from '../Settings'
 import CommunityChatHub from '../CommunityChatHub'
+import AuraChat from '../AuraChat'
 import { PractitionerOnboarding } from '../../../../pages/PractitionerOnboarding'
 import OHPricingSection from '../../../openhand/OHPricingSection'
 import { toast } from 'react-hot-toast'
@@ -49,6 +50,7 @@ export function PractitionerDashboard() {
     if (tabParam) return tabParam
     const path = decodeURIComponent(location.pathname.toLowerCase())
     if (path.includes('profile') || path.includes('settings')) return 'profile'
+    if (path.includes('aura') || path.includes('assistant')) return 'aura'
     if (path.includes('coupon')) return 'coupons'
     if (path.includes('community') || path.includes('chat')) return 'community'
     if (path.includes('offer')) return 'offers'
@@ -211,6 +213,7 @@ export function PractitionerDashboard() {
 
   const rawPracticeItems = [
     { id: 'dash',      label: 'Practice Cockpit', icon: <FiGrid /> },
+    { id: 'aura',      label: 'AURA Assistant',   icon: <FiZap />, badge: 'Assistant' },
     { id: 'social',    label: 'Social Posts',     icon: <FiShare2 /> },
     { id: 'community', label: 'Community Hub',    icon: <FiMessageSquare /> },
     { id: 'offers',    label: 'Offers',           icon: <FiTag /> },
@@ -531,6 +534,9 @@ export function PractitionerDashboard() {
                   loading={loading}
                 />
               )}
+              {activeSection === 'aura' && (
+                <AuraChat role="practitioner" />
+              )}
               {activeSection === 'coupons' && (
                 <PractitionerCoupons />
               )}
@@ -641,8 +647,8 @@ export function PractitionerDashboard() {
                   Unlock More for Your Practice
                 </h2>
                 <p style={{ margin: 0, color: '#64748B', fontSize: 14 }}>
-                  Free tier: 1 offer, directory listing, AURA Aftercare Notes.
-                  Upgrade to add Circles, automations, the live AURA panel, and more.
+                  Free tier: 1 offer, directory listing, and session notes.
+                  Upgrade to add Circles, automations, custom branding, and more.
                 </p>
               </div>
 

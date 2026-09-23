@@ -28,6 +28,7 @@ import Reflections from './Reflections'
 import Courses from './Courses'
 import Settings from '../Settings'
 import CommunityChatHub from '../CommunityChatHub'
+import AuraChat from '../AuraChat'
 import { fetchClientDashboardData } from '../../../../services/operations/dashboardAPI'
 
 export function LearnerDashboard() {
@@ -46,6 +47,7 @@ export function LearnerDashboard() {
     if (path.includes('practitioner')) return 'practitioners'
     if (path.includes('circle')) return 'circle'
     if (path.includes('community') || path.includes('chat')) return 'community'
+    if (path.includes('aura') || path.includes('companion')) return 'aura'
     if (path.includes('session')) return 'sessions'
     if (path.includes('reflection')) return 'reflections'
     return 'journey'
@@ -100,6 +102,13 @@ export function LearnerDashboard() {
       label: 'My journey',
       icon: <FiMapPin />,
       badge: null,
+    },
+    {
+      id: 'aura',
+      label: 'AURA Counselor',
+      icon: <FiZap />,
+      badge: 'Virtual Practitioner',
+      hasDot: true,
     },
     {
       id: 'checkin',
@@ -370,6 +379,9 @@ export function LearnerDashboard() {
               dashboardData={dashboardData}
               onReflectionUpdate={loadData}
             />
+          )}
+          {activeTab === 'aura' && (
+            <AuraChat role="learner" />
           )}
           {activeTab === 'profile' && (
             <Settings />

@@ -38,7 +38,7 @@ const PRESETS = [
     durationMinutes: 50,
     maxSeats: '',
     weekCount: '',
-    tags: '50 Min 1:1 Call, Personalized Guided Exercises, AURA AI Notes Summary',
+    tags: '50 Min 1:1 Call, Personalized Guided Exercises, Session Notes Summary',
     description: 'Dedicated 50-minute 1:1 session focusing on therapeutic guidance, emotional processing, and personalized coping strategies.',
   },
   {
@@ -868,7 +868,7 @@ export function MyOffers({ telemetryData, onUpdate }) {
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. 1:1 Video Call, AURA Post-Session Summary, Async Chat Support"
+                  placeholder="e.g. 1:1 Video Call, Post-Session Summary, Async Chat Support"
                   value={tagsInput}
                   onChange={(e) => setTagsInput(e.target.value)}
                   style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #CBD5E1', fontSize: '13.5px', outline: 'none' }}

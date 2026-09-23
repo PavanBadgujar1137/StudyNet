@@ -14,7 +14,7 @@ const DEFAULT_PLANS = [
       "Host 1 live private group circle",
       "Standard directory listing & client booking link",
       "Client mood check-in tracking & notes",
-      "Post-session AURA transcript & clinical note draft",
+      "Post-session transcript & clinical note draft",
       "Razorpay direct payment gateway integration",
     ],
   },

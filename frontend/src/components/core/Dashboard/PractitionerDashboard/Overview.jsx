@@ -214,8 +214,8 @@ export function Overview({ practitionerName = 'Practitioner', setActiveSection, 
           <div className="row">
             <div className="av g">!</div>
             <div className="who">
-              <b>Session notes &amp; AURA drafts ({pendingNotes.length})</b>
-              <span>Review AI drafted notes from recent sessions</span>
+              <b>Session notes &amp; drafts ({pendingNotes.length})</b>
+              <span>Review notes from recent sessions</span>
             </div>
             <div className="rt">
               <button className="mini" onClick={() => setActiveSection('clients')}>Review</button>
@@ -290,11 +290,11 @@ export function Overview({ practitionerName = 'Practitioner', setActiveSection, 
         </div>
       </div>
 
-      {/* AURA & Consent Control Center (Section 2C) */}
+      {/* Privacy & Consent Control Center (Section 2C) */}
       <div className="card" style={{ marginTop: '18px', background: 'linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)', border: '1.5px solid #E2E8F0', borderRadius: '16px', padding: '20px' }}>
         <div className="sechd" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
           <div>
-            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#0F172A' }}>🔒 AURA &amp; Consent Control Center</h3>
+            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#0F172A' }}>🔒 Privacy &amp; Consent Control Center</h3>
             <p style={{ margin: '2px 0 0', fontSize: '13px', color: '#64748B' }}>Auditable per-learner consent status, retention windows, and privacy compliance logs.</p>
           </div>
           <span style={{ fontSize: '12px', fontWeight: 700, background: '#EFF6FF', color: '#2563EB', padding: '4px 10px', borderRadius: '20px', border: '1px solid #BFDBFE' }}>
@@ -306,7 +306,7 @@ export function Overview({ practitionerName = 'Practitioner', setActiveSection, 
           <div style={{ background: '#FFFFFF', padding: '14px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
             <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase' }}>Active Consent Status</span>
             <div style={{ fontSize: '18px', fontWeight: 800, color: '#166534', marginTop: '4px' }}>100% Opt-In Verified</div>
-            <p style={{ fontSize: '11px', color: '#475569', margin: '4px 0 0' }}>All active learners signed session recording &amp; AI note consent.</p>
+            <p style={{ fontSize: '11px', color: '#475569', margin: '4px 0 0' }}>All active learners signed session recording &amp; care note consent.</p>
           </div>
 
           <div style={{ background: '#FFFFFF', padding: '14px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
@@ -316,9 +316,9 @@ export function Overview({ practitionerName = 'Practitioner', setActiveSection, 
           </div>
 
           <div style={{ background: '#FFFFFF', padding: '14px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
-            <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase' }}>AURA Execution Mode</span>
+            <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase' }}>Session Notes Mode</span>
             <div style={{ fontSize: '18px', fontWeight: 800, color: '#7C3AED', marginTop: '4px' }}>Notes-Only Free</div>
-            <p style={{ fontSize: '11px', color: '#475569', margin: '4px 0 0' }}>Post-session drafting active; live panel optional per session.</p>
+            <p style={{ fontSize: '11px', color: '#475569', margin: '4px 0 0' }}>Post-session note drafting active for client record keeping.</p>
           </div>
 
           <div style={{ background: '#FFFFFF', padding: '14px', borderRadius: '12px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '8px' }}>

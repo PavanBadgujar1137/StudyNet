@@ -84,7 +84,7 @@ export default function MySubscription() {
       "Unlimited access to all practitioner free video courses",
       "Join and participate in peer growth & support Circles",
       "Daily mood check-ins & guided reflection journal",
-      "Personal AI health & reflection companion (AURA)",
+      "Personal health & reflection companion tools",
       "Direct 1:1 session bookings with verified practitioners",
       "Encrypted digital health record & notes vault",
       "Zero subscriptions or credit card needed — 100% Free Forever",
@@ -132,7 +132,7 @@ export default function MySubscription() {
               </h2>
 
               <p style={{ color: "#D1FAE5", fontSize: "14px", margin: 0, maxWidth: "600px" }}>
-                Your account is completely free. You have lifetime access to all practitioner free courses, live group circles, reflection journals, and AURA AI co-pilot tools.
+                Your account is completely free. You have lifetime access to all practitioner free courses, live group circles, and reflection journals.
               </p>
             </div>
 
