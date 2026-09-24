@@ -4,7 +4,7 @@
  * @param {string} fallbackTitle
  * @returns {string}
  */
-export const formatClassTitle = (title, fallbackTitle = 'Live Zoom Class') => {
+export const formatClassTitle = (title, fallbackTitle = 'Live Session') => {
   if (!title || typeof title !== 'string') return fallbackTitle
 
   let clean = title.trim()

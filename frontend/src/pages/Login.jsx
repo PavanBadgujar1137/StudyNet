@@ -83,7 +83,7 @@ function Login() {
               <div className="split-card-header">
                 <h2 className="split-card-title split-card-title--cyan">Learner Sign In</h2>
                 <p className="split-card-desc">
-                  Access your daily check-ins, join live Zoom classes, participate in wellness circles, and track reflections.
+                  Access your daily check-ins, join live interactive classes, participate in wellness circles, and track reflections.
                 </p>
 
                 <div className="split-pills-row">

@@ -40,6 +40,10 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
 
 
   // Form State
+  const [sessionType, setSessionType] = useState('1-on-1') // '1-on-1' | 'group'
+  const [selectedClientId, setSelectedClientId] = useState('')
+  const [maxAttendees, setMaxAttendees] = useState('')
+  const [instantStarting, setInstantStarting] = useState(false)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [scheduledStart, setScheduledStart] = useState('')
@@ -50,8 +54,63 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
   const [editDescription, setEditDescription] = useState('')
   const [editScheduledStart, setEditScheduledStart] = useState('')
   const [editDurationMinutes, setEditDurationMinutes] = useState(60)
+  const [editSessionType, setEditSessionType] = useState('1-on-1')
 
   const upcomingClasses = telemetryData?.upcomingClasses || []
+
+  // Pre-fill modal for a booked learner
+  const handleScheduleForLearner = (booking) => {
+    const client = booking?.client
+    const clientName = client ? `${client.firstName} ${client.lastName}`.trim() : 'Learner'
+    setTitle(`1-on-1 Live Session: ${clientName}`)
+    setDescription(`Exclusive 1-on-1 consultation and coaching session with ${clientName}.`)
+    setSessionType('1-on-1')
+    setSelectedClientId(client?._id || '')
+    if (booking?.scheduledAt) {
+      const dt = new Date(booking.scheduledAt)
+      if (dt > new Date()) {
+        setScheduledStart(dt.toISOString().slice(0, 16))
+      } else {
+        const soon = new Date(Date.now() + 10 * 60 * 1000)
+        setScheduledStart(soon.toISOString().slice(0, 16))
+      }
+    } else {
+      const soon = new Date(Date.now() + 10 * 60 * 1000)
+      setScheduledStart(soon.toISOString().slice(0, 16))
+    }
+    setShowScheduleModal(true)
+  }
+
+  // Fast-start instant 1-on-1 LiveKit room
+  const handleStartInstantSession = async () => {
+    if (!token) return
+    setInstantStarting(true)
+    const now = new Date()
+    const endDate = new Date(now.getTime() + 60 * 60 * 1000)
+    const payload = {
+      title: `Instant 1-on-1 Session (${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`,
+      description: 'Immediate LiveKit WebRTC 1-on-1 session created by practitioner.',
+      scheduledStart: now.toISOString(),
+      scheduledEnd: endDate.toISOString(),
+      sessionType: '1-on-1',
+      maxAttendees: 2,
+      streamProvider: 'livekit',
+    }
+
+    const result = await scheduleLiveClass(token, payload)
+    setInstantStarting(false)
+
+    if (result) {
+      const createdClass = Array.isArray(result) ? result[0] : (result?.data?.[0] || result?.data || result)
+      const targetId = createdClass?._id || createdClass?.classId
+      if (targetId) {
+        toast.success('Instant 1-on-1 LiveKit room ready!')
+        navigate(`/live/${targetId}`)
+      } else if (onUpdate) {
+        onUpdate()
+      }
+    }
+  }
 
   const handleScheduleSubmit = async (e) => {
     e.preventDefault()
@@ -63,7 +122,7 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
     const startDate = new Date(scheduledStart)
     const now = new Date()
 
-    // ITEM 18 FIX: Prevent backdated meeting creation
+    // Prevent backdated meeting creation
     if (startDate < new Date(now.getTime() - 5 * 60 * 1000)) {
       toast.error('Cannot schedule a backdated meeting. Please choose a future date and time.')
       return
@@ -77,7 +136,10 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
       description: description.slice(0, 500),
       scheduledStart: startDate.toISOString(),
       scheduledEnd: endDate.toISOString(),
-      streamProvider: 'zoom',
+      sessionType,
+      clientId: sessionType === '1-on-1' && selectedClientId ? selectedClientId : undefined,
+      maxAttendees: sessionType === 'group' && maxAttendees ? Number(maxAttendees) : (sessionType === '1-on-1' ? 1 : undefined),
+      streamProvider: 'livekit',
     }
 
     const result = await scheduleLiveClass(token, payload)
@@ -88,6 +150,8 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
       setTitle('')
       setDescription('')
       setScheduledStart('')
+      setSelectedClientId('')
+      setMaxAttendees('')
       setDurationMinutes(60)
       if (onUpdate) onUpdate()
     }
@@ -146,7 +210,7 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
     if (!url) return
     navigator.clipboard.writeText(url)
     setCopiedId(id)
-    toast.success('Copied Zoom join link to clipboard!')
+    toast.success('Copied live session link to clipboard!')
     setTimeout(() => setCopiedId(null), 2500)
   }
 
@@ -236,18 +300,40 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
                     )}
                   </div>
 
-                  {/* Amount + Status */}
-                  <div style={{ flexShrink: 0, textAlign: 'right' }}>
-                    <div style={{ color: '#10B981', fontWeight: 700, fontSize: 14 }}>
-                      ₹{booking.amount?.toLocaleString('en-IN')}
+                  {/* Amount + Status + 1-on-1 Action */}
+                  <div style={{ flexShrink: 0, textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ color: '#10B981', fontWeight: 700, fontSize: 14 }}>
+                        ₹{booking.amount?.toLocaleString('en-IN')}
+                      </div>
+                      <span style={{
+                        fontSize: 11, padding: '2px 8px', borderRadius: 20, fontWeight: 600,
+                        background: booking.status === 'confirmed' ? '#DCFCE7' : booking.status === 'completed' ? '#EFF6FF' : '#FEF3C7',
+                        color: booking.status === 'confirmed' ? '#166534' : booking.status === 'completed' ? '#1D4ED8' : '#92400E',
+                      }}>
+                        {booking.status}
+                      </span>
                     </div>
-                    <span style={{
-                      fontSize: 11, padding: '2px 8px', borderRadius: 20, fontWeight: 600,
-                      background: booking.status === 'confirmed' ? '#DCFCE7' : booking.status === 'completed' ? '#EFF6FF' : '#FEF3C7',
-                      color: booking.status === 'confirmed' ? '#166534' : booking.status === 'completed' ? '#1D4ED8' : '#92400E',
-                    }}>
-                      {booking.status}
-                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleScheduleForLearner(booking)}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        padding: '4px 10px',
+                        background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)',
+                        color: '#fff',
+                        fontSize: 11,
+                        fontWeight: 700,
+                        borderRadius: 6,
+                        border: 'none',
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 4px rgba(139, 92, 246, 0.2)'
+                      }}
+                    >
+                      <FiVideo size={12} /> Schedule 1-on-1
+                    </button>
                   </div>
                 </div>
               )
@@ -260,12 +346,32 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
       <div className="htop" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
         <div>
           <div className="crumb">Live session room</div>
-          <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#0F172A' }}>Zoom Live Session Hub</h1>
+          <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#0F172A' }}>Live Session Hub</h1>
           <p style={{ color: '#64748B', fontSize: '14px' }}>
-            {upcomingClasses.length} class(es)/session(s) configured for Zoom streaming.
+            {upcomingClasses.length} session(s) configured with LiveKit WebRTC.
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <button
+            className="btn"
+            style={{
+              background: '#0F172A',
+              color: '#38BDF8',
+              border: '1px solid #38BDF8',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '10px 18px',
+              borderRadius: '12px',
+              fontWeight: 700,
+              cursor: instantStarting ? 'not-allowed' : 'pointer',
+              opacity: instantStarting ? 0.7 : 1,
+            }}
+            onClick={handleStartInstantSession}
+            disabled={instantStarting}
+          >
+            <FiVideo size={17} /> {instantStarting ? 'Starting...' : 'Instant 1-on-1 Room'}
+          </button>
           <button
             className="btn"
             style={{
@@ -280,9 +386,16 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
               border: 'none',
               cursor: 'pointer'
             }}
-            onClick={() => setShowScheduleModal(true)}
+            onClick={() => {
+              setTitle('')
+              setDescription('')
+              setSessionType('1-on-1')
+              setSelectedClientId('')
+              setMaxAttendees('')
+              setShowScheduleModal(true)
+            }}
           >
-            <FiPlus size={18} /> Schedule Zoom Class
+            <FiPlus size={18} /> Schedule Live Session
           </button>
           {upcomingClasses.length > 0 && (
             <button
@@ -294,11 +407,14 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
                 borderRadius: '12px',
                 fontWeight: 700,
                 border: 'none',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
               }}
               onClick={() => navigate(`/live/${upcomingClasses[0]._id}`)}
             >
-              Launch Next Room
+              <FiExternalLink size={15} /> Launch Next Room
             </button>
           )}
         </div>
@@ -306,9 +422,9 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
 
       <div className="card" style={{ marginBottom: '20px', background: '#FFFFFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '20px' }}>
         <div className="sechd" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#0F172A' }}>Your Zoom Live Sessions</h3>
+          <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#0F172A' }}>Your Live Sessions</h3>
           <span style={{ fontSize: '12px', color: '#64748B', background: '#F1F5F9', padding: '4px 10px', borderRadius: '999px', fontWeight: 600 }}>
-            Powered by Zoom Server-to-Server OAuth
+            Powered by LiveKit WebRTC
           </span>
         </div>
 
@@ -334,7 +450,7 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
                     width: '44px',
                     height: '44px',
                     borderRadius: '12px',
-                    background: '#2563EB',
+                    background: cls.sessionType === 'group' ? '#2563EB' : 'linear-gradient(135deg, #7C3AED, #4F46E5)',
                     color: '#FFF',
                     display: 'flex',
                     alignItems: 'center',
@@ -342,11 +458,24 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
                     flexShrink: 0
                   }}
                 >
-                  <FiVideo size={20} />
+                  {cls.sessionType === 'group' ? <FiVideo size={20} /> : <FiUser size={20} />}
                 </div>
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                     <b style={{ fontSize: '15px', color: '#0F172A' }}>{formatClassTitle(cls.title)}</b>
+                    <span
+                      style={{
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        padding: '2px 8px',
+                        borderRadius: '999px',
+                        background: cls.sessionType === 'group' ? '#EFF6FF' : '#F5F3FF',
+                        color: cls.sessionType === 'group' ? '#1D4ED8' : '#7C3AED',
+                        border: cls.sessionType === 'group' ? '1px solid #BFDBFE' : '1px solid #DDD6FE'
+                      }}
+                    >
+                      {cls.sessionType === 'group' ? '👥 GROUP' : '👤 1-on-1'}
+                    </span>
                     <span
                       style={{
                         fontSize: '11px',
@@ -360,34 +489,38 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
                       {cls.status === 'live' ? '🔴 LIVE NOW' : 'SCHEDULED'}
                     </span>
                   </div>
-                  <div style={{ fontSize: '13px', color: '#64748B', marginTop: '4px', display: 'flex', gap: '12px' }}>
+                  <div style={{ fontSize: '13px', color: '#64748B', marginTop: '4px', display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
                     <span><FiCalendar size={12} style={{ display: 'inline', marginRight: '4px' }} />{new Date(cls.scheduledStart).toLocaleString()}</span>
-                    {cls.zoomMeetingId && <span>ID: <code style={{ fontWeight: 600, color: '#1E293B' }}>{cls.zoomMeetingId}</code></span>}
+                    {cls.client && (
+                      <span style={{ color: '#475569' }}>
+                        <FiUser size={12} style={{ display: 'inline', marginRight: '4px' }} />
+                        Client: <strong style={{ color: '#1E293B' }}>{cls.client.firstName} {cls.client.lastName}</strong>
+                      </span>
+                    )}
+                    {cls.livekitRoomName && <span>Room: <code style={{ fontWeight: 600, color: '#1E293B' }}>{cls.livekitRoomName}</code></span>}
                   </div>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {cls.zoomJoinUrl && (
-                  <button
-                    onClick={() => handleCopyLink(cls.zoomJoinUrl, cls._id)}
-                    style={{
-                      padding: '8px 12px',
-                      fontSize: '12px',
-                      background: '#F1F5F9',
-                      color: '#475569',
-                      border: '1px solid #CBD5E1',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}
-                    title="Copy Join Link"
-                  >
-                    {copiedId === cls._id ? <FiCheckCircle color="#10B981" /> : <FiCopy />} Copy Link
-                  </button>
-                )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => handleCopyLink(`${window.location.origin}/live/${cls._id}`, cls._id)}
+                  style={{
+                    padding: '8px 12px',
+                    fontSize: '12px',
+                    background: '#F1F5F9',
+                    color: '#475569',
+                    border: '1px solid #CBD5E1',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                  title="Copy Live Session Link"
+                >
+                  {copiedId === cls._id ? <FiCheckCircle color="#10B981" /> : <FiCopy />} Copy Link
+                </button>
 
                 <button
                   onClick={() => handleOpenEditModal(cls)}
@@ -414,7 +547,7 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
                   style={{
                     padding: '8px 16px',
                     fontSize: '12px',
-                    background: '#2563EB',
+                    background: cls.sessionType === 'group' ? '#2563EB' : 'linear-gradient(135deg, #7C3AED, #2563EB)',
                     color: '#FFF',
                     border: 'none',
                     borderRadius: '8px',
@@ -426,7 +559,7 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
                   }}
                   onClick={() => navigate(`/live/${cls._id}`)}
                 >
-                  <FiExternalLink size={14} /> Open Portal
+                  <FiExternalLink size={14} /> {cls.sessionType === 'group' ? 'Open Portal' : 'Launch 1-on-1'}
                 </button>
 
                 <button
@@ -450,8 +583,8 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
         ) : (
           <div style={{ padding: '36px 20px', textAlign: 'center', color: '#64748B', background: '#F8FAFC', borderRadius: '12px' }}>
             <FiVideo size={36} style={{ margin: '0 auto 12px', color: '#94A3B8' }} />
-            <h4 style={{ fontSize: '16px', fontWeight: 700, color: '#1E293B', marginBottom: '4px' }}>No live Zoom class currently scheduled</h4>
-            <p style={{ marginBottom: '16px', fontSize: '13px' }}>Schedule a live video conferencing session with real Zoom start & join links.</p>
+            <h4 style={{ fontSize: '16px', fontWeight: 700, color: '#1E293B', marginBottom: '4px' }}>No live sessions currently scheduled</h4>
+            <p style={{ marginBottom: '16px', fontSize: '13px' }}>Schedule a live video conferencing session powered by LiveKit WebRTC.</p>
             <button
               className="btn"
               style={{
@@ -465,7 +598,7 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
               }}
               onClick={() => setShowScheduleModal(true)}
             >
-              <FiPlus size={16} style={{ display: 'inline', marginRight: '6px' }} /> Schedule Zoom Live Class
+              <FiPlus size={16} style={{ display: 'inline', marginRight: '6px' }} /> Schedule Live Session
             </button>
           </div>
         )}
@@ -499,8 +632,8 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <div>
-                <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A' }}>Schedule Zoom Live Session</h2>
-                <p style={{ fontSize: '13px', color: '#64748B' }}>Creates an active Zoom meeting via OAuth API</p>
+                <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A' }}>Schedule Live Session</h2>
+                <p style={{ fontSize: '13px', color: '#64748B' }}>Creates an active WebRTC room powered by LiveKit</p>
               </div>
               <button
                 onClick={() => setShowScheduleModal(false)}
@@ -512,12 +645,120 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
 
             <form onSubmit={handleScheduleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '8px' }}>
+                  Session Type *
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setSessionType('1-on-1')}
+                    style={{
+                      padding: '10px 14px',
+                      borderRadius: '10px',
+                      border: sessionType === '1-on-1' ? '2px solid #8B5CF6' : '1px solid #E2E8F0',
+                      background: sessionType === '1-on-1' ? '#F5F3FF' : '#FFFFFF',
+                      color: sessionType === '1-on-1' ? '#6D28D9' : '#64748B',
+                      fontWeight: 700,
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      boxShadow: sessionType === '1-on-1' ? '0 2px 6px rgba(139, 92, 246, 0.2)' : 'none',
+                    }}
+                  >
+                    <FiUser size={16} /> 1-on-1 Session
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSessionType('group')
+                      setSelectedClientId('')
+                    }}
+                    style={{
+                      padding: '10px 14px',
+                      borderRadius: '10px',
+                      border: sessionType === 'group' ? '2px solid #3B82F6' : '1px solid #E2E8F0',
+                      background: sessionType === 'group' ? '#EFF6FF' : '#FFFFFF',
+                      color: sessionType === 'group' ? '#1D4ED8' : '#64748B',
+                      fontWeight: 700,
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      boxShadow: sessionType === 'group' ? '0 2px 6px rgba(59, 130, 246, 0.2)' : 'none',
+                    }}
+                  >
+                    <FiVideo size={16} /> Group Session / Circle
+                  </button>
+                </div>
+              </div>
+
+              {sessionType === '1-on-1' ? (
+                <div>
+                  <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                    <span>Booked Learner (Optional)</span>
+                    <span style={{ fontSize: '11px', color: '#64748B', fontWeight: 500 }}>Locks room to this client</span>
+                  </label>
+                  <select
+                    value={selectedClientId}
+                    onChange={(e) => {
+                      setSelectedClientId(e.target.value)
+                      const found = bookings.find((b) => b.client?._id === e.target.value)
+                      if (found && !title) {
+                        setTitle(`1-on-1 Session: ${found.client?.firstName} ${found.client?.lastName}`)
+                      }
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '10px',
+                      border: '1px solid #CBD5E1',
+                      fontSize: '13px',
+                      background: '#FFF'
+                    }}
+                  >
+                    <option value="">Open / Share Direct LiveKit Link</option>
+                    {bookings.map((b) => (
+                      <option key={b._id} value={b.client?._id}>
+                        {b.client?.firstName} {b.client?.lastName} ({b.client?.email}) — {b.offer?.title || 'Booked Client'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div>
+                  <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                    <span>Max Attendees Limit</span>
+                    <span style={{ fontSize: '11px', color: '#64748B', fontWeight: 500 }}>Leave empty for unlimited</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="2"
+                    placeholder="e.g. 20 (or blank for unlimited)"
+                    value={maxAttendees}
+                    onChange={(e) => setMaxAttendees(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '10px',
+                      border: '1px solid #CBD5E1',
+                      fontSize: '13px'
+                    }}
+                  />
+                </div>
+              )}
+
+              <div>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
                   Session Title / Topic *
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Masterclass: Mindfulness & Deep Focus"
+                  placeholder={sessionType === '1-on-1' ? 'e.g. 1-on-1 Coaching: Breakthrough Consultation' : 'e.g. Masterclass: Mindfulness & Deep Focus'}
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   required
@@ -630,7 +871,7 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
                     opacity: submitting ? 0.7 : 1
                   }}
                 >
-                  {submitting ? 'Creating Zoom Session...' : 'Create Zoom Meeting'}
+                  {submitting ? 'Creating Live Session...' : 'Create Live Session'}
                 </button>
               </div>
             </form>
@@ -648,8 +889,8 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
                   <FiEdit3 size={18} />
                 </div>
                 <div>
-                  <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0F172A', margin: 0 }}>Edit Zoom Live Session</h3>
-                  <p style={{ fontSize: '12px', color: '#64748B', margin: 0 }}>Update meeting title, description, or start time.</p>
+                  <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0F172A', margin: 0 }}>Edit Live Session</h3>
+                  <p style={{ fontSize: '12px', color: '#64748B', margin: 0 }}>Update session title, description, or start time.</p>
                 </div>
               </div>
               <button onClick={() => setShowEditModal(false)} style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer' }}>
@@ -790,10 +1031,10 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
 
             <div>
               <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', margin: '0 0 8px 0' }}>
-                Cancel Zoom Live Class?
+                Cancel Live Session?
               </h3>
               <p style={{ fontSize: '13.5px', color: '#475569', margin: 0, lineHeight: '1.5' }}>
-                Are you sure you want to cancel this scheduled Zoom live class? This action will remove the session from your schedule.
+                Are you sure you want to cancel this scheduled live session? This action will remove the session from your schedule.
               </p>
             </div>
 

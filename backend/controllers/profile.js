@@ -302,13 +302,20 @@ exports.getClientDashboardData = async (req, res) => {
       reflections = (await ReflectionPrompt.find({ client: userId }).sort({ createdAt: -1 })) || []
     } catch (e) { reflections = [] }
 
-    // Upcoming Zoom Live Classes
+    // Upcoming Live Classes (LiveKit)
     let upcomingClasses = []
     try {
       const rawClasses = (await LiveClass.find({
         status: { $in: ["scheduled", "live"] },
+        $or: [
+          { sessionType: "group" },
+          { sessionType: { $exists: false } },
+          { client: userId },
+          { "attendees.user": userId },
+        ],
       })
         .populate("instructor", "firstName lastName image")
+        .populate("client", "firstName lastName image")
         .sort({ scheduledStart: 1 })
         .limit(10)
         .lean()) || []
@@ -319,7 +326,7 @@ exports.getClientDashboardData = async (req, res) => {
         const alphaCount = (title.match(/[a-zA-Z0-9]/g) || []).length
         const hasVowelsOrDigits = /[aeiouyAEIOUY0-9]/.test(title)
         if (alphaCount < 2 || (!hasVowelsOrDigits && title.length >= 4)) {
-          title = "Live Zoom Class"
+          title = "Live Interactive Session"
         }
         return { ...cls, title }
       })
@@ -429,7 +436,7 @@ exports.getPractitionerDashboardData = async (req, res) => {
     const userId = req.user.id
     const user = await User.findById(userId).populate("additionalDetails")
 
-    // Upcoming Zoom classes created by this instructor
+    // Upcoming live classes created by this instructor
     const upcomingClasses = await LiveClass.find({ instructor: userId })
       .sort({ scheduledStart: 1 })
       .lean()

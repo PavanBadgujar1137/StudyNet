@@ -182,3 +182,16 @@ export const getClassById = async (token, classId) => {
     return null
   }
 }
+
+export const getLiveClassToken = async (token, classId) => {
+  try {
+    const response = await apiConnector("GET", `${JOIN_CLASS_API}/${classId}/token`, null, {
+      Authorization: `Bearer ${token}`,
+    })
+    if (!response?.data?.success) throw new Error(response?.data?.message)
+    return response.data.data
+  } catch (error) {
+    console.error("getLiveClassToken error:", error)
+    return null
+  }
+}

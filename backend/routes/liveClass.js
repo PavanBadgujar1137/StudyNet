@@ -13,21 +13,23 @@ const {
   cancelClass,
   publishRecording,
   getClassById,
+  getLiveClassToken,
 } = require("../controllers/liveClass")
 
-// ── Shared (auth required for Students and Practitioners) ────────────────────
+// ── Static Routes First (Express Best Practice to avoid param collisions) ───────
 router.get("/upcoming", auth, getUpcomingClasses)
+router.get("/instructor/schedule", auth, isInstructor, getInstructorSchedule)
+router.post("/schedule", auth, isInstructor, scheduleLiveClass)
+
+// ── Parameterized /:classId Routes ───────────────────────────────────────────
+router.get("/:classId/token", auth, getLiveClassToken)
 router.post("/:classId/join", auth, joinClass)
 router.post("/:classId/leave", auth, leaveClass)
-router.get("/:classId", auth, getClassById)
-
-// ── Instructor / Practitioner Routes ──────────────────────────────────────────
-router.post("/schedule", auth, isInstructor, scheduleLiveClass)
-router.get("/instructor/schedule", auth, isInstructor, getInstructorSchedule)
 router.post("/:classId/start", auth, isInstructor, startClass)
 router.post("/:classId/end", auth, isInstructor, endClass)
 router.post("/:classId/reschedule", auth, isInstructor, rescheduleClass)
 router.post("/:classId/cancel", auth, isInstructor, cancelClass)
 router.post("/:classId/publish-recording", auth, isInstructor, publishRecording)
+router.get("/:classId", auth, getClassById)
 
 module.exports = router

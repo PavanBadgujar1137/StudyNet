@@ -45,17 +45,15 @@ const liveClassSchema = new mongoose.Schema(
       default: "scheduled",
     },
 
-    // ── Zoom integration fields ──────────────────────────────────────────────
+    // ── LiveKit WebRTC Streaming Fields ──────────────────────────────────────
     streamProvider: {
       type: String,
-      enum: ["zoom", "hms", "agora", "custom"],
-      default: "zoom",
+      enum: ["livekit", "custom"],
+      default: "livekit",
     },
-    // Zoom Meeting details generated via Zoom API or provided link
-    zoomMeetingId: { type: String },
-    zoomJoinUrl: { type: String },
-    zoomStartUrl: { type: String, select: false }, // host start link hidden from public queries
-    zoomPassword: { type: String },
+    // LiveKit Room identifier and connection details
+    livekitRoomName: { type: String },
+    livekitServerUrl: { type: String },
 
     // Chat
     chatEnabled: { type: Boolean, default: true },
@@ -68,9 +66,21 @@ const liveClassSchema = new mongoose.Schema(
       ref: "RecordedLecture",
     },
 
+    // Session Type: 1-on-1 (default) or group
+    sessionType: {
+      type: String,
+      enum: ["1-on-1", "group"],
+      default: "1-on-1",
+    },
+    // Optional specific client for 1-on-1 session
+    client: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "user",
+    },
+
     // Attendance
     attendees: [attendeeSchema],
-    maxAttendees: { type: Number, default: null }, // null = unlimited
+    maxAttendees: { type: Number, default: null }, // null = unlimited (or 1 for 1-on-1)
 
     // Recurring class grouping — all docs in a series share this UUID
     recurrenceGroup: { type: String },
@@ -82,8 +92,8 @@ const liveClassSchema = new mongoose.Schema(
 )
 
 // Index for efficient queries
-liveClassSchema.index({ batch: 1, scheduledStart: 1 })
 liveClassSchema.index({ instructor: 1, scheduledStart: 1 })
+liveClassSchema.index({ client: 1, scheduledStart: 1 })
 liveClassSchema.index({ status: 1 })
 liveClassSchema.index({ recurrenceGroup: 1 })
 

@@ -119,7 +119,7 @@ export function Documentation() {
       desc: 'Connect Open Hand with your external calendar, video, payment, and automation tools.',
       items: [
         { title: 'Google Calendar, Outlook, iCal', snippet: 'Two-way calendar synchronization to automatically block off booked Open Hand sessions.', details: 'Two-way sync prevents scheduling conflicts across all your personal and professional calendars.' },
-        { title: 'Zoom, Google Meet (fallback options)', snippet: 'Configure custom external video fallback links for low-bandwidth connections.', details: 'Set backup external video meeting links if a learner experiences local bandwidth bottlenecks.' },
+        { title: 'LiveKit WebRTC & Custom Video Links', snippet: 'Native in-browser video streaming with customizable fallback links for low-bandwidth connections.', details: 'Ultra-low latency WebRTC powered by LiveKit with automatic resolution adaptation.' },
         { title: 'Stripe, Razorpay', snippet: 'Direct gateway connection for localized regional currencies and instant payouts.', details: 'Process credit cards, debit cards, UPI, netbanking, and Apple Pay/Google Pay.' },
         { title: 'Zapier / API', snippet: 'Connect Open Hand webhooks to 5,000+ apps for custom automated workflows.', details: 'Trigger webhooks on new bookings, session completions, or learner payments to update CRM tools.' }
       ]

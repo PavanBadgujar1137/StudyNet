@@ -800,8 +800,8 @@
   margin-left: auto;
   flex-shrink: 0;
 }
-.client-app-shell .oh-zoom-join-btn,
-.oh-zoom-join-btn {
+.client-app-shell .oh-live-join-btn,
+.oh-live-join-btn {
   background: #2563EB !important;
   color: #FFFFFF !important;
   border: none !important;
@@ -819,14 +819,14 @@
   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2) !important;
   transition: all 0.2s ease !important;
 }
-.client-app-shell .oh-zoom-join-btn:hover,
-.oh-zoom-join-btn:hover {
+.client-app-shell .oh-live-join-btn:hover,
+.oh-live-join-btn:hover {
   background: #1D4ED8 !important;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
 }
-.client-app-shell .oh-zoom-join-btn svg,
-.oh-zoom-join-btn svg {
+.client-app-shell .oh-live-join-btn svg,
+.oh-live-join-btn svg {
   flex-shrink: 0 !important;
   stroke-width: 2.2 !important;
 }

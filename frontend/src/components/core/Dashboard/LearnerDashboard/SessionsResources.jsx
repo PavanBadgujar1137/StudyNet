@@ -16,12 +16,12 @@ export function SessionsResources({ practitionerName = 'your instructor', dashbo
       <div className="hd">
         <div className="k">Sessions &amp; resources</div>
         <h1>Everything in one place</h1>
-        <p>Your Zoom live classes, course materials, and resources shared by {instructorTitle}.</p>
+        <p>Your live classes, course materials, and resources shared by {instructorTitle}.</p>
       </div>
 
       <div className="card" style={{ marginBottom: '20px' }}>
         <div className="sechd">
-          <h3>Coming up (Zoom Live Classes)</h3>
+          <h3>Coming up (Live Classes)</h3>
         </div>
 
         {upcomingClasses.length > 0 ? (
@@ -43,17 +43,17 @@ export function SessionsResources({ practitionerName = 'your instructor', dashbo
                 <button
                   type="button"
                   onClick={() => navigate(`/live/${cls._id}`)}
-                  className="oh-zoom-join-btn"
+                  className="oh-live-join-btn"
                 >
                   <FiVideo size={16} />
-                  <span>Join Zoom Class</span>
+                  <span>Join Live Class</span>
                 </button>
               </div>
             </div>
           ))
         ) : (
           <div style={{ padding: '16px 0', color: '#64748B', fontSize: '13px' }}>
-            No upcoming Zoom live classes scheduled at this moment. Scheduled live classes will appear here.
+            No upcoming live classes scheduled at this moment. Scheduled live classes will appear here.
           </div>
         )}
       </div>

@@ -2,10 +2,15 @@ const { v4: uuidv4 } = require("uuid")
 const LiveClass = require("../models/LiveClass")
 const User = require("../models/User")
 const mailSender = require("../utils/mailSender")
-const { createZoomMeeting } = require("../utils/zoom")
+const {
+  generateRoomName,
+  generateLiveKitToken,
+  closeLiveKitRoom,
+  getLiveKitConfig,
+} = require("../utils/livekit")
 
 // ─────────────────────────────────────────────────────────────────────────────
-// INSTRUCTOR: Schedule a live class (single or recurring) using Zoom
+// INSTRUCTOR: Schedule a live class (single or recurring) using LiveKit
 // ─────────────────────────────────────────────────────────────────────────────
 exports.scheduleLiveClass = async (req, res) => {
   try {
@@ -19,6 +24,8 @@ exports.scheduleLiveClass = async (req, res) => {
       scheduledEnd,
       chatEnabled,
       maxAttendees,
+      sessionType,       // "1-on-1" | "group" (default "1-on-1")
+      clientId,          // optional specific client ID for 1-on-1 session
       recurrence,        // "none" | "daily" | "weekly"
       recurrenceEndDate, // ISO date string
     } = req.body
@@ -30,7 +37,7 @@ exports.scheduleLiveClass = async (req, res) => {
       })
     }
 
-    // ITEM 18 FIX: Prevent backdated meeting creation
+    // Prevent backdated meeting creation
     if (new Date(scheduledStart) < new Date(Date.now() - 5 * 60 * 1000)) {
       return res.status(400).json({
         success: false,
@@ -39,9 +46,7 @@ exports.scheduleLiveClass = async (req, res) => {
     }
 
     const start = new Date(scheduledStart)
-
     const end = new Date(scheduledEnd)
-    const durationMinutes = Math.max(15, Math.round((end.getTime() - start.getTime()) / 60000))
 
     // Build all class dates (single or recurring series)
     const dates = [{ start, end }]
@@ -63,22 +68,22 @@ exports.scheduleLiveClass = async (req, res) => {
     }
 
     const recurrenceGroup = dates.length > 1 ? uuidv4() : null
+    const { serverUrl } = getLiveKitConfig()
 
-    // Create Zoom meeting for EACH class session
+    // Determine final session type and capacity
+    const finalSessionType = sessionType === "group" ? "group" : "1-on-1"
+    const finalMaxAttendees = maxAttendees
+      ? Number(maxAttendees)
+      : finalSessionType === "1-on-1"
+      ? 1
+      : null
+
+    // Create LiveKit-enabled session for EACH class date
     const createdClasses = []
 
     for (const { start: s, end: e } of dates) {
-      let zoomData = { zoomMeetingId: "", zoomJoinUrl: "", zoomStartUrl: "", zoomPassword: "" }
-      try {
-        zoomData = await createZoomMeeting({
-          topic: `${title} - Live Session`,
-          agenda: description || title,
-          startTime: s,
-          durationMinutes,
-        })
-      } catch (zoomErr) {
-        console.warn("Zoom meeting creation warning:", zoomErr.message)
-      }
+      const sessionUniqueId = uuidv4().slice(0, 8)
+      const livekitRoomName = generateRoomName(sessionUniqueId, title)
 
       const liveClass = await LiveClass.create({
         course: courseId || undefined,
@@ -86,15 +91,15 @@ exports.scheduleLiveClass = async (req, res) => {
         description: description || "",
         tags: tags ? (Array.isArray(tags) ? tags : JSON.parse(tags)) : [],
         instructor: instructorId,
+        sessionType: finalSessionType,
+        client: clientId || undefined,
         scheduledStart: s,
         scheduledEnd: e,
         chatEnabled: chatEnabled !== false,
-        maxAttendees: maxAttendees ? Number(maxAttendees) : null,
-        streamProvider: "zoom",
-        zoomMeetingId: zoomData.zoomMeetingId,
-        zoomJoinUrl: zoomData.zoomJoinUrl,
-        zoomStartUrl: zoomData.zoomStartUrl,
-        zoomPassword: zoomData.zoomPassword,
+        maxAttendees: finalMaxAttendees,
+        streamProvider: "livekit",
+        livekitRoomName,
+        livekitServerUrl: serverUrl,
         recurrenceGroup,
         status: "scheduled",
       })
@@ -104,7 +109,7 @@ exports.scheduleLiveClass = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: `${createdClasses.length} Zoom live class(es) scheduled successfully.`,
+      message: `${createdClasses.length} live ${finalSessionType} session(s) scheduled successfully.`,
       data: createdClasses,
     })
   } catch (error) {
@@ -129,6 +134,7 @@ exports.getInstructorSchedule = async (req, res) => {
     }
 
     const classes = await LiveClass.find(filter)
+      .populate("client", "firstName lastName image email")
       .sort({ scheduledStart: 1 })
       .lean()
 
@@ -159,16 +165,31 @@ exports.getInstructorSchedule = async (req, res) => {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STUDENT / INSTRUCTOR: Get upcoming live classes (enrolled courses)
+// STUDENT / INSTRUCTOR: Get upcoming live classes (enrolled courses & 1-on-1)
 // ─────────────────────────────────────────────────────────────────────────────
 exports.getUpcomingClasses = async (req, res) => {
   try {
+    const userId = req.user?.id
     const now = new Date()
-    const rawClasses = await LiveClass.find({
+
+    const filter = {
       scheduledStart: { $gte: now },
       status: { $in: ["scheduled", "live"] },
-    })
-      .populate("instructor", "firstName lastName image")
+    }
+
+    if (userId) {
+      filter.$or = [
+        { sessionType: "group" },
+        { sessionType: { $exists: false } },
+        { client: userId },
+        { instructor: userId },
+        { "attendees.user": userId },
+      ]
+    }
+
+    const rawClasses = await LiveClass.find(filter)
+      .populate("instructor", "firstName lastName image email")
+      .populate("client", "firstName lastName image email")
       .sort({ scheduledStart: 1 })
       .limit(20)
       .lean()
@@ -179,7 +200,7 @@ exports.getUpcomingClasses = async (req, res) => {
       const alphaCount = (title.match(/[a-zA-Z0-9]/g) || []).length
       const hasVowelsOrDigits = /[aeiouyAEIOUY0-9]/.test(title)
       if (alphaCount < 2 || (!hasVowelsOrDigits && title.length >= 4)) {
-        title = "Live Zoom Class"
+        title = cls.sessionType === "1-on-1" ? "1-on-1 Live Session" : "Live Interactive Session"
       }
       return { ...cls, title }
     })
@@ -192,35 +213,63 @@ exports.getUpcomingClasses = async (req, res) => {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// INSTRUCTOR: Start class — set status = live, return Zoom Start & Join details
+// INSTRUCTOR: Start class — set status = live & generate Host LiveKit Token
 // ─────────────────────────────────────────────────────────────────────────────
 exports.startClass = async (req, res) => {
   try {
     const instructorId = req.user.id
     const { classId } = req.params
 
-    const liveClass = await LiveClass.findById(classId).select("+zoomStartUrl")
+    const liveClass = await LiveClass.findById(classId)
     if (!liveClass) return res.status(404).json({ success: false, message: "Class not found." })
     if (String(liveClass.instructor) !== String(instructorId)) {
-      return res.status(403).json({ success: false, message: "Not authorized." })
+      return res.status(403).json({ success: false, message: "Not authorized to host this class." })
+    }
+
+    // Ensure LiveKit room name exists
+    if (!liveClass.livekitRoomName) {
+      liveClass.livekitRoomName = generateRoomName(liveClass._id, liveClass.title)
     }
 
     liveClass.status = "live"
     liveClass.actualStart = new Date()
+    liveClass.streamProvider = "livekit"
+    const { serverUrl } = getLiveKitConfig()
+    liveClass.livekitServerUrl = serverUrl
     await liveClass.save()
+
+    // Generate Host LiveKit Token with admin/host privileges
+    const instructorUser = await User.findById(instructorId).lean()
+    const participantName = instructorUser ? `${instructorUser.firstName} ${instructorUser.lastName}`.trim() : "Instructor Host"
+
+    const tokenData = await generateLiveKitToken({
+      roomName: liveClass.livekitRoomName,
+      identity: String(instructorId),
+      name: participantName,
+      isHost: true,
+      metadata: {
+        role: "instructor",
+        avatar: instructorUser?.image || "",
+        classId: String(liveClass._id),
+        sessionType: liveClass.sessionType || "1-on-1",
+      },
+    })
 
     return res.status(200).json({
       success: true,
-      message: "Zoom Class is now LIVE.",
+      message: "LiveKit Session is now LIVE.",
       data: {
         classId: liveClass._id,
         title: liveClass.title,
+        sessionType: liveClass.sessionType || "1-on-1",
+        client: liveClass.client,
         status: liveClass.status,
-        streamProvider: "zoom",
-        zoomMeetingId: liveClass.zoomMeetingId,
-        zoomJoinUrl: liveClass.zoomJoinUrl,
-        zoomStartUrl: liveClass.zoomStartUrl || liveClass.zoomJoinUrl,
-        zoomPassword: liveClass.zoomPassword,
+        streamProvider: "livekit",
+        livekitRoomName: liveClass.livekitRoomName,
+        livekitServerUrl: tokenData.serverUrl,
+        livekitToken: tokenData.token,
+        chatEnabled: liveClass.chatEnabled,
+        isInstructor: true,
       },
     })
   } catch (error) {
@@ -230,7 +279,7 @@ exports.startClass = async (req, res) => {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// INSTRUCTOR: End class — set status = ended
+// INSTRUCTOR: End class — set status = ended & close LiveKit room
 // ─────────────────────────────────────────────────────────────────────────────
 exports.endClass = async (req, res) => {
   try {
@@ -247,7 +296,16 @@ exports.endClass = async (req, res) => {
     liveClass.actualEnd = new Date()
     await liveClass.save()
 
-    return res.status(200).json({ success: true, message: "Class ended.", data: { classId } })
+    // Clean up room on LiveKit server
+    if (liveClass.livekitRoomName) {
+      await closeLiveKitRoom(liveClass.livekitRoomName)
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Live session ended successfully.",
+      data: { classId },
+    })
   } catch (error) {
     console.error("endClass error:", error)
     return res.status(500).json({ success: false, message: error.message })
@@ -255,18 +313,29 @@ exports.endClass = async (req, res) => {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STUDENT: Join class — verify enrollment & return Zoom meeting join details
+// STUDENT / PARTICIPANT: Join class — verify window/capacity & generate Token
 // ─────────────────────────────────────────────────────────────────────────────
 exports.joinClass = async (req, res) => {
   try {
     const userId = req.user.id
     const { classId } = req.params
 
-    const liveClass = await LiveClass.findById(classId).select("+zoomStartUrl")
+    const liveClass = await LiveClass.findById(classId)
 
     if (!liveClass) return res.status(404).json({ success: false, message: "Class not found." })
 
     const isInstructor = String(liveClass.instructor) === String(userId)
+
+    // Verify 1-on-1 session privacy (only designated client or host instructor can join)
+    if (liveClass.sessionType === "1-on-1" && liveClass.client) {
+      const isDesignatedClient = String(liveClass.client) === String(userId)
+      if (!isInstructor && !isDesignatedClient) {
+        return res.status(403).json({
+          success: false,
+          message: "This is a private 1-on-1 live session.",
+        })
+      }
+    }
 
     // Check join window for non-instructors (15 min before start or already live)
     const now = new Date()
@@ -302,25 +371,99 @@ exports.joinClass = async (req, res) => {
       await liveClass.save()
     }
 
+    // Ensure room name exists
+    if (!liveClass.livekitRoomName) {
+      liveClass.livekitRoomName = generateRoomName(liveClass._id, liveClass.title)
+      await liveClass.save()
+    }
+
+    // Fetch user details for display name in LiveKit
+    const attendeeUser = await User.findById(userId).lean()
+    const participantName = attendeeUser ? `${attendeeUser.firstName} ${attendeeUser.lastName}`.trim() : `Attendee-${userId.slice(-4)}`
+
+    // Generate participant LiveKit token
+    const tokenData = await generateLiveKitToken({
+      roomName: liveClass.livekitRoomName,
+      identity: String(userId),
+      name: participantName,
+      isHost: isInstructor,
+      metadata: {
+        role: isInstructor ? "instructor" : "student",
+        avatar: attendeeUser?.image || "",
+        classId: String(liveClass._id),
+        sessionType: liveClass.sessionType || "1-on-1",
+      },
+    })
+
     return res.status(200).json({
       success: true,
       data: {
         classId: liveClass._id,
         title: liveClass.title,
         description: liveClass.description,
+        sessionType: liveClass.sessionType || "1-on-1",
+        client: liveClass.client,
         status: liveClass.status,
         scheduledStart: liveClass.scheduledStart,
         scheduledEnd: liveClass.scheduledEnd,
-        streamProvider: "zoom",
-        zoomMeetingId: liveClass.zoomMeetingId,
-        zoomJoinUrl: liveClass.zoomJoinUrl,
-        zoomStartUrl: liveClass.zoomStartUrl || liveClass.zoomJoinUrl,
-        zoomPassword: liveClass.zoomPassword,
+        streamProvider: "livekit",
+        livekitRoomName: liveClass.livekitRoomName,
+        livekitServerUrl: tokenData.serverUrl,
+        livekitToken: tokenData.token,
         chatEnabled: liveClass.chatEnabled,
+        isInstructor,
       },
     })
   } catch (error) {
     console.error("joinClass error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REFRESH / GET TOKEN: Re-fetch LiveKit token for an active class
+// ─────────────────────────────────────────────────────────────────────────────
+exports.getLiveClassToken = async (req, res) => {
+  try {
+    const userId = req.user.id
+    const { classId } = req.params
+
+    const liveClass = await LiveClass.findById(classId)
+    if (!liveClass) return res.status(404).json({ success: false, message: "Class not found." })
+
+    const isInstructor = String(liveClass.instructor) === String(userId)
+
+    if (!liveClass.livekitRoomName) {
+      liveClass.livekitRoomName = generateRoomName(liveClass._id, liveClass.title)
+      await liveClass.save()
+    }
+
+    const userRecord = await User.findById(userId).lean()
+    const participantName = userRecord ? `${userRecord.firstName} ${userRecord.lastName}`.trim() : `User-${userId.slice(-4)}`
+
+    const tokenData = await generateLiveKitToken({
+      roomName: liveClass.livekitRoomName,
+      identity: String(userId),
+      name: participantName,
+      isHost: isInstructor,
+      metadata: {
+        role: isInstructor ? "instructor" : "student",
+        avatar: userRecord?.image || "",
+        classId: String(liveClass._id),
+      },
+    })
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        livekitToken: tokenData.token,
+        livekitServerUrl: tokenData.serverUrl,
+        livekitRoomName: liveClass.livekitRoomName,
+        streamProvider: "livekit",
+      },
+    })
+  } catch (error) {
+    console.error("getLiveClassToken error:", error)
     return res.status(500).json({ success: false, message: error.message })
   }
 }
@@ -363,7 +506,7 @@ exports.rescheduleClass = async (req, res) => {
   try {
     const instructorId = req.user.id || req.user._id
     const { classId } = req.params
-    const { scheduledStart, scheduledEnd, title, description } = req.body
+    const { scheduledStart, scheduledEnd, title, description, sessionType, clientId } = req.body
 
     const liveClass = await LiveClass.findById(classId)
     if (!liveClass) return res.status(404).json({ success: false, message: "Class not found." })
@@ -380,6 +523,8 @@ exports.rescheduleClass = async (req, res) => {
     if (scheduledEnd) liveClass.scheduledEnd = new Date(scheduledEnd)
     if (title) liveClass.title = title.slice(0, 100)
     if (description !== undefined) liveClass.description = description.slice(0, 500)
+    if (sessionType) liveClass.sessionType = sessionType
+    if (clientId !== undefined) liveClass.client = clientId || null
     await liveClass.save()
 
     return res.status(200).json({ success: true, message: "Class rescheduled.", data: liveClass })
@@ -443,15 +588,15 @@ exports.publishRecording = async (req, res) => {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// INSTRUCTOR: Get a single class detail (with attendance)
+// INSTRUCTOR / LEARNER: Get a single class detail (with attendance & client)
 // ─────────────────────────────────────────────────────────────────────────────
 exports.getClassById = async (req, res) => {
   try {
     const { classId } = req.params
     const liveClass = await LiveClass.findById(classId)
-      .populate("instructor", "firstName lastName image")
+      .populate("instructor", "firstName lastName image email")
+      .populate("client", "firstName lastName image email")
       .populate("attendees.user", "firstName lastName email image")
-      .select("+zoomStartUrl")
       .lean()
 
     if (!liveClass) return res.status(404).json({ success: false, message: "Class not found." })

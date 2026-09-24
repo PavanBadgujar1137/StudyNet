@@ -59,7 +59,7 @@ function Template({ title, description1, description2, formType }) {
                   📹
                 </div>
                 <div>
-                  <b>Zoom Live Session Hub</b>
+                  <b>LiveKit Live Session Hub</b>
                   <span>In-Dashboard HD Video &amp; Telemetry</span>
                 </div>
                 <div className="auth-float-card__badge" style={{ background: 'rgba(52,211,153,0.15)', color: '#34D399' }}>

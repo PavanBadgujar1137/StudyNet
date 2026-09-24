@@ -637,9 +637,9 @@ export function MyLearners({ setActiveSection, telemetryData, onUpdate }) {
                             className="mini"
                             style={{ background: '#2563EB', color: '#FFF', border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '6px 10px', fontWeight: 600 }}
                             onClick={() => setActiveSection('room')}
-                            title="Schedule Zoom session"
+                            title="Schedule live session"
                           >
-                            <FiVideo size={13} /> Zoom
+                            <FiVideo size={13} /> Live
                           </button>
                         </div>
                       </td>

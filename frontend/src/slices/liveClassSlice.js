@@ -9,11 +9,10 @@ const initialState = {
   currentClass: null,
   currentClassLoading: false,
 
-  // Zoom Meeting details for joining/starting
-  zoomMeetingId: null,
-  zoomJoinUrl: null,
-  zoomStartUrl: null,
-  zoomPassword: null,
+  // LiveKit WebRTC session details
+  livekitToken: null,
+  livekitServerUrl: null,
+  livekitRoomName: null,
 
   // Scheduling form state
   scheduleFormOpen: false,
@@ -52,17 +51,15 @@ const liveClassSlice = createSlice({
       state.currentClass = action.payload
       state.currentClassLoading = false
     },
-    setZoomCredentials(state, action) {
-      state.zoomMeetingId = action.payload.zoomMeetingId
-      state.zoomJoinUrl = action.payload.zoomJoinUrl
-      state.zoomStartUrl = action.payload.zoomStartUrl
-      state.zoomPassword = action.payload.zoomPassword
+    setLiveKitCredentials(state, action) {
+      state.livekitToken = action.payload.livekitToken || null
+      state.livekitServerUrl = action.payload.livekitServerUrl || null
+      state.livekitRoomName = action.payload.livekitRoomName || null
     },
-    clearZoomCredentials(state) {
-      state.zoomMeetingId = null
-      state.zoomJoinUrl = null
-      state.zoomStartUrl = null
-      state.zoomPassword = null
+    clearLiveKitCredentials(state) {
+      state.livekitToken = null
+      state.livekitServerUrl = null
+      state.livekitRoomName = null
     },
     setStats(state, action) {
       state.stats = action.payload
@@ -103,8 +100,8 @@ export const {
   setClasses,
   setCurrentClassLoading,
   setCurrentClass,
-  setZoomCredentials,
-  clearZoomCredentials,
+  setLiveKitCredentials,
+  clearLiveKitCredentials,
   setStats,
   openScheduleForm,
   closeScheduleForm,

@@ -56,8 +56,8 @@ export function MyJourney({ clientName = 'Student', practitionerName = 'your ins
         <div className={`step ${dashboardData?.upcomingClasses?.length ? 'done' : 'locked'}`}>
           <div className="mark"><div className="ring">3</div><div className="when">Live</div></div>
           <div className="bub">
-            <h3>Zoom Live Classes & Sessions</h3>
-            <p>{dashboardData?.upcomingClasses?.length ? `You have ${dashboardData.upcomingClasses.length} live Zoom class(es) scheduled.` : 'Enroll in live classes to join Zoom sessions with your instructor.'}</p>
+            <h3>Live Interactive Sessions</h3>
+            <p>{dashboardData?.upcomingClasses?.length ? `You have ${dashboardData.upcomingClasses.length} live interactive session(s) scheduled.` : 'Enroll in courses or sessions to join live interactive sessions with your instructor.'}</p>
             <span className="tagline">Live Learning</span>
           </div>
         </div>

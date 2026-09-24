@@ -1,55 +1,79 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useCallback } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { useSelector } from "react-redux"
 import {
-  FiVideo, FiCopy, FiExternalLink, FiCalendar, FiClock,
-  FiUser, FiCheckCircle, FiPlayCircle, FiPower, FiShield, FiTv, FiArrowLeft
+  FiVideo,
+  FiCopy,
+  FiCalendar,
+  FiClock,
+  FiUser,
+  FiCheckCircle,
+  FiPlayCircle,
+  FiPower,
+  FiShield,
+  FiArrowLeft,
+  FiMessageSquare,
+  FiRadio,
+  FiMaximize2,
+  FiRefreshCw,
 } from "react-icons/fi"
 import toast from "react-hot-toast"
+import { LiveKitRoom, VideoConference } from "@livekit/components-react"
+import "@livekit/components-styles"
 
-import { joinClass, leaveClass, startClass, endClass } from "../services/operations/liveClassAPI"
-import { apiConnector } from "../services/apiConnector"
-
+import { joinClass, leaveClass, startClass, endClass, getLiveClassToken } from "../services/operations/liveClassAPI"
 
 export default function LiveClassRoom() {
   const { classId } = useParams()
   const navigate = useNavigate()
 
-  const handleGoBack = () => {
-    if (window.history.length > 1) {
-      navigate(-1)
-    } else {
-      navigate('/dashboard?tab=sessions')
-    }
-  }
   const { token } = useSelector((s) => s.auth)
   const { user } = useSelector((s) => s.profile)
 
   const [classDetails, setClassDetails] = useState(null)
+  const [livekitToken, setLivekitToken] = useState(null)
+  const [livekitServerUrl, setLivekitServerUrl] = useState(null)
   const [loading, setLoading] = useState(true)
   const [starting, setStarting] = useState(false)
-  const [embedMode, setEmbedMode] = useState(true)
-  const [copiedField, setCopiedField] = useState(null)
+  const [copiedLink, setCopiedLink] = useState(false)
   const [showEndModal, setShowEndModal] = useState(false)
+  const [roomConnected, setRoomConnected] = useState(false)
+  const [reflectionNotes, setReflectionNotes] = useState("")
 
   const isInstructor = user?.accountType === "Instructor" || user?.accountType === "Practitioner"
 
-  useEffect(() => {
-    const fetchDetails = async () => {
-      setLoading(true)
-      const details = await joinClass(token, classId)
-      if (!details) {
-        navigate(isInstructor ? "/dashboard/instructor" : "/dashboard/enrolled-courses")
-        return
-      }
-      setClassDetails(details)
-      setLoading(false)
+  const handleGoBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1)
+    } else {
+      navigate(isInstructor ? "/dashboard/instructor" : "/dashboard?tab=sessions")
+    }
+  }
+
+  // Fetch class session info and initial LiveKit token
+  const fetchDetails = useCallback(async () => {
+    setLoading(true)
+    const details = await joinClass(token, classId)
+    if (!details) {
+      navigate(isInstructor ? "/dashboard/instructor" : "/dashboard/enrolled-courses")
+      return
     }
 
-    fetchDetails()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [classId, token])
+    setClassDetails(details)
+    if (details.livekitToken) {
+      setLivekitToken(details.livekitToken)
+    }
+    if (details.livekitServerUrl) {
+      setLivekitServerUrl(details.livekitServerUrl)
+    }
+    setLoading(false)
+  }, [classId, token, isInstructor, navigate])
 
+  useEffect(() => {
+    fetchDetails()
+  }, [fetchDetails])
+
+  // Instructor initiates the live session
   const handleStartStream = async () => {
     setStarting(true)
     const streamDetails = await startClass(token, classId)
@@ -57,14 +81,32 @@ export default function LiveClassRoom() {
       setClassDetails((prev) => ({
         ...prev,
         status: "live",
-        zoomStartUrl: streamDetails.zoomStartUrl,
-        zoomJoinUrl: streamDetails.zoomJoinUrl,
-        zoomMeetingId: streamDetails.zoomMeetingId,
-        zoomPassword: streamDetails.zoomPassword,
+        livekitRoomName: streamDetails.livekitRoomName,
+        livekitServerUrl: streamDetails.livekitServerUrl,
+        livekitToken: streamDetails.livekitToken,
       }))
-      toast.success("Zoom meeting session activated!")
+      if (streamDetails.livekitToken) {
+        setLivekitToken(streamDetails.livekitToken)
+      }
+      if (streamDetails.livekitServerUrl) {
+        setLivekitServerUrl(streamDetails.livekitServerUrl)
+      }
+      toast.success("LiveKit WebRTC session is now active!")
     }
     setStarting(false)
+  }
+
+  // Refresh token if needed
+  const handleRefreshToken = async () => {
+    const toastId = toast.loading("Reconnecting to LiveKit...")
+    const res = await getLiveClassToken(token, classId)
+    if (res?.livekitToken) {
+      setLivekitToken(res.livekitToken)
+      if (res.livekitServerUrl) setLivekitServerUrl(res.livekitServerUrl)
+      toast.success("LiveKit session reconnected!", { id: toastId })
+    } else {
+      toast.error("Could not refresh session token.", { id: toastId })
+    }
   }
 
   const handleEndClass = () => {
@@ -79,25 +121,17 @@ export default function LiveClassRoom() {
       navigate("/dashboard/instructor")
     } else {
       await leaveClass(token, classId)
-      toast.success("Left session room.")
+      toast.success("Left live session.")
       navigate("/dashboard/enrolled-courses")
     }
   }
 
-  const copyToClipboard = (text, fieldName) => {
-    if (!text) return
-    navigator.clipboard.writeText(text)
-    setCopiedField(fieldName)
-    toast.success(`Copied ${fieldName} to clipboard!`)
-    setTimeout(() => setCopiedField(null), 2500)
-  }
-
-  const launchZoom = (url) => {
-    if (!url) {
-      toast.error("Zoom meeting URL not available")
-      return
-    }
-    window.open(url, "_blank", "noopener,noreferrer")
+  const copySessionLink = () => {
+    const shareUrl = `${window.location.origin}/live/${classId}`
+    navigator.clipboard.writeText(shareUrl)
+    setCopiedLink(true)
+    toast.success("Copied live session link to clipboard!")
+    setTimeout(() => setCopiedLink(false), 2500)
   }
 
   if (loading) {
@@ -105,7 +139,7 @@ export default function LiveClassRoom() {
       <div className="min-h-screen bg-richblack-900 flex items-center justify-center text-richblack-300">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-sm font-medium tracking-wide">Connecting to Zoom Meeting Room...</p>
+          <p className="text-sm font-medium tracking-wide">Connecting to LiveKit Room...</p>
         </div>
       </div>
     )
@@ -113,455 +147,548 @@ export default function LiveClassRoom() {
 
   if (!classDetails) return null
 
-  const activeZoomUrl = isInstructor
-    ? classDetails.zoomStartUrl || classDetails.zoomJoinUrl
-    : classDetails.zoomJoinUrl
-
-  const zoomWebEmbedUrl = classDetails.zoomMeetingId
-    ? `https://zoom.us/wc/${classDetails.zoomMeetingId}/join?pwd=${classDetails.zoomPassword || ''}`
-    : activeZoomUrl
+  const isLive = classDetails.status === "live"
+  const canConnect = Boolean(livekitToken && livekitServerUrl && (isLive || isInstructor))
 
   return (
-    <div style={{ minHeight: 'calc(100vh - 3.5rem)', background: '#F8FAFC', padding: '32px 16px', color: '#0F172A' }}>
-      <div style={{ maxWidth: '1140px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div style={{ minHeight: "calc(100vh - 3.5rem)", background: "#0F172A", padding: "24px 16px", color: "#F8FAFC" }}>
+      <div style={{ maxWidth: "1400px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "20px" }}>
         
-        {/* Top Back Navigation Bar */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <button
-            onClick={handleGoBack}
-            style={{
-              background: '#FFFFFF',
-              border: '1px solid #CBD5E1',
-              color: '#0F172A',
-              padding: '9px 18px',
-              borderRadius: '12px',
-              fontWeight: 700,
-              fontSize: '13px',
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            <FiArrowLeft size={16} /> Back to Sessions &amp; Resources
-          </button>
-        </div>
+        {/* Top Header Bar */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <button
+              onClick={handleGoBack}
+              style={{
+                background: "rgba(30, 41, 59, 0.8)",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                color: "#E2E8F0",
+                padding: "8px 16px",
+                borderRadius: "10px",
+                fontWeight: 600,
+                fontSize: "13px",
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+                transition: "all 0.15s ease",
+              }}
+            >
+              <FiArrowLeft size={16} /> Back
+            </button>
 
-        {/* Top Header Card */}
-        <div style={{ background: '#ffffff', border: '1px solid #E2E8F0', borderRadius: '24px', padding: '28px 32px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', position: 'relative', overflow: 'hidden' }}>
-          
-          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '20px' }}>
-            <div style={{ maxWidth: '680px' }}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                {classDetails.status === "live" ? (
-                  <span style={{ background: '#DC2626', color: '#FFFFFF', fontSize: '11.5px', fontWeight: 800, padding: '4px 12px', borderRadius: '20px', display: 'inline-flex', alignItems: 'center', gap: '6px', boxShadow: '0 2px 8px rgba(220, 38, 38, 0.3)' }}>
-                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#FFFFFF' }}></span>
-                    LIVE ON ZOOM
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <h1 style={{ fontSize: "20px", fontWeight: 800, margin: 0, color: "#FFFFFF", letterSpacing: "-0.3px" }}>
+                  {classDetails.title}
+                </h1>
+                {isLive ? (
+                  <span style={{
+                    background: "#DC2626",
+                    color: "#FFFFFF",
+                    fontSize: "11px",
+                    fontWeight: 800,
+                    padding: "3px 10px",
+                    borderRadius: "12px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    boxShadow: "0 0 12px rgba(220, 38, 38, 0.6)",
+                  }}>
+                    <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#FFFFFF", animation: "pulse 1.5s infinite" }}></span>
+                    LIVE
                   </span>
                 ) : (
-                  <span style={{ background: '#F3E8FF', color: '#7E22CE', border: '1px solid #D8B4FE', fontSize: '11.5px', fontWeight: 700, padding: '4px 12px', borderRadius: '20px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{
+                    background: "rgba(124, 58, 237, 0.2)",
+                    color: "#C4B5FD",
+                    border: "1px solid rgba(139, 92, 246, 0.3)",
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    padding: "3px 10px",
+                    borderRadius: "12px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}>
                     <FiCalendar size={12} /> SCHEDULED
                   </span>
                 )}
-                <span style={{ background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE', fontSize: '11.5px', fontWeight: 700, padding: '4px 12px', borderRadius: '20px' }}>
-                  Zoom Integration
+                <span style={{
+                  background: classDetails.sessionType === "group" ? "rgba(37, 99, 235, 0.2)" : "rgba(168, 85, 247, 0.2)",
+                  color: classDetails.sessionType === "group" ? "#93C5FD" : "#DDD6FE",
+                  border: classDetails.sessionType === "group" ? "1px solid rgba(59, 130, 246, 0.3)" : "1px solid rgba(168, 85, 247, 0.3)",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  padding: "3px 10px",
+                  borderRadius: "12px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "5px",
+                }}>
+                  {classDetails.sessionType === "group" ? <FiVideo size={12} /> : <FiUser size={12} />}
+                  {classDetails.sessionType === "group" ? "Group Session" : "1-on-1 Private"}
+                </span>
+                <span style={{
+                  background: "rgba(37, 99, 235, 0.15)",
+                  color: "#93C5FD",
+                  border: "1px solid rgba(59, 130, 246, 0.3)",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  padding: "3px 10px",
+                  borderRadius: "12px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "5px",
+                }}>
+                  <FiRadio size={12} /> LiveKit WebRTC
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <button
+              onClick={copySessionLink}
+              style={{
+                background: "rgba(30, 41, 59, 0.8)",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                color: "#E2E8F0",
+                padding: "8px 14px",
+                borderRadius: "10px",
+                fontSize: "12.5px",
+                fontWeight: 600,
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+              title="Copy session invite link"
+            >
+              {copiedLink ? <FiCheckCircle color="#10B981" size={15} /> : <FiCopy size={15} />}
+              {copiedLink ? "Link Copied" : "Copy Link"}
+            </button>
+
+            {isInstructor && !isLive && (
+              <button
+                onClick={handleStartStream}
+                disabled={starting}
+                style={{
+                  background: "linear-gradient(135deg, #7C3AED 0%, #2563EB 100%)",
+                  color: "#FFFFFF",
+                  border: "none",
+                  padding: "9px 18px",
+                  borderRadius: "10px",
+                  fontWeight: 700,
+                  fontSize: "13px",
+                  cursor: starting ? "not-allowed" : "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  boxShadow: "0 4px 14px rgba(124, 58, 237, 0.4)",
+                  opacity: starting ? 0.7 : 1,
+                }}
+              >
+                <FiPlayCircle size={16} />
+                {starting ? "Starting..." : "Start Live Session"}
+              </button>
+            )}
+
+            <button
+              onClick={handleRefreshToken}
+              style={{
+                background: "rgba(30, 41, 59, 0.8)",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                color: "#94A3B8",
+                padding: "8px 12px",
+                borderRadius: "10px",
+                fontSize: "12px",
+                fontWeight: 600,
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+              title="Reconnect / Refresh session"
+            >
+              <FiRefreshCw size={14} />
+            </button>
+
+            <button
+              onClick={handleEndClass}
+              style={{
+                background: "rgba(220, 38, 38, 0.15)",
+                border: "1px solid rgba(220, 38, 38, 0.3)",
+                color: "#FCA5A5",
+                padding: "8px 16px",
+                borderRadius: "10px",
+                fontWeight: 700,
+                fontSize: "13px",
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <FiPower size={15} />
+              {isInstructor ? "End Session" : "Leave"}
+            </button>
+          </div>
+        </div>
+
+        {/* Main Classroom Layout */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: "20px", alignItems: "stretch", minHeight: "680px" }}>
+          
+          {/* Main Video Arena */}
+          <div style={{
+            background: "#020617",
+            borderRadius: "20px",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            overflow: "hidden",
+            position: "relative",
+            display: "flex",
+            flexDirection: "column",
+            boxShadow: "0 20px 40px -15px rgba(0,0,0,0.5)",
+          }}>
+            {canConnect ? (
+              <LiveKitRoom
+                video={true}
+                audio={true}
+                token={livekitToken}
+                serverUrl={livekitServerUrl}
+                connect={true}
+                data-lk-theme="default"
+                onConnected={() => setRoomConnected(true)}
+                onDisconnected={() => {
+                  setRoomConnected(false)
+                  toast("Session disconnected.", { icon: "ℹ️" })
+                }}
+                onError={(err) => {
+                  console.error("LiveKit room error:", err)
+                  toast.error(`LiveKit connection error: ${err.message}`)
+                }}
+                style={{ width: "100%", height: "100%", minHeight: "650px", flex: 1 }}
+              >
+                <VideoConference />
+              </LiveKitRoom>
+            ) : (
+              /* Waiting / Lobby Screen */
+              <div style={{
+                flex: 1,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "40px 24px",
+                textAlign: "center",
+                gap: "24px",
+                background: "radial-gradient(ellipse at top, #1E1B4B 0%, #020617 70%)",
+              }}>
+                <div style={{
+                  width: "80px",
+                  height: "80px",
+                  borderRadius: "24px",
+                  background: "linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(37, 99, 235, 0.2))",
+                  border: "1px solid rgba(139, 92, 246, 0.3)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#A78BFA",
+                  boxShadow: "0 0 30px rgba(124, 58, 237, 0.25)",
+                }}>
+                  <FiVideo size={40} />
+                </div>
+
+                <div style={{ maxWidth: "480px" }}>
+                  <h2 style={{ fontSize: "24px", fontWeight: 800, color: "#FFFFFF", margin: "0 0 10px 0" }}>
+                    {isInstructor ? "Ready to Launch Your Live Session" : "Waiting for Instructor to Start"}
+                  </h2>
+                  <p style={{ fontSize: "14px", color: "#94A3B8", margin: 0, lineHeight: "1.6" }}>
+                    {isInstructor
+                      ? "Your LiveKit WebRTC room is prepared with high-definition audio, video, screen-sharing, and real-time interactive chat."
+                      : "The host has not started the session yet. This page will connect automatically once the session is live."}
+                  </p>
+                </div>
+
+                {isInstructor ? (
+                  <button
+                    onClick={handleStartStream}
+                    disabled={starting}
+                    style={{
+                      background: "linear-gradient(135deg, #7C3AED 0%, #2563EB 100%)",
+                      color: "#FFFFFF",
+                      border: "none",
+                      padding: "14px 28px",
+                      borderRadius: "14px",
+                      fontWeight: 800,
+                      fontSize: "15px",
+                      cursor: starting ? "not-allowed" : "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      boxShadow: "0 8px 24px rgba(124, 58, 237, 0.4)",
+                      transition: "transform 0.15s ease",
+                    }}
+                  >
+                    <FiPlayCircle size={20} />
+                    {starting ? "Launching Live Room..." : "Launch Live Classroom Now"}
+                  </button>
+                ) : (
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    background: "rgba(30, 41, 59, 0.6)",
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                    padding: "10px 20px",
+                    borderRadius: "12px",
+                    fontSize: "13px",
+                    color: "#CBD5E1",
+                  }}>
+                    <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#F59E0B", animation: "ping 1.5s infinite" }}></span>
+                    Standing by in Waiting Room
+                  </div>
+                )}
+
+                <div style={{ display: "flex", gap: "20px", fontSize: "12px", color: "#64748B", marginTop: "12px" }}>
+                  <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <FiShield size={14} color="#10B981" /> WebRTC End-to-End Security
+                  </span>
+                  <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <FiRadio size={14} color="#38BDF8" /> Adaptive Dynacast HD
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right Sidebar: Session Info & Practitioner Note Pad */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            
+            {/* Session Metadata Card */}
+            <div style={{
+              background: "#1E293B",
+              borderRadius: "16px",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              padding: "20px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "14px",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(255, 255, 255, 0.06)", paddingBottom: "10px" }}>
+                <span style={{ fontSize: "12px", fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  Live Session Info
+                </span>
+                <span style={{ fontSize: "11px", color: "#38BDF8", fontWeight: 700 }}>
+                  LiveKit SFU
                 </span>
               </div>
 
-              <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#0F172A', margin: '0 0 8px 0', letterSpacing: '-0.5px' }}>
-                {classDetails.title}
-              </h1>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px", fontSize: "13px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#CBD5E1" }}>
+                  <FiClock size={16} color="#A78BFA" />
+                  <span>
+                    Scheduled:{" "}
+                    <strong style={{ color: "#FFFFFF" }}>
+                      {classDetails.scheduledStart
+                        ? new Date(classDetails.scheduledStart).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                        : "Now"}
+                    </strong>
+                  </span>
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#CBD5E1" }}>
+                  <FiUser size={16} color="#A78BFA" />
+                  <span>
+                    Host:{" "}
+                    <strong style={{ color: "#FFFFFF" }}>
+                      {isInstructor ? "You (Practitioner)" : "Course Instructor"}
+                    </strong>
+                  </span>
+                </div>
+
+                {classDetails.client && (
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#CBD5E1" }}>
+                    <FiUser size={16} color="#38BDF8" />
+                    <span>
+                      Client:{" "}
+                      <strong style={{ color: "#FFFFFF" }}>
+                        {classDetails.client.firstName} {classDetails.client.lastName}
+                      </strong>
+                    </span>
+                  </div>
+                )}
+
+                {classDetails.livekitRoomName && (
+                  <div style={{
+                    background: "rgba(15, 23, 42, 0.6)",
+                    border: "1px solid rgba(255, 255, 255, 0.06)",
+                    borderRadius: "10px",
+                    padding: "8px 12px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "4px",
+                  }}>
+                    <span style={{ fontSize: "11px", color: "#64748B" }}>Room Identifier</span>
+                    <span style={{ fontFamily: "monospace", fontSize: "12px", color: "#38BDF8" }}>
+                      {classDetails.livekitRoomName}
+                    </span>
+                  </div>
+                )}
+              </div>
 
               {classDetails.description && (
-                <p style={{ fontSize: '13.5px', color: '#475569', margin: 0, lineHeight: '1.5' }}>
+                <p style={{ fontSize: "12.5px", color: "#94A3B8", margin: 0, lineHeight: "1.5", borderTop: "1px solid rgba(255, 255, 255, 0.06)", paddingTop: "10px" }}>
                   {classDetails.description}
                 </p>
               )}
             </div>
 
-            {/* Quick Action Button */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-              {isInstructor && classDetails.status === "scheduled" ? (
+            {/* Practitioner Live Reflection Notes (Aura AI Ready) */}
+            <div style={{
+              background: "#1E293B",
+              borderRadius: "16px",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              padding: "20px",
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <FiMessageSquare size={16} color="#A78BFA" />
+                  <span style={{ fontSize: "13px", fontWeight: 700, color: "#FFFFFF" }}>
+                    {isInstructor ? "Session Clinical Notes" : "Personal Reflection"}
+                  </span>
+                </div>
+                <span style={{ fontSize: "10px", background: "rgba(167, 139, 250, 0.2)", color: "#C4B5FD", padding: "2px 8px", borderRadius: "8px", fontWeight: 700 }}>
+                  Aura Co-Pilot Ready
+                </span>
+              </div>
+
+              <textarea
+                value={reflectionNotes}
+                onChange={(e) => setReflectionNotes(e.target.value)}
+                placeholder={isInstructor ? "Note client observations, key milestones, and post-session homework..." : "Record key insights, breakthroughs, or notes from today's session..."}
+                style={{
+                  width: "100%",
+                  flex: 1,
+                  minHeight: "180px",
+                  background: "#0F172A",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  borderRadius: "12px",
+                  padding: "12px",
+                  fontSize: "13px",
+                  color: "#E2E8F0",
+                  resize: "none",
+                  outline: "none",
+                  lineHeight: "1.5",
+                  boxSizing: "border-box",
+                }}
+              />
+
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "11px", color: "#64748B" }}>
+                <span>Notes auto-save locally</span>
                 <button
-                  onClick={handleStartStream}
-                  disabled={starting}
+                  type="button"
+                  onClick={() => toast.success("Session reflection saved!")}
                   style={{
-                    background: 'linear-gradient(135deg, #7C3AED 0%, #2563EB 100%)',
-                    color: '#FFFFFF',
-                    padding: '12px 24px',
-                    borderRadius: '12px',
-                    fontWeight: 800,
-                    fontSize: '14px',
-                    border: 'none',
-                    cursor: starting ? 'not-allowed' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    boxShadow: '0 4px 14px rgba(124, 58, 237, 0.4)',
-                    opacity: starting ? 0.6 : 1,
+                    background: "rgba(255, 255, 255, 0.08)",
+                    border: "none",
+                    color: "#CBD5E1",
+                    padding: "4px 10px",
+                    borderRadius: "6px",
+                    fontSize: "11px",
+                    fontWeight: 600,
+                    cursor: "pointer",
                   }}
                 >
-                  <FiPlayCircle size={18} />
-                  {starting ? "Initializing Zoom..." : "Start Zoom Meeting"}
-                </button>
-              ) : (
-                <button
-                  onClick={() => launchZoom(activeZoomUrl)}
-                  style={{
-                    background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)',
-                    color: '#FFFFFF',
-                    padding: '12px 24px',
-                    borderRadius: '12px',
-                    fontWeight: 800,
-                    fontSize: '14px',
-                    border: 'none',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)',
-                  }}
-                >
-                  <FiExternalLink size={18} />
-                  {isInstructor ? "Launch Zoom as Host" : "Join Zoom Meeting"}
-                </button>
-              )}
-
-              <button
-                onClick={handleEndClass}
-                style={{
-                  background: '#F1F5F9',
-                  color: '#0F172A',
-                  border: '1px solid #CBD5E1',
-                  padding: '12px 20px',
-                  borderRadius: '12px',
-                  fontWeight: 700,
-                  fontSize: '14px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                }}
-              >
-                <FiPower size={16} />
-                {isInstructor ? "End Session" : "Leave"}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Main Grid Section */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '24px', alignItems: 'start' }}>
-          
-          {/* Main Display Container */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', gridColumn: 'span 2' }}>
-            <div style={{ background: '#ffffff', border: '1px solid #E2E8F0', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', minHeight: '420px' }}>
-              
-              {/* Header inside screen */}
-              <div style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <button
-                    onClick={handleGoBack}
-                    style={{
-                      background: '#FFFFFF',
-                      border: '1px solid #CBD5E1',
-                      color: '#2563EB',
-                      padding: '6px 12px',
-                      borderRadius: '8px',
-                      fontSize: '12.5px',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                    }}
-                    title="Back to Sessions & Resources"
-                  >
-                    <FiArrowLeft size={14} /> Back
-                  </button>
-                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#EFF6FF', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>
-                    <FiVideo size={18} />
-                  </div>
-                  <div>
-                    <h3 style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A', margin: 0 }}>Zoom Meeting Experience</h3>
-                    <p style={{ fontSize: '11px', color: '#64748B', margin: 0 }}>High-Definition Audio &amp; Video Portal</p>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => setEmbedMode(!embedMode)}
-                  style={{ background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE', padding: '6px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
-                >
-                  <FiTv size={14} />
-                  {embedMode ? "Switch to Launch View" : "Embed Web Preview"}
+                  Save Note
                 </button>
               </div>
-
-              {/* Screen Body */}
-              <div style={{ flex: 1, padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#F8FAFC', position: 'relative' }}>
-                {embedMode ? (
-                  <iframe
-                    src={zoomWebEmbedUrl}
-                    title="Zoom In-Dashboard Video Call"
-                    style={{ width: '100%', height: '520px', borderRadius: '16px', border: '1px solid #E2E8F0', background: '#000000' }}
-                    allow="camera; microphone; fullscreen; display-capture; autoplay"
-                  />
-                ) : (
-                  <div style={{ maxWidth: '440px', textAlign: 'center', padding: '24px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '18px' }}>
-                    <div style={{ width: '72px', height: '72px', borderRadius: '24px', background: '#EFF6FF', color: '#2563EB', border: '1px solid #BFDBFE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px' }}>
-                      <FiVideo size={36} />
-                    </div>
-
-                    <div>
-                      <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', margin: '0 0 6px 0' }}>
-                        {classDetails.status === "live"
-                          ? "Zoom Session Active"
-                          : "Ready for Zoom Meeting"}
-                      </h3>
-                      <p style={{ fontSize: '13px', color: '#475569', margin: 0, lineHeight: '1.5' }}>
-                        Click below to launch the Zoom meeting application directly or access the room through your browser.
-                      </p>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap', width: '100%' }}>
-                      <button
-                        onClick={() => launchZoom(activeZoomUrl)}
-                        style={{ background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)', color: '#FFFFFF', border: 'none', padding: '12px 22px', borderRadius: '12px', fontWeight: 800, fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)' }}
-                      >
-                        <FiExternalLink size={16} />
-                        Open in Zoom App / Web
-                      </button>
-                      
-                      <button
-                        onClick={() => setEmbedMode(true)}
-                        style={{ background: '#FFFFFF', color: '#0F172A', border: '1px solid #CBD5E1', padding: '12px 20px', borderRadius: '12px', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}
-                      >
-                        Try Web Embed
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Bottom Footer Info */}
-              <div style={{ padding: '12px 20px', background: '#F8FAFC', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#64748B' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#059669', fontWeight: 700 }}>
-                  <FiShield size={14} />
-                  Encrypted Zoom Meeting
-                </span>
-                <span>OpenHand Video Integration</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Sidebar - Meeting Details & Credentials */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            {/* Meeting Credentials Card */}
-            <div style={{ background: '#ffffff', border: '1px solid #E2E8F0', borderRadius: '24px', padding: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <h2 style={{ fontSize: '16px', fontWeight: 800, color: '#0F172A', borderBottom: '1px solid #E2E8F0', paddingBottom: '12px', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <FiVideo color="#7C3AED" size={18} />
-                Zoom Meeting Details
-              </h2>
-
-              {/* Meeting ID */}
-              <div>
-                <label style={{ fontSize: '11px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 6px 0', display: 'block' }}>
-                  Meeting ID
-                </label>
-                <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontFamily: 'monospace', fontSize: '14px', color: '#0F172A', fontWeight: 700 }}>
-                    {classDetails.zoomMeetingId || "Generating..."}
-                  </span>
-                  <button
-                    onClick={() => copyToClipboard(classDetails.zoomMeetingId, "Meeting ID")}
-                    style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', padding: '4px' }}
-                    title="Copy Meeting ID"
-                  >
-                    {copiedField === "Meeting ID" ? <FiCheckCircle color="#059669" size={16} /> : <FiCopy size={16} />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Passcode */}
-              {classDetails.zoomPassword && (
-                <div>
-                  <label style={{ fontSize: '11px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 6px 0', display: 'block' }}>
-                    Passcode
-                  </label>
-                  <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontFamily: 'monospace', fontSize: '14px', color: '#0F172A', fontWeight: 700 }}>
-                      {classDetails.zoomPassword}
-                    </span>
-                    <button
-                      onClick={() => copyToClipboard(classDetails.zoomPassword, "Passcode")}
-                      style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', padding: '4px' }}
-                      title="Copy Passcode"
-                    >
-                      {copiedField === "Passcode" ? <FiCheckCircle color="#059669" size={16} /> : <FiCopy size={16} />}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Join Link Copy */}
-              <div>
-                <label style={{ fontSize: '11px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 6px 0', display: 'block' }}>
-                  Direct Join Link
-                </label>
-                <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontFamily: 'monospace', fontSize: '12px', color: '#475569', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {classDetails.zoomJoinUrl || "No link available"}
-                  </span>
-                  <button
-                    onClick={() => copyToClipboard(classDetails.zoomJoinUrl, "Join Link")}
-                    style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', padding: '4px', flexShrink: 0 }}
-                    title="Copy Join Link"
-                  >
-                    {copiedField === "Join Link" ? <FiCheckCircle color="#059669" size={16} /> : <FiCopy size={16} />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Launch Button */}
-              <button
-                onClick={() => launchZoom(activeZoomUrl)}
-                style={{
-                  width: '100%',
-                  background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
-                  color: '#FFFFFF',
-                  border: 'none',
-                  padding: '14px 20px',
-                  borderRadius: '12px',
-                  fontWeight: 800,
-                  fontSize: '13.5px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  boxShadow: '0 4px 14px rgba(15, 23, 42, 0.25)',
-                }}
-              >
-                <FiExternalLink size={16} />
-                Open Zoom Session
-              </button>
             </div>
 
-            {/* Class Schedule Information Card */}
-            <div style={{ background: '#ffffff', border: '1px solid #E2E8F0', borderRadius: '24px', padding: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '12.5px', color: '#475569' }}>
-              <h3 style={{ fontSize: '14px', fontWeight: 800, color: '#0F172A', borderBottom: '1px solid #E2E8F0', paddingBottom: '8px', margin: 0 }}>
-                Session Guidelines
-              </h3>
-              
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <FiClock color="#7C3AED" size={16} style={{ flexShrink: 0 }} />
-                <span>
-                  Starts:{" "}
-                  <strong style={{ color: '#0F172A', fontWeight: 700 }}>
-                    {classDetails.scheduledStart
-                      ? new Date(classDetails.scheduledStart).toLocaleString()
-                      : "Now"}
-                  </strong>
-                </span>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <FiUser color="#7C3AED" size={16} style={{ flexShrink: 0 }} />
-                <span>
-                  Host: <strong style={{ color: '#0F172A', fontWeight: 700 }}>{isInstructor ? "You (Instructor)" : "Course Instructor"}</strong>
-                </span>
-              </div>
-
-              <div style={{ paddingTop: '8px', borderTop: '1px solid #F1F5F9', fontSize: '11.5px', color: '#64748B' }}>
-                Ensure you have the Zoom Client installed or grant permission to launch the Zoom web player when prompted.
-              </div>
-            </div>
           </div>
 
         </div>
+
       </div>
 
       {/* End Session Confirmation Modal */}
       {showEndModal && (
         <div
           style={{
-            position: 'fixed',
+            position: "fixed",
             inset: 0,
-            background: 'rgba(15, 23, 42, 0.75)',
-            backdropFilter: 'blur(8px)',
+            background: "rgba(2, 6, 23, 0.8)",
+            backdropFilter: "blur(8px)",
             zIndex: 1000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '16px',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px",
           }}
           onClick={() => setShowEndModal(false)}
         >
           <div
             style={{
-              background: '#ffffff',
-              borderRadius: '24px',
-              padding: '32px 28px',
-              maxWidth: '460px',
-              width: '100%',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-              border: '1px solid #E2E8F0',
-              textAlign: 'center',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '16px',
+              background: "#1E293B",
+              borderRadius: "20px",
+              padding: "28px",
+              maxWidth: "440px",
+              width: "100%",
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              textAlign: "center",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "16px",
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Warning Icon Badge */}
             <div
               style={{
-                width: '64px',
-                height: '64px',
-                borderRadius: '50%',
-                background: '#FEE2E2',
-                color: '#DC2626',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 4px 12px rgba(220, 38, 38, 0.15)',
+                width: "56px",
+                height: "56px",
+                borderRadius: "50%",
+                background: "rgba(220, 38, 38, 0.2)",
+                color: "#F87171",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
-              <FiPower size={30} />
+              <FiPower size={26} />
             </div>
 
             <div>
-              <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', margin: '0 0 8px 0' }}>
-                {isInstructor ? "End Zoom Live Session?" : "Leave Live Session?"}
+              <h3 style={{ fontSize: "18px", fontWeight: 800, color: "#FFFFFF", margin: "0 0 8px 0" }}>
+                {isInstructor ? "Conclude Live Session?" : "Leave Live Room?"}
               </h3>
-              <p style={{ fontSize: '13.5px', color: '#475569', margin: 0, lineHeight: '1.5' }}>
+              <p style={{ fontSize: "13px", color: "#94A3B8", margin: 0, lineHeight: "1.5" }}>
                 {isInstructor
-                  ? "Are you sure you want to end this Zoom live class for all students? This will conclude the session room and log attendance."
-                  : "Are you sure you want to leave this session? You can rejoin anytime while the live class remains active."}
+                  ? "Ending this session will disconnect all connected participants and finalize attendance logs."
+                  : "Are you sure you want to leave this live room? You can rejoin at any point while the session is live."}
               </p>
             </div>
 
-            <div style={{ display: 'flex', gap: '12px', width: '100%', marginTop: '8px' }}>
+            <div style={{ display: "flex", gap: "10px", width: "100%", marginTop: "6px" }}>
               <button
                 type="button"
                 onClick={() => setShowEndModal(false)}
                 style={{
                   flex: 1,
-                  background: '#F1F5F9',
-                  color: '#0F172A',
-                  border: '1px solid #CBD5E1',
-                  padding: '12px 18px',
-                  borderRadius: '12px',
-                  fontWeight: 700,
-                  fontSize: '13.5px',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
+                  background: "rgba(255, 255, 255, 0.08)",
+                  color: "#E2E8F0",
+                  border: "none",
+                  padding: "11px 16px",
+                  borderRadius: "10px",
+                  fontWeight: 600,
+                  fontSize: "13px",
+                  cursor: "pointer",
                 }}
               >
                 Cancel
@@ -572,19 +699,18 @@ export default function LiveClassRoom() {
                 onClick={confirmEndClass}
                 style={{
                   flex: 1,
-                  background: 'linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)',
-                  color: '#FFFFFF',
-                  border: 'none',
-                  padding: '12px 18px',
-                  borderRadius: '12px',
-                  fontWeight: 800,
-                  fontSize: '13.5px',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 14px rgba(220, 38, 38, 0.35)',
-                  transition: 'all 0.15s ease',
+                  background: "linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)",
+                  color: "#FFFFFF",
+                  border: "none",
+                  padding: "11px 16px",
+                  borderRadius: "10px",
+                  fontWeight: 700,
+                  fontSize: "13px",
+                  cursor: "pointer",
+                  boxShadow: "0 4px 12px rgba(220, 38, 38, 0.4)",
                 }}
               >
-                {isInstructor ? "Yes, End Session" : "Yes, Leave Class"}
+                {isInstructor ? "Yes, End Session" : "Yes, Leave"}
               </button>
             </div>
           </div>
@@ -593,4 +719,3 @@ export default function LiveClassRoom() {
     </div>
   )
 }
-

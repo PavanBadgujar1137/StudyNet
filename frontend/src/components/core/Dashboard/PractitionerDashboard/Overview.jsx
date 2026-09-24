@@ -50,7 +50,7 @@ export function Overview({ practitionerName = 'Practitioner', setActiveSection, 
         <div>
           <p style={{ margin: 0, color: '#64748B', fontSize: '14px' }}>{upcomingClasses.length} class(es) scheduled for today.</p>
         </div>
-        <button className="btn" onClick={() => setActiveSection('room')}>Start next Zoom session</button>
+        <button className="btn" onClick={() => setActiveSection('room')}>Start next Live session</button>
       </div>
 
       {/* Page 9 Correction 3: Resume Onboarding Nudge */}
@@ -169,7 +169,7 @@ export function Overview({ practitionerName = 'Practitioner', setActiveSection, 
 
         <div className="card">
           <div className="sechd">
-            <h3>Scheduled Zoom Sessions ({upcomingClasses.length})</h3>
+            <h3>Scheduled Live Sessions ({upcomingClasses.length})</h3>
             <button
               type="button"
               className="link-btn"
@@ -188,7 +188,7 @@ export function Overview({ practitionerName = 'Practitioner', setActiveSection, 
                 </div>
                 <div className="who">
                   <b>{formatClassTitle(cls.title)}</b>
-                  <span>Zoom Class · {new Date(cls.scheduledStart).toLocaleDateString()}</span>
+                  <span>Live Session · {new Date(cls.scheduledStart).toLocaleDateString()}</span>
                 </div>
                 <div className="rt">
                   <b>{new Date(cls.scheduledStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</b>
@@ -203,7 +203,7 @@ export function Overview({ practitionerName = 'Practitioner', setActiveSection, 
               </div>
             ))
           ) : (
-            <p className="note" style={{ padding: '12px 0' }}>No Zoom live classes scheduled for today.</p>
+            <p className="note" style={{ padding: '12px 0' }}>No live classes scheduled for today.</p>
           )}
         </div>
       </div>
