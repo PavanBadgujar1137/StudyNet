@@ -14,7 +14,6 @@ import {
   FiArrowLeft,
   FiMessageSquare,
   FiRadio,
-  FiMaximize2,
   FiRefreshCw,
 } from "react-icons/fi"
 import toast from "react-hot-toast"
@@ -230,9 +229,9 @@ export default function LiveClassRoom() {
                   {classDetails.sessionType === "group" ? "Group Session" : "1-on-1 Private"}
                 </span>
                 <span style={{
-                  background: "rgba(37, 99, 235, 0.15)",
-                  color: "#93C5FD",
-                  border: "1px solid rgba(59, 130, 246, 0.3)",
+                  background: roomConnected ? "rgba(16, 185, 129, 0.2)" : "rgba(37, 99, 235, 0.15)",
+                  color: roomConnected ? "#6EE7B7" : "#93C5FD",
+                  border: roomConnected ? "1px solid rgba(16, 185, 129, 0.4)" : "1px solid rgba(59, 130, 246, 0.3)",
                   fontSize: "11px",
                   fontWeight: 700,
                   padding: "3px 10px",
@@ -241,7 +240,7 @@ export default function LiveClassRoom() {
                   alignItems: "center",
                   gap: "5px",
                 }}>
-                  <FiRadio size={12} /> LiveKit WebRTC
+                  <FiRadio size={12} /> {roomConnected ? "Connected Live" : "LiveKit WebRTC"}
                 </span>
               </div>
             </div>
@@ -563,9 +562,6 @@ export default function LiveClassRoom() {
                     {isInstructor ? "Session Clinical Notes" : "Personal Reflection"}
                   </span>
                 </div>
-                <span style={{ fontSize: "10px", background: "rgba(167, 139, 250, 0.2)", color: "#C4B5FD", padding: "2px 8px", borderRadius: "8px", fontWeight: 700 }}>
-                  Aura Co-Pilot Ready
-                </span>
               </div>
 
               <textarea
