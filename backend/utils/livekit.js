@@ -13,7 +13,7 @@ const { AccessToken, RoomServiceClient } = require("livekit-server-sdk")
 const getLiveKitConfig = () => {
   const apiKey = process.env.LIVEKIT_API_KEY || "devkey"
   const apiSecret = process.env.LIVEKIT_API_SECRET || "secret_openhand_livekit_key_2026"
-  const serverUrl = process.env.LIVEKIT_SERVER_URL || "wss://openhand-live.livekit.cloud"
+  const serverUrl = process.env.LIVEKIT_SERVER_URL || process.env.LIVEKIT_URL || "wss://openhand-live.livekit.cloud"
 
   return { apiKey, apiSecret, serverUrl }
 }
