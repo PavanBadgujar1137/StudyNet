@@ -399,9 +399,9 @@ export function PractitionerDashboard() {
       </aside>
 
       {/* Main Viewport */}
-      <main className="oh-main-viewport">
+      <main className="oh-main-viewport" style={activeSection === 'aura' ? { overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column' } : {}}>
         {/* Sticky Top Bar */}
-        <div className="oh-viewport-header">
+        <div className="oh-viewport-header" style={activeSection === 'aura' ? { flexShrink: 0 } : {}}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <button 
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#334155', padding: '4px' }}
@@ -483,7 +483,7 @@ export function PractitionerDashboard() {
         </div>
 
         {/* View Content */}
-        <div className="oh-view-body main">
+        <div className="oh-view-body main" style={activeSection === 'aura' ? { padding: 0, maxWidth: '100%', width: '100%', flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' } : {}}>
           {isPractitionerExpired && activeSection !== 'profile' ? (
             <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '10px 0 40px' }}>
               {/* Expired Lock Header Banner */}
