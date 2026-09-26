@@ -30,6 +30,7 @@ import Settings from '../Settings'
 import CommunityChatHub from '../CommunityChatHub'
 import AuraChat from '../AuraChat'
 import { fetchClientDashboardData } from '../../../../services/operations/dashboardAPI'
+import ProfileDropdown from '../../Auth/ProfileDropdown'
 
 export function LearnerDashboard() {
   const location = useLocation()
@@ -181,7 +182,12 @@ export function LearnerDashboard() {
       <aside className={`oh-sidebar ${isMobileSidebarOpen ? 'open' : ''}`} style={{ overflowY: 'hidden', justifyContent: 'flex-start' }}>
         {/* Sidebar Header */}
         <div className="oh-sidebar-head">
-          <div className="oh-sidebar-brand">
+          <div 
+            className="oh-sidebar-brand"
+            onClick={() => setActiveTab('journey')}
+            style={{ cursor: 'pointer' }}
+            title="Return to Learner Dashboard"
+          >
             <div className="oh-sidebar-brand-icon">
               <FiZap />
             </div>
@@ -320,6 +326,11 @@ export function LearnerDashboard() {
             >
               <FiZap /> Quick Check-in
             </button>
+
+            {/* Profile Dropdown with working Dashboard & Logout */}
+            <div style={{ marginLeft: '4px', display: 'flex', alignItems: 'center' }}>
+              <ProfileDropdown onSelectSection={setActiveTab} />
+            </div>
           </div>
         </div>
 

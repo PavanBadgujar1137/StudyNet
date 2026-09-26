@@ -23,7 +23,6 @@ import SocialCallback from "./pages/SocialCallback"
 import HomeMarketing from "./pages/marketing/Home"
 import PractitionerJourney from "./pages/marketing/PractitionerJourney"
 import PricingPage from "./pages/marketing/PricingPage"
-import ForOrganizations from "./pages/marketing/ForOrganizations"
 import FindAPractitioner from "./pages/marketing/FindAPractitioner"
 import PractitionerPublicProfile from "./pages/marketing/PractitionerPublicProfile"
 import CoPilot from "./pages/marketing/CoPilot"
@@ -106,7 +105,7 @@ function App() {
 
 
   return (
-    <div className="flex min-h-screen w-full flex-col overflow-x-hidden bg-richblack-900 font-inter">
+    <div className="flex min-h-screen w-full flex-col overflow-x-hidden bg-white font-inter">
       <ScrollToTop />
       <Navbar />
       <Routes>
@@ -114,7 +113,7 @@ function App() {
         <Route path="/" element={<HomeMarketing />} />
         <Route path="/practitioner-journey" element={<PractitionerJourney />} />
         <Route path="/pricing" element={<PricingPage />} />
-        <Route path="/for-organizations" element={<ForOrganizations />} />
+        <Route path="/for-organizations" element={<Navigate to="/contact-us" replace />} />
         <Route path="/find-a-practitioner" element={<FindAPractitioner />} />
         <Route path="/practitioner/:handle" element={<PractitionerPublicProfile />} />
         <Route path="/practitioners/:handle" element={<PractitionerPublicProfile />} />

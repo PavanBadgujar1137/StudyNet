@@ -20,9 +20,7 @@ const Footer = () => {
   const navLinks = {
     Platform: [
       { label: "Home", to: "/" },
-      { label: "For Organizations", to: "/for-organizations" },
       { label: "Find a Practitioner", to: "/find-a-practitioner" },
-      { label: "Practitioner Journey", to: "/practitioner-journey" },
       { label: "Pricing", to: "/pricing" },
       { label: "Contact Us", to: "/contact-us" },
       { label: "AURA AI", to: "/aura" },

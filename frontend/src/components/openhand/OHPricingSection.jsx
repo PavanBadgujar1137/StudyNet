@@ -8,6 +8,7 @@ import {
   FiBookOpen,
   FiUsers,
   FiMessageSquare,
+  FiHome,
 } from "react-icons/fi"
 import { HiSparkles } from "react-icons/hi"
 import toast from "react-hot-toast"
@@ -401,9 +402,9 @@ export default function OHPricingSection({
                 onClick={() => setActiveTab("learner")}
                 className="w-full sm:w-auto px-6 py-3 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-200 min-h-[44px] flex items-center justify-center cursor-pointer"
                 style={{
-                  backgroundColor: activeTab === "learner" ? "#10B981" : "transparent",
+                  backgroundColor: activeTab === "learner" ? "#2563EB" : "transparent",
                   color: activeTab === "learner" ? "#FFFFFF" : "#0F172A",
-                  boxShadow: activeTab === "learner" ? "0 4px 14px rgba(16, 185, 129, 0.4)" : "none",
+                  boxShadow: activeTab === "learner" ? "0 4px 14px rgba(37, 99, 235, 0.35)" : "none",
                   transform: activeTab === "learner" ? "scale(1.02)" : "scale(1)",
                 }}
               >
@@ -415,110 +416,107 @@ export default function OHPricingSection({
 
         {/* ─── LEARNER 100% FREE SHOWCASE CARD ─── */}
         {activeTab === "learner" ? (
-          <div className="max-w-4xl mx-auto pt-4">
-            <div className="bg-white rounded-3xl shadow-2xl p-8 sm:p-12 relative overflow-hidden" style={{ border: "2px solid #10B981" }}>
-              <div className="flex flex-wrap items-center justify-between gap-4 mb-8 pb-6 border-b border-slate-100">
+          <div className="max-w-5xl mx-auto pt-4">
+            <div className="bg-white rounded-[28px] sm:rounded-[32px] border border-slate-200 shadow-xl overflow-hidden flex flex-col md:flex-row">
+              {/* Left Panel: Vibrant Gradient Hero */}
+              <div
+                className="w-full md:w-[350px] lg:w-[370px] shrink-0 p-8 sm:p-10 flex flex-col justify-between text-white"
+                style={{
+                  background: "linear-gradient(150deg, #372ba8 0%, #204de8 45%, #0066ff 100%)",
+                }}
+              >
                 <div>
-                  <div
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      background: "#ECFDF5",
-                      color: "#047857",
-                      fontWeight: 800,
-                      fontSize: "12px",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.05em",
-                      padding: "6px 16px",
-                      borderRadius: "9999px",
-                      border: "1px solid #A7F3D0",
-                      marginBottom: "12px",
-                    }}
-                  >
-                    <HiSparkles /> 100% FREE FOR ALL LEARNERS
+                  {/* Pill Badge */}
+                  <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold text-white bg-white/20 backdrop-blur-sm">
+                    <span className="text-xs font-black">✓</span>
+                    <span>Free forever</span>
                   </div>
-                  <h3 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
-                    Unlimited Platform Access
+
+                  {/* Plan Name */}
+                  <h3 className="text-2xl sm:text-[26px] font-bold text-white mt-7 mb-2 tracking-tight">
+                    OpenHand Learner
                   </h3>
-                  <p className="text-slate-600 font-medium text-sm sm:text-base mt-2">
-                    Every learner account is completely free forever. No monthly membership fees, no surprise paywalls.
-                  </p>
-                </div>
-                <div className="text-right">
-                  <div style={{ fontSize: "48px", fontWeight: 900, color: "#059669", lineHeight: 1 }}>₹0</div>
-                  <div style={{ fontSize: "12px", fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: "4px" }}>
-                    Free Forever
+
+                  {/* Price */}
+                  <div className="flex items-baseline gap-1 my-1">
+                    <span className="text-3xl sm:text-4xl font-bold text-white leading-none">₹</span>
+                    <span className="text-7xl sm:text-8xl font-black text-white tracking-tight leading-none">0</span>
+                  </div>
+
+                  {/* Previous Price Strikethrough */}
+                  <div className="text-sm font-medium text-white/80 mt-1 mb-8">
+                    Was <span className="line-through">₹999/month</span>
                   </div>
                 </div>
+
+                {/* CTA Action */}
+                <button
+                  type="button"
+                  onClick={() => navigate(token ? "/app/courses" : "/signup")}
+                  className="w-full bg-white hover:bg-slate-50 active:scale-[0.98] text-slate-900 font-extrabold text-base py-3.5 px-6 rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer group"
+                >
+                  <span>Join free</span>
+                  <span className="text-lg transition-transform group-hover:translate-x-1">→</span>
+                </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-10">
-                {[
-                  { title: "Free Course Access", desc: "Watch and complete all practitioner free video courses without limits.", icon: FiBookOpen },
-                  { title: "Live Circles & Cohorts", desc: "Join small-group wellbeing and peer support circles hosted by practitioners.", icon: FiUsers },
-                  { title: "Daily Mood Check-ins", desc: "Track daily reflections, feelings, and wellbeing momentum.", icon: FiHeart },
-                  { title: "AURA AI Companion", desc: "Consent-first AI reflection assistant and aftercare notes companion.", icon: HiSparkles },
-                  { title: "1:1 Session Bookings", desc: "Connect directly with verified licensed practitioners & therapists.", icon: FiMessageSquare },
-                  { title: "Secure Health Records", desc: "Encrypted personal reflections, notes, and digital vault.", icon: FiShield },
-                ].map((feat, idx) => {
-                  const Icon = feat.icon
-                  return (
-                    <div key={idx} className="flex items-start gap-3.5 p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
-                      <div
-                        style={{
-                          width: "40px",
-                          height: "40px",
-                          borderRadius: "12px",
-                          background: "#D1FAE5",
-                          color: "#047857",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                          fontSize: "18px",
-                        }}
-                      >
-                        <Icon />
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-slate-900 text-sm mb-1">{feat.title}</h4>
-                        <p className="text-slate-600 text-xs leading-relaxed">{feat.desc}</p>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
+              {/* Right Panel: Features List */}
+              <div className="flex-1 p-8 sm:p-10 lg:p-12 bg-white flex flex-col justify-center">
+                <div className="text-[11px] font-extrabold tracking-widest text-slate-400 uppercase mb-7">
+                  INCLUDED IN YOUR MEMBERSHIP
+                </div>
 
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4 border-t border-slate-100">
-                {token ? (
-                  <button
-                    type="button"
-                    onClick={() => navigate("/app/courses")}
-                    className="w-full sm:w-auto flex items-center justify-center gap-2 cursor-pointer font-extrabold text-sm px-8 py-3.5 rounded-full text-white bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/30 transition-all"
-                  >
-                    <span>Go to Courses Library</span>
-                    <FiArrowRight size={18} />
-                  </button>
-                ) : (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => navigate("/signup")}
-                      className="w-full sm:w-auto flex items-center justify-center gap-2 cursor-pointer font-extrabold text-sm px-8 py-3.5 rounded-full text-white bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/30 transition-all"
-                    >
-                      <span>Create Free Account</span>
-                      <FiArrowRight size={18} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => navigate("/login")}
-                      className="w-full sm:w-auto flex items-center justify-center cursor-pointer font-bold text-sm px-8 py-3.5 rounded-full text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-300 transition-all"
-                    >
-                      <span>Learner Login</span>
-                    </button>
-                  </>
-                )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-7">
+                  {[
+                    {
+                      title: "All practitioner courses",
+                      desc: "Watch and finish any course",
+                      icon: FiBookOpen,
+                    },
+                    {
+                      title: "Live group circles",
+                      desc: "Join small, guided groups",
+                      icon: FiUsers,
+                    },
+                    {
+                      title: "AURA AI companion",
+                      desc: "Reflect privately, anytime",
+                      icon: HiSparkles,
+                    },
+                    {
+                      title: "Daily mood check-ins",
+                      desc: "See how you’re growing",
+                      icon: FiHeart,
+                    },
+                    {
+                      title: "Private digital vault",
+                      desc: "Your notes, kept secure",
+                      icon: FiShield,
+                    },
+                    {
+                      title: "Family sharing",
+                      desc: "Add up to 3 family members",
+                      icon: FiHome,
+                    },
+                  ].map((item, idx) => {
+                    const Icon = item.icon
+                    return (
+                      <div key={idx} className="flex items-start gap-4">
+                        <div className="w-11 h-11 rounded-xl bg-[#EEF2FF] text-[#4F46E5] flex items-center justify-center shrink-0 text-xl">
+                          <Icon />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-slate-900 text-sm sm:text-[15px] leading-snug">
+                            {item.title}
+                          </h4>
+                          <p className="text-slate-400 text-xs sm:text-[13px] font-normal mt-0.5 leading-snug">
+                            {item.desc}
+                          </p>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
             </div>
           </div>

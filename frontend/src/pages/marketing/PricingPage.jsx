@@ -114,7 +114,7 @@ export function PricingPage() {
               </div>
               <div>
                 <Link
-                  to="/for-organizations"
+                  to="/contact-us"
                   className="px-6 py-3.5 rounded-full font-extrabold text-sm transition-all shadow-lg whitespace-nowrap inline-flex items-center gap-2 hover:scale-105"
                   style={{ backgroundColor: '#2563EB', color: '#FFFFFF', border: 'none' }}
                 >

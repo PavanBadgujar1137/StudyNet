@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { OHFooter } from '../../components/openhand'
+import { OHFooter, OpenHandFlow, OHBrandStrap } from '../../components/openhand'
 import learnerIllustration from '../../assets/Images/illustration_path.svg'
 import websiteIllustration from '../../assets/Images/website_illustration.svg'
 import {
@@ -44,17 +44,38 @@ export function Home() {
       <section className="relative pt-10 pb-16 lg:pt-14 lg:pb-24 overflow-hidden bg-white border-b border-slate-200/80">
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
-          {/* Top Toggle Switcher: [ I want to grow ] [ I guide others ] */}
-          <div className="flex items-center mb-8">
-            <div className="inline-flex items-center p-1 rounded-full bg-white border border-slate-200 shadow-xs">
+          {/* Top Toggle Switcher: Centered Glowing Bubble [ I want to grow ] [ I guide others ] */}
+          <div className="flex justify-center items-center mb-10">
+            <div
+              className="relative inline-flex items-center p-1.5 rounded-full transition-all duration-300"
+              style={{
+                background: "rgba(255, 255, 255, 0.95)",
+                backdropFilter: "blur(16px)",
+                WebkitBackdropFilter: "blur(16px)",
+                border: "1.5px solid rgba(145, 55, 239, 0.4)",
+                boxShadow:
+                  "0 0 28px -4px rgba(12, 109, 255, 0.35), 0 0 36px -6px rgba(145, 55, 239, 0.4), 0 10px 30px -10px rgba(47, 59, 224, 0.25)",
+              }}
+            >
               <button
                 type="button"
                 onClick={() => setHeroRole('learner')}
-                className="px-5 py-2 rounded-full text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer"
+                className="relative px-6 py-2.5 rounded-full text-xs sm:text-sm font-extrabold transition-all duration-300 cursor-pointer select-none"
                 style={
                   heroRole === 'learner'
-                    ? { backgroundColor: '#0F172A', color: '#FFFFFF' }
-                    : { backgroundColor: 'transparent', color: '#475569' }
+                    ? {
+                        background:
+                          "linear-gradient(100deg, #0C6DFF 0%, #2F3BE0 45%, #5B2FE0 70%, #9137EF 100%)",
+                        color: "#FFFFFF",
+                        boxShadow:
+                          "0 4px 18px -2px rgba(47, 59, 224, 0.7), 0 0 14px 0 rgba(145, 55, 239, 0.55)",
+                        transform: "scale(1.02)",
+                      }
+                    : {
+                        backgroundColor: "transparent",
+                        color: "#4A5378",
+                        transform: "scale(1)",
+                      }
                 }
               >
                 I want to grow
@@ -62,11 +83,22 @@ export function Home() {
               <button
                 type="button"
                 onClick={() => setHeroRole('practitioner')}
-                className="px-5 py-2 rounded-full text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer"
+                className="relative px-6 py-2.5 rounded-full text-xs sm:text-sm font-extrabold transition-all duration-300 cursor-pointer select-none"
                 style={
                   heroRole === 'practitioner'
-                    ? { backgroundColor: '#0F172A', color: '#FFFFFF' }
-                    : { backgroundColor: 'transparent', color: '#475569' }
+                    ? {
+                        background:
+                          "linear-gradient(100deg, #0C6DFF 0%, #2F3BE0 45%, #5B2FE0 70%, #9137EF 100%)",
+                        color: "#FFFFFF",
+                        boxShadow:
+                          "0 4px 18px -2px rgba(47, 59, 224, 0.7), 0 0 14px 0 rgba(145, 55, 239, 0.55)",
+                        transform: "scale(1.02)",
+                      }
+                    : {
+                        backgroundColor: "transparent",
+                        color: "#4A5378",
+                        transform: "scale(1)",
+                      }
                 }
               >
                 I guide others
@@ -243,22 +275,22 @@ export function Home() {
               {heroRole === 'learner' ? (
                 /* Learner Hero Illustration */
                 <div className="w-full max-w-lg lg:max-w-xl flex items-center justify-center">
-                  <div className="relative w-full bg-white rounded-3xl p-3 sm:p-4 border border-slate-200 shadow-xl transition-all hover:shadow-2xl overflow-hidden group">
+                  <div className="relative w-full bg-white rounded-3xl p-3 sm:p-4 border border-slate-200 shadow-xl transition-all hover:shadow-2xl overflow-hidden group animate-heartbeat">
                     <img
                       src={learnerIllustration}
                       alt="Find the Guide Who Gets You"
-                      className="w-full h-auto object-contain rounded-2xl transform transition-transform duration-300 group-hover:scale-[1.01]"
+                      className="w-full h-auto object-contain rounded-2xl transform transition-transform duration-300"
                     />
                   </div>
                 </div>
               ) : (
                 /* Practitioner Hero Illustration */
                 <div className="w-full max-w-lg lg:max-w-xl flex items-center justify-center">
-                  <div className="relative w-full bg-white rounded-3xl p-3 sm:p-4 border border-slate-200 shadow-xl transition-all hover:shadow-2xl overflow-hidden group">
+                  <div className="relative w-full bg-white rounded-3xl p-3 sm:p-4 border border-slate-200 shadow-xl transition-all hover:shadow-2xl overflow-hidden group animate-heartbeat">
                     <img
                       src={websiteIllustration}
                       alt="OpenHand Practitioner Platform"
-                      className="w-full h-auto object-contain rounded-2xl transform transition-transform duration-300 group-hover:scale-[1.01]"
+                      className="w-full h-auto object-contain rounded-2xl transform transition-transform duration-300"
                     />
                   </div>
                 </div>
@@ -272,50 +304,14 @@ export function Home() {
       </section>
 
       {/* ========================================================================= */}
-      {/* 2. STATS & PLATFORM ASSURANCE STRIP (Screenshot 3)                       */}
+      {/* 2. FLOATING CONTINUOUS SCROLLING BRAND MARQUEE STRAP                      */}
       {/* ========================================================================= */}
-      <section className="py-7 text-white" style={{ backgroundColor: '#0F172A' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-6 text-center divide-y md:divide-y-0 md:divide-x divide-slate-700/60">
-            
-            <div className="pt-2 md:pt-0">
-              <div className="text-2xl sm:text-3xl font-black" style={{ fontFamily: "'Playfair Display', Georgia, serif", color: '#FFFFFF' }}>
-                1,200+
-              </div>
-              <div className="text-xs font-medium mt-1" style={{ color: '#94A3B8' }}>practitioners</div>
-            </div>
+      <OHBrandStrap />
 
-            <div className="pt-2 md:pt-0">
-              <div className="text-2xl sm:text-3xl font-black" style={{ fontFamily: "'Playfair Display', Georgia, serif", color: '#FFFFFF' }}>
-                8
-              </div>
-              <div className="text-xs font-medium mt-1" style={{ color: '#94A3B8' }}>max seats per Circle</div>
-            </div>
-
-            <div className="pt-2 md:pt-0">
-              <div className="text-2xl sm:text-3xl font-black" style={{ fontFamily: "'Playfair Display', Georgia, serif", color: '#FFFFFF' }}>
-                6-week
-              </div>
-              <div className="text-xs font-medium mt-1" style={{ color: '#94A3B8' }}>time-boxed containers</div>
-            </div>
-
-            <div className="pt-2 md:pt-0">
-              <div className="text-2xl sm:text-3xl font-black" style={{ fontFamily: "'Playfair Display', Georgia, serif", color: '#FFFFFF' }}>
-                UPI · Cards
-              </div>
-              <div className="text-xs font-medium mt-1" style={{ color: '#94A3B8' }}>Razorpay &amp; Stripe payouts</div>
-            </div>
-
-            <div className="pt-2 md:pt-0 col-span-2 md:col-span-1">
-              <div className="text-2xl sm:text-3xl font-black" style={{ fontFamily: "'Playfair Display', Georgia, serif", color: '#FFFFFF' }}>
-                Consent-first
-              </div>
-              <div className="text-xs font-medium mt-1" style={{ color: '#94A3B8' }}>AURA session AI</div>
-            </div>
-
-          </div>
-        </div>
-      </section>
+      {/* ========================================================================= */}
+      {/* 2.5 OPENHAND FLOW: SCATTERED IN. ONE PRACTICE OUT                         */}
+      {/* ========================================================================= */}
+      <OpenHandFlow />
 
       {/* ========================================================================= */}
       {/* 3. HOW IT WORKS: ONE PLATFORM, TWO JOURNEYS (Screenshot 4)               */}
@@ -323,7 +319,7 @@ export function Home() {
       <section className="py-20 lg:py-24 bg-white border-b border-slate-200/80" id="how-it-works">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
-          <div className="text-left mb-12 sm:mb-16">
+          <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
             <span
               style={{
                 color: "#2563EB",
@@ -354,12 +350,14 @@ export function Home() {
             {/* Card 1: Learners Journey */}
             <div className="bg-[#F8FAFC] rounded-3xl p-8 sm:p-10 border border-slate-200 flex flex-col justify-between shadow-xs">
               <div>
-                <span 
-                  className="inline-block px-3.5 py-1 rounded-full text-xs font-bold mb-8"
-                  style={{ color: '#1E40AF', backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE' }}
-                >
-                  Learners
-                </span>
+                <div className="flex justify-center mb-8">
+                  <span 
+                    className="inline-block px-4 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider"
+                    style={{ color: '#1E40AF', backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE' }}
+                  >
+                    FOR LEARNERS
+                  </span>
+                </div>
 
                 <div className="space-y-7">
                   <div className="flex items-start gap-4">
@@ -432,12 +430,14 @@ export function Home() {
               style={{ backgroundColor: '#0F172A', border: '1px solid #1E293B', color: '#FFFFFF' }}
             >
               <div>
-                <span 
-                  className="inline-block px-3.5 py-1 rounded-full text-xs font-bold mb-8"
-                  style={{ color: '#E2E8F0', backgroundColor: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)' }}
-                >
-                  Practitioners
-                </span>
+                <div className="flex justify-center mb-8">
+                  <span 
+                    className="inline-block px-4 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider"
+                    style={{ color: '#E2E8F0', backgroundColor: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)' }}
+                  >
+                    FOR PRACTITIONERS
+                  </span>
+                </div>
 
                 <div className="space-y-7">
                   <div className="flex items-start gap-4">
@@ -509,134 +509,7 @@ export function Home() {
         </div>
       </section>
 
-      {/* ========================================================================= */}
-      {/* 4. EVERYTHING YOU OFFER, BOOKABLE FROM ONE LINK (Screenshot 5)            */}
-      {/* ========================================================================= */}
-      <section className="py-20 lg:py-24 bg-slate-50 border-b border-slate-200/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-12 gap-4">
-            <div>
-              <span
-                style={{
-                  color: "#2563EB",
-                  backgroundColor: "#EFF6FF",
-                  border: "1px solid #BFDBFE",
-                  borderRadius: "9999px",
-                  padding: "5px 16px",
-                  fontSize: "11px",
-                  fontWeight: 800,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                  display: "inline-block",
-                  marginBottom: "12px",
-                }}
-              >
-                FOR PRACTITIONERS
-              </span>
-              <h2 
-                className="text-3xl sm:text-5xl font-black tracking-tight"
-                style={{ fontFamily: "'Playfair Display', Georgia, serif", color: '#0F172A' }}
-              >
-                Everything you offer, bookable from one link
-              </h2>
-            </div>
-            <div>
-              <Link 
-                to="/pricing"
-                className="text-sm font-extrabold transition-colors inline-flex items-center gap-1.5"
-                style={{ color: '#2563EB' }}
-              >
-                <span>See pricing</span>
-                <FiArrowRight />
-              </Link>
-            </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            
-            {/* 1: 1:1 Sessions */}
-            <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs hover:border-slate-300 hover:shadow-md transition-all flex items-start gap-4">
-              <span className="text-2xl p-2 rounded-2xl bg-blue-50 border border-blue-100 shrink-0">
-                📞
-              </span>
-              <div>
-                <h4 className="font-extrabold text-base mb-1" style={{ color: '#0F172A' }}>1:1 Sessions</h4>
-                <p className="text-xs sm:text-sm font-medium leading-relaxed" style={{ color: '#475569' }}>
-                  Video calls with calendar sync and buffers.
-                </p>
-              </div>
-            </div>
-
-            {/* 2: 6-Week Circles */}
-            <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs hover:border-slate-300 hover:shadow-md transition-all flex items-start gap-4">
-              <span className="text-2xl p-2 rounded-2xl bg-indigo-50 border border-indigo-100 shrink-0">
-                ⭕
-              </span>
-              <div>
-                <h4 className="font-extrabold text-base mb-1" style={{ color: '#0F172A' }}>6-Week Circles</h4>
-                <p className="text-xs sm:text-sm font-medium leading-relaxed" style={{ color: '#475569' }}>
-                  Capped at 8 people. Real accountability.
-                </p>
-              </div>
-            </div>
-
-            {/* 3: Check-ins */}
-            <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs hover:border-slate-300 hover:shadow-md transition-all flex items-start gap-4">
-              <span className="text-2xl p-2 rounded-2xl bg-teal-50 border border-teal-100 shrink-0">
-                📝
-              </span>
-              <div>
-                <h4 className="font-extrabold text-base mb-1" style={{ color: '#0F172A' }}>Check-ins</h4>
-                <p className="text-xs sm:text-sm font-medium leading-relaxed" style={{ color: '#475569' }}>
-                  Mood &amp; intention logs between sessions.
-                </p>
-              </div>
-            </div>
-
-            {/* 4: Priority DM */}
-            <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs hover:border-slate-300 hover:shadow-md transition-all flex items-start gap-4">
-              <span className="text-2xl p-2 rounded-2xl bg-purple-50 border border-purple-100 shrink-0">
-                💬
-              </span>
-              <div>
-                <h4 className="font-extrabold text-base mb-1" style={{ color: '#0F172A' }}>Priority DM</h4>
-                <p className="text-xs sm:text-sm font-medium leading-relaxed" style={{ color: '#475569' }}>
-                  Paid async questions with a reply window.
-                </p>
-              </div>
-            </div>
-
-            {/* 5: Resources */}
-            <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs hover:border-slate-300 hover:shadow-md transition-all flex items-start gap-4">
-              <span className="text-2xl p-2 rounded-2xl bg-emerald-50 border border-emerald-100 shrink-0">
-                📚
-              </span>
-              <div>
-                <h4 className="font-extrabold text-base mb-1" style={{ color: '#0F172A' }}>Resources</h4>
-                <p className="text-xs sm:text-sm font-medium leading-relaxed" style={{ color: '#475569' }}>
-                  Sell worksheets, audio practices, guides.
-                </p>
-              </div>
-            </div>
-
-            {/* 6: Org / EAP Seats */}
-            <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs hover:border-slate-300 hover:shadow-md transition-all flex items-start gap-4">
-              <span className="text-2xl p-2 rounded-2xl bg-sky-50 border border-sky-100 shrink-0">
-                🏢
-              </span>
-              <div>
-                <h4 className="font-extrabold text-base mb-1" style={{ color: '#0F172A' }}>Org / EAP Seats</h4>
-                <p className="text-xs sm:text-sm font-medium leading-relaxed" style={{ color: '#475569' }}>
-                  Per-seat billing with HR confidentiality.
-                </p>
-              </div>
-            </div>
-
-          </div>
-
-        </div>
-      </section>
 
       {/* ========================================================================= */}
       {/* 5. AURA · CONSENT-FIRST AI (Screenshot 6)                                */}
@@ -761,7 +634,7 @@ export function Home() {
             </div>
 
             <Link
-              to="/for-organizations"
+              to="/contact-us"
               className="w-full md:w-auto px-8 py-3.5 rounded-full font-bold text-sm shadow-md hover:bg-slate-800 transition-all whitespace-nowrap text-center cursor-pointer"
               style={{ backgroundColor: '#0F172A', color: '#FFFFFF' }}
             >
