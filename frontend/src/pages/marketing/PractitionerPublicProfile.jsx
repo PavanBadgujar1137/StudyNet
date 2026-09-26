@@ -1,0 +1,575 @@
+import React, { useState, useEffect } from 'react'
+import { useParams, useNavigate, Link } from 'react-router-dom'
+import {
+  FiCheckCircle,
+  FiCalendar,
+  FiArrowLeft,
+  FiShield
+} from 'react-icons/fi'
+import { toast } from 'react-hot-toast'
+import { apiConnector } from '../../services/apiConnector'
+import OHFooter from '../../components/openhand/OHFooter'
+
+import { IntakeModal } from '../../components/openhand'
+import { formatPractitionerName } from '../../utils/formatName'
+import CheckoutCouponModal from '../../components/core/Coupons/CheckoutCouponModal'
+
+export function PractitionerPublicProfile() {
+  const { handle } = useParams()
+  const navigate = useNavigate()
+
+  const [profile, setProfile] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  // Stage 02 — Intake Modal State
+  const [showIntakeModal, setShowIntakeModal] = useState(false)
+  const [showCouponModal, setShowCouponModal] = useState(false)
+  const [selectedOffer, setSelectedOffer] = useState(null)
+
+  // Review & Rating Modal State
+  const [showReviewModal, setShowReviewModal] = useState(false)
+  const [userRating, setUserRating] = useState(5)
+  const [reviewContent, setReviewContent] = useState('')
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false)
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault()
+    const token = localStorage.getItem('token')
+      ? JSON.parse(localStorage.getItem('token'))
+      : null
+
+    if (!token) {
+      toast.error('Please sign in as a learner to submit feedback.')
+      navigate('/login')
+      return
+    }
+
+    if (!reviewContent.trim()) {
+      toast.error('Please enter your review text.')
+      return
+    }
+
+    setIsSubmittingReview(true)
+    const toastId = toast.loading('Submitting feedback for Admin Verification...')
+    try {
+      const practUserId = profile?.user?._id || profile?.user?.id || profile?.user
+      const res = await apiConnector('POST', '/api/v1/testimonials', {
+        practitionerId: practUserId,
+        rating: userRating,
+        content: reviewContent,
+      }, { Authorization: `Bearer ${token}` })
+
+      if (res?.data?.success) {
+        toast.success(res.data.message || '⭐ Submitted for Admin Verification! It will appear once approved.', { id: toastId, duration: 6000 })
+        setShowReviewModal(false)
+        setReviewContent('')
+      } else {
+        toast.error(res?.data?.message || 'Failed to submit review', { id: toastId })
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Error submitting review', { id: toastId })
+    } finally {
+      setIsSubmittingReview(false)
+    }
+  }
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setLoading(true)
+      try {
+        const response = await apiConnector('GET', `/api/v1/practitioners/handle/${handle}`)
+        if (response?.data?.success) {
+          setProfile(response.data.data)
+        } else {
+          setProfile(null)
+        }
+      } catch (error) {
+        console.error('Fetch practitioner by handle error:', error)
+        setProfile(null)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchProfile()
+  }, [handle])
+
+  // Stage 02: First trigger intake modal
+  const handleBookOffer = (offer) => {
+    const token = localStorage.getItem('token')
+      ? JSON.parse(localStorage.getItem('token'))
+      : null
+
+    if (!token) {
+      toast.error('Please log in to book a session.')
+      navigate('/login')
+      return
+    }
+
+    setSelectedOffer(offer)
+    setShowIntakeModal(true)
+  }
+
+  // Triggered after 6-question intake is submitted -> opens Coupon & Checkout modal
+  const handleIntakeSubmitted = async (formattedAnswers) => {
+    setShowIntakeModal(false)
+    if (selectedOffer) {
+      setShowCouponModal(true)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div style={{ background: '#F8FAFC', minHeight: '100vh', color: '#0F172A', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '16px', fontWeight: 600 }}>
+        Loading practitioner profile...
+      </div>
+    )
+  }
+
+  if (!profile) {
+    return (
+      <div style={{ background: '#F8FAFC', minHeight: '100vh', color: '#0F172A', padding: '80px 24px', textAlign: 'center' }}>
+        <div style={{ maxWidth: '520px', margin: '0 auto', background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '24px', padding: '40px', boxShadow: '0 10px 30px rgba(15, 23, 42, 0.05)' }}>
+          <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#0F172A', marginBottom: '12px' }}>Practitioner Profile Not Found</h1>
+          <p style={{ color: '#64748B', marginBottom: '24px', fontSize: '14.5px' }}>
+            The booking link <code style={{ background: '#F1F5F9', padding: '4px 8px', borderRadius: '6px', color: '#2563EB' }}>/practitioner/{handle}</code> is either unavailable or pending verification.
+          </p>
+          <Link
+            to="/find-a-practitioner"
+            style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #7C3AED 100%)', color: '#ffffff', padding: '12px 24px', borderRadius: '30px', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '8px', boxShadow: '0 4px 14px rgba(59, 130, 246, 0.3)' }}
+          >
+            <FiArrowLeft /> Browse Practitioner Directory
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  const user = profile.user || {}
+  const practitionerName = formatPractitionerName(user, 'Practitioner')
+  const offers = (profile.offers || profile.userOffers || []).filter(
+    (o) => o.status === 'published' || (!o.status && o.status !== 'draft')
+  )
+  const reviews = profile.reviews || []
+
+  return (
+    <div style={{ background: '#F8FAFC', minHeight: '100vh', color: '#0F172A', fontFamily: 'Plus Jakarta Sans, Inter, sans-serif' }}>
+
+      {/* Top Banner Navigation Header */}
+      <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', padding: '16px 32px', sticky: 'top', top: 0, zIndex: 10, boxShadow: '0 2px 8px rgba(15, 23, 42, 0.02)' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+          <Link to="/find-a-practitioner" style={{ color: '#2563EB', textDecoration: 'none', fontSize: '14px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <FiArrowLeft /> Back to Guide Directory
+          </Link>
+          <span style={{ fontSize: '12.5px', background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0', padding: '5px 14px', borderRadius: '20px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <FiShield color="#059669" /> Verified OpenHand Guide Profile
+          </span>
+        </div>
+      </div>
+
+      <div style={{ maxWidth: '1100px', margin: '36px auto 60px auto', padding: '0 24px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
+
+        {/* Main Practitioner Hero Card */}
+        <div
+          style={{
+            background: '#FFFFFF',
+            border: '1px solid #E2E8F0',
+            borderRadius: '24px',
+            padding: '36px',
+            boxShadow: '0 10px 30px rgba(15, 23, 42, 0.05)',
+            display: 'flex',
+            gap: '28px',
+            flexWrap: 'wrap',
+            alignItems: 'flex-start'
+          }}
+        >
+          {/* Avatar Image */}
+          <div
+            style={{
+              width: '120px',
+              height: '120px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #3B82F6 0%, #7C3AED 100%)',
+              color: '#ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '44px',
+              fontWeight: 800,
+              border: '4px solid #DBEAFE',
+              boxShadow: '0 8px 24px rgba(59, 130, 246, 0.25)',
+              flexShrink: 0,
+              overflow: 'hidden'
+            }}
+          >
+            {user.image ? (
+              <img src={user.image} alt={practitionerName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <span>{user.firstName?.slice(0, 1) || 'D'}</span>
+            )}
+          </div>
+
+          {/* Practitioner Info & Credentials */}
+          <div style={{ flex: 1, minWidth: '280px' }}>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '6px' }}>
+              <h1 style={{ fontSize: '32px', fontWeight: 800, color: '#0F172A', margin: 0, letterSpacing: '-0.5px' }}>
+                {practitionerName}
+              </h1>
+
+              <span style={{ background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0', padding: '4px 12px', borderRadius: '20px', fontSize: '12.5px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <FiCheckCircle color="#059669" /> Verified Guide
+              </span>
+            </div>
+
+            <p style={{ color: '#2563EB', fontSize: '16px', fontWeight: 700, margin: '0 0 14px 0', letterSpacing: '0.1px' }}>
+              {profile.credentials || 'Verified Clinical Practitioner'}
+            </p>
+
+            <p style={{ color: '#475569', fontSize: '15.5px', lineHeight: '1.65', margin: '0 0 24px 0', maxWidth: '720px' }}>
+              {profile.bio || 'Welcome to my official practice profile! I offer personalized 1-on-1 consultations, Circles, and structured health learning programs.'}
+            </p>
+
+            {/* Specialties & Languages Badges */}
+            <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', fontSize: '13.5px', paddingTop: '18px', borderTop: '1px solid #F1F5F9' }}>
+              <div>
+                <span style={{ color: '#64748B', fontWeight: 700, display: 'block', marginBottom: '6px', textTransform: 'uppercase', fontSize: '11.5px', letterSpacing: '0.5px' }}>
+                  Specialties:
+                </span>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {(profile.specialties && profile.specialties.length > 0 ? profile.specialties : ['Emotional Intelligence']).map((spec, i) => (
+                    <span key={i} style={{ background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE', padding: '5px 12px', borderRadius: '20px', fontWeight: 600 }}>
+                      {spec}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <span style={{ color: '#64748B', fontWeight: 700, display: 'block', marginBottom: '6px', textTransform: 'uppercase', fontSize: '11.5px', letterSpacing: '0.5px' }}>
+                  Languages:
+                </span>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {(profile.languages && profile.languages.length > 0 ? profile.languages : ['English']).map((lang, i) => (
+                    <span key={i} style={{ background: '#F1F5F9', color: '#334155', border: '1px solid #CBD5E1', padding: '5px 12px', borderRadius: '20px', fontWeight: 600 }}>
+                      {lang}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Practice Offers & Booking Section */}
+        <div>
+          <div style={{ marginBottom: '20px' }}>
+            <h2 style={{ fontSize: '24px', fontWeight: 800, color: '#0F172A', margin: 0, letterSpacing: '-0.5px' }}>
+              Book Session or Join Program
+            </h2>
+            <p style={{ color: '#64748B', fontSize: '14.5px', margin: '4px 0 0 0' }}>
+              Select an available offer below to reserve your direct session slot with {practitionerName}.
+            </p>
+          </div>
+
+          {offers.length === 0 ? (
+            <div
+              style={{
+                background: '#FFFFFF',
+                border: '1px solid #E2E8F0',
+                borderRadius: '24px',
+                padding: '48px 24px',
+                textAlign: 'center',
+                boxShadow: '0 10px 30px rgba(15, 23, 42, 0.04)'
+              }}
+            >
+              <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#EFF6FF', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px auto', fontSize: '28px' }}>
+                <FiCalendar color="#2563EB" />
+              </div>
+              <h3 style={{ margin: '0 0 8px 0', fontSize: '22px', fontWeight: 800, color: '#0F172A' }}>
+                No Active Booking Slots
+              </h3>
+              <p style={{ margin: '0 0 24px 0', fontSize: '14.5px', color: '#64748B', maxWidth: '480px', marginInline: 'auto', lineHeight: '1.5' }}>
+                This practitioner has not published active booking offers yet. Check back soon or explore other verified guides in our directory.
+              </p>
+              <Link
+                to="/find-a-practitioner"
+                style={{
+                  background: 'linear-gradient(135deg, #3B82F6 0%, #7C3AED 100%)',
+                  color: '#ffffff',
+                  padding: '12px 24px',
+                  borderRadius: '30px',
+                  fontWeight: 700,
+                  fontSize: '14px',
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: '0 4px 16px rgba(59, 130, 246, 0.3)'
+                }}
+              >
+                Browse Verified Directory →
+              </Link>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+              {offers.map((offer) => (
+                <div
+                  key={offer._id}
+                  style={{
+                    background: '#FFFFFF',
+                    border: '1px solid #E2E8F0',
+                    borderRadius: '20px',
+                    padding: '28px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    gap: '20px',
+                    boxShadow: '0 10px 25px rgba(15, 23, 42, 0.04)'
+                  }}
+                >
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                      <span style={{ 
+                        background: offer.isDummy ? '#F0FDF4' : '#EFF6FF', 
+                        color: offer.isDummy ? '#15803D' : '#1D4ED8', 
+                        border: offer.isDummy ? '1px solid #BBF7D0' : '1px solid #BFDBFE', 
+                        padding: '4px 12px', 
+                        borderRadius: '12px', 
+                        fontSize: '12px', 
+                        fontWeight: 700, 
+                        textTransform: 'capitalize' 
+                      }}>
+                        {offer.isDummy ? '🌱 1:1 Consultation (Upcoming)' : (offer.type || '1:1 Session')}
+                      </span>
+                      <span style={{ fontSize: '18px', fontWeight: 800, color: (offer.isDummy || offer.price == null) ? '#64748B' : '#059669' }}>
+                        {offer.isDummy || offer.price == null ? 'Price NA' : `₹${offer.price}`}
+                      </span>
+                    </div>
+
+                    <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#0F172A', margin: '0 0 10px 0', lineHeight: '1.3' }}>
+                      {offer.title}
+                    </h3>
+
+                    <p style={{ fontSize: '14px', color: '#475569', lineHeight: '1.5', margin: 0 }}>
+                      {offer.description || offer.details || (offer.isDummy ? 'Standard 1:1 introductory consultation session. Personalized booking schedule and custom pricing will be live shortly.' : 'Includes direct live consultation, personalized action plan, and follow-up support.')}
+                    </p>
+                  </div>
+
+                  {offer.isDummy || offer.price == null ? (
+                    <div
+                      style={{
+                        background: '#F8FAFC',
+                        color: '#64748B',
+                        border: '1px dashed #CBD5E1',
+                        padding: '12px 16px',
+                        borderRadius: '20px',
+                        fontWeight: 600,
+                        fontSize: '13.5px',
+                        textAlign: 'center',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <span>🌱 Custom pricing & booking coming soon</span>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleBookOffer(offer)}
+                      style={{
+                        background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                        color: '#ffffff',
+                        border: 'none',
+                        padding: '14px',
+                        borderRadius: '30px',
+                        fontWeight: 700,
+                        fontSize: '14.5px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        boxShadow: '0 4px 14px rgba(16, 185, 129, 0.25)'
+                      }}
+                    >
+                      <FiCalendar fontSize={16} />
+                      Reserve Slot — ₹{offer.price}
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Verified Client Reviews Section */}
+        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '24px', padding: '32px', boxShadow: '0 10px 25px rgba(15, 23, 42, 0.04)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14, marginBottom: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                Verified Client Feedback ({reviews.length})
+              </h2>
+              {profile.rating && (
+                <span style={{ background: '#FEF3C7', color: '#B45309', padding: '4px 10px', borderRadius: 20, fontSize: 13, fontWeight: 800 }}>
+                  ★ {profile.rating}
+                </span>
+              )}
+            </div>
+
+            <button
+              onClick={() => setShowReviewModal(true)}
+              style={{
+                padding: '9px 18px',
+                borderRadius: '20px',
+                background: '#F1F5F9',
+                border: '1px solid #CBD5E1',
+                color: '#1E293B',
+                fontWeight: 700,
+                fontSize: '13px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              ★ Leave Feedback / Review
+            </button>
+          </div>
+
+          {reviews.length === 0 ? (
+            <div style={{ padding: '24px', textAlign: 'center', background: '#F8FAFC', borderRadius: '16px', color: '#64748B', fontSize: '13.5px' }}>
+              No reviews published yet. Be the first client to book a session and share your experience!
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+              {reviews.map((rev, i) => (
+                <div key={rev._id || i} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '20px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                    <span style={{ color: '#F59E0B', fontWeight: 700, fontSize: '14px' }}>
+                      {'★'.repeat(rev.rating || 5)}
+                    </span>
+                    <span style={{ fontWeight: 700, fontSize: '13.5px', color: '#0F172A' }}>
+                      — {rev.clientName || (rev.user?.firstName ? `${rev.user.firstName} ${rev.user.lastName || ''}` : 'Verified Client')}
+                    </span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '13.5px', color: '#334155', lineHeight: '1.5' }}>
+                    "{rev.review}"
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+      </div>
+
+      {/* Leave Feedback Modal */}
+      {showReviewModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ background: '#FFFFFF', borderRadius: 24, width: '100%', maxWidth: 480, padding: 28, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#0F172A' }}>
+                Rate &amp; Review {practitionerName}
+              </h3>
+              <button onClick={() => setShowReviewModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B', fontSize: 20 }}>
+                ✕
+              </button>
+            </div>
+
+            <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 12, padding: 12, marginBottom: 16, fontSize: 12.5, color: '#1E40AF', lineHeight: 1.4 }}>
+              ℹ️ <strong>Admin Verification Notice:</strong> All feedback and ratings are reviewed by our platform moderation team before being published live.
+            </div>
+
+            <form onSubmit={handleReviewSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#0F172A', marginBottom: 8 }}>
+                  Your Rating
+                </label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setUserRating(star)}
+                      style={{
+                        flex: 1,
+                        padding: '10px 0',
+                        borderRadius: 10,
+                        border: userRating >= star ? '2px solid #F59E0B' : '1px solid #CBD5E1',
+                        background: userRating >= star ? '#FFFBEB' : '#FFFFFF',
+                        color: userRating >= star ? '#B45309' : '#64748B',
+                        fontWeight: 800,
+                        fontSize: 14,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {star} ★
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#0F172A', marginBottom: 6 }}>
+                  Your Feedback / Experience <sup>*</sup>
+                </label>
+                <textarea
+                  required
+                  rows={4}
+                  value={reviewContent}
+                  onChange={e => setReviewContent(e.target.value)}
+                  placeholder="Share details about your consultation, recovery, or learning experience..."
+                  style={{ width: '100%', padding: '12px', borderRadius: 12, border: '1px solid #CBD5E1', fontSize: 13.5, resize: 'vertical', outline: 'none' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: 12, marginTop: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => setShowReviewModal(false)}
+                  style={{ flex: 1, padding: '12px', background: '#F1F5F9', border: '1px solid #CBD5E1', borderRadius: 12, color: '#475569', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingReview}
+                  style={{ flex: 1, padding: '12px', background: 'linear-gradient(135deg, #10B981, #059669)', border: 'none', borderRadius: 12, color: '#FFFFFF', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(16,185,129,0.25)' }}
+                >
+                  {isSubmittingReview ? 'Submitting...' : 'Submit Feedback'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Pre-Session 6-Question Intake Modal (Stage 02) */}
+      <IntakeModal
+        open={showIntakeModal}
+        onClose={() => setShowIntakeModal(false)}
+        practitionerName={practitionerName}
+        questions={profile.intakeQuestions || []}
+        onSubmit={handleIntakeSubmitted}
+      />
+
+      {/* Session Checkout & Coupon Modal */}
+      <CheckoutCouponModal
+        isOpen={showCouponModal}
+        onClose={() => setShowCouponModal(false)}
+        productType="session"
+        product={selectedOffer}
+        onSuccess={() => {
+          toast.success('🎉 Session booked successfully!')
+          navigate('/dashboard/my-profile')
+        }}
+      />
+
+      <OHFooter />
+    </div>
+  )
+}
+
+export default PractitionerPublicProfile
