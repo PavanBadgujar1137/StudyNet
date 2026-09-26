@@ -12,9 +12,6 @@ import { logout } from '../../services/operations/authAPI'
 
 const PUBLIC_LINKS = [
   { label: 'Home',                 to: '/' },
-  { label: 'Learner journey',      to: '/learner-journey' },
-  { label: 'Practitioner journey',  to: '/practitioner-journey' },
-  { label: 'For organizations',    to: '/for-organizations' },
   { label: 'Find a practitioner',  to: '/find-a-practitioner' },
   { label: 'AURA',                 to: '/aura' },
   { label: 'Pricing',              to: '/pricing' },

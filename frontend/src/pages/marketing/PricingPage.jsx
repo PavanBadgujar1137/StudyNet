@@ -5,18 +5,17 @@ import {
   OHEyebrow,
   OHPricingSection,
 } from '../../components/openhand'
-import { 
-  FiShield, 
-  FiZap, 
-  FiLock, 
-  FiArrowRight, 
-  FiCreditCard, 
+import {
+  FiShield,
+  FiZap,
+  FiArrowRight,
   FiRefreshCw,
   FiChevronDown,
   FiMessageSquare,
   FiBookOpen,
+  FiBriefcase,
   FiUserCheck,
-  FiBriefcase
+  FiCreditCard,
 } from 'react-icons/fi'
 
 export function PricingPage() {
@@ -81,85 +80,9 @@ export function PricingPage() {
       <main className="flex-1">
         
         {/* ========================================================================= */}
-        {/* HERO SECTION */}
-        {/* ========================================================================= */}
-        <header className="oh-pricing-hero pt-14 pb-12 text-center bg-gradient-to-b from-white via-slate-50 to-slate-100/60 border-b border-slate-200/70 relative overflow-hidden">
-          {/* Subtle Ambient Background Gradient */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[320px] bg-gradient-to-r from-emerald-500/10 via-blue-500/10 to-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-          
-          <div className="oh-wrap max-w-5xl mx-auto px-4 relative z-10">
-            <OHEyebrow>OpenHand Transparent Plans</OHEyebrow>
-
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight my-4 leading-tight">
-              100% Free for Learners <br className="hidden sm:inline" />
-              <span className="oh-grad-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                Platform Plans for Practitioners
-              </span>
-            </h1>
-
-            <p className="sub text-slate-600 text-base sm:text-lg max-w-2xl mx-auto font-medium leading-relaxed">
-              Learners enjoy complete, unrestricted free access to courses, circles, check-ins, and AURA AI. Practitioners get powerful practice tools with <strong>0% platform commission</strong>.
-            </p>
-
-            {/* Key Trust Highlights */}
-            <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 mt-8 text-xs sm:text-sm font-bold text-slate-700">
-              <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-emerald-200 text-emerald-700 shadow-xs">
-                <FiUserCheck className="text-emerald-600 text-base" />
-                <span>100% Free for Learners</span>
-              </div>
-              <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-xs">
-                <FiZap className="text-blue-600 text-base" />
-                <span>0% Commission for Practitioners</span>
-              </div>
-              <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-xs">
-                <FiShield className="text-purple-600 text-base" />
-                <span>Razorpay 256-bit Secure</span>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* ========================================================================= */}
         {/* INTERACTIVE PRICING SECTION (LEARNER FREE SHOWCASE & PRACTITIONER PLANS) */}
         {/* ========================================================================= */}
-        <OHPricingSection defaultRole="learner" />
-
-        {/* ========================================================================= */}
-        {/* PAYMENT & SECURITY HIGHLIGHTS */}
-        {/* ========================================================================= */}
-        <section className="py-14 bg-slate-50 border-b border-slate-200">
-          <div className="oh-wrap max-w-5xl mx-auto px-4 text-center">
-            <h3 className="text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-6">
-              BANK-GRADE PAYMENT &amp; SUBSCRIPTION SECURITY
-            </h3>
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col items-center text-center">
-                <FiCreditCard className="text-2xl text-blue-600 mb-2" />
-                <h4 className="font-bold text-slate-900 text-sm">Razorpay Integration</h4>
-                <p className="text-xs text-slate-500 mt-1">UPI, Cards &amp; NetBanking</p>
-              </div>
-
-              <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col items-center text-center">
-                <FiLock className="text-2xl text-emerald-600 mb-2" />
-                <h4 className="font-bold text-slate-900 text-sm">256-bit Encryption</h4>
-                <p className="text-xs text-slate-500 mt-1">PCI-DSS Compliant</p>
-              </div>
-
-              <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col items-center text-center">
-                <FiZap className="text-2xl text-amber-500 mb-2" />
-                <h4 className="font-bold text-slate-900 text-sm">Instant Unlocking</h4>
-                <p className="text-xs text-slate-500 mt-1">Immediate access</p>
-              </div>
-
-              <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col items-center text-center">
-                <FiShield className="text-2xl text-purple-600 mb-2" />
-                <h4 className="font-bold text-slate-900 text-sm">No Hidden Fees</h4>
-                <p className="text-xs text-slate-500 mt-1">Cancel anytime</p>
-              </div>
-            </div>
-          </div>
-        </section>
+        <OHPricingSection defaultRole="practitioner" />
 
         {/* ========================================================================= */}
         {/* ORGANIZATIONS & ENTERPRISE BANNER */}

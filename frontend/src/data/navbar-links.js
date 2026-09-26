@@ -4,18 +4,6 @@ export const NavbarLinks = [
     path: "/",
   },
   {
-    title: "Learner Journey",
-    path: "/learner-journey",
-  },
-  {
-    title: "Practitioner Journey",
-    path: "/practitioner-journey",
-  },
-  {
-    title: "For Organizations",
-    path: "/for-organizations",
-  },
-  {
     title: "Find a Practitioner",
     path: "/find-a-practitioner",
   },

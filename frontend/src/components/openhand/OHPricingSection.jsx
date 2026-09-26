@@ -1,13 +1,78 @@
 import React, { useState, useEffect } from "react"
 import { useSelector } from "react-redux"
-import { useNavigate } from "react-router-dom"
-import { FiShield, FiArrowRight, FiHeart, FiBookOpen, FiUsers, FiMessageSquare } from "react-icons/fi"
+import { useNavigate, Link } from "react-router-dom"
+import {
+  FiShield,
+  FiArrowRight,
+  FiHeart,
+  FiBookOpen,
+  FiUsers,
+  FiMessageSquare,
+} from "react-icons/fi"
 import { HiSparkles } from "react-icons/hi"
 import toast from "react-hot-toast"
 import OHEyebrow from "./OHEyebrow"
 import { apiConnector } from "../../services/apiConnector"
 
-export default function OHPricingSection({ defaultRole = "practitioner", title, subtitle, hideRoleSwitcher = false, isModal = false, onSuccess }) {
+const INCLUDED_PRACTITIONER_FEATURES = [
+  {
+    title: "0% commission",
+    desc: "You keep 100% of every session and programme fee.",
+  },
+  {
+    title: "Clients pay you directly",
+    desc: "Through your own UPI, bank account or payment link. OpenHand never holds your money.",
+  },
+  {
+    title: "Verified practitioner profile",
+    desc: "Credential-checked profile with a verified badge.",
+  },
+  {
+    title: "Priority directory placement",
+    desc: "Be found first by clients searching OpenHand.",
+  },
+  {
+    title: "Unlimited 1:1 session offers",
+    desc: "With your own personal booking link.",
+  },
+  {
+    title: "Unlimited live Circles",
+    desc: "Run group sessions and communities without limits.",
+  },
+  {
+    title: "Unlimited offers, free and paid",
+    desc: "Workshops, programmes, discovery calls and more.",
+  },
+  {
+    title: "AURA Aftercare Notes",
+    desc: "Structured session notes your clients can return to.",
+  },
+  {
+    title: "Check-in & reflection sequences",
+    desc: "Automated follow-ups that keep clients progressing between sessions.",
+  },
+  {
+    title: "Gift learner memberships",
+    desc: "Offer complimentary memberships to your clients.",
+  },
+  {
+    title: "Practitioner Network",
+    desc: "Peer Supervision Groups with fellow verified practitioners.",
+  },
+  {
+    title: "Circle analytics",
+    desc: "See attendance, engagement and client retention at a glance.",
+  },
+]
+
+export default function OHPricingSection({
+  defaultRole = "practitioner",
+  title,
+  subtitle,
+  hideRoleSwitcher = false,
+  isModal = false,
+  onSuccess,
+}) {
   const [activeTab, setActiveTab] = useState(defaultRole) // "learner" | "practitioner"
   const [payingPlan, setPayingPlan] = useState(null)
   const [subStatus, setSubStatus] = useState(null)
@@ -50,8 +115,8 @@ export default function OHPricingSection({ defaultRole = "practitioner", title, 
 
   const handlePayNow = async (planKey) => {
     if (!token) {
-      toast.error("Please login to subscribe to a practitioner plan.")
-      navigate("/login")
+      toast.error("Please login or sign up to join as a practitioner.")
+      navigate("/signup")
       return
     }
 
@@ -81,40 +146,30 @@ export default function OHPricingSection({ defaultRole = "practitioner", title, 
       }
 
       const { order, key, planName } = res.data
-
       toast.dismiss(toastId)
 
       const isRealRazorpayOrder =
-        typeof order?.id === 'string' &&
+        typeof order?.id === "string" &&
         /^order_[A-Za-z0-9]{14,}$/.test(order.id) &&
-        !order.id.includes('sub') &&
-        !order.id.includes('pract') &&
-        !order.id.includes('mock') &&
-        !order.id.includes('fake')
+        !order.id.includes("sub") &&
+        !order.id.includes("pract") &&
+        !order.id.includes("mock") &&
+        !order.id.includes("fake")
 
       const options = {
         key: key,
         amount: order.amount,
-        currency: order.currency || 'INR',
+        currency: order.currency || "INR",
         name: "OpenHand Wellbeing Platform",
         description: `Subscription: ${planName}`,
         ...(isRealRazorpayOrder ? { order_id: order.id } : {}),
         prefill: {
-          name: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : "",
+          name: user ? `${user.firstName || ""} ${user.lastName || ""}`.trim() : "",
           email: user?.email || "",
-          ...(
-            (() => {
-              const rawPhone = user?.additionalDetails?.contactNumber || user?.contactNumber
-              if (rawPhone && rawPhone !== 'null' && rawPhone !== 'undefined') {
-                const trimmed = String(rawPhone).trim()
-                if (trimmed.length > 0) return { contact: trimmed }
-              }
-              return {}
-            })()
-          ),
+          ...(user?.contactNumber ? { contact: String(user.contactNumber).trim() } : {}),
         },
         theme: {
-          color: "#1F5FE0",
+          color: "#2563EB",
         },
         handler: async (response) => {
           const verifyToastId = toast.loading("Verifying payment with Razorpay...")
@@ -136,7 +191,6 @@ export default function OHPricingSection({ defaultRole = "practitioner", title, 
                 id: verifyToastId,
               })
 
-              // Refresh subscription status
               const subRes = await apiConnector("GET", "/api/v1/payments/subscription/mine", null, {
                 Authorization: `Bearer ${token}`,
               })
@@ -147,7 +201,6 @@ export default function OHPricingSection({ defaultRole = "practitioner", title, 
                 onSuccess()
               }
 
-              // Redirect
               setTimeout(() => {
                 navigate("/practice")
               }, 1200)
@@ -178,97 +231,105 @@ export default function OHPricingSection({ defaultRole = "practitioner", title, 
     }
   }
 
-  const practitionerPlans = [
-    {
-      key: "starter",
-      name: "Starter",
-      price: "₹999",
-      period: "/month",
-      tagline: "For practitioners starting and building their online practice.",
-      badge: "PLATFORM ACCESS",
-      featured: false,
-      features: [
-        "AURA Aftercare Notes — free on every plan, including free tier",
-        "AURA Live Prompts panel — in-session (Starter and above)",
-        "Publish 1:1 Session offers",
-        "Host 1 live Circle",
-        "Directory listing & booking link",
-        "Razorpay direct payout integration",
-      ],
-    },
-    {
-      key: "growth",
-      name: "Growth",
-      price: "₹2,999",
-      period: "/month",
-      tagline: "Scale your practice with unlimited Circles, automations, and branded tools.",
-      badge: "MOST POPULAR FOR PRACTITIONERS",
-      featured: true,
-      features: [
-        "Everything in Starter",
-        "Unlimited live Circles",
-        "Unlimited offer publishing (free & paid)",
-        "Automated Check-in & reflection sequences",
-        "Priority directory placement & verified badge",
-        "Practitioner Network & Peer Supervision Groups",
-        "Free learner Memberships to gift clients",
-      ],
-    },
-    {
-      key: "master",
-      name: "Master Studio",
-      price: "₹5,999",
-      period: "/month",
-      tagline: "For established clinics and high-volume practitioners.",
-      badge: "CLINIC & STUDIO",
-      featured: false,
-      features: [
-        "Everything in Growth",
-        "Fastest payouts: direct T+2 bank settlement",
-        "White-label portal & custom domain",
-        "Branded app",
-        "Dedicated account manager",
-        "Zapier / API integration",
-        "Circle analytics & learner retention intelligence",
-      ],
-    },
-  ]
-
   return (
     <section className={isModal ? "py-6 bg-transparent" : "oh-sec py-16 bg-slate-50 border-t border-b border-slate-200"} id="pricing">
       <div className="oh-wrap max-w-[1360px] mx-auto px-4">
+        
         {/* Header */}
         <div className="text-center max-w-5xl mx-auto mb-10">
-          <OHEyebrow>{activeTab === "learner" ? "100% Free for Learners" : "Practitioner Platform Plans"}</OHEyebrow>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[42px] font-black text-slate-900 tracking-tight my-4">
-            {title || (
-              <>
-                {activeTab === "learner" ? (
-                  <>
-                    OpenHand is{" "}
-                    <span className="oh-grad-text bg-gradient-to-r from-emerald-600 via-teal-600 to-blue-600 bg-clip-text text-transparent">
-                      100% Completely Free
-                    </span>{" "}
-                    for Learners
-                  </>
-                ) : (
-                  <>
-                    Transparent plans for{" "}
-                    <span className="oh-grad-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                      Practitioners &amp; Studios
-                    </span>
-                  </>
-                )}
-              </>
-            )}
-          </h2>
-          <p className="text-slate-600 text-base sm:text-lg font-medium leading-relaxed max-w-2xl mx-auto">
-            {subtitle || (
-              activeTab === "learner"
-                ? "No subscriptions. No credit card required. Register, log in, and access practitioner free courses, live circles, daily check-ins, and AURA AI freely."
-                : "All payments are processed securely via Razorpay with 0% platform commission on your earnings."
-            )}
-          </p>
+          
+          {activeTab === "practitioner" ? (
+            <>
+              <span
+                style={{
+                  color: "#2563EB",
+                  backgroundColor: "#EFF6FF",
+                  border: "1px solid #BFDBFE",
+                  borderRadius: "9999px",
+                  padding: "6px 18px",
+                  fontSize: "12px",
+                  fontWeight: 800,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  display: "inline-block",
+                  marginBottom: "14px",
+                }}
+              >
+                FOR COACHES, THERAPISTS &amp; HEALING PRACTITIONERS
+              </span>
+
+              <h1 
+                className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight my-3 leading-[1.15]"
+                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+              >
+                Build your practice on OpenHand. <br />
+                <span style={{ color: "#2563EB" }}>
+                  Keep every rupee you earn.
+                </span>
+              </h1>
+
+              <p className="text-slate-600 text-sm sm:text-base font-medium leading-relaxed max-w-2xl mx-auto">
+                One flat membership. Zero commission on your sessions. Your clients pay you directly, and OpenHand never stands between you and your income.
+              </p>
+
+              {/* 3 Green Dots Strip */}
+              <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 mt-5 text-xs sm:text-sm font-semibold text-slate-700">
+                <span className="flex items-center gap-2">
+                  <span
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "9999px",
+                      backgroundColor: "#059669",
+                      display: "inline-block",
+                      flexShrink: 0,
+                    }}
+                  />
+                  0% commission, always
+                </span>
+                <span className="flex items-center gap-2">
+                  <span
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "9999px",
+                      backgroundColor: "#059669",
+                      display: "inline-block",
+                      flexShrink: 0,
+                    }}
+                  />
+                  Direct payments to you
+                </span>
+                <span className="flex items-center gap-2">
+                  <span
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "9999px",
+                      backgroundColor: "#059669",
+                      display: "inline-block",
+                      flexShrink: 0,
+                    }}
+                  />
+                  Verified practitioners only
+                </span>
+              </div>
+            </>
+          ) : (
+            <>
+              <OHEyebrow>100% Free for Learners</OHEyebrow>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[42px] font-black text-slate-900 tracking-tight my-4">
+                OpenHand is{" "}
+                <span className="oh-grad-text bg-gradient-to-r from-emerald-600 via-teal-600 to-blue-600 bg-clip-text text-transparent">
+                  100% Completely Free
+                </span>{" "}
+                for Learners
+              </h2>
+              <p className="text-slate-600 text-base sm:text-lg font-medium leading-relaxed max-w-2xl mx-auto">
+                No subscriptions. No credit card required. Register, log in, and access practitioner free courses, live circles, daily check-ins, and AURA AI freely.
+              </p>
+            </>
+          )}
 
           {/* User Active Plan / Status Banner */}
           {token && subStatus && (
@@ -321,7 +382,20 @@ export default function OHPricingSection({ defaultRole = "practitioner", title, 
 
           {/* Role Switcher Tabs */}
           {!hideRoleSwitcher && (
-            <div className="inline-flex flex-col sm:flex-row items-center p-1.5 rounded-2xl mt-8 shadow-sm border border-slate-300 max-w-full gap-1.5" style={{ backgroundColor: '#E2E8F0' }}>
+            <div className="inline-flex flex-col sm:flex-row items-center p-1.5 rounded-2xl mt-8 shadow-sm border border-slate-300 max-w-full gap-1.5" style={{ backgroundColor: "#E2E8F0" }}>
+              <button
+                type="button"
+                onClick={() => setActiveTab("practitioner")}
+                className="w-full sm:w-auto px-6 py-3 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-200 min-h-[44px] flex items-center justify-center cursor-pointer"
+                style={{
+                  backgroundColor: activeTab === "practitioner" ? "#0F172A" : "transparent",
+                  color: activeTab === "practitioner" ? "#FFFFFF" : "#0F172A",
+                  boxShadow: activeTab === "practitioner" ? "0 4px 14px rgba(15, 23, 42, 0.4)" : "none",
+                  transform: activeTab === "practitioner" ? "scale(1.02)" : "scale(1)",
+                }}
+              >
+                🩺 For Practitioners (0% Commission)
+              </button>
               <button
                 type="button"
                 onClick={() => setActiveTab("learner")}
@@ -335,19 +409,6 @@ export default function OHPricingSection({ defaultRole = "practitioner", title, 
               >
                 🎓 For Learners (100% Free Forever)
               </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab("practitioner")}
-                className="w-full sm:w-auto px-6 py-3 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-200 min-h-[44px] flex items-center justify-center cursor-pointer"
-                style={{
-                  backgroundColor: activeTab === "practitioner" ? "#0F172A" : "transparent",
-                  color: activeTab === "practitioner" ? "#FFFFFF" : "#0F172A",
-                  boxShadow: activeTab === "practitioner" ? "0 4px 14px rgba(15, 23, 42, 0.4)" : "none",
-                  transform: activeTab === "practitioner" ? "scale(1.02)" : "scale(1)",
-                }}
-              >
-                🩺 For Practitioners (From ₹999/mo)
-              </button>
             </div>
           )}
         </div>
@@ -355,8 +416,7 @@ export default function OHPricingSection({ defaultRole = "practitioner", title, 
         {/* ─── LEARNER 100% FREE SHOWCASE CARD ─── */}
         {activeTab === "learner" ? (
           <div className="max-w-4xl mx-auto pt-4">
-            <div className="bg-white rounded-3xl shadow-2xl p-8 sm:p-12 relative overflow-hidden" style={{ border: '2px solid #10B981' }}>
-              {/* Header Badge */}
+            <div className="bg-white rounded-3xl shadow-2xl p-8 sm:p-12 relative overflow-hidden" style={{ border: "2px solid #10B981" }}>
               <div className="flex flex-wrap items-center justify-between gap-4 mb-8 pb-6 border-b border-slate-100">
                 <div>
                   <div
@@ -393,7 +453,6 @@ export default function OHPricingSection({ defaultRole = "practitioner", title, 
                 </div>
               </div>
 
-              {/* Free Features Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-10">
                 {[
                   { title: "Free Course Access", desc: "Watch and complete all practitioner free video courses without limits.", icon: FiBookOpen },
@@ -431,34 +490,12 @@ export default function OHPricingSection({ defaultRole = "practitioner", title, 
                 })}
               </div>
 
-              {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4 border-t border-slate-100">
                 {token ? (
                   <button
                     type="button"
                     onClick={() => navigate("/app/courses")}
-                    className="w-full sm:w-auto flex items-center justify-center gap-2 cursor-pointer"
-                    style={{
-                      background: "#059669",
-                      color: "#FFFFFF",
-                      padding: "14px 32px",
-                      borderRadius: "9999px",
-                      border: "none",
-                      fontWeight: 800,
-                      fontSize: "15px",
-                      boxShadow: "0 4px 14px rgba(5, 150, 105, 0.4)",
-                      transition: "all 0.2s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = "#047857"
-                      e.currentTarget.style.transform = "translateY(-2px)"
-                      e.currentTarget.style.boxShadow = "0 6px 20px rgba(5, 150, 105, 0.5)"
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = "#059669"
-                      e.currentTarget.style.transform = "none"
-                      e.currentTarget.style.boxShadow = "0 4px 14px rgba(5, 150, 105, 0.4)"
-                    }}
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 cursor-pointer font-extrabold text-sm px-8 py-3.5 rounded-full text-white bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/30 transition-all"
                   >
                     <span>Go to Courses Library</span>
                     <FiArrowRight size={18} />
@@ -468,28 +505,7 @@ export default function OHPricingSection({ defaultRole = "practitioner", title, 
                     <button
                       type="button"
                       onClick={() => navigate("/signup")}
-                      className="w-full sm:w-auto flex items-center justify-center gap-2 cursor-pointer"
-                      style={{
-                        background: "#059669",
-                        color: "#FFFFFF",
-                        padding: "14px 32px",
-                        borderRadius: "9999px",
-                        border: "none",
-                        fontWeight: 800,
-                        fontSize: "15px",
-                        boxShadow: "0 4px 14px rgba(5, 150, 105, 0.4)",
-                        transition: "all 0.2s ease",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "#047857"
-                        e.currentTarget.style.transform = "translateY(-2px)"
-                        e.currentTarget.style.boxShadow = "0 6px 20px rgba(5, 150, 105, 0.5)"
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "#059669"
-                        e.currentTarget.style.transform = "none"
-                        e.currentTarget.style.boxShadow = "0 4px 14px rgba(5, 150, 105, 0.4)"
-                      }}
+                      className="w-full sm:w-auto flex items-center justify-center gap-2 cursor-pointer font-extrabold text-sm px-8 py-3.5 rounded-full text-white bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/30 transition-all"
                     >
                       <span>Create Free Account</span>
                       <FiArrowRight size={18} />
@@ -497,25 +513,7 @@ export default function OHPricingSection({ defaultRole = "practitioner", title, 
                     <button
                       type="button"
                       onClick={() => navigate("/login")}
-                      className="w-full sm:w-auto flex items-center justify-center cursor-pointer"
-                      style={{
-                        background: "#F1F5F9",
-                        color: "#0F172A",
-                        padding: "14px 32px",
-                        borderRadius: "9999px",
-                        border: "1.5px solid #CBD5E1",
-                        fontWeight: 800,
-                        fontSize: "15px",
-                        transition: "all 0.2s ease",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "#E2E8F0"
-                        e.currentTarget.style.borderColor = "#94A3B8"
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "#F1F5F9"
-                        e.currentTarget.style.borderColor = "#CBD5E1"
-                      }}
+                      className="w-full sm:w-auto flex items-center justify-center cursor-pointer font-bold text-sm px-8 py-3.5 rounded-full text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-300 transition-all"
                     >
                       <span>Learner Login</span>
                     </button>
@@ -525,157 +523,588 @@ export default function OHPricingSection({ defaultRole = "practitioner", title, 
             </div>
           </div>
         ) : (
-          <>
-            {/* All Plans 0% Commission Callout for Practitioners */}
-            <div className="text-center mb-6">
-              <span
-                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs sm:text-sm font-extrabold shadow-xs"
-                style={{ color: "#1D4ED8", backgroundColor: "#EFF6FF", border: "1px solid #BFDBFE" }}
+          /* ─── PRACTITIONER PRICING 3-CARDS + 12-FEATURES GRID ─── */
+          <div className="pt-2">
+            
+            {/* 3 Cards Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch max-w-7xl mx-auto">
+              
+              {/* Card 1: Monthly Practitioner Pro */}
+              <div className="bg-white rounded-3xl p-7 sm:p-8 flex flex-col justify-between border border-slate-200 shadow-sm hover:shadow-md transition-all">
+                <div>
+                  <div className="text-[11px] font-extrabold tracking-widest text-slate-500 uppercase mb-2">
+                    MONTHLY
+                  </div>
+                  <h3 
+                    className="text-2xl sm:text-3xl font-bold text-slate-900 mb-1"
+                    style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                  >
+                    Practitioner Pro
+                  </h3>
+                  <p className="text-xs text-slate-500 min-h-[34px] leading-relaxed">
+                    The complete practitioner toolkit, billed month to month.
+                  </p>
+
+                  <div className="mt-4 mb-1">
+                    <span className="text-4xl sm:text-5xl font-extrabold text-slate-900">₹6,000</span>
+                    <span className="text-sm font-semibold text-slate-500 ml-1">/month</span>
+                  </div>
+                  <div className="text-xs text-slate-500 mb-6 font-medium">
+                    ₹72,000 billed across 12 months
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handlePayNow("pro_monthly")}
+                    disabled={payingPlan === "pro_monthly"}
+                    className="w-full py-3.5 px-6 rounded-full font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer mb-8 hover:opacity-90"
+                    style={{ backgroundColor: "#0F172A", color: "#FFFFFF" }}
+                  >
+                    <span>{payingPlan === "pro_monthly" ? "Opening Razorpay..." : "Join as a Practitioner →"}</span>
+                  </button>
+
+                  <ul className="space-y-3.5 text-xs text-slate-700 font-medium">
+                    <li className="flex items-start gap-2.5">
+                      <span
+                        style={{
+                          width: "18px",
+                          height: "18px",
+                          borderRadius: "9999px",
+                          backgroundColor: "#059669",
+                          color: "#FFFFFF",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          marginTop: "2px",
+                        }}
+                      >
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
+                        </svg>
+                      </span>
+                      <span>0% commission. Keep 100% of your fees</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span
+                        style={{
+                          width: "18px",
+                          height: "18px",
+                          borderRadius: "9999px",
+                          backgroundColor: "#059669",
+                          color: "#FFFFFF",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          marginTop: "2px",
+                        }}
+                      >
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
+                        </svg>
+                      </span>
+                      <span>Clients pay you directly</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span
+                        style={{
+                          width: "18px",
+                          height: "18px",
+                          borderRadius: "9999px",
+                          backgroundColor: "#059669",
+                          color: "#FFFFFF",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          marginTop: "2px",
+                        }}
+                      >
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
+                        </svg>
+                      </span>
+                      <span>Verified profile &amp; priority placement</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span
+                        style={{
+                          width: "18px",
+                          height: "18px",
+                          borderRadius: "9999px",
+                          backgroundColor: "#059669",
+                          color: "#FFFFFF",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          marginTop: "2px",
+                        }}
+                      >
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
+                        </svg>
+                      </span>
+                      <span>Unlimited sessions, Circles and offers</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span
+                        style={{
+                          width: "18px",
+                          height: "18px",
+                          borderRadius: "9999px",
+                          backgroundColor: "#059669",
+                          color: "#FFFFFF",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          marginTop: "2px",
+                        }}
+                      >
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
+                        </svg>
+                      </span>
+                      <span>AURA Aftercare Notes &amp; client sequences</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="border-t border-dashed border-slate-200 pt-4 mt-8 text-center text-xs font-semibold text-slate-500">
+                  0% commission · You keep 100%
+                </div>
+              </div>
+
+              {/* Card 2: Annual Practitioner Pro (Best Value) */}
+              <div
+                className="bg-white rounded-3xl p-7 sm:p-8 flex flex-col justify-between relative shadow-xl transform lg:-translate-y-2"
+                style={{ border: "2px solid #2563EB" }}
               >
-                <span>✨</span>
-                <span>All plans: 0% commission on your session &amp; Circle earnings.</span>
-              </span>
+                {/* Floating "Best value" Badge */}
+                <span
+                  style={{
+                    position: "absolute",
+                    top: "-14px",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    backgroundColor: "#2563EB",
+                    color: "#FFFFFF",
+                    fontSize: "11px",
+                    fontWeight: 800,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                    padding: "4px 16px",
+                    borderRadius: "9999px",
+                    boxShadow: "0 4px 14px rgba(37, 99, 235, 0.35)",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Best value
+                </span>
+
+                <div>
+                  <div className="text-[11px] font-extrabold tracking-widest text-slate-500 uppercase mb-2">
+                    ANNUAL
+                  </div>
+                  <h3 
+                    className="text-2xl sm:text-3xl font-bold text-slate-900 mb-1"
+                    style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                  >
+                    Practitioner Pro
+                  </h3>
+                  <p className="text-xs text-slate-500 min-h-[34px] leading-relaxed">
+                    The same complete toolkit, with a year of extras.
+                  </p>
+
+                  <div className="mt-4 mb-1">
+                    <span className="text-4xl sm:text-5xl font-extrabold text-slate-900">₹50,000</span>
+                    <span className="text-sm font-semibold text-slate-500 ml-1">/year</span>
+                  </div>
+                  <div className="text-xs text-slate-500 mb-6 font-medium">
+                    Works out to ₹4,167/month · <span style={{ color: "#2563EB", fontWeight: 800 }}>Save ₹22,000</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handlePayNow("pro_annual")}
+                    disabled={payingPlan === "pro_annual"}
+                    className="w-full py-3.5 px-6 rounded-full font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer mb-8 text-white hover:opacity-95"
+                    style={{ backgroundColor: "#2563EB", boxShadow: "0 10px 24px rgba(37, 99, 235, 0.28)" }}
+                  >
+                    <span>{payingPlan === "pro_annual" ? "Opening Razorpay..." : "Join for the Year →"}</span>
+                  </button>
+
+                  <div className="text-[11px] font-black uppercase tracking-wider text-slate-700 mb-3">
+                    EVERYTHING IN MONTHLY, PLUS
+                  </div>
+
+                  <ul className="space-y-3.5 text-xs text-slate-700 font-medium">
+                    <li className="flex items-start gap-2.5">
+                      <span
+                        style={{
+                          width: "18px",
+                          height: "18px",
+                          borderRadius: "9999px",
+                          backgroundColor: "#059669",
+                          color: "#FFFFFF",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          marginTop: "2px",
+                        }}
+                      >
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
+                        </svg>
+                      </span>
+                      <span>About 3.5 months free every year</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span
+                        style={{
+                          width: "18px",
+                          height: "18px",
+                          borderRadius: "9999px",
+                          backgroundColor: "#059669",
+                          color: "#FFFFFF",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          marginTop: "2px",
+                        }}
+                      >
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
+                        </svg>
+                      </span>
+                      <span>Your price locked for 12 months</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span
+                        style={{
+                          width: "18px",
+                          height: "18px",
+                          borderRadius: "9999px",
+                          backgroundColor: "#059669",
+                          color: "#FFFFFF",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          marginTop: "2px",
+                        }}
+                      >
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
+                        </svg>
+                      </span>
+                      <span>Featured Spotlight in the directory</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span
+                        style={{
+                          width: "18px",
+                          height: "18px",
+                          borderRadius: "9999px",
+                          backgroundColor: "#059669",
+                          color: "#FFFFFF",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          marginTop: "2px",
+                        }}
+                      >
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
+                        </svg>
+                      </span>
+                      <span>Concierge onboarding: we set up your profile and first offers</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="border-t border-dashed border-slate-200 pt-4 mt-8 text-center text-xs font-semibold text-slate-500">
+                  0% commission · You keep 100%
+                </div>
+              </div>
+
+              {/* Card 3: White Label Master Studio */}
+              <div
+                className="rounded-3xl p-7 sm:p-8 flex flex-col justify-between shadow-2xl text-white relative"
+                style={{ backgroundColor: "#0F172A", border: "1px solid #1E293B" }}
+              >
+                <div>
+                  <div className="text-[11px] font-extrabold tracking-widest text-slate-300 uppercase mb-2">
+                    WHITE LABEL
+                  </div>
+                  <h3 
+                    className="text-2xl sm:text-3xl font-bold text-white mb-1"
+                    style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                  >
+                    Master Studio
+                  </h3>
+                  <p className="text-xs text-slate-300 min-h-[34px] leading-relaxed">
+                    Your own coaching platform, powered by OpenHand.
+                  </p>
+
+                  <div className="mt-4 mb-1">
+                    <span className="text-4xl sm:text-5xl font-extrabold text-white">Tailored</span>
+                  </div>
+                  <div className="text-xs text-slate-300 mb-6 font-medium">
+                    Priced around your studio's size and needs
+                  </div>
+
+                  <Link
+                    to="/contact-us"
+                    className="w-full py-3.5 px-6 rounded-full font-extrabold text-sm transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer mb-8 hover:bg-slate-100"
+                    style={{ backgroundColor: "#FFFFFF", color: "#0F172A" }}
+                  >
+                    <span>Talk to Us →</span>
+                  </Link>
+
+                  <div className="text-[11px] font-black uppercase tracking-wider text-slate-300 mb-3">
+                    EVERYTHING IN PRACTITIONER PRO, PLUS
+                  </div>
+
+                  <ul className="space-y-3.5 text-xs text-slate-200 font-medium">
+                    <li className="flex items-start gap-2.5">
+                      <span
+                        style={{
+                          width: "18px",
+                          height: "18px",
+                          borderRadius: "9999px",
+                          backgroundColor: "rgba(255, 255, 255, 0.18)",
+                          color: "#FFFFFF",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          marginTop: "2px",
+                        }}
+                      >
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
+                        </svg>
+                      </span>
+                      <span>Your brand and your domain, with no OpenHand branding</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span
+                        style={{
+                          width: "18px",
+                          height: "18px",
+                          borderRadius: "9999px",
+                          backgroundColor: "rgba(255, 255, 255, 0.18)",
+                          color: "#FFFFFF",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          marginTop: "2px",
+                        }}
+                      >
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
+                        </svg>
+                      </span>
+                      <span>Branded mobile app with your name and logo</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span
+                        style={{
+                          width: "18px",
+                          height: "18px",
+                          borderRadius: "9999px",
+                          backgroundColor: "rgba(255, 255, 255, 0.18)",
+                          color: "#FFFFFF",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          marginTop: "2px",
+                        }}
+                      >
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
+                        </svg>
+                      </span>
+                      <span>Add your team of coaches under one studio</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span
+                        style={{
+                          width: "18px",
+                          height: "18px",
+                          borderRadius: "9999px",
+                          backgroundColor: "rgba(255, 255, 255, 0.18)",
+                          color: "#FFFFFF",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          marginTop: "2px",
+                        }}
+                      >
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
+                        </svg>
+                      </span>
+                      <span>Run your own programmes, cohorts and certifications</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span
+                        style={{
+                          width: "18px",
+                          height: "18px",
+                          borderRadius: "9999px",
+                          backgroundColor: "rgba(255, 255, 255, 0.18)",
+                          color: "#FFFFFF",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          marginTop: "2px",
+                        }}
+                      >
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
+                        </svg>
+                      </span>
+                      <span>Connect your own payment account. Money goes straight to you</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span
+                        style={{
+                          width: "18px",
+                          height: "18px",
+                          borderRadius: "9999px",
+                          backgroundColor: "rgba(255, 255, 255, 0.18)",
+                          color: "#FFFFFF",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          marginTop: "2px",
+                        }}
+                      >
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
+                        </svg>
+                      </span>
+                      <span>Zapier &amp; API integration</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span
+                        style={{
+                          width: "18px",
+                          height: "18px",
+                          borderRadius: "9999px",
+                          backgroundColor: "rgba(255, 255, 255, 0.18)",
+                          color: "#FFFFFF",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          marginTop: "2px",
+                        }}
+                      >
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
+                        </svg>
+                      </span>
+                      <span>Dedicated account manager</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span
+                        style={{
+                          width: "18px",
+                          height: "18px",
+                          borderRadius: "9999px",
+                          backgroundColor: "rgba(255, 255, 255, 0.18)",
+                          color: "#FFFFFF",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          marginTop: "2px",
+                        }}
+                      >
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
+                        </svg>
+                      </span>
+                      <span>White-glove migration of your existing clients</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="border-t border-dashed border-slate-700 pt-4 mt-8 text-center text-xs font-semibold text-slate-400">
+                  White label · 0% commission
+                </div>
+              </div>
+
             </div>
 
-            {/* Pricing Cards Grid */}
-            <div className="plans-grid grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch pt-4">
-              {practitionerPlans.map((plan) => {
-                const isCurrentActive = subStatus?.subscription?.planKey === plan.key
+            {/* ─── 12-Item Feature Breakdown Section (Screenshot 2) ─── */}
+            <div 
+              className="mt-16 sm:mt-20 rounded-[32px] p-6 sm:p-12 shadow-xs max-w-7xl mx-auto"
+              style={{ backgroundColor: "#F8FAFC", border: "1px solid #E2E8F0" }}
+            >
+              <div className="text-center max-w-3xl mx-auto mb-10">
+                <h3 
+                  className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight"
+                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                >
+                  Every Practitioner Pro membership includes
+                </h3>
+                <p className="text-slate-600 text-sm sm:text-base font-medium mt-2">
+                  Monthly or annual, you get the full toolkit from day one.
+                </p>
+              </div>
 
-                return (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                {INCLUDED_PRACTITIONER_FEATURES.map((item, idx) => (
                   <div
-                    key={plan.key}
-                    className={`plan-card relative rounded-3xl p-8 flex flex-col justify-between transition-all duration-300 ${
-                      plan.featured
-                        ? "bg-slate-900 text-white border-2 border-indigo-500 shadow-2xl transform md:-translate-y-3"
-                        : "bg-white text-slate-900 border border-slate-200 shadow-sm hover:shadow-lg"
-                    }`}
+                    key={idx}
+                    className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-start gap-3.5 hover:border-slate-300 hover:shadow-sm transition-all"
                   >
-                    {plan.featured && (
-                      <span
-                        className="featured-badge absolute -top-4 left-1/2 -translate-x-1/2 text-[11px] font-extrabold tracking-wider uppercase py-1.5 px-5 rounded-full shadow-lg whitespace-nowrap"
-                        style={{ background: "linear-gradient(90deg, #2563EB, #4F46E5, #9333EA)", color: "#FFFFFF" }}
-                      >
-                        {plan.badge}
-                      </span>
-                    )}
-
+                    <span
+                      style={{
+                        width: "22px",
+                        height: "22px",
+                        borderRadius: "9999px",
+                        backgroundColor: "#059669",
+                        color: "#FFFFFF",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                        marginTop: "2px",
+                      }}
+                    >
+                      <svg width="12" height="9" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
+                      </svg>
+                    </span>
                     <div>
-                      <h3 className={`text-2xl font-bold mb-2 ${plan.featured ? "text-white" : "text-slate-900"}`}>
-                        {plan.name}
-                      </h3>
-                      <p
-                        className={`text-xs mb-6 min-h-[38px] font-medium leading-relaxed ${
-                          plan.featured ? "text-slate-300" : "text-slate-600"
-                        }`}
-                      >
-                        {plan.tagline}
+                      <h4 className="font-extrabold text-slate-900 text-sm mb-1 leading-snug">
+                        {item.title}
+                      </h4>
+                      <p className="text-slate-600 text-xs leading-relaxed font-medium">
+                        {item.desc}
                       </p>
-
-                      <div className="price-tag text-4xl font-extrabold mb-3 tracking-tight">
-                        {plan.price}
-                        <small
-                          className={`text-base font-medium ${plan.featured ? "text-slate-300" : "text-slate-500"}`}
-                        >
-                          {plan.period}
-                        </small>
-                      </div>
-
-                      {!plan.featured && (
-                        <div
-                          className="cut-badge font-bold text-[11px] uppercase tracking-wider py-1.5 px-3 rounded-xl mb-6 inline-flex items-center gap-1.5"
-                          style={{ backgroundColor: "#EFF6FF", color: "#1D4ED8", border: "1px solid #DBEAFE" }}
-                        >
-                          {plan.badge}
-                        </div>
-                      )}
-                      {plan.featured && (
-                        <div
-                          className="cut-badge font-bold text-[11px] uppercase tracking-wider py-1.5 px-3 rounded-xl mb-6 inline-flex items-center gap-1.5"
-                          style={{ backgroundColor: "rgba(49, 46, 129, 0.6)", color: "#7DD3FC", border: "1px solid rgba(99, 102, 241, 0.3)" }}
-                        >
-                          FULL UNLOCK + RAZORPAY SECURE
-                        </div>
-                      )}
-
-                      <ul
-                        className={`plan-features text-sm space-y-3 mb-8 ${
-                          plan.featured ? "text-slate-200" : "text-slate-700"
-                        }`}
-                      >
-                        {plan.features.map((feat, idx) => (
-                          <li key={idx} className="flex items-start gap-2.5 font-medium text-xs leading-snug">
-                            <span
-                              className="font-bold text-sm"
-                              style={{ color: plan.featured ? "#38BDF8" : "#059669" }}
-                            >
-                              ✓
-                            </span>
-                            <span>{feat}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    <div className="flex flex-col gap-3 mt-6">
-                      <button
-                        type="button"
-                        onClick={() => handlePayNow(plan.key)}
-                        disabled={payingPlan === plan.key || isCurrentActive}
-                        style={{
-                          width: '100%',
-                          padding: '14px 20px',
-                          borderRadius: '9999px',
-                          border: 'none',
-                          fontWeight: 800,
-                          fontSize: '14px',
-                          cursor: (payingPlan === plan.key || isCurrentActive) ? 'not-allowed' : 'pointer',
-                          background: isCurrentActive
-                            ? '#10B981'
-                            : plan.featured
-                            ? 'linear-gradient(135deg, #3B82F6 0%, #6366F1 50%, #8B5CF6 100%)'
-                            : '#0F172A',
-                          color: '#FFFFFF',
-                          boxShadow: isCurrentActive
-                            ? '0 4px 14px rgba(16, 185, 129, 0.3)'
-                            : plan.featured
-                            ? '0 10px 25px -5px rgba(99, 102, 241, 0.5)'
-                            : '0 4px 14px rgba(15, 23, 42, 0.15)',
-                          transition: 'all 0.2s ease-in-out',
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!isCurrentActive && payingPlan !== plan.key) {
-                            e.currentTarget.style.transform = 'translateY(-2px)'
-                            e.currentTarget.style.boxShadow = plan.featured
-                              ? '0 15px 30px -5px rgba(99, 102, 241, 0.6)'
-                              : '0 8px 20px rgba(15, 23, 42, 0.25)'
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!isCurrentActive && payingPlan !== plan.key) {
-                            e.currentTarget.style.transform = 'none'
-                            e.currentTarget.style.boxShadow = plan.featured
-                              ? '0 10px 25px -5px rgba(99, 102, 241, 0.5)'
-                              : '0 4px 14px rgba(15, 23, 42, 0.15)'
-                          }
-                        }}
-                      >
-                        {payingPlan === plan.key
-                          ? "Opening Razorpay..."
-                          : isCurrentActive
-                          ? "Current Active Plan ✓"
-                          : `Subscribe to ${plan.name} — ${plan.price}`}
-                      </button>
-
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '11px', color: plan.featured ? '#94A3B8' : '#64748B', fontWeight: 600, marginTop: '4px' }}>
-                        <FiShield size={13} color="#10B981" /> 100% Direct Razorpay Payment
-                      </div>
                     </div>
                   </div>
-                )
-              })}
+                ))}
+              </div>
             </div>
-          </>
+
+          </div>
         )}
       </div>
     </section>
