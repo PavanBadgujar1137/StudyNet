@@ -1,11 +1,11 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { OHFooter } from '../../components/openhand'
+import learnerIllustration from '../../assets/Images/illustration_path.svg'
 import websiteIllustration from '../../assets/Images/website_illustration.svg'
 import {
   FiArrowRight,
   FiSearch,
-  FiStar,
 } from 'react-icons/fi'
 
 export function Home() {
@@ -16,8 +16,6 @@ export function Home() {
 
   // Learner Hero interactive state
   const [learnerQuery, setLearnerQuery] = useState('')
-  const [selectedOffer, setSelectedOffer] = useState('1on1') // '1on1' | 'circle'
-  const [selectedTime, setSelectedTime] = useState('Today 6:00')
 
   // Practitioner Hero interactive state
   const [claimHandle, setClaimHandle] = useState('yourname')
@@ -243,93 +241,15 @@ export function Home() {
             <div className="lg:col-span-5 flex justify-center">
               
               {heroRole === 'learner' ? (
-                /* Learner Mock Practitioner Card */
-                <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 border border-slate-200 shadow-xl transition-all">
-                  
-                  {/* Practitioner Header */}
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="w-14 h-14 rounded-full bg-blue-100 text-blue-800 font-black flex items-center justify-center text-lg shrink-0 border border-blue-200">
-                      PR
-                    </div>
-                    <div>
-                      <h4 className="font-extrabold text-slate-900 text-base leading-snug">
-                        Dr. Priya Raman
-                      </h4>
-                      <p className="text-xs text-slate-500 font-medium">
-                        Burnout &amp; Resilience Coach
-                      </p>
-                      <div className="flex items-center gap-1.5 mt-1 text-xs font-bold text-amber-500">
-                        <FiStar size={13} fill="currentColor" />
-                        <span>4.9</span>
-                        <span className="text-slate-400 font-medium">· 320 sessions</span>
-                      </div>
-                    </div>
+                /* Learner Hero Illustration */
+                <div className="w-full max-w-lg lg:max-w-xl flex items-center justify-center">
+                  <div className="relative w-full bg-white rounded-3xl p-3 sm:p-4 border border-slate-200 shadow-xl transition-all hover:shadow-2xl overflow-hidden group">
+                    <img
+                      src={learnerIllustration}
+                      alt="Find the Guide Who Gets You"
+                      className="w-full h-auto object-contain rounded-2xl transform transition-transform duration-300 group-hover:scale-[1.01]"
+                    />
                   </div>
-
-                  {/* 2 Selectable Offer Boxes */}
-                  <div className="space-y-3 mb-5">
-                    <div
-                      onClick={() => setSelectedOffer('1on1')}
-                      className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between cursor-pointer ${
-                        selectedOffer === '1on1'
-                          ? 'border-blue-600 bg-blue-50/60 shadow-xs'
-                          : 'border-slate-200 bg-white hover:border-slate-300'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="text-blue-600">📞</span>
-                        <span className="text-xs font-bold text-slate-800">
-                          1:1 Session · 45 min
-                        </span>
-                      </div>
-                      <span className="text-xs font-extrabold text-slate-900">₹1,499</span>
-                    </div>
-
-                    <div
-                      onClick={() => setSelectedOffer('circle')}
-                      className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between cursor-pointer ${
-                        selectedOffer === 'circle'
-                          ? 'border-blue-600 bg-blue-50/60 shadow-xs'
-                          : 'border-slate-200 bg-white hover:border-slate-300'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="text-indigo-600">⭕</span>
-                        <span className="text-xs font-bold text-slate-800">
-                          Burnout Circle · 6 wks
-                        </span>
-                      </div>
-                      <span className="text-xs font-extrabold text-slate-900">₹4,999</span>
-                    </div>
-                  </div>
-
-                  {/* Time Slots */}
-                  <div className="flex flex-wrap items-center gap-2 mb-6">
-                    {['Today 6:00', 'Today 8:30', 'Tue 11:00'].map((time) => (
-                      <button
-                        key={time}
-                        type="button"
-                        onClick={() => setSelectedTime(time)}
-                        className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                          selectedTime === time
-                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                            : 'bg-emerald-50/60 text-emerald-700 border border-emerald-100 hover:bg-emerald-100/70'
-                        }`}
-                      >
-                        {time}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Primary CTA */}
-                  <button
-                    type="button"
-                    onClick={() => navigate('/find-a-practitioner')}
-                    className="w-full py-3.5 px-6 rounded-2xl font-bold text-sm text-white shadow-md hover:bg-blue-700 transition-all cursor-pointer"
-                    style={{ backgroundColor: '#2563EB', boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)' }}
-                  >
-                    Book a session
-                  </button>
                 </div>
               ) : (
                 /* Practitioner Hero Illustration */
