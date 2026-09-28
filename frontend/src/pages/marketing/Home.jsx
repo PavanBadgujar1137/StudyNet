@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { OHFooter } from '../../components/openhand'
+import { CONTACT } from '../../config/productConfig'
 import {
   FiClock,
   FiCheckCircle,
@@ -220,7 +221,7 @@ export function Home() {
             </span>
             <div style={{ width: '1px', height: '20px', background: '#CBD5E1' }} className="hidden sm:block" />
             <span style={{ fontSize: '12px', color: '#475569', fontWeight: 600 }}>
-              Built by Zwiebel AI · India-first wellness tech
+              {CONTACT.address}
             </span>
           </div>
         </div>

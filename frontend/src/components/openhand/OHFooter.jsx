@@ -8,12 +8,12 @@ import {
   FaInstagram, 
   FaLinkedin 
 } from 'react-icons/fa'
-import { 
-  FiArrowUp, 
-  FiGlobe, 
-  FiHeart,
-  FiMail
+import {
+  FiArrowUp,
+  FiMail,
+  FiMapPin,
 } from 'react-icons/fi'
+import { CONTACT } from '../../config/productConfig'
 
 const LINKS = [
   { 
@@ -130,15 +130,9 @@ export function OHFooter() {
               </span>
             </div>
 
-            {/* Initiative Tag & Email Contact */}
-            <div className="flex items-center text-xs font-medium gap-1.5 mt-1" style={{ color: '#CBD5E1' }}>
-              <FiGlobe style={{ color: '#60A5FA' }} />
-              <span>A Magnificent Us initiative, built by <strong className="font-bold" style={{ color: '#60A5FA' }}>Zwiebel AI</strong>.</span>
-            </div>
-
             <div className="flex items-center text-xs font-semibold gap-2 mt-1" style={{ color: '#E2E8F0' }}>
               <FiMail style={{ color: '#60A5FA' }} />
-              <span>Contact: <a href="mailto:connect@openhand.live" className="hover:underline font-bold" style={{ color: '#60A5FA' }}>connect@openhand.live</a></span>
+              <span>Contact: <a href={`mailto:${CONTACT.connect}`} className="hover:underline font-bold" style={{ color: '#60A5FA' }}>{CONTACT.connect}</a></span>
             </div>
 
             {/* Social Links */}
@@ -201,13 +195,10 @@ export function OHFooter() {
 
         {/* Bottom Bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 text-xs font-semibold" style={{ color: '#E2E8F0' }}>
-          <div className="flex flex-wrap items-center gap-2 text-center sm:text-left">
-            <span>© {new Date().getFullYear()} <strong className="font-bold" style={{ color: '#FFFFFF' }}>OpenHand</strong> · All rights reserved.</span>
-            <span className="hidden sm:inline text-blue-500">•</span>
-            <span className="inline-flex items-center gap-1.5">
-              Crafted with <FiHeart className="text-red-500 animate-pulse" /> by <strong style={{ color: '#60A5FA' }}>Zwiebel AI</strong>
-            </span>
-          </div>
+          <p className="inline-flex items-center gap-2 text-center sm:text-left m-0" style={{ color: '#CBD5E1' }}>
+            <FiMapPin style={{ color: '#60A5FA', flexShrink: 0 }} />
+            <span>{CONTACT.address}</span>
+          </p>
 
           <div>
             <button
