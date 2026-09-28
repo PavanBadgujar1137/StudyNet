@@ -40,6 +40,7 @@ import { apiConnector } from '../../../../services/apiConnector'
 import { fetchPractitionerDashboardData } from '../../../../services/operations/dashboardAPI'
 
 import { formatPractitionerName } from '../../../../utils/formatName'
+import ProfileDropdown from '../../Auth/ProfileDropdown'
 
 export function PractitionerDashboard() {
   const location = useLocation()
@@ -262,7 +263,12 @@ export function PractitionerDashboard() {
         <div>
           {/* Sidebar Header */}
           <div className="oh-sidebar-head">
-            <div className="oh-sidebar-brand">
+            <div 
+              className="oh-sidebar-brand"
+              onClick={() => setActiveSection('dash')}
+              style={{ cursor: 'pointer' }}
+              title="Return to Practitioner Dashboard"
+            >
               <div className="oh-sidebar-brand-icon" style={{ background: 'linear-gradient(135deg, #1F5FE0 0%, #8A2BE0 100%)' }}>
                 <FiZap />
               </div>
@@ -399,9 +405,9 @@ export function PractitionerDashboard() {
       </aside>
 
       {/* Main Viewport */}
-      <main className="oh-main-viewport">
+      <main className="oh-main-viewport" style={activeSection === 'aura' ? { overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column' } : {}}>
         {/* Sticky Top Bar */}
-        <div className="oh-viewport-header">
+        <div className="oh-viewport-header" style={activeSection === 'aura' ? { flexShrink: 0 } : {}}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <button 
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#334155', padding: '4px' }}
@@ -479,11 +485,16 @@ export function PractitionerDashboard() {
             >
               <FiVideo /> Enter Session Room
             </button>
+
+            {/* Profile Dropdown with working Dashboard & Logout */}
+            <div style={{ marginLeft: '4px', display: 'flex', alignItems: 'center' }}>
+              <ProfileDropdown onSelectSection={setActiveSection} />
+            </div>
           </div>
         </div>
 
         {/* View Content */}
-        <div className="oh-view-body main">
+        <div className="oh-view-body main" style={activeSection === 'aura' ? { padding: 0, maxWidth: '100%', width: '100%', flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' } : {}}>
           {isPractitionerExpired && activeSection !== 'profile' ? (
             <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '10px 0 40px' }}>
               {/* Expired Lock Header Banner */}

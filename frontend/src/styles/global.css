@@ -118,6 +118,38 @@
   --oh-max-w-narrow: 920px;
 }
 
+/* ─── Heartbeat Animation ─────────────────────────────────────────── */
+@keyframes oh-heartbeat {
+  0% {
+    transform: scale(1);
+  }
+  14% {
+    transform: scale(1.026);
+  }
+  28% {
+    transform: scale(1);
+  }
+  42% {
+    transform: scale(1.034);
+  }
+  70% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-heartbeat {
+  animation: oh-heartbeat 2.8s ease-in-out infinite;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+.animate-heartbeat:hover {
+  animation-play-state: paused;
+}
+
 /* ─── Base Reset & Core Setup ───────────────────────────────────────── */
 *, *::before, *::after {
   box-sizing: border-box;

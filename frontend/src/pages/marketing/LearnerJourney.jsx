@@ -8,7 +8,6 @@ import {
   IntakeModal,
 } from '../../components/openhand'
 import { FiTrendingUp } from 'react-icons/fi'
-import openHandMeetAuraSvg from '../../assets/Images/OpenHand_Meet_AURA_High_Resolution.svg'
 
 
 const STAGES = [
@@ -337,17 +336,6 @@ export function LearnerJourney() {
         </div>
       </section>
 
-      {/* Meet AURA Section — High Resolution Banner */}
-      <section className="oh-sec py-8 sm:py-14 bg-white relative" id="copilot">
-        <div className="w-full max-w-[1400px] mx-auto px-3 sm:px-6 lg:px-8 flex items-center justify-center">
-          <img
-            src={openHandMeetAuraSvg}
-            alt="Meet AURA — Consent-First AI Companion for Practitioners"
-            className="w-full h-auto max-w-[1360px] object-contain block select-none rounded-2xl shadow-xl"
-            loading="eager"
-          />
-        </div>
-      </section>
 
       {/* Learner Pricing Section */}
       <OHPricingSection defaultRole="learner" hideRoleSwitcher={true} />

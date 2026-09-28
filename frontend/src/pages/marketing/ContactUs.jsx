@@ -383,13 +383,19 @@ export function ContactUs() {
                   </button>
                   <button
                     type="button"
-                    className="py-2 px-3 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-blue-300 transition-colors flex items-center justify-center gap-1.5"
+                    className="py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 border cursor-pointer hover:opacity-90 shadow-sm"
+                    style={{
+                      backgroundColor: '#0F172A',
+                      color: '#FFFFFF',
+                      borderColor: '#1E293B',
+                    }}
                     onClick={(e) => {
                       e.stopPropagation()
                       setDirectActionModal('setup')
                     }}
                   >
-                    <FiMail /> Open Direct Setup Options
+                    <FiMail size={14} style={{ color: '#93C5FD' }} />
+                    <span style={{ color: '#FFFFFF', fontWeight: 700 }}>Open Direct Setup Options</span>
                   </button>
                 </div>
               </div>
@@ -430,13 +436,19 @@ export function ContactUs() {
                   </button>
                   <button
                     type="button"
-                    className="py-2 px-3 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-blue-300 transition-colors flex items-center justify-center gap-1.5"
+                    className="py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 border cursor-pointer hover:opacity-90 shadow-sm"
+                    style={{
+                      backgroundColor: '#0F172A',
+                      color: '#FFFFFF',
+                      borderColor: '#1E293B',
+                    }}
                     onClick={(e) => {
                       e.stopPropagation()
                       setDirectActionModal('tech')
                     }}
                   >
-                    <FiMail /> Open Direct Security Mailbox
+                    <FiMail size={14} style={{ color: '#93C5FD' }} />
+                    <span style={{ color: '#FFFFFF', fontWeight: 700 }}>Open Direct Security Mailbox</span>
                   </button>
                 </div>
               </div>
@@ -477,13 +489,19 @@ export function ContactUs() {
                   </button>
                   <button
                     type="button"
-                    className="py-2 px-3 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-blue-300 transition-colors flex items-center justify-center gap-1.5"
+                    className="py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 border cursor-pointer hover:opacity-90 shadow-sm"
+                    style={{
+                      backgroundColor: '#0F172A',
+                      color: '#FFFFFF',
+                      borderColor: '#1E293B',
+                    }}
                     onClick={(e) => {
                       e.stopPropagation()
                       setDirectActionModal('org')
                     }}
                   >
-                    <FiPhoneCall /> Open Enterprise Line Options
+                    <FiPhoneCall size={14} style={{ color: '#93C5FD' }} />
+                    <span style={{ color: '#FFFFFF', fontWeight: 700 }}>Open Enterprise Line Options</span>
                   </button>
                 </div>
               </div>

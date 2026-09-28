@@ -14,6 +14,8 @@ export { OHChip, OHChipGroup } from './OHChip'
 export { OHModal }        from './OHModal'
 export { default as OHPricingSection } from './OHPricingSection'
 export { default as OHPricingModal } from './OHPricingModal'
+export { default as OpenHandFlow } from './OpenHandFlow'
+export { default as OHBrandStrap, DEFAULT_BRANDS } from './OHBrandStrap'
 
 // Data visualization
 export { OHSparkline }    from './OHSparkline'

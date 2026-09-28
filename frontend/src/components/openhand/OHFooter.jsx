@@ -19,18 +19,14 @@ const LINKS = [
   { 
     group: 'PRODUCT',      
     items: [
-      { label: 'Practitioner journey', to: '/practitioner-journey' },
       { label: 'Find a practitioner', to: '/find-a-practitioner' },
       { label: 'Pricing',             to: '/pricing' },
       { label: 'AURA',                 to: '/aura', badge: 'AI' },
-      { label: 'Learner journey',   to: '/learner-journey' },
     ]
   },
   { 
     group: 'FOR PRACTITIONERS', 
     items: [
-      // { label: 'Start free',        to: '/start-free', badge: 'Free' },
-      { label: 'For organizations', to: '/for-organizations' },
       { label: 'Contact Us',        to: '/contact-us' },
       { label: 'Onboarding',        to: '/onboarding/practitioner' },
     ]

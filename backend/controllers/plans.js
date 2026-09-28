@@ -98,6 +98,8 @@ const PLAN_DETAILS = {
   growth: { price: 2999, name: "Growth Plan", buttonId: "pl_TIpGvgepbsigNC" },
   practice: { price: 5999, name: "Practice Plan", buttonId: "pl_TIpJ8iM19tFFtf" },
   master: { price: 5999, name: "Master VIP Plan", buttonId: "pl_TIpJ8iM19tFFtf" },
+  pro_monthly: { price: 6000, name: "Practitioner Pro (Monthly)", buttonId: "pl_TIp5rKJwNIOFhi" },
+  pro_annual: { price: 50000, name: "Practitioner Pro (Annual)", buttonId: "pl_TIpGvgepbsigNC" },
 }
 
 exports.createPlanOrder = async (req, res) => {
@@ -168,12 +170,16 @@ exports.verifyPlanPayment = async (req, res) => {
         growth: 2999,
         practice: 5999,
         master: 5999,
+        pro_monthly: 6000,
+        pro_annual: 50000,
       }
       const planNames = {
         starter: "Starter Plan",
         growth: "Growth Plan",
         practice: "Practice Plan",
         master: "Master VIP Plan",
+        pro_monthly: "Practitioner Pro (Monthly)",
+        pro_annual: "Practitioner Pro (Annual)",
       }
       const keyLower = planKey.toLowerCase()
       const amount = planPrices[keyLower] || 999

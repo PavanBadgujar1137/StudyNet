@@ -1,19 +1,32 @@
-import { useState, useEffect } from "react"
-import { AiOutlineMenu } from "react-icons/ai"
-import { FiX } from "react-icons/fi"
+import React, { useState, useEffect } from "react"
 import { useSelector } from "react-redux"
 import { Link, matchPath, useLocation } from "react-router-dom"
+import { AiOutlineMenu } from "react-icons/ai"
+import { FiX } from "react-icons/fi"
 
 import { NavbarLinks } from "../../data/navbar-links"
 import logoIcon from "../../assets/Logo/Logo-Icon.png"
 import ProfileDropdown from "../core/Auth/ProfileDropdown"
 
-function Navbar() {
+export function Navbar() {
   const { token } = useSelector((state) => state.auth)
   const { user } = useSelector((state) => state.profile)
   const location = useLocation()
 
+  const [scrolled, setScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20)
+    onScroll()
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => window.removeEventListener("scroll", onScroll)
+  }, [])
+
+  // Close mobile drawer on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false)
+  }, [location.pathname])
 
   const matchRoute = (route) => {
     return matchPath({ path: route }, location.pathname)
@@ -26,142 +39,173 @@ function Navbar() {
     location.pathname.startsWith("/admin") ||
     location.pathname.startsWith("/org")
 
-  // Close mobile drawer on route change
-  useEffect(() => {
-    setIsMobileMenuOpen(false)
-  }, [location.pathname])
+  if (isDashboardRoute) {
+    return null
+  }
 
   return (
-    <header className={`sticky top-0 z-[1000] w-full border-b border-white/40 bg-white/80 backdrop-blur-xl shadow-sm transition-all duration-300 ${isDashboardRoute ? "hidden lg:block" : ""}`}>
-      <div className="relative flex h-16 md:h-18 w-full items-center justify-between pl-2 sm:pl-4 pr-4 md:pr-8 max-w-[1536px] mx-auto py-2">
-        {/* Left Side: Logo */}
-        <div className="flex items-center">
-          <Link to="/" className="flex items-center gap-2.5 group transition-transform duration-200 hover:opacity-90">
-            <img src={logoIcon} alt="OpenHand Logo" className="h-9 md:h-10 w-auto object-contain" />
-            <div className="flex flex-col">
-              <span className="text-xl md:text-2xl font-bold tracking-tight text-navy leading-none">
-                Open<span className="bg-gradient-to-r from-royal-blue to-violet bg-clip-text text-transparent">Hand</span>
-              </span>
-              <span className="text-[9px] md:text-[10px] uppercase font-bold tracking-widest text-royal-blue/70">Your Growth, Our Guidance.</span>
-            </div>
-          </Link>
-        </div>
+    <>
+      <header
+        className={`fixed top-4 left-1/2 -translate-x-1/2 z-[1000] flex items-center justify-between gap-4 md:gap-7 py-2 px-3 sm:px-4 pl-4 sm:pl-5 rounded-full border transition-all duration-300 w-max max-w-[calc(100vw-32px)] ${
+          scrolled
+            ? "bg-white/85 shadow-[0_14px_40px_-14px_rgba(29,33,169,0.3)] border-[#E3E6F6]/95 backdrop-blur-xl"
+            : "bg-white/75 shadow-[0_1px_2px_rgba(13,24,69,0.04),0_12px_40px_-12px_rgba(29,33,169,0.18)] border-[#E3E6F6]/90 backdrop-blur-xl"
+        }`}
+        style={{
+          fontFamily: "'Outfit', 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif",
+        }}
+      >
+        {/* Brand Logo & Title */}
+        <Link to="/" className="flex items-center gap-2 group shrink-0">
+          <img
+            src={logoIcon}
+            alt="OpenHand"
+            className="h-7 sm:h-8 w-auto object-contain transition-transform group-hover:scale-105"
+          />
+          <span className="font-semibold text-lg sm:text-[19px] tracking-tight text-[#0D1845] flex items-center leading-none">
+            Open
+            <b
+              className="font-semibold"
+              style={{
+                background: "linear-gradient(90deg, #4423CC, #9137EF)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
+              Hand
+            </b>
+          </span>
+        </Link>
 
-        {/* Center: Navigation Links (Desktop) */}
-        <nav className="hidden lg:block">
-          <ul className="flex items-center gap-x-4 xl:gap-x-7 text-slate-900 font-bold text-sm xl:text-base whitespace-nowrap">
-            {NavbarLinks.map((link, index) => {
-              const isFindPractitioner = link?.path === '/find-a-practitioner'
-              const shouldOpenNewTab = isFindPractitioner && token && user?.accountType === 'Practitioner'
-              return (
-                <li key={index}>
-                  <Link
-                    to={link?.path}
-                    target={shouldOpenNewTab ? '_blank' : '_self'}
-                    rel={shouldOpenNewTab ? 'noopener noreferrer' : undefined}
-                    className="relative py-2 block group min-h-[44px] flex items-center"
-                  >
-                    <p
-                      className={`${
-                        matchRoute(link?.path)
-                          ? "text-royal-blue font-extrabold"
-                          : "text-slate-900 font-bold hover:text-royal-blue"
-                      } transition-colors duration-200`}
-                    >
-                      {link.title}
-                    </p>
-                    <span 
-                      className={`absolute bottom-0 left-0 h-[2.5px] rounded-full bg-gradient-to-r from-royal-blue to-violet transition-all duration-300 ${
-                        matchRoute(link?.path) ? "w-full shadow-sm shadow-royal-blue/50" : "w-0 group-hover:w-full"
-                      }`}
-                    />
-                  </Link>
-                </li>
-              )
-            })}
-          </ul>
+        {/* Primary Desktop Nav Links */}
+        <nav className="hidden lg:flex items-center gap-5 xl:gap-7" aria-label="Primary">
+          {NavbarLinks.map((link, index) => {
+            const isActive = matchRoute(link?.path)
+            const isFindPractitioner = link?.path === "/find-a-practitioner"
+            const shouldOpenNewTab = isFindPractitioner && token && user?.accountType === "Practitioner"
+
+            return (
+              <Link
+                key={index}
+                to={link?.path}
+                target={shouldOpenNewTab ? "_blank" : "_self"}
+                rel={shouldOpenNewTab ? "noopener noreferrer" : undefined}
+                className="relative py-1 text-[14.5px] font-semibold transition-colors duration-200"
+                style={{
+                  color: isActive ? "#0D1845" : "#4A5378",
+                }}
+              >
+                <span className="hover:text-[#0D1845] transition-colors">
+                  {link.title}
+                </span>
+                {isActive && (
+                  <span
+                    className="absolute -bottom-1.5 left-0 right-0 h-[2px] rounded-full"
+                    style={{
+                      background: "linear-gradient(100deg, #0C6DFF 0%, #2F3BE0 45%, #5B2FE0 70%, #9137EF 100%)",
+                    }}
+                  />
+                )}
+              </Link>
+            )
+          })}
         </nav>
 
-
-        {/* Right Side: Login, Signup & Profile Icon */}
-        <div className="flex items-center gap-x-3">
-          {token === null && (
-            <div className="hidden sm:flex items-center gap-x-3">
-              <Link to="/login">
-                <button className="min-h-[44px] rounded-full border border-royal-blue/30 bg-white/80 px-5 py-2 text-sm font-bold text-navy hover:bg-royal-blue/5 hover:border-royal-blue transition-all duration-300 hover:scale-95 shadow-sm">
-                  Sign In
-                </button>
+        {/* Right CTA / Auth Controls */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          {token === null ? (
+            <div className="flex items-center gap-2">
+              <Link
+                to="/login"
+                className="hidden sm:inline-flex items-center justify-center px-3 py-1.5 text-xs sm:text-sm font-semibold text-[#4A5378] hover:text-[#0D1845] transition-colors"
+              >
+                Sign In
               </Link>
-              <Link to="/signup">
-                <button className="min-h-[44px] btn-shimmer rounded-full bg-gradient-to-r from-royal-blue via-blue-600 to-violet px-5 py-2 text-sm font-bold text-white hover:opacity-95 hover:shadow-xl hover:shadow-royal-blue/25 transition-all duration-300 hover:scale-105 animate-neon-pulse">
-                  Start Free
-                </button>
+              <Link
+                to="/signup"
+                className="inline-flex items-center justify-center px-4 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-semibold text-white shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 whitespace-nowrap"
+                style={{
+                  background: "linear-gradient(100deg, #0C6DFF 0%, #2F3BE0 45%, #5B2FE0 70%, #9137EF 100%)",
+                  boxShadow: "0 10px 30px -10px rgba(47, 59, 224, 0.7)",
+                }}
+              >
+                <span>Start Free</span>
+                <span className="ml-1">→</span>
               </Link>
             </div>
+          ) : (
+            <ProfileDropdown />
           )}
-          {token !== null && <ProfileDropdown />}
-          <button 
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
-            className="p-2.5 rounded-2xl hover:bg-slate-100 lg:hidden transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-800"
+
+          {/* Mobile Menu Toggle Button */}
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="lg:hidden p-2 rounded-full text-[#0D1845] hover:bg-slate-100 transition-colors"
             aria-label="Toggle navigation menu"
           >
-            {isMobileMenuOpen ? <FiX fontSize={24} /> : <AiOutlineMenu fontSize={24} />}
+            {isMobileMenuOpen ? <FiX size={20} /> : <AiOutlineMenu size={20} />}
           </button>
         </div>
-      </div>
+      </header>
 
-      {/* Mobile Menu Dropdown Panel & Backdrop */}
+      {/* Layout spacer ensuring fixed floating navbar never overlaps page content */}
+      <div className="h-16 md:h-20 w-full shrink-0 pointer-events-none" aria-hidden="true" />
+
+      {/* Floating Mobile Navigation Drawer */}
       {isMobileMenuOpen && (
         <>
-          {/* Backdrop Overlay */}
-          <div 
-            className="fixed inset-0 top-[64px] bg-slate-900/50 backdrop-blur-sm z-[1040] lg:hidden transition-opacity duration-300"
+          <div
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[998] lg:hidden transition-opacity"
             onClick={() => setIsMobileMenuOpen(false)}
           />
-
-          {/* Full-width Dropdown Container */}
-          <div className="absolute top-full left-0 right-0 w-full bg-white border-b border-slate-200 shadow-2xl p-5 z-[1050] lg:hidden overflow-y-auto max-h-[calc(100vh-70px)] transition-all duration-300">
-            <nav>
-              <ul className="flex flex-col gap-y-1.5">
-                {NavbarLinks.map((link, index) => (
-                  <li key={index}>
-                    <Link
-                      to={link?.path}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className={`flex items-center px-4 py-3 rounded-xl text-base font-bold transition-all duration-200 min-h-[44px] ${
-                        matchRoute(link?.path)
-                          ? "bg-royal-blue/10 text-royal-blue font-extrabold"
-                          : "text-slate-900 font-bold hover:bg-slate-50 hover:text-royal-blue"
-                      }`}
-                    >
-                      {link.title}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+          <div className="fixed top-20 left-4 right-4 z-[999] bg-white/95 backdrop-blur-xl border border-slate-200/90 rounded-3xl p-5 shadow-2xl lg:hidden max-w-md mx-auto animate-in fade-in zoom-in-95 duration-200">
+            <nav className="flex flex-col gap-1.5 mb-4">
+              {NavbarLinks.map((link, index) => {
+                const isActive = matchRoute(link?.path)
+                return (
+                  <Link
+                    key={index}
+                    to={link?.path}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`px-4 py-2.5 rounded-2xl text-sm font-bold transition-all ${
+                      isActive
+                        ? "bg-blue-50 text-[#0C6DFF]"
+                        : "text-[#4A5378] hover:text-[#0D1845] hover:bg-slate-50"
+                    }`}
+                  >
+                    {link.title}
+                  </Link>
+                )
+              })}
             </nav>
 
-            {/* Mobile Auth Controls */}
             {token === null && (
-              <div className="pt-5 mt-4 border-t border-slate-100 flex flex-col sm:flex-row gap-3">
-                <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="w-full">
-                  <button className="w-full min-h-[44px] rounded-xl border border-royal-blue/30 bg-white py-2.5 text-center text-sm font-bold text-navy hover:bg-royal-blue/5">
-                    Sign In
-                  </button>
+              <div className="pt-3 border-t border-slate-100 flex flex-col gap-2">
+                <Link
+                  to="/login"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="w-full py-2.5 text-center rounded-full border border-slate-200 text-sm font-bold text-[#0D1845]"
+                >
+                  Sign In
                 </Link>
-                <Link to="/signup" onClick={() => setIsMobileMenuOpen(false)} className="w-full">
-                  <button className="w-full min-h-[44px] rounded-xl bg-gradient-to-r from-royal-blue via-blue-600 to-violet py-2.5 text-center text-sm font-bold text-white shadow-md">
-                    Start Free
-                  </button>
+                <Link
+                  to="/signup"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="w-full py-2.5 text-center rounded-full text-sm font-bold text-white shadow-md"
+                  style={{
+                    background: "linear-gradient(100deg, #0C6DFF 0%, #2F3BE0 45%, #5B2FE0 70%, #9137EF 100%)",
+                  }}
+                >
+                  Start Free Practice
                 </Link>
               </div>
             )}
           </div>
         </>
       )}
-    </header>
+    </>
   )
 }
 
 export default Navbar
-

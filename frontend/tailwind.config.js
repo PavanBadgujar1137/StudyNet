@@ -1,3 +1,5 @@
+const colors = require("tailwindcss/colors");
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ["./src/**/*.{js,jsx,ts,tsx}"],
@@ -11,6 +13,7 @@ module.exports = {
       mono: ["Plus Jakarta Sans", "Inter", "sans-serif"],
     },
     colors: {
+      ...colors,
       white: "#fff",
       black: "#000",
       transparent: "#ffffff00",
