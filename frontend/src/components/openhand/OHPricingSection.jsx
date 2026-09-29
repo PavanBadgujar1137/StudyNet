@@ -3,11 +3,9 @@ import { useSelector } from "react-redux"
 import { useNavigate, Link } from "react-router-dom"
 import {
   FiShield,
-  FiArrowRight,
   FiHeart,
   FiBookOpen,
   FiUsers,
-  FiMessageSquare,
   FiHome,
 } from "react-icons/fi"
 import { HiSparkles } from "react-icons/hi"
@@ -364,7 +362,7 @@ export default function OHPricingSection({
                 <FiShield size={18} />
                 {subStatus.isFreeLearner ? (
                   <span>
-                    🎓 <strong>Free Learner Account:</strong> You have 100% free unlimited access to the entire platform!
+                    🎓 <strong>Free Learner Account:</strong> Access free courses and purchase premium content as needed.
                   </span>
                 ) : subStatus.hasActiveSubscription ? (
                   <span>

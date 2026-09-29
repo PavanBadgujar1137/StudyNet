@@ -102,7 +102,7 @@ export function Navbar() {
                   <span
                     className="absolute -bottom-1.5 left-0 right-0 h-[2px] rounded-full"
                     style={{
-                      background: "linear-gradient(100deg, #0C6DFF 0%, #2F3BE0 45%, #5B2FE0 70%, #9137EF 100%)",
+                      background: "linear-gradient(90deg, #0C6DFF 0%, #2563EB 100%)",
                     }}
                   />
                 )}
@@ -112,25 +112,20 @@ export function Navbar() {
         </nav>
 
         {/* Right CTA / Auth Controls */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
           {token === null ? (
             <div className="flex items-center gap-2">
               <Link
                 to="/login"
-                className="hidden sm:inline-flex items-center justify-center px-3 py-1.5 text-xs sm:text-sm font-semibold text-[#4A5378] hover:text-[#0D1845] transition-colors"
+                className="hidden sm:inline-flex items-center justify-center h-9 px-4 sm:px-5 rounded-full text-xs sm:text-sm font-semibold text-[#0C6DFF] border border-[#0C6DFF] bg-white hover:bg-[#0C6DFF] hover:text-white transition-all duration-200 whitespace-nowrap shadow-sm"
               >
                 Sign In
               </Link>
               <Link
                 to="/signup"
-                className="inline-flex items-center justify-center px-4 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-semibold text-white shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 whitespace-nowrap"
-                style={{
-                  background: "linear-gradient(100deg, #0C6DFF 0%, #2F3BE0 45%, #5B2FE0 70%, #9137EF 100%)",
-                  boxShadow: "0 10px 30px -10px rgba(47, 59, 224, 0.7)",
-                }}
+                className="inline-flex items-center justify-center h-9 px-4 sm:px-5 rounded-full text-xs sm:text-sm font-semibold text-white bg-[#0C6DFF] border border-[#0C6DFF] hover:bg-[#0952C7] hover:border-[#0952C7] shadow-[0_2px_10px_rgba(12,109,255,0.28)] hover:shadow-[0_4px_14px_rgba(12,109,255,0.38)] transition-all duration-200 hover:-translate-y-0.5 whitespace-nowrap"
               >
-                <span>Start Free</span>
-                <span className="ml-1">→</span>
+                Sign Up
               </Link>
             </div>
           ) : (
@@ -181,23 +176,20 @@ export function Navbar() {
             </nav>
 
             {token === null && (
-              <div className="pt-3 border-t border-slate-100 flex flex-col gap-2">
+              <div className="pt-3 border-t border-slate-100 flex flex-col gap-2.5">
                 <Link
                   to="/login"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="w-full py-2.5 text-center rounded-full border border-slate-200 text-sm font-bold text-[#0D1845]"
+                  className="w-full h-10 flex items-center justify-center rounded-full border border-[#0C6DFF] text-sm font-bold text-[#0C6DFF] bg-white hover:bg-[#0C6DFF] hover:text-white transition-all duration-200 shadow-sm"
                 >
                   Sign In
                 </Link>
                 <Link
                   to="/signup"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="w-full py-2.5 text-center rounded-full text-sm font-bold text-white shadow-md"
-                  style={{
-                    background: "linear-gradient(100deg, #0C6DFF 0%, #2F3BE0 45%, #5B2FE0 70%, #9137EF 100%)",
-                  }}
+                  className="w-full h-10 flex items-center justify-center rounded-full text-sm font-bold text-white bg-[#0C6DFF] border border-[#0C6DFF] hover:bg-[#0952C7] shadow-sm transition-all duration-200"
                 >
-                  Start Free Practice
+                  Sign Up
                 </Link>
               </div>
             )}
