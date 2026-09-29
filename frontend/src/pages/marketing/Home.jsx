@@ -41,7 +41,7 @@ export function Home() {
       {/* ========================================================================= */}
       {/* 1. DUAL-ROLE INTERACTIVE HERO SECTION                                     */}
       {/* ========================================================================= */}
-      <section className="relative pt-10 pb-16 lg:pt-14 lg:pb-24 overflow-hidden bg-white border-b border-slate-200/80">
+      <section className="relative pt-4 pb-16 lg:pt-8 lg:pb-24 overflow-hidden bg-white border-b border-slate-200/80">
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           {/* Top Toggle Switcher: Centered Glowing Bubble [ I want to grow ] [ I guide others ] */}

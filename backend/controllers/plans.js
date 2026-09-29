@@ -2,57 +2,54 @@ const PlanConfig = require("../models/PlanConfig")
 
 const DEFAULT_PLANS = [
   {
-    planKey: "starter",
-    name: "Starter Plan",
-    tagline: "For practitioners starting & building their online therapy or coaching practice.",
+    planKey: "open",
+    name: "Open",
+    tagline: "Start your practice. We start bringing mentees.",
+    monthlyFee: 0,
+    commissionPercentage: 10,
+    features: [
+      "Flat 10% on every booking — your link or ours",
+      "Growth Hand onboarding: profile & positioning review",
+      "Listed in OpenHand mentee discovery",
+      "1:1, group sessions, webinars & packages",
+      "Built-in HD Session Room",
+      "Verified Practitioner badge",
+      "Instant UPI / bank payouts",
+    ],
+  },
+  {
+    planKey: "pro",
+    name: "Pro",
+    tagline: "A growth partner working on your practice every month.",
     monthlyFee: 999,
-    commissionPercentage: 0,
-    defaultMembershipPrice: 799,
-    razorpayButtonId: "pl_TIp5rKJwNIOFhi",
+    yearlyFee: 9588,
+    commissionPercentage: 5,
     features: [
-      "Publish 1:1 session offers & free/paid courses",
-      "Host 1 live private group circle",
-      "Standard directory listing & client booking link",
-      "Client mood check-in tracking & notes",
-      "Post-session transcript & clinical note draft",
-      "Razorpay direct payment gateway integration",
+      "Everything in Open — commission drops to 5%",
+      "Monthly growth review with an OpenHand mentor",
+      "Priority mentee matching & featured placement",
+      "Visibility campaigns: spotlights, collaborations, events",
+      "Programs, cohorts & memberships",
+      "AI session notes & client progress insights",
+      "Custom domain & white-label booking page",
     ],
   },
   {
-    planKey: "growth",
-    name: "Growth Plan",
-    tagline: "Full suite to scale your practice with unlimited circles, custom cohorts, and automations.",
-    monthlyFee: 2999,
+    planKey: "institution",
+    name: "Institution",
+    tagline: "Academies, colleges & coaching firms.",
+    monthlyFee: 0,
     commissionPercentage: 0,
-    defaultMembershipPrice: 799,
-    razorpayButtonId: "pl_TIpGvgepbsigNC",
     features: [
-      "Everything in Starter Plan",
-      "Unlimited live group circles & custom cohorts",
-      "Unlimited course publishing (free & paid pricing)",
-      "Automated client check-in & reflection sequences",
-      "Priority directory placement & verified badge",
-      "Custom branding & companion passes for clients",
-    ],
-  },
-  {
-    planKey: "master",
-    name: "Master VIP Plan",
-    tagline: "For established clinics and high-volume practitioners seeking maximum growth.",
-    monthlyFee: 5999,
-    commissionPercentage: 0,
-    defaultMembershipPrice: 799,
-    razorpayButtonId: "pl_TIpJ8iM19tFFtf",
-    features: [
-      "Everything in Growth Plan",
-      "VIP clinic profile & multi-practitioner account support",
-      "Dedicated account manager & 24/7 technical support",
-      "Custom API & EHR integration support",
-      "Zero platform commission on all booking transactions",
+      "Everything in Pro",
+      "Custom commission — as low as 0%",
+      "Dedicated growth & success manager",
+      "Multi-practitioner teams & roles",
+      "LMS, certification & cohort workflows",
+      "API, SSO & data export",
     ],
   },
 ]
-
 
 exports.getPlans = async (req, res) => {
   try {
@@ -60,7 +57,6 @@ exports.getPlans = async (req, res) => {
     if (plans.length === 0) {
       plans = await PlanConfig.insertMany(DEFAULT_PLANS)
     } else {
-      // Sync client-focused details into DB documents
       for (const def of DEFAULT_PLANS) {
         await PlanConfig.findOneAndUpdate(
           { planKey: def.planKey },
@@ -94,19 +90,22 @@ const crypto = require("crypto")
 const User = require("../models/User")
 
 const PLAN_DETAILS = {
-  starter: { price: 999, name: "Starter Plan", buttonId: "pl_TIp5rKJwNIOFhi" },
-  growth: { price: 2999, name: "Growth Plan", buttonId: "pl_TIpGvgepbsigNC" },
-  practice: { price: 5999, name: "Practice Plan", buttonId: "pl_TIpJ8iM19tFFtf" },
-  master: { price: 5999, name: "Master VIP Plan", buttonId: "pl_TIpJ8iM19tFFtf" },
-  pro_monthly: { price: 6000, name: "Practitioner Pro (Monthly)", buttonId: "pl_TIp5rKJwNIOFhi" },
-  pro_annual: { price: 50000, name: "Practitioner Pro (Annual)", buttonId: "pl_TIpGvgepbsigNC" },
+  open: { price: 0, name: "Open Plan", buttonId: "pl_open" },
+  pro: { price: 999, name: "Pro Plan", buttonId: "pl_pro_monthly" },
+  pro_monthly: { price: 999, name: "Pro Plan (Monthly)", buttonId: "pl_pro_monthly" },
+  pro_yearly: { price: 9588, name: "Pro Plan (Yearly)", buttonId: "pl_pro_yearly" },
+  pro_annual: { price: 9588, name: "Pro Plan (Yearly)", buttonId: "pl_pro_yearly" },
+  // Backward compatibility
+  starter: { price: 999, name: "Pro Plan", buttonId: "pl_pro_monthly" },
+  growth: { price: 999, name: "Pro Plan", buttonId: "pl_pro_monthly" },
+  master: { price: 9588, name: "Pro Plan (Yearly)", buttonId: "pl_pro_yearly" },
 }
 
 exports.createPlanOrder = async (req, res) => {
   try {
-    const { planKey = "starter" } = req.body
+    const { planKey = "pro_monthly" } = req.body
     const keyLower = planKey.toLowerCase()
-    const planInfo = PLAN_DETAILS[keyLower] || PLAN_DETAILS.starter
+    const planInfo = PLAN_DETAILS[keyLower] || PLAN_DETAILS.pro_monthly
     const amountInPaise = planInfo.price * 100
 
     const { key_id } = getRazorpayKeys()
@@ -148,7 +147,7 @@ exports.verifyPlanPayment = async (req, res) => {
       razorpay_order_id,
       razorpay_payment_id,
       razorpay_signature,
-      planKey = "starter",
+      planKey = "pro_monthly",
     } = req.body
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
@@ -166,20 +165,25 @@ exports.verifyPlanPayment = async (req, res) => {
 
     if (generated_signature === razorpay_signature) {
       const planPrices = {
+        open: 0,
+        pro: 999,
+        pro_monthly: 999,
+        pro_yearly: 9588,
+        pro_annual: 9588,
         starter: 999,
-        growth: 2999,
-        practice: 5999,
-        master: 5999,
-        pro_monthly: 6000,
-        pro_annual: 50000,
+        growth: 999,
+        master: 9588,
       }
       const planNames = {
-        starter: "Starter Plan",
-        growth: "Growth Plan",
-        practice: "Practice Plan",
-        master: "Master VIP Plan",
-        pro_monthly: "Practitioner Pro (Monthly)",
-        pro_annual: "Practitioner Pro (Annual)",
+        open: "Open Plan",
+        pro: "Pro Plan",
+        pro_monthly: "Pro Plan (Monthly)",
+        pro_yearly: "Pro Plan (Yearly)",
+        pro_annual: "Pro Plan (Yearly)",
+        institution: "Institution Plan",
+        starter: "Pro Plan",
+        growth: "Pro Plan",
+        master: "Pro Plan (Yearly)",
       }
       const keyLower = planKey.toLowerCase()
       const amount = planPrices[keyLower] || 999
@@ -197,7 +201,11 @@ exports.verifyPlanPayment = async (req, res) => {
 
           const startDate = new Date()
           const endDate = new Date()
-          endDate.setMonth(endDate.getMonth() + 1)
+          if (keyLower.includes("yearly") || keyLower.includes("annual")) {
+            endDate.setFullYear(endDate.getFullYear() + 1)
+          } else {
+            endDate.setMonth(endDate.getMonth() + 1)
+          }
 
           const sub = await Subscription.create({
             client: req.user.id,

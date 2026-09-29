@@ -27,19 +27,28 @@ exports.createSubscriptionOrder = async (req, res) => {
     const userId = req.user.id
 
     const planPrices = {
+      open: 0,
+      pro: 999,
+      pro_monthly: 999,
+      pro_yearly: 9588,
+      pro_annual: 9588,
       starter: 999,
-      growth: 2999,
-      practice: 5999,
-      master: 5999,
+      growth: 999,
+      master: 9588,
     }
     const planNames = {
-      starter: "Starter Plan",
-      growth: "Growth Plan",
-      practice: "Practice Plan",
-      master: "Master VIP Plan",
+      open: "Open Plan",
+      pro: "Pro Plan",
+      pro_monthly: "Pro Plan (Monthly)",
+      pro_yearly: "Pro Plan (Yearly)",
+      pro_annual: "Pro Plan (Yearly)",
+      institution: "Institution Plan",
+      starter: "Pro Plan",
+      growth: "Pro Plan",
+      master: "Pro Plan (Yearly)",
     }
 
-    if (!planKey || !planPrices[planKey]) {
+    if (!planKey || planPrices[planKey] === undefined) {
       return res.status(400).json({ success: false, message: "Invalid practitioner plan key" })
     }
 
@@ -88,8 +97,27 @@ exports.verifySubscriptionPayment = async (req, res) => {
       return res.status(400).json({ success: false, message: "Payment verification failed" })
     }
 
-    const planPrices = { starter: 999, growth: 2999, practice: 5999, master: 5999 }
-    const planNames = { starter: "Starter Plan", growth: "Growth Plan", practice: "Practice Plan", master: "Master VIP Plan" }
+    const planPrices = {
+      open: 0,
+      pro: 999,
+      pro_monthly: 999,
+      pro_yearly: 9588,
+      pro_annual: 9588,
+      starter: 999,
+      growth: 999,
+      master: 9588,
+    }
+    const planNames = {
+      open: "Open Plan",
+      pro: "Pro Plan",
+      pro_monthly: "Pro Plan (Monthly)",
+      pro_yearly: "Pro Plan (Yearly)",
+      pro_annual: "Pro Plan (Yearly)",
+      institution: "Institution Plan",
+      starter: "Pro Plan",
+      growth: "Pro Plan",
+      master: "Pro Plan (Yearly)",
+    }
     const amount = planPrices[planKey] || 0
 
     // Deactivate any existing active subscription for this user
@@ -98,7 +126,11 @@ exports.verifySubscriptionPayment = async (req, res) => {
     // Create new subscription record
     const startDate = new Date()
     const endDate = new Date()
-    endDate.setMonth(endDate.getMonth() + 1)
+    if (planKey && (planKey.includes("yearly") || planKey.includes("annual"))) {
+      endDate.setFullYear(endDate.getFullYear() + 1)
+    } else {
+      endDate.setMonth(endDate.getMonth() + 1)
+    }
 
     const subscription = await Subscription.create({
       client: userId,

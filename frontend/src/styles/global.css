@@ -241,7 +241,7 @@ details > summary::-webkit-details-marker { display: none; }
   width: 100%;
   max-width: var(--oh-max-w);
   margin: 0 auto;
-  padding: 0 clamp(16px, 3.5vw, 40px);
+  padding: 0 clamp(12px, 2vw, 24px);
 }
 
 .oh-grad-text {
@@ -1044,7 +1044,7 @@ textarea.oh-intake-textarea:focus,
 
 /* Marketing: Find a Practitioner */
 .oh-dir-page { min-height: 100vh; display: flex; flex-direction: column; background: var(--oh-mist); }
-.oh-dir-hero { padding: var(--oh-space-16) 0 var(--oh-space-6); text-align: center; }
+.oh-dir-hero { padding: 48px 0 var(--oh-space-6); text-align: center; }
 .dir-title { font-family: var(--oh-font-head); font-size: var(--oh-text-5xl); font-weight: 800; max-width: 24ch; margin: var(--oh-space-3) auto 0; line-height: 1.15; color: var(--oh-navy); }
 .dir-sub { font-size: var(--oh-text-lg); color: var(--oh-muted); max-width: 62ch; margin: var(--oh-space-4) auto 0; line-height: 1.6; }
 .dir-trust-pill { display: inline-flex; align-items: center; gap: 12px; padding: 8px 20px; background: rgba(255, 255, 255, 0.85); border: 1px solid rgba(13, 27, 61, 0.08); border-radius: 999px; margin-top: 24px; font-size: 13.5px; font-weight: 600; color: var(--oh-navy); box-shadow: 0 4px 12px rgba(13, 27, 61, 0.03); }
@@ -2828,7 +2828,7 @@ textarea.oh-intake-textarea:focus,
 
 /* Hero Section */
 .talk-hero {
-  padding: 84px 0 54px;
+  padding: 56px 0 40px;
   text-align: center;
   position: relative;
 }
@@ -5283,7 +5283,7 @@ textarea.oh-intake-textarea:focus,
 @media (max-width: 1024px) {
 
   /* --- GLOBAL: oh-wrap padding --- */
-  .oh-wrap { padding: 0 clamp(16px, 4vw, 32px); }
+  .oh-wrap { padding: 0 clamp(12px, 2.5vw, 20px); }
 
   /* --- HOME: Box Time Section --- */
   .boxtime-layout {
@@ -5466,7 +5466,7 @@ textarea.oh-intake-textarea:focus,
 @media (max-width: 480px) {
 
   /* --- GLOBAL --- */
-  .oh-wrap { padding: 0 16px !important; }
+  .oh-wrap { padding: 0 12px !important; }
 
   /* --- HOME --- */
   .oh-home-hero { padding: 24px 0 16px !important; }

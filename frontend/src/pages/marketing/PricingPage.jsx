@@ -38,8 +38,8 @@ export function PricingPage() {
       category: 'practitioner',
       categoryTag: 'FOR PRACTITIONERS',
       icon: FiBriefcase,
-      q: "Do Practitioners get a free trial to set up their practice?",
-      a: "Yes! All Practitioners get a 14-day free trial to explore the practice dashboard, set up 1:1 session offerings, draft courses, and test live circle containers. To publish live and accept client bookings, choose a Practitioner Plan (Starter ₹999/mo, Growth ₹2,999/mo, or Master ₹5,999/mo)."
+      q: "How does the Practitioner pricing model work?",
+      a: "You can start completely free with our Open plan (₹0/month with 10% per booking). When you are ready to scale with a dedicated growth partner, switch to Pro (₹999/month or ₹799/month billed yearly with commission dropping to 5%). For academies and coaching firms, our Institution plan offers custom terms."
     },
     {
       category: 'payment',
