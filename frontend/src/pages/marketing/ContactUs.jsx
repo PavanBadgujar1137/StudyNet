@@ -303,8 +303,11 @@ export function ContactUs() {
             <span>Contact Us — Response within 24 hours guaranteed</span>
           </div>
 
-          <h1 className="text-2xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 my-4 text-center whitespace-nowrap w-full mx-auto">
-            Contact <span className="talk-grad-text">OpenHand Team.</span>
+          <h1
+            className="text-2xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 my-4 text-center whitespace-nowrap w-full mx-auto"
+            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+          >
+            Contact <span className="italic font-bold" style={{ color: '#2563EB' }}>OpenHand Team.</span>
           </h1>
           <p className="sub text-slate-600 text-base sm:text-lg max-w-2xl mx-auto font-medium leading-relaxed mb-8">
             Have questions about OpenHand? Connect directly with our Practice Setup Desk or Tech &amp; Ethics Desk for personalized practice guidance, platform setup, or enterprise inquiries.
@@ -340,7 +343,7 @@ export function ContactUs() {
         <div className="oh-wrap">
           <div className="talk-sec-head">
             <span className="talk-section-tag">Executive Contact Desks</span>
-            <h2>Who would you like to reach out to?</h2>
+            <h2 style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>Who would you like to reach out to?</h2>
             <p>Connect with our specialized Practice Setup Desk or Tech &amp; Ethics Desk based on your specific practice needs.</p>
           </div>
 
@@ -772,7 +775,7 @@ export function ContactUs() {
         <div className="oh-wrap">
           <div className="talk-sec-head">
             <span className="talk-section-tag">Frequently Asked Questions</span>
-            <h2>Before you ask us</h2>
+            <h2 style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>Before you ask us</h2>
             <p>Common questions practitioners have before scheduling a founder call.</p>
           </div>
 
@@ -811,7 +814,7 @@ export function ContactUs() {
       <section className="talk-close">
         <div className="oh-wrap">
           <div className="close-card">
-            <h2>Or skip the call and explore directly.</h2>
+            <h2 style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>Or skip the call and explore directly.</h2>
             <p>
               The free plan is open right now. You can create your practice space in seconds and contact us whenever you're ready.
             </p>

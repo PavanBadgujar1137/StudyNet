@@ -17,38 +17,36 @@ import { apiConnector } from "../../services/apiConnector"
 
 export default function OHPricingSection({
   defaultRole = "practitioner",
+  role,
+  onRoleChange,
   title,
   subtitle,
   hideRoleSwitcher = false,
   isModal = false,
   onSuccess,
 }) {
-  const [activeTab, setActiveTab] = useState(defaultRole) // "learner" | "practitioner"
+  const [internalTab, setInternalTab] = useState(defaultRole) // "learner" | "practitioner"
+  const activeTab = role !== undefined ? role : internalTab
+
+  const handleTabChange = (newTab) => {
+    setInternalTab(newTab)
+    if (onRoleChange) {
+      onRoleChange(newTab)
+    }
+  }
+
   const [billingCycle, setBillingCycle] = useState("monthly") // "monthly" | "yearly"
   const [payingPlan, setPayingPlan] = useState(null)
-  const [subStatus, setSubStatus] = useState(null)
 
   useEffect(() => {
-    setActiveTab(defaultRole)
-  }, [defaultRole])
+    if (role === undefined) {
+      setInternalTab(defaultRole)
+    }
+  }, [defaultRole, role])
 
   const { token } = useSelector((state) => state.auth)
   const { user } = useSelector((state) => state.profile)
   const navigate = useNavigate()
-
-  useEffect(() => {
-    if (token) {
-      apiConnector("GET", "/api/v1/payments/subscription/mine", null, {
-        Authorization: `Bearer ${token}`,
-      })
-        .then((res) => {
-          if (res?.data?.success) {
-            setSubStatus(res.data)
-          }
-        })
-        .catch(() => {})
-    }
-  }, [token])
 
   const loadRazorpaySDK = () => {
     return new Promise((resolve) => {
@@ -145,9 +143,8 @@ export default function OHPricingSection({
               const subRes = await apiConnector("GET", "/api/v1/payments/subscription/mine", null, {
                 Authorization: `Bearer ${token}`,
               })
-              if (subRes?.data?.success) {
-                setSubStatus(subRes.data)
-                if (onSuccess) onSuccess(subRes.data)
+              if (subRes?.data?.success && onSuccess) {
+                onSuccess(subRes.data)
               } else if (onSuccess) {
                 onSuccess()
               }
@@ -183,11 +180,11 @@ export default function OHPricingSection({
   }
 
   return (
-    <section className={isModal ? "py-6 bg-transparent" : "bg-slate-50 border-b border-slate-200"} id="pricing" style={isModal ? {} : { paddingTop: "52px", paddingBottom: "64px" }}>
-      <div className="oh-wrap max-w-[1360px] mx-auto px-4">
+    <section className={isModal ? "py-6 bg-transparent" : "bg-white border-b border-slate-200/80"} id="pricing" style={isModal ? {} : { paddingTop: "44px", paddingBottom: "64px" }}>
+      <div className="w-full max-w-[1540px] mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
-        <div className="text-center max-w-5xl mx-auto mb-10">
+        <div className="text-center max-w-5xl mx-auto mb-2">
           
           {activeTab === "practitioner" ? (
             <>
@@ -214,102 +211,62 @@ export default function OHPricingSection({
                 style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
               >
                 We don't just host your practice. <br />
-                <span style={{ color: "#2563EB" }}>
+                <span className="italic font-bold" style={{ color: "#2563EB" }}>
                   We grow it with you.
                 </span>
               </h1>
 
               <p className="text-slate-600 text-sm sm:text-base font-medium leading-relaxed max-w-2xl mx-auto">
-                Other platforms hand you tools and leave the growth to you. OpenHand holds your hand — bringing you the right mentees, making your name known and strengthening your practice — for one flat 10%, with ₹0 to start.
+                Other platforms just give you tools. OpenHand actively brings you mentees, builds your reach, and grows your practice — for a flat 10%, with ₹0 to start.
               </p>
 
-              {/* 3 Metric Highlight Strip */}
-              <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 mt-6 max-w-2xl mx-auto">
-                <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-white border border-slate-200 shadow-sm">
-                  <span className="text-xl sm:text-2xl font-black text-[#2563EB] tracking-tight">₹0</span>
-                  <span className="text-xs sm:text-sm font-bold text-slate-600 leading-tight text-left">to start</span>
+              {/* 3 Metric Highlights as Points */}
+              <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 mt-6 max-w-3xl mx-auto">
+                <div className="flex items-center gap-2.5 text-slate-700 font-semibold text-sm sm:text-[15px]">
+                  <span className="w-5 h-5 rounded-full bg-blue-100 text-[#2563EB] flex items-center justify-center text-xs font-black shrink-0">
+                    ✓
+                  </span>
+                  <span><strong className="text-slate-900 font-extrabold">₹0</strong> to start</span>
                 </div>
-                <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-white border border-slate-200 shadow-sm">
-                  <span className="text-xl sm:text-2xl font-black text-[#059669] tracking-tight">10%</span>
-                  <span className="text-xs sm:text-sm font-bold text-slate-600 leading-tight text-left">flat, every channel</span>
+                <div className="flex items-center gap-2.5 text-slate-700 font-semibold text-sm sm:text-[15px]">
+                  <span className="w-5 h-5 rounded-full bg-emerald-100 text-[#059669] flex items-center justify-center text-xs font-black shrink-0">
+                    ✓
+                  </span>
+                  <span><strong className="text-slate-900 font-extrabold">10%</strong> flat, every channel</span>
                 </div>
-                <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-white border border-slate-200 shadow-sm">
-                  <span className="text-xl sm:text-2xl font-black text-[#7C3AED] tracking-tight">1</span>
-                  <span className="text-xs sm:text-sm font-bold text-slate-600 leading-tight text-left">growth partner, every plan</span>
+                <div className="flex items-center gap-2.5 text-slate-700 font-semibold text-sm sm:text-[15px]">
+                  <span className="w-5 h-5 rounded-full bg-purple-100 text-[#7C3AED] flex items-center justify-center text-xs font-black shrink-0">
+                    ✓
+                  </span>
+                  <span><strong className="text-slate-900 font-extrabold">1</strong> growth partner, every plan</span>
                 </div>
               </div>
             </>
           ) : (
             <>
               <OHEyebrow>100% Free for Learners</OHEyebrow>
-              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[42px] font-black text-slate-900 tracking-tight my-4">
+              <h2
+                className="text-2xl sm:text-3xl md:text-4xl lg:text-[42px] font-black text-slate-900 tracking-tight my-4"
+                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+              >
                 OpenHand is{" "}
-                <span className="oh-grad-text bg-gradient-to-r from-emerald-600 via-teal-600 to-blue-600 bg-clip-text text-transparent">
+                <span className="italic font-bold" style={{ color: "#2563EB" }}>
                   100% Completely Free
                 </span>{" "}
                 for Learners
               </h2>
-              <p className="text-slate-600 text-base sm:text-lg font-medium leading-relaxed max-w-2xl mx-auto">
+              <p className="text-slate-600 text-base sm:text-lg font-medium leading-relaxed max-w-3xl mx-auto">
                 No subscriptions. No credit card required. Register, log in, and access practitioner free courses, live circles, daily check-ins, and AURA AI freely.
               </p>
             </>
           )}
 
-          {/* User Active Plan / Status Banner */}
-          {token && subStatus && (
-            <div
-              className="max-w-xl mx-auto mt-6 p-4 rounded-2xl border text-sm font-semibold flex items-center justify-between gap-4 shadow-sm"
-              style={{
-                background: subStatus.isFreeLearner
-                  ? "#F0FDF4"
-                  : subStatus.hasActiveSubscription
-                  ? "#F0FDF4"
-                  : subStatus.isTrialActive
-                  ? "#F3E8FF"
-                  : "#FEF2F2",
-                borderColor: subStatus.isFreeLearner
-                  ? "#BBF7D0"
-                  : subStatus.hasActiveSubscription
-                  ? "#BBF7D0"
-                  : subStatus.isTrialActive
-                  ? "#E9D5FF"
-                  : "#FCA5A5",
-                color: subStatus.isFreeLearner
-                  ? "#166534"
-                  : subStatus.hasActiveSubscription
-                  ? "#166534"
-                  : subStatus.isTrialActive
-                  ? "#7E22CE"
-                  : "#DC2626",
-              }}
-            >
-              <div className="flex items-center gap-2">
-                <FiShield size={18} />
-                {subStatus.isFreeLearner ? (
-                  <span>
-                    🎓 <strong>Free Learner Account:</strong> Access free courses and purchase premium content as needed.
-                  </span>
-                ) : subStatus.hasActiveSubscription ? (
-                  <span>
-                    Active Subscription: <strong>{subStatus.subscription?.planName || "Active Plan"}</strong>
-                  </span>
-                ) : subStatus.isTrialActive ? (
-                  <span>
-                    ⚡ 14-Day Free Trial Active: <strong>{subStatus.trialDaysRemaining} days remaining</strong>
-                  </span>
-                ) : (
-                  <span>⚠️ 14-Day Free Trial Expired — Subscribe below to unlock all practice features</span>
-                )}
-              </div>
-            </div>
-          )}
-
           {/* Role Switcher Tabs */}
           {!hideRoleSwitcher && (
-            <div className="inline-flex flex-col sm:flex-row items-center p-1.5 rounded-2xl mt-8 shadow-sm border border-slate-300 max-w-full gap-1.5" style={{ backgroundColor: "#E2E8F0" }}>
+            <div className="inline-flex flex-col sm:flex-row items-center p-1.5 rounded-2xl mt-5 shadow-sm border border-slate-300 max-w-full gap-1.5" style={{ backgroundColor: "#E2E8F0" }}>
               <button
                 type="button"
-                onClick={() => setActiveTab("practitioner")}
+                onClick={() => handleTabChange("practitioner")}
                 className="w-full sm:w-auto px-6 py-3 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-200 min-h-[44px] flex items-center justify-center cursor-pointer"
                 style={{
                   backgroundColor: activeTab === "practitioner" ? "#0F172A" : "transparent",
@@ -322,7 +279,7 @@ export default function OHPricingSection({
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab("learner")}
+                onClick={() => handleTabChange("learner")}
                 className="w-full sm:w-auto px-6 py-3 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-200 min-h-[44px] flex items-center justify-center cursor-pointer"
                 style={{
                   backgroundColor: activeTab === "learner" ? "#2563EB" : "transparent",
@@ -445,10 +402,10 @@ export default function OHPricingSection({
           </div>
         ) : (
           /* ─── NEW PRACTITIONER PRICING 3-CARDS WITH MONTHLY / YEARLY TOGGLE ─── */
-          <div className="pt-2">
+          <div className="pt-0">
             
             {/* Top Monthly / Yearly Toggle Pill */}
-            <div className="flex items-center justify-center mt-8 mb-10">
+            <div className="flex items-center justify-center mt-3 mb-8">
               <div className="inline-flex items-center p-1.5 rounded-full bg-white border border-slate-200 shadow-sm gap-1">
                 <button
                   type="button"
@@ -479,7 +436,7 @@ export default function OHPricingSection({
             </div>
 
             {/* 3 Cards Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch w-full max-w-[1540px] mx-auto">
               
               {/* Card 1: Open */}
               <div className="bg-white rounded-[28px] p-7 sm:p-9 flex flex-col justify-between border border-slate-200 shadow-sm hover:shadow-md transition-all">
@@ -703,37 +660,6 @@ export default function OHPricingSection({
                 </div>
               </div>
 
-            </div>
-
-            {/* Bottom Monthly / Yearly Toggle Under the Pricing Boxes */}
-            <div className="flex items-center justify-center mt-12 mb-4">
-              <div className="inline-flex items-center p-1.5 rounded-full bg-white border border-slate-200 shadow-sm gap-1">
-                <button
-                  type="button"
-                  onClick={() => setBillingCycle("monthly")}
-                  className={`px-6 py-2.5 rounded-full text-xs sm:text-sm font-extrabold transition-all duration-200 cursor-pointer ${
-                    billingCycle === "monthly"
-                      ? "bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-md"
-                      : "text-slate-600 hover:text-slate-900 bg-transparent"
-                  }`}
-                >
-                  Monthly
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setBillingCycle("yearly")}
-                  className={`px-6 py-2.5 rounded-full text-xs sm:text-sm font-extrabold transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
-                    billingCycle === "yearly"
-                      ? "bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-md"
-                      : "text-slate-600 hover:text-slate-900 bg-transparent"
-                  }`}
-                >
-                  <span>Yearly</span>
-                  <span className={`text-[11px] font-extrabold ${billingCycle === "yearly" ? "text-blue-100" : "text-indigo-600 font-black"}`}>
-                    save 20%
-                  </span>
-                </button>
-              </div>
             </div>
 
           </div>

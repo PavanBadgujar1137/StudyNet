@@ -5,7 +5,7 @@
  */
 
 /* ─── Google Fonts & Tailwind Directives ────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;0,900;1,500;1,600;1,700;1,800;1,900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -62,8 +62,9 @@
   --oh-glow:         0 0 60px 0 rgba(124, 58, 237, 0.20);
 
   /* Typography */
-  --oh-font-head:    'Outfit', 'Plus Jakarta Sans', 'Poppins', sans-serif;
-  --oh-font-body:    'Plus Jakarta Sans', 'Inter', sans-serif;
+  --oh-font-serif:   'Playfair Display', Georgia, serif;
+  --oh-font-head:    'Playfair Display', Georgia, 'Plus Jakarta Sans', serif;
+  --oh-font-body:    'Inter', 'Plus Jakarta Sans', system-ui, sans-serif;
 
   --oh-text-xs:      11.5px;
   --oh-text-sm:      13.5px;
@@ -114,8 +115,8 @@
   --oh-z-toast:   100;
 
   /* Layout */
-  --oh-max-w:        1400px;
-  --oh-max-w-narrow: 920px;
+  --oh-max-w:        1560px;
+  --oh-max-w-narrow: 1040px;
 }
 
 /* ─── Heartbeat Animation ─────────────────────────────────────────── */
@@ -241,7 +242,7 @@ details > summary::-webkit-details-marker { display: none; }
   width: 100%;
   max-width: var(--oh-max-w);
   margin: 0 auto;
-  padding: 0 clamp(12px, 2vw, 24px);
+  padding: 0 clamp(10px, 1.5vw, 20px);
 }
 
 .oh-grad-text {
@@ -5283,7 +5284,7 @@ textarea.oh-intake-textarea:focus,
 @media (max-width: 1024px) {
 
   /* --- GLOBAL: oh-wrap padding --- */
-  .oh-wrap { padding: 0 clamp(12px, 2.5vw, 20px); }
+  .oh-wrap { padding: 0 clamp(10px, 2vw, 16px); }
 
   /* --- HOME: Box Time Section --- */
   .boxtime-layout {
@@ -5466,7 +5467,7 @@ textarea.oh-intake-textarea:focus,
 @media (max-width: 480px) {
 
   /* --- GLOBAL --- */
-  .oh-wrap { padding: 0 12px !important; }
+  .oh-wrap { padding: 0 10px !important; }
 
   /* --- HOME --- */
   .oh-home-hero { padding: 24px 0 16px !important; }

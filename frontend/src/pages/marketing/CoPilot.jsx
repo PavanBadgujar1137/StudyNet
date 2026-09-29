@@ -671,13 +671,13 @@ const CSS = `
 --blue:#0C6DFF;--blue2:#0052F0;--indigo:#1D21A9;--violet:#5B2FE0;--purple:#9137EF;--navy:#0B1238;
 --brand:linear-gradient(100deg,#0C6DFF 0%,#2F3BE0 45%,#5B2FE0 70%,#9137EF 100%);
 --shadow:0 1px 2px rgba(13,24,69,.04),0 12px 40px -12px rgba(29,33,169,.18);
---sans:'Geist',ui-sans-serif,system-ui,sans-serif;--display:'Outfit',var(--sans);--serif:'Instrument Serif',Georgia,serif;--mono:'Geist Mono',ui-monospace,monospace;
+--sans:'Inter',-apple-system,BlinkMacSystemFont,ui-sans-serif,system-ui,sans-serif;--display:'Playfair Display',Georgia,serif;--serif:'Playfair Display',Georgia,serif;--mono:'Roboto Mono',ui-monospace,monospace;
 position:relative;min-height:100vh;background:var(--bg);color:var(--ink);font-family:var(--sans);overflow-x:hidden;-webkit-font-smoothing:antialiased}
 .au *{box-sizing:border-box}.au a{color:inherit;text-decoration:none}.au button{font:inherit;color:inherit;cursor:pointer}
 .au ::selection{background:rgba(12,109,255,.18)}
 .au main{position:relative;z-index:1}
 .au h1,.au h2,.au h3,.au h4,.band-line,.tagline{font-family:var(--display)}
-.au .serif{font-family:var(--serif);font-style:italic;font-weight:400;letter-spacing:-.01em}
+.au .serif{font-family:var(--serif);font-style:italic;font-weight:700;letter-spacing:-.01em}
 .au .mono{font-family:var(--mono);letter-spacing:.02em}
 .au .grad{background:var(--brand);background-size:160% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:sheen 7s ease-in-out infinite}
 @keyframes sheen{50%{background-position:100% 0}}
