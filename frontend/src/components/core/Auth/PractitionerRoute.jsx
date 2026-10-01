@@ -22,6 +22,9 @@ function PractitionerRoute({ children }) {
     user?.accountType === ACCOUNT_TYPE.PRACTITIONER ||
     user?.accountType === ACCOUNT_TYPE.INSTRUCTOR
   ) {
+    if (!user.hasConsented) {
+      return <Navigate to="/consent" />
+    }
     return children
   }
 

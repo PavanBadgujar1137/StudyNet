@@ -9,6 +9,7 @@ const {
   sendotp,
   changePassword,
   socialLogin,
+  acceptConsent,
 } = require("../controllers/Auth")
 const {
   resetPasswordToken,
@@ -37,6 +38,9 @@ router.post("/sendotp", sendotp)
 
 // Route for Changing the password
 router.post("/changepassword", auth, changePassword)
+
+// Route to accept consent terms
+router.post("/accept-consent", auth, acceptConsent)
 
 // ********************************************************************************************************
 //                                      Reset Password

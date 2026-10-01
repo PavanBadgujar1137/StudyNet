@@ -87,11 +87,21 @@ export default function ChangeProfilePicture() {
     <div className="rounded-3xl border border-slate-200/80 bg-white p-6 md:p-8 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6 text-left">
       <div className="flex items-center gap-5">
         <div className="relative">
-          <img
-            src={previewSource || user?.image}
-            alt={`profile-${user?.firstName}`}
-            className="aspect-square w-20 h-20 rounded-2xl object-cover ring-4 ring-slate-100 shadow-md bg-slate-800"
-          />
+          {previewSource || (user?.image && !user?.image?.includes('dicebear')) ? (
+            <img
+              src={previewSource || user?.image}
+              alt={`profile-${user?.firstName}`}
+              className="aspect-square w-20 h-20 rounded-2xl object-cover ring-4 ring-slate-100 shadow-md bg-slate-800"
+              onError={(e) => {
+                e.target.onerror = null; // prevents looping
+                e.target.src = `https://ui-avatars.com/api/?name=${user?.firstName}+${user?.lastName}&background=4F46E5&color=fff&size=200&bold=true`
+              }}
+            />
+          ) : (
+            <div className="aspect-square w-20 h-20 rounded-2xl ring-4 ring-slate-100 shadow-md bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white text-2xl font-bold tracking-tight">
+              {`${user?.firstName?.charAt(0) || ''}${user?.lastName?.charAt(0) || ''}`.toUpperCase() || '?'}
+            </div>
+          )}
           <label 
             htmlFor="profile-picture-upload-input"
             className="absolute -bottom-1 -right-1 p-2 rounded-xl bg-indigo-600 text-white shadow-md hover:bg-indigo-700 transition-all cursor-pointer"

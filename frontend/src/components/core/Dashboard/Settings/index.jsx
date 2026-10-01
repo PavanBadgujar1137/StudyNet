@@ -81,11 +81,15 @@ export default function Settings() {
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: '20px' }}>
             {/* Avatar */}
             <div style={{ position: 'relative' }}>
-              {user?.image ? (
+              {user?.image && !user?.image?.includes('dicebear') ? (
                 <img
                   src={user.image}
                   alt={fullName}
                   style={{ width: '100px', height: '100px', borderRadius: '16px', border: '4px solid #0F172A', objectFit: 'cover', background: '#1E293B', boxShadow: '0 10px 20px rgba(0,0,0,0.3)' }}
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = `https://ui-avatars.com/api/?name=${user?.firstName}+${user?.lastName}&background=4F46E5&color=fff&size=200&bold=true`;
+                  }}
                 />
               ) : (
                 <div

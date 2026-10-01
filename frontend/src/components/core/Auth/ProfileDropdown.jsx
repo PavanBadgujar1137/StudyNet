@@ -59,10 +59,8 @@ export default function ProfileDropdown({ onSelectSection }) {
             alt={user?.firstName || "Profile"}
             className="aspect-square w-8 h-8 rounded-full object-cover border border-slate-200"
             onError={(e) => {
-              e.currentTarget.style.display = "none"
-              if (e.currentTarget.nextElementSibling) {
-                e.currentTarget.nextElementSibling.style.display = "flex"
-              }
+              e.target.onerror = null;
+              e.target.src = `https://ui-avatars.com/api/?name=${user?.firstName}+${user?.lastName}&background=4F46E5&color=fff&size=100&bold=true`;
             }}
           />
         ) : null}
