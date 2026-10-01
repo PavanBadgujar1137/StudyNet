@@ -7,6 +7,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { OHFooter } from "../../components/openhand";
 import logoIcon from "../../assets/Logo/Logo-Icon.png";
+import logoMark from "../../assets/Logo/Logo-Icon-transparent.png";
 
 /* ─────────────────────────── data ─────────────────────────── */
 
@@ -106,69 +107,22 @@ function useReveal() {
   }, []);
 }
 
-/* ─────────────────────────── the living thread (infinity) ─────────────────────────── */
+/* ─────────────────────────── OpenHand logo mark (replaces generic infinity SVG) ─────────────────────────── */
 
-function lemniscate(a = 250, cx = 300, cy = 170, n = 260, from = 0, to = Math.PI * 2) {
-  let d = "";
-  for (let i = 0; i <= n; i++) {
-    const t = from + (to - from) * (i / n);
-    const s = Math.sin(t), c = Math.cos(t), k = 1 + s * s;
-    d += `${i ? "L" : "M"}${(cx + (a * c) / k).toFixed(1)} ${(cy + (a * 1.3 * s * c) / k).toFixed(1)}`;
-  }
-  return d;
-}
-const LOOP_D = lemniscate();
-const OVER_D = lemniscate(250, 300, 170, 60, Math.PI / 2 - 0.5, Math.PI / 2 + 0.5);
-const loopPoint = (t, a = 250, cx = 300, cy = 170) => {
-  const s = Math.sin(t), c = Math.cos(t), k = 1 + s * s;
-  return [cx + (a * c) / k, cy + (a * 1.3 * s * c) / k];
-};
-const LOOP_NODES = [0.35, 1.05, 2.1, 3.5, 4.2, 5.3].map((t, i) => ({ id: i + 1, p: loopPoint(t) }));
-
-function InfinityThread({ live = true, mini = false, uid = "a" }) {
-  const g = (n) => `${n}-${uid}`;
+function InfinityThread({ live = true, mini = false }) {
   return (
-    <svg className={`thread-svg ${live ? "" : "off"} ${mini ? "mini" : ""}`} viewBox="0 0 600 340" aria-hidden="true">
-      <defs>
-        <linearGradient id={g("rib")} x1="40" y1="0" x2="560" y2="0" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor={mini ? "#FFFFFF" : "#0C6DFF"} />
-          <stop offset=".42" stopColor={mini ? "#E0E7FF" : "#2F3BE0"} />
-          <stop offset=".7" stopColor={mini ? "#EDE9FE" : "#5B2FE0"} />
-          <stop offset="1" stopColor={mini ? "#F5F3FF" : "#9137EF"} />
-        </linearGradient>
-        <linearGradient id={g("shade")} x1="0" y1="40" x2="0" y2="300" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#fff" stopOpacity=".35" />
-          <stop offset=".5" stopColor="#fff" stopOpacity="0" />
-          <stop offset="1" stopColor="#1D21A9" stopOpacity={mini ? 0 : 0.35} />
-        </linearGradient>
-        <filter id={g("blur")} x="-20%" y="-40%" width="140%" height="180%"><feGaussianBlur stdDeviation="18" /></filter>
-        <filter id={g("glow")} x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
-      </defs>
-
-      {/* soft coloured shadow */}
-      {!mini && <path d={LOOP_D} fill="none" stroke={`url(#${g("rib")})`} strokeWidth="40" opacity=".35" filter={`url(#${g("blur")})`} transform="translate(0 22)" />}
-      {/* ribbon */}
-      <path className="rib" d={LOOP_D} fill="none" stroke={`url(#${g("rib")})`} strokeWidth={mini ? 18 : 34} strokeLinecap="round" />
-      <path d={LOOP_D} fill="none" stroke={`url(#${g("shade")})`} strokeWidth={mini ? 18 : 34} strokeLinecap="round" />
-      {/* over-under crossing, like the mark */}
-      <path d={OVER_D} fill="none" stroke={mini ? "transparent" : "var(--cut)"} strokeWidth="46" strokeLinecap="butt" />
-      <path d={OVER_D} fill="none" stroke={`url(#${g("rib")})`} strokeWidth={mini ? 18 : 34} strokeLinecap="butt" />
-      <path d={OVER_D} fill="none" stroke={`url(#${g("shade")})`} strokeWidth={mini ? 18 : 34} strokeLinecap="butt" />
-      {/* inner highlight */}
-      <path d={LOOP_D} fill="none" stroke="#fff" strokeOpacity=".35" strokeWidth="2" transform="translate(0 -9)" />
-
-      {/* light travelling the thread */}
-      <path className="comet c1" d={LOOP_D} pathLength="1" fill="none" stroke="#fff" strokeWidth={mini ? 7 : 9} strokeLinecap="round" filter={`url(#${g("glow")})`} />
-      <path className="comet c2" d={LOOP_D} pathLength="1" fill="none" stroke="#fff" strokeWidth={mini ? 4 : 5} strokeLinecap="round" filter={`url(#${g("glow")})`} />
-
-      {/* session beads */}
-      {!mini && LOOP_NODES.map((n, i) => (
-        <g key={n.id} className="bead" style={{ animationDelay: `${i * 0.55}s` }}>
-          <circle cx={n.p[0]} cy={n.p[1]} r="11" fill="#fff" />
-          <circle cx={n.p[0]} cy={n.p[1]} r="5" fill={i < 3 ? "#0C6DFF" : "#9137EF"} />
-        </g>
-      ))}
-    </svg>
+    <div className={`oh-logo-mark-wrap ${live ? "" : "off"} ${mini ? "mini" : ""}`} aria-hidden="true">
+      {/* Ambient glow layer */}
+      {!mini && <div className="oh-glow-ring" />}
+      <img
+        src={logoMark}
+        alt="OpenHand logo"
+        className="oh-logo-img"
+        draggable={false}
+      />
+      {/* Travelling light sweep */}
+      <div className="oh-sweep" />
+    </div>
   );
 }
 
@@ -577,7 +531,7 @@ function FinalCTA() {
   return (
     <section className="final-wrap" id="start">
       <div className="final rv">
-        <div className="final-loop"><InfinityThread mini uid="f" /></div>
+        <div className="final-loop"><InfinityThread mini /></div>
         <h2>Coach like the future<br /><em className="serif">already arrived.</em></h2>
         <p className="sub">Post-session notes are free on every practitioner plan. Nothing switches on until you do.</p>
         <div className="cta-row center">
@@ -597,7 +551,7 @@ function Band() {
       </svg>
       <div className="band-in">
         <span className="band-heart" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="30" height="30"><path fill="url(#hg)" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.3 3.1 4.5 6.9 4.5c2.1 0 3.6 1.2 5.1 3 1.5-1.8 3-3 5.1-3 3.8 0 6 3.8 4.5 7.3C19.5 16.4 12 21 12 21z"/><defs><linearGradient id="hg" x1="0" x2="1"><stop offset="0" stopColor="#4F46E5"/><stop offset="1" stopColor="#8B5CF6"/></linearGradient></defs></svg>
+          <svg viewBox="0 0 24 24" width="30" height="30"><path fill="url(#hg)" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.3 3.1 4.5 6.9 4.5c2.1 0 3.6 1.2 5.1 3 1.5-1.8 3-3 5.1-3 3.8 0 6 3.8 4.5 7.3C19.5 16.4 12 21 12 21z" /><defs><linearGradient id="hg" x1="0" x2="1"><stop offset="0" stopColor="#4F46E5" /><stop offset="1" stopColor="#8B5CF6" /></linearGradient></defs></svg>
         </span>
         <p className="band-line">Built for coaches.<br />Designed for <em>impact.</em></p>
         <span className="band-tag">#OpenHand</span>
@@ -732,21 +686,26 @@ background:conic-gradient(from var(--a),transparent 0 60%,#0C6DFF 72%,#5B2FE0 82
 .chips li{font-size:13px;font-weight:500;color:var(--mute);padding:7px 13px;border-radius:999px;background:#fff;border:1px solid var(--line)}
 .chips li:before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--brand);margin-right:8px;vertical-align:1px}
 
-/* stage · living infinity */
+/* stage · OpenHand logo mark (replaces hand-coded infinity SVG) */
 .stage-wrap{display:flex;flex-direction:column;align-items:center;gap:18px;width:100%}
 .stage{position:relative;width:100%;aspect-ratio:1.25/1;perspective:1100px}
 .stage-3d{position:absolute;inset:0;transform:rotateX(var(--rx,0)) rotateY(var(--ry,0));transform-style:preserve-3d;transition:transform .6s cubic-bezier(.2,.7,.2,1)}
 .orbit{position:absolute;left:50%;top:50%;border-radius:50%;border:1.5px dashed rgba(91,47,224,.18);transform:translate(-50%,-50%);animation:spinO 60s linear infinite}
 .o1{width:92%;aspect-ratio:1.9}.o2{width:70%;aspect-ratio:2.4;border-style:solid;border-color:rgba(12,109,255,.1);animation-direction:reverse;animation-duration:80s}
 @keyframes spinO{to{transform:translate(-50%,-50%) rotate(360deg)}}
-.thread-svg{position:absolute;left:3%;right:3%;top:18%;width:94%;height:auto;overflow:visible;transform:translateZ(40px);transition:filter 1s,opacity 1s}
-.thread-svg .comet{stroke-dasharray:.07 .93;animation:run 5.5s linear infinite}
-.thread-svg .c2{stroke-dasharray:.03 .97;animation-duration:5.5s;animation-delay:-2.75s;opacity:.8}
-@keyframes run{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
-.thread-svg .bead{animation:bead 3.3s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
-.thread-svg .bead circle:first-child{filter:drop-shadow(0 3px 6px rgba(29,33,169,.35))}
-@keyframes bead{50%{transform:scale(1.18)}}
-.thread-svg.off{filter:saturate(.1) brightness(1.15);opacity:.55}.thread-svg.off .comet{animation-play-state:paused;opacity:0}
+
+/* oh-logo-mark: OpenHand brand asset wrapper */
+.oh-logo-mark-wrap{position:absolute;left:3%;right:3%;top:14%;width:94%;height:auto;display:flex;align-items:center;justify-content:center;transform:translateZ(40px);transition:filter 1s,opacity 1s}
+.oh-logo-mark-wrap.off{filter:saturate(.1) brightness(1.15);opacity:.55}
+.oh-logo-mark-wrap.mini{position:relative;left:auto;right:auto;top:auto;transform:none;width:100%;height:100%}
+.oh-logo-img{width:100%;height:auto;max-width:520px;object-fit:contain;display:block;filter:drop-shadow(0 0 32px rgba(91,47,224,.55)) drop-shadow(0 0 14px rgba(12,109,255,.4));animation:ohFloat 6s ease-in-out infinite}
+.oh-logo-mark-wrap.mini .oh-logo-img{max-width:180px;filter:drop-shadow(0 0 12px rgba(91,47,224,.45));animation:ohFloat 6s ease-in-out infinite}
+@keyframes ohFloat{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-10px) scale(1.025)}}
+.oh-glow-ring{position:absolute;inset:-8%;border-radius:50%;background:radial-gradient(ellipse at 50% 60%,rgba(91,47,224,.22) 0%,rgba(12,109,255,.12) 40%,transparent 70%);animation:ohGlowPulse 4s ease-in-out infinite;pointer-events:none}
+@keyframes ohGlowPulse{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
+.oh-sweep{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,transparent 0%,rgba(255,255,255,.18) 20%,transparent 40%);animation:ohSpin 8s linear infinite;pointer-events:none;mix-blend-mode:screen}
+@keyframes ohSpin{to{transform:rotate(360deg)}}
+.oh-logo-mark-wrap.off .oh-sweep{opacity:0;animation-play-state:paused}
 .gcard{position:absolute;display:flex;align-items:center;gap:12px;padding:12px 16px 12px 12px;border-radius:18px;background:rgba(255,255,255,.82);border:1px solid rgba(227,230,246,.95);
 backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 20px 50px -18px rgba(29,33,169,.35);animation:float 6s ease-in-out infinite;transition:opacity .8s,filter .8s}
 .gcard b{display:block;font-family:var(--display);font-size:14.5px;font-weight:600}.gcard small{display:block;font-size:12.5px;color:var(--mute);margin-top:2px}
@@ -911,8 +870,8 @@ backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 20px 
 background:radial-gradient(ellipse at 15% 0%,rgba(255,255,255,.18),transparent 45%),linear-gradient(120deg,#0052F0 0%,#2F3BE0 40%,#5B2FE0 70%,#9137EF 100%);box-shadow:0 50px 120px -40px rgba(47,59,224,.8)}
 .final:before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.18) 1px,transparent 1.3px);background-size:24px 24px;mask-image:radial-gradient(ellipse at 50% 30%,#000,transparent 70%);-webkit-mask-image:radial-gradient(ellipse at 50% 30%,#000,transparent 70%)}
 .final>*{position:relative}
-.final-loop{width:260px;height:150px;margin:0 auto 10px;position:relative}
-.final-loop .thread-svg{position:absolute;inset:0;top:0;left:0;width:100%;transform:none}
+.final-loop{width:260px;height:150px;margin:0 auto 10px;position:relative;display:flex;align-items:center;justify-content:center}
+.final-loop .oh-logo-mark-wrap{position:relative;left:auto;right:auto;top:auto;transform:none;width:100%;height:100%;justify-content:center}
 .final h2 .serif{color:#fff;font-size:1.05em}
 .final .sub{color:rgba(255,255,255,.82);margin-bottom:32px}
 
