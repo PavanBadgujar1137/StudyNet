@@ -4,11 +4,11 @@ import {
   OHFooter,
   OHEyebrow,
   OHPricingSection,
+  OHTakeHomeSimulator,
+  OHCompareTable,
 } from '../../components/openhand'
 import {
-  FiShield,
   FiZap,
-  FiArrowRight,
   FiRefreshCw,
   FiChevronDown,
   FiMessageSquare,
@@ -19,6 +19,7 @@ import {
 } from 'react-icons/fi'
 
 export function PricingPage() {
+  const [pricingRole, setPricingRole] = useState('practitioner') // 'practitioner' | 'learner'
   const [activeTab, setActiveTab] = useState('all') // 'all' | 'learner' | 'practitioner' | 'payment'
   const [openFaq, setOpenFaq] = useState(0)
 
@@ -28,46 +29,39 @@ export function PricingPage() {
 
   const allFaqs = [
     {
-      category: 'learner',
-      categoryTag: 'FOR LEARNERS',
-      icon: FiUserCheck,
-      q: "Is OpenHand completely free for Learners?",
-      a: "Yes! OpenHand is 100% free for all learners forever. When you sign up, you get immediate, unrestricted access to practitioner free courses, live growth circles, daily mood check-ins, self-reflection journals, and our consent-first AURA AI reflection companion. No credit card, no subscription, and no trial expiration."
-    },
-    {
       category: 'practitioner',
-      categoryTag: 'FOR PRACTITIONERS',
+      categoryTag: 'OPENHAND DIFFERENCE',
       icon: FiBriefcase,
-      q: "Do Practitioners get a free trial to set up their practice?",
-      a: "Yes! All Practitioners get a 14-day free trial to explore the practice dashboard, set up 1:1 session offerings, draft courses, and test live circle containers. To publish live and accept client bookings, choose a Practitioner Plan (Starter ₹999/mo, Growth ₹2,999/mo, or Master ₹5,999/mo)."
-    },
-    {
-      category: 'payment',
-      categoryTag: 'PAYMENTS & SECURITY',
-      icon: FiCreditCard,
-      q: "How are payments processed and secured?",
-      a: "All payments and monthly plan subscriptions are processed through Razorpay, India's leading PCI-DSS compliant payment gateway. We support UPI, Credit/Debit Cards, Net Banking, and Wallets with 256-bit encryption and instant activation."
-    },
-    {
-      category: 'payment',
-      categoryTag: 'BILLING & CANCELLATION',
-      icon: FiRefreshCw,
-      q: "Can Practitioners switch, upgrade, or cancel their plan at any time?",
-      a: "Yes, practitioners can upgrade, downgrade, or cancel their platform subscription at any time directly from the dashboard. Upgrades apply immediately, while downgrades or cancellations take effect at the end of the current billing period."
+      q: "How is OpenHand different from a marketplace or course tool?",
+      a: "Marketplaces list you and wait. Course tools give you software and leave growth to you. OpenHand is a growth partner — we work with you to position your practice, bring you the right mentees and make your name known."
     },
     {
       category: 'practitioner',
-      categoryTag: 'PRACTITIONER EARNINGS',
+      categoryTag: 'FREE OPEN PLAN',
       icon: FiZap,
-      q: "How do Practitioner earnings and payouts work?",
-      a: "Earnings from paid 1:1 sessions and paid courses are automatically recorded in your financial dashboard with 0% platform commission. The platform credits your earnings ledger, and salary disbursements are transferred directly to your bank account."
+      q: "Is the Open plan really free?",
+      a: "Yes. No card, no setup fee, no monthly charge. You pay a flat commission only when you earn."
+    },
+    {
+      category: 'practitioner',
+      categoryTag: 'COMMISSION & BOOKINGS',
+      icon: FiUserCheck,
+      q: "Do you charge more for mentees you bring me?",
+      a: "No. One flat rate on every booking — whether it came from your own link or from OpenHand."
     },
     {
       category: 'payment',
-      categoryTag: 'ORGANIZATIONS',
-      icon: FiShield,
-      q: "Are there custom plans for clinics, hospitals, or organizations?",
-      a: "Yes! We offer tailored Organization & Enterprise plans with team seats, central HR/Admin billing, aggregate wellbeing insights, and dedicated account support. Visit our For Organizations page to request a custom rollout."
+      categoryTag: 'PAYMENT GATEWAY',
+      icon: FiCreditCard,
+      q: "What about payment gateway charges?",
+      a: "Gateway fees are passed through at cost and shown on every payout statement. No hidden margin."
+    },
+    {
+      category: 'payment',
+      categoryTag: 'BILLING & PLANS',
+      icon: FiRefreshCw,
+      q: "Can I switch plans anytime?",
+      a: "Yes. Upgrade or downgrade in one click; changes apply from your next billing cycle."
     }
   ]
 
@@ -76,61 +70,94 @@ export function PricingPage() {
     : allFaqs.filter(item => item.category === activeTab)
 
   return (
-    <div className="oh-marketing-page min-h-screen bg-slate-50 text-slate-800 flex flex-col justify-between font-sans">
+    <div className="oh-marketing-page min-h-screen bg-white text-slate-800 flex flex-col justify-between font-sans">
       <main className="flex-1">
         
         {/* ========================================================================= */}
         {/* INTERACTIVE PRICING SECTION (LEARNER FREE SHOWCASE & PRACTITIONER PLANS) */}
         {/* ========================================================================= */}
-        <OHPricingSection defaultRole="practitioner" />
+        <OHPricingSection
+          role={pricingRole}
+          onRoleChange={setPricingRole}
+          defaultRole="practitioner"
+        />
 
         {/* ========================================================================= */}
-        {/* ORGANIZATIONS & ENTERPRISE BANNER */}
+        {/* PRACTITIONER EXCLUSIVE SECTIONS (SHOWN ONLY WHEN PRACTITIONER TAB IS ACTIVE) */}
         {/* ========================================================================= */}
-        <section className="py-12 bg-white border-b border-slate-200">
-          <div className="oh-wrap max-w-5xl mx-auto px-4">
-            <div 
-              className="p-8 sm:p-10 rounded-3xl shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6 border"
-              style={{
-                backgroundColor: '#0F172A',
-                background: 'linear-gradient(135deg, #09132C 0%, #0F172A 50%, #1E1B4B 100%)',
-                borderColor: '#3B82F6',
-                color: '#FFFFFF',
-              }}
-            >
-              <div className="max-w-2xl text-center md:text-left">
-                <span 
-                  className="px-3.5 py-1 rounded-full font-extrabold text-[10px] uppercase tracking-wider inline-block mb-3"
-                  style={{ backgroundColor: 'rgba(59, 130, 246, 0.2)', color: '#60A5FA', border: '1px solid rgba(96, 165, 250, 0.4)' }}
-                >
-                  ENTERPRISE &amp; ORGANIZATIONS
-                </span>
-                <h3 className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-1 mb-2" style={{ color: '#FFFFFF' }}>
-                  Need a custom plan for your organization or clinic?
-                </h3>
-                <p className="text-sm sm:text-base font-medium leading-relaxed" style={{ color: '#CBD5E1' }}>
-                  We offer enterprise team licenses, centralized HR billing, aggregate analytics, and dedicated rollout managers.
-                </p>
+        {pricingRole === 'practitioner' && (
+          <>
+            {/* GROWTH HAND — 4-STEP SECTION UNDER PRICING BOXES */}
+            <section className="py-14 bg-[#F5F6FF] border-b border-slate-200">
+              <div className="oh-wrap max-w-[1540px] mx-auto px-2 sm:px-4">
+                {/* Header */}
+                <div className="text-center max-w-2xl mx-auto mb-10">
+                  <span className="text-[11px] font-extrabold uppercase tracking-widest text-[#4F46E5] mb-3 block">
+                    THE OPENHAND DIFFERENCE
+                  </span>
+                  <h2
+                    className="text-3xl sm:text-4xl lg:text-[42px] font-black text-slate-900 tracking-tight leading-tight mb-4"
+                    style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                  >
+                    Hand-holding, not just hosting.
+                  </h2>
+                  <p className="text-slate-600 text-sm sm:text-base font-medium leading-relaxed">
+                    Every plan includes <strong>Growth Hand</strong> — our hands-on programme that works on getting you mentees, not just taking bookings.
+                  </p>
+                </div>
+
+                {/* 4 Steps Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                  {[
+                    {
+                      num: "01",
+                      title: "Position",
+                      desc: "We sharpen your profile, niche and offers so the right mentees instantly get why you.",
+                    },
+                    {
+                      num: "02",
+                      title: "Get discovered",
+                      desc: "Your practice is matched to mentees actively looking for your expertise — not left to wait.",
+                    },
+                    {
+                      num: "03",
+                      title: "Get known",
+                      desc: "Spotlights, collaborations and events that build your name beyond your own followers.",
+                    },
+                    {
+                      num: "04",
+                      title: "Grow & retain",
+                      desc: "Regular reviews of your bookings and retention, with clear next steps to strengthen your practice.",
+                    },
+                  ].map((step, idx) => (
+                    <div key={idx} className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm hover:shadow-md transition-all">
+                      <span
+                        className="inline-flex items-center justify-center w-10 h-10 rounded-xl text-white text-xs font-extrabold mb-4"
+                        style={{ background: "linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)" }}
+                      >
+                        {step.num}
+                      </span>
+                      <h3 className="text-base font-extrabold text-slate-900 mb-2">{step.title}</h3>
+                      <p className="text-slate-500 text-sm leading-relaxed font-medium">{step.desc}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div>
-                <Link
-                  to="/contact-us"
-                  className="px-6 py-3.5 rounded-full font-extrabold text-sm transition-all shadow-lg whitespace-nowrap inline-flex items-center gap-2 hover:scale-105"
-                  style={{ backgroundColor: '#2563EB', color: '#FFFFFF', border: 'none' }}
-                >
-                  <span>Explore Enterprise Plans</span>
-                  <FiArrowRight />
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
+            </section>
+
+            {/* TAKE-HOME SIMULATOR (CALCULATOR WITH COMPETITOR COMPARISONS) */}
+            <OHTakeHomeSimulator />
+
+            {/* SIDE BY SIDE COMPARISON TABLE */}
+            <OHCompareTable />
+          </>
+        )}
 
         {/* ========================================================================= */}
         {/* NEW MODERN SPLIT FAQ SECTION */}
         {/* ========================================================================= */}
-        <section className="py-20 bg-slate-100/70 border-b border-slate-200">
-          <div className="oh-wrap max-w-6xl mx-auto px-4 sm:px-6">
+        <section className="py-20 bg-slate-50/80 border-b border-slate-200">
+          <div className="oh-wrap max-w-[1540px] mx-auto px-2 sm:px-4">
             
             {/* Split Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
@@ -139,7 +166,10 @@ export function PricingPage() {
               <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-24">
                 <div>
                   <OHEyebrow>Help &amp; Clear Answers</OHEyebrow>
-                  <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight my-3 leading-tight">
+                  <h2
+                    className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight my-3 leading-tight"
+                    style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                  >
                     Frequently Asked Questions
                   </h2>
                   <p className="text-slate-600 text-sm sm:text-base font-medium leading-relaxed">
@@ -161,20 +191,6 @@ export function PricingPage() {
                     }}
                   >
                     All Questions
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => { setActiveTab('learner'); setOpenFaq(0); }}
-                    className="px-4 py-2 rounded-xl text-xs font-extrabold transition-all duration-200 cursor-pointer"
-                    style={{
-                      backgroundColor: activeTab === 'learner' ? '#2563EB' : '#FFFFFF',
-                      color: activeTab === 'learner' ? '#FFFFFF' : '#0F172A',
-                      border: activeTab === 'learner' ? '1px solid #2563EB' : '1px solid #CBD5E1',
-                      boxShadow: activeTab === 'learner' ? '0 4px 12px rgba(37, 99, 235, 0.3)' : 'none',
-                    }}
-                  >
-                    🎓 For Learners
                   </button>
 
                   <button
@@ -202,7 +218,7 @@ export function PricingPage() {
                       boxShadow: activeTab === 'payment' ? '0 4px 12px rgba(37, 99, 235, 0.3)' : 'none',
                     }}
                   >
-                    💳 Payments &amp; Security
+                    💳 Payments &amp; Gateway
                   </button>
                 </div>
 

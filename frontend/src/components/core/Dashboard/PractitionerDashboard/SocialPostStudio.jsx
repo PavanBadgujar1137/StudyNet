@@ -402,17 +402,17 @@ export function SocialPostStudio() {
     let generatedCaption = ''
 
     if (templateType === 'health_tip') {
-      generatedTitle = 'Daily Wellness Tip'
-      generatedCaption = `🌿 Wellness Minute with ${practitionerName}:\n\nPrioritizing small daily habits makes a profound difference in long-term vitality. Here are 3 simple ways to restore your energy today:\n\n1️⃣ Drink a full glass of water upon waking.\n2️⃣ Take 5 deep, slow belly breaths during mid-day breaks.\n3️⃣ Step outside for 10 minutes of natural sunlight.\n\nWhich habit will you focus on today? Let us know below! 👇\n\n#HealthTips #Wellness #HolisticHealth #SelfCare #Mindfulness`
+      generatedTitle = 'Tips For your Niche'
+      generatedCaption = `💡 A quick tip for you from ${practitionerName}:\n\nPrioritizing small daily habits makes a profound difference in your long-term success. Here are 3 simple ways to stay on track today:\n\n1️⃣ Stay hydrated and take regular breaks.\n2️⃣ Take 5 deep breaths when feeling overwhelmed.\n3️⃣ Set one clear priority for your day.\n\nWhich habit will you focus on today? Let us know below! 👇\n\n#Tips #DailyAdvice #Growth #Success`
     } else if (templateType === 'testimonial') {
-      generatedTitle = 'Client Breakthrough Story'
-      generatedCaption = `✨ Inspiring Healing Story ✨\n\n"Working with ${practitionerName} transformed how I approach my health and daily recovery."\n\nSeeing our clients achieve pain-free movement, mental clarity, and renewed vitality is why we do what we do. Every step toward wellness is a victory worth celebrating.\n\nReady to take the first step toward your health goals? Book a consultation via our link in bio!\n\n#PatientSuccess #HealingJourney #Practitioner #HealthGoals #Wellbeing`
+      generatedTitle = 'Your Life Style'
+      generatedCaption = `✨ Your Life Style ✨\n\n"Embracing a balanced lifestyle with ${practitionerName} transformed how I approach my daily routine."\n\nSeeing our community achieve clarity, renewed vitality, and better balance is why we do what we do. Every step toward wellness is a victory worth celebrating.\n\nReady to elevate your lifestyle? Tap the link in our bio!\n\n#LifeStyle #Balance #Wellbeing #Growth`
     } else if (templateType === 'schedule') {
-      generatedTitle = 'Clinic Consultation Availability'
-      generatedCaption = `📅 Appointments Open For This Week!\n\nOur clinic calendar is now open for new consultations and follow-up sessions. Whether you're looking for preventative guidance or holistic treatment, we're here to support you.\n\n👉 Tap the link in bio or visit our website to lock in your preferred session time before slots fill up!\n\n#AppointmentBooking #HealthConsultation #WellnessClinic #Practitioner`
+      generatedTitle = 'Announcement'
+      generatedCaption = `📢 Special Announcement!\n\nWe have some exciting updates to share with you all this week. Whether you're looking for new insights or just want to stay connected, we've got something special planned.\n\n👉 Tap the link in bio or visit our website to learn more before it's gone!\n\n#Announcement #ExcitingNews #CommunityUpdates`
     } else if (templateType === 'motivation') {
-      generatedTitle = 'Weekly Motivation'
-      generatedCaption = `💪 Your Health Is Your Greatest Investment.\n\nRemember: transformation isn't about perfection; it's about consistency. Be gentle with your progress today, nourish your body, and rest when needed.\n\nWishing you a vibrant and empowering week ahead! 🌟\n\n#Motivation #WellnessMindset #SelfLove #DailyHealth #PractitionerWisdom`
+      generatedTitle = 'Festive Greeting'
+      generatedCaption = `🎉 Wishing you a wonderful festive season!\n\nMay this special time bring you joy, health, and prosperity. Be sure to take a moment to celebrate with your loved ones and cherish the memories you're making.\n\nWishing you a vibrant and empowering holiday! 🌟\n\n#FestiveGreeting #HappyHolidays #Joy #Celebrate #SeasonsGreetings`
     }
 
     setTitle(generatedTitle)
@@ -507,7 +507,7 @@ export function SocialPostStudio() {
           {/* Compact Metric Badges */}
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
             <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '6px 14px', borderRadius: '20px', fontSize: '12.5px', color: '#475569', fontWeight: 600 }}>
-              Channels Linked: <strong style={{ color: '#2563EB', fontWeight: 800 }}>{connectedCount}/4</strong>
+              Social media Accounts Linked: <strong style={{ color: '#2563EB', fontWeight: 800 }}>{connectedCount}/4</strong>
             </div>
             <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '6px 14px', borderRadius: '20px', fontSize: '12.5px', color: '#475569', fontWeight: 600 }}>
               Total Posts: <strong style={{ color: '#059669', fontWeight: 800 }}>{posts.length}</strong>
@@ -523,7 +523,7 @@ export function SocialPostStudio() {
           {[
             { id: 'canvas', label: 'Compose & Live Preview', icon: <FiSmartphone fontSize={15} /> },
             { id: 'feed', label: `Posts Feed (${posts.length})`, icon: <FiGrid fontSize={15} /> },
-            { id: 'channels', label: `Channels (${connectedCount})`, icon: <FiShare2 fontSize={15} /> },
+            { id: 'channels', label: `Social media Accounts (${connectedCount})`, icon: <FiShare2 fontSize={15} /> },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -558,7 +558,7 @@ export function SocialPostStudio() {
       {/* TAB 1: AI CREATOR & IPHONE 15 DEVICE SIMULATOR */}
       {/* -------------------------------------------------------------------------- */}
       {activeTab === 'canvas' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px', alignItems: 'start' }}>
           
           {/* LEFT COLUMN: AI EDITOR & GRAPHIC STUDIO */}
           <div className="card" style={{ padding: '24px', background: '#ffffff', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -575,9 +575,9 @@ export function SocialPostStudio() {
               <div style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: '14px', padding: '16px 18px', display: 'flex', alignItems: 'flex-start', gap: '14px', color: '#991B1B' }}>
                 <FiAlertTriangle fontSize={22} style={{ flexShrink: 0, marginTop: '2px', color: '#DC2626' }} />
                 <div>
-                  <strong style={{ display: 'block', fontSize: '14.5px' }}>No Social Channels Linked Yet</strong>
+                  <strong style={{ display: 'block', fontSize: '14.5px' }}>No Social media Accounts Linked Yet</strong>
                   <div style={{ fontSize: '13px', marginTop: '2px', color: '#7F1D1D' }}>
-                    Connect your Instagram, X, LinkedIn or Facebook handle under <strong>Connected Channels</strong> tab to publish directly.
+                    Connect your Instagram, X, LinkedIn or Facebook handle under <strong>Connected Social media Accounts</strong> tab to publish directly.
                   </div>
                 </div>
               </div>
@@ -590,10 +590,10 @@ export function SocialPostStudio() {
               </div>
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                 {[
-                  { id: 'health_tip', label: '🩺 Health Advice' },
-                  { id: 'testimonial', label: '⭐ Patient Story' },
-                  { id: 'schedule', label: '📅 Booking Promo' },
-                  { id: 'motivation', label: '💡 Motivation' },
+                  { id: 'health_tip', label: '🩺 Tips For your Niche' },
+                  { id: 'testimonial', label: '⭐ Your Life Style' },
+                  { id: 'schedule', label: '📅 Announcement' },
+                  { id: 'motivation', label: '💡 Festive Greeting' },
                 ].map((preset) => (
                   <button
                     key={preset.id}
@@ -1176,7 +1176,7 @@ export function SocialPostStudio() {
           </div>
 
           {/* RIGHT COLUMN: REALISTIC IPHONE 15 PRO DEVICE SIMULATOR */}
-          <div className="card" style={{ padding: '24px', background: '#ffffff', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center' }}>
+          <div className="card" style={{ padding: '24px', background: '#ffffff', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center', position: 'sticky', top: '24px', alignSelf: 'start' }}>
             
             <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>

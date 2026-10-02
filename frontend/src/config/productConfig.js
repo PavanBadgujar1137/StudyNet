@@ -127,69 +127,67 @@ export const LEARNER_PLANS = [
 // The actual take-rate % must be confirmed by the client before the
 // pricing page can state it explicitly. The placeholder below must
 // be replaced with the real number before launch.
-export const COMMISSION_RATE_PLACEHOLDER = 'CLIENT_SUPPLIED_COMMISSION_%'
-
 export const PRACTITIONER_PLANS = [
   {
-    key: 'starter',
-    name: 'Starter',
+    key: 'open',
+    name: 'Open',
+    price: '₹0',
+    period: '/month',
+    commission: '10% per booking · every channel',
+    tagline: 'Start your practice. We start bringing mentees.',
+    badge: 'START FREE',
+    featured: false,
+    buttonText: 'Start free →',
+    features: [
+      'Flat 10% on every booking — your link or ours',
+      'Growth Hand onboarding: profile & positioning review',
+      'Listed in OpenHand mentee discovery',
+      '1:1, group sessions, webinars & packages',
+      'Built-in HD Session Room',
+      'Verified Practitioner badge',
+      'Instant UPI / bank payouts',
+    ],
+  },
+  {
+    key: 'pro',
+    name: 'Pro',
     price: '₹999',
+    yearlyPrice: '₹799',
     period: '/month',
-    tagline: 'For practitioners building their online practice from scratch.',
-    badge: 'PLATFORM ACCESS',
-    featured: false,
-    features: [
-      'Publish 1:1 Session offers',
-      'Host 1 live Circle',
-      'Directory listing & booking link',
-      'Learner mood check-in tracking',
-      'AURA Aftercare Notes (post-session drafting) — included free',
-      'Razorpay direct payout integration',
-    ],
-    // NOTE: AURA post-session notes are FREE on this tier per CP-2
-    auraPostSessionFree: true,
-    auraLivePanelIncluded: true, // paid gating starts at Starter
-  },
-  {
-    key: 'growth',
-    name: 'Growth',
-    price: '₹2,999',
-    period: '/month',
-    tagline: 'Scale your practice with unlimited Circles, automations, and branded tools.',
-    badge: 'MOST POPULAR',
+    yearlyPeriod: '/month, billed yearly',
+    commission: '5% per booking · every channel',
+    tagline: 'A growth partner working on your practice every month.',
+    badge: 'MOST CHOSEN',
     featured: true,
+    buttonText: 'Grow with Pro →',
     features: [
-      'Everything in Starter',
-      'Unlimited live Circles',
-      'Unlimited offer publishing',
-      'Automated Check-in & reflection sequences',
-      'Priority directory placement & verified badge',
-      'Free learner Memberships to gift clients',  // was "Companion passes" — renamed per PJ-7
+      'Everything in Open — commission drops to 5%',
+      'Monthly growth review with an OpenHand mentor',
+      'Priority mentee matching & featured placement',
+      'Visibility campaigns: spotlights, collaborations, events',
+      'Programs, cohorts & memberships',
+      'AI session notes & client progress insights',
+      'Custom domain & white-label booking page',
     ],
-    auraPostSessionFree: true,
-    auraLivePanelIncluded: true,
   },
   {
-    key: 'master',
-    name: 'Master',             // was "Master VIP" — "VIP" removed per brief (PJ-6)
-    price: '₹5,999',
-    period: '/month',
-    tagline: 'For established clinics and high-volume practitioners.',
-    badge: 'CLINIC & STUDIO',
+    key: 'institution',
+    name: 'Institution',
+    price: 'Custom',
+    period: '',
+    commission: 'Custom commission',
+    tagline: 'Academies, colleges & coaching firms.',
+    badge: 'INSTITUTION',
     featured: false,
+    buttonText: 'Talk to us →',
     features: [
-      'Everything in Growth',
-      // ⚠️ CP-6: replace placeholder with real commission rate before launch
-      `Take-rate: ${COMMISSION_RATE_PLACEHOLDER} — confirm with client`,
-      'White-label portal & custom domain',          // per G3 exact label
-      'Branded app',                                  // per G3 exact label
-      'Dedicated account manager',                   // per G3 exact label
-      'Zapier / API integration',                    // per G3 exact label
-      'SSO and HRIS integration',                    // per G3 — Phase 3
-      'Circle analytics & learner retention intelligence',
+      'Everything in Pro',
+      'Custom commission — as low as 0%',
+      'Dedicated growth & success manager',
+      'Multi-practitioner teams & roles',
+      'LMS, certification & cohort workflows',
+      'API, SSO & data export',
     ],
-    auraPostSessionFree: true,
-    auraLivePanelIncluded: true,
   },
 ]
 

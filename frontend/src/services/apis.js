@@ -9,6 +9,7 @@ export const endpoints = {
   SOCIAL_LOGIN_API: BASE_URL + "/auth/social-login",
   RESETPASSTOKEN_API: BASE_URL + "/auth/reset-password-token",
   RESETPASSWORD_API: BASE_URL + "/auth/reset-password",
+  ACCEPT_CONSENT_API: BASE_URL + "/auth/accept-consent",
 }
 
 // PROFILE ENDPOINTS

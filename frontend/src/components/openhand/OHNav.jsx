@@ -27,7 +27,7 @@ const LEARNER_LINKS = [
 ]
 
 const PRACTITIONER_LINKS = [
-  { label: 'Practice Cockpit', to: '/practice/dashboard' },
+  { label: 'My Dashboard', to: '/practice/dashboard' },
   { label: 'My offers',        to: '/practice/offers' },
   { label: 'Learners',  to: '/practice/clients' },
   { label: 'Circles',   to: '/practice/circles' },

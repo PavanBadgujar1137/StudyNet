@@ -459,7 +459,7 @@ export default function Courses() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: '#DCFCE7', borderRadius: 20, border: '1px solid #BBF7D0' }}>
           <FiCheck size={14} color="#166534" />
           <span style={{ color: '#166534', fontWeight: 700, fontSize: 13 }}>
-            Free Learner Account — Unlimited Access
+            Free Learner Account — Access Free & Premium Courses
           </span>
         </div>
       </div>

@@ -18,6 +18,7 @@ import UpdatePassword from "./pages/UpdatePassword"
 import VerifyEmail from "./pages/VerifyEmail"
 import LiveClassRoom from "./pages/LiveClassRoom"
 import SocialCallback from "./pages/SocialCallback"
+import ConsentDeclaration from "./pages/ConsentDeclaration"
 
 // OpenHand Marketing Pages (Verbatim Specs)
 import HomeMarketing from "./pages/marketing/Home"
@@ -141,6 +142,16 @@ function App() {
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/data-consent" element={<DataConsent />} />
         <Route path="/security" element={<Security />} />
+
+        {/* Mandatory consent gate — shown once after any registration */}
+        <Route
+          path="/consent"
+          element={
+            <PrivateRoute>
+              <ConsentDeclaration />
+            </PrivateRoute>
+          }
+        />
 
         {/* Learner App (5 Tabs) */}
         <Route

@@ -32,6 +32,7 @@ const practitionerProfileSchema = new mongoose.Schema(
     adminVerifiedRating: { type: Number, default: null },
     verifiedRatingCount: { type: Number, default: 0 },
     rating: { type: Number, default: null },
+    viewCount: { type: Number, default: 0 }, // Used for ranking based on profile views
 
     // Payout & Bank Details for Admin Salary Transfer
     bankAccountName: { type: String, trim: true },

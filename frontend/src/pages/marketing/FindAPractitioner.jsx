@@ -456,30 +456,30 @@ export function FindAPractitioner() {
 
                   return (
                     <article key={p._id} className="practitioner-card">
-                      {/* Header: Avatar + Meta */}
-                      <div className="p-card-head">
-                        <div className="p-avatar-wrap">
-                          {userImg ? (
-                            <img
-                              src={userImg}
-                              alt={name}
-                              className="p-avatar-img"
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none'
-                                const fallback = e.currentTarget.parentElement?.querySelector('.p-avatar')
-                                if (fallback) fallback.style.display = 'flex'
-                              }}
-                            />
-                          ) : null}
-                          <div
-                            className="p-avatar"
-                            style={{ display: userImg ? 'none' : 'flex' }}
-                          >
-                            {p.avatarInitials || name.slice(0, 2).toUpperCase()}
-                          </div>
-                          {p.onlineNow && <span className="p-online-dot" title="Accepting learners" />}
+                      {/* Large Square Avatar */}
+                      <div className="p-avatar-large-wrap">
+                        {userImg ? (
+                          <img
+                            src={userImg}
+                            alt={name}
+                            className="p-avatar-large-img"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none'
+                              const fallback = e.currentTarget.parentElement?.querySelector('.p-avatar-large-fallback')
+                              if (fallback) fallback.style.display = 'flex'
+                            }}
+                          />
+                        ) : null}
+                        <div
+                          className="p-avatar-large-fallback"
+                          style={{ display: userImg ? 'none' : 'flex' }}
+                        >
+                          {p.avatarInitials || name.slice(0, 1).toUpperCase()}
                         </div>
+                      </div>
 
+                      <div className="practitioner-card-body">
+                        {/* Meta info */}
                         <div className="p-meta-wrap">
                           <div className="p-name-row">
                             <h3 className="p-name">{name}</h3>
@@ -487,7 +487,7 @@ export function FindAPractitioner() {
                               <span className="p-verified-badge" title="Verified Credential">✓ Verified</span>
                             )}
                           </div>
-                          <div className="p-credentials">{p.credentials}</div>
+                          {p.credentials && <div className="p-credentials">{p.credentials}</div>}
                           <div className="p-rating-row">
                             {p.reviewCount ? (
                               <>
@@ -501,9 +501,8 @@ export function FindAPractitioner() {
                             )}
                           </div>
                         </div>
-                      </div>
 
-                      {/* Bio */}
+                        {/* Bio */}
                       <p className="p-bio-text">{p.bio}</p>
 
                       {/* Offers Section — real or dummy placeholder */}
@@ -593,6 +592,7 @@ export function FindAPractitioner() {
                           </>
                         )}
                       </div>
+                    </div>
                     </article>
                   )
                 })}

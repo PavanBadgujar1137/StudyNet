@@ -41,8 +41,8 @@ export function Home() {
       {/* ========================================================================= */}
       {/* 1. DUAL-ROLE INTERACTIVE HERO SECTION                                     */}
       {/* ========================================================================= */}
-      <section className="relative pt-10 pb-16 lg:pt-14 lg:pb-24 overflow-hidden bg-white border-b border-slate-200/80">
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="relative pt-4 pb-16 lg:pt-8 lg:pb-24 overflow-hidden bg-white border-b border-slate-200/80">
+        <div className="relative max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-8">
           
           {/* Top Toggle Switcher: Centered Glowing Bubble [ I want to grow ] [ I guide others ] */}
           <div className="flex justify-center items-center mb-10">
@@ -144,8 +144,8 @@ export function Home() {
                   </h1>
 
                   {/* Subtitle */}
-                  <p className="text-base sm:text-xl font-normal leading-relaxed max-w-xl" style={{ color: '#475569' }}>
-                    Book 1:1 sessions or join a small 8-person Circle with verified coaches, counsellors and mentors.
+                  <p className="text-base sm:text-lg lg:text-xl font-normal leading-relaxed max-w-none lg:whitespace-nowrap" style={{ color: '#475569' }}>
+                    Book 1:1 sessions or join a Circle with verified coaches, counsellors and mentors.
                   </p>
 
                   {/* Search Bar Input */}
@@ -174,7 +174,7 @@ export function Home() {
                   </form>
 
                   {/* Suggestion Topic Pills */}
-                  <div className="flex flex-wrap items-center gap-2 pt-2">
+                  <div className="flex flex-wrap items-center gap-2.5 pt-3">
                     {['Burnout', 'Career change', 'Anxiety at work', 'Leadership', 'Parenting'].map((topic) => (
                       <button
                         key={topic}
@@ -183,8 +183,11 @@ export function Home() {
                           setLearnerQuery(topic)
                           navigate(`/find-a-practitioner?search=${encodeURIComponent(topic)}`)
                         }}
-                        className="px-4 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 hover:border-blue-400 hover:text-blue-600 transition-all shadow-2xs cursor-pointer"
-                        style={{ color: '#334155' }}
+                        className="px-5 py-2 rounded-full text-sm font-bold bg-white border-2 hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50/40 hover:shadow-sm transition-all cursor-pointer whitespace-nowrap"
+                        style={{
+                          color: '#1E293B',
+                          borderColor: '#CBD5E1',
+                        }}
                       >
                         {topic}
                       </button>
@@ -317,7 +320,7 @@ export function Home() {
       {/* 3. HOW IT WORKS: ONE PLATFORM, TWO JOURNEYS (Screenshot 4)               */}
       {/* ========================================================================= */}
       <section className="py-20 lg:py-24 bg-white border-b border-slate-200/80" id="how-it-works">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-8">
           
           <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
             <span
@@ -522,7 +525,7 @@ export function Home() {
         {/* Glow ambient */}
         <div className="absolute -top-24 right-0 w-96 h-96 bg-blue-500/15 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
             
             {/* Left text */}
@@ -600,7 +603,7 @@ export function Home() {
       {/* 6. ORGANIZATIONS BANNER & DUAL CLOSING CTAS (Screenshot 7)                */}
       {/* ========================================================================= */}
       <section className="py-20 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+        <div className="max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           
           {/* Top Banner: Organizations & EAP */}
           <div className="bg-white rounded-3xl p-8 sm:p-12 border border-slate-200 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xs">

@@ -3,11 +3,9 @@ import { useSelector } from "react-redux"
 import { useNavigate, Link } from "react-router-dom"
 import {
   FiShield,
-  FiArrowRight,
   FiHeart,
   FiBookOpen,
   FiUsers,
-  FiMessageSquare,
   FiHome,
 } from "react-icons/fi"
 import { HiSparkles } from "react-icons/hi"
@@ -15,90 +13,40 @@ import toast from "react-hot-toast"
 import OHEyebrow from "./OHEyebrow"
 import { apiConnector } from "../../services/apiConnector"
 
-const INCLUDED_PRACTITIONER_FEATURES = [
-  {
-    title: "0% commission",
-    desc: "You keep 100% of every session and programme fee.",
-  },
-  {
-    title: "Clients pay you directly",
-    desc: "Through your own UPI, bank account or payment link. OpenHand never holds your money.",
-  },
-  {
-    title: "Verified practitioner profile",
-    desc: "Credential-checked profile with a verified badge.",
-  },
-  {
-    title: "Priority directory placement",
-    desc: "Be found first by clients searching OpenHand.",
-  },
-  {
-    title: "Unlimited 1:1 session offers",
-    desc: "With your own personal booking link.",
-  },
-  {
-    title: "Unlimited live Circles",
-    desc: "Run group sessions and communities without limits.",
-  },
-  {
-    title: "Unlimited offers, free and paid",
-    desc: "Workshops, programmes, discovery calls and more.",
-  },
-  {
-    title: "AURA Aftercare Notes",
-    desc: "Structured session notes your clients can return to.",
-  },
-  {
-    title: "Check-in & reflection sequences",
-    desc: "Automated follow-ups that keep clients progressing between sessions.",
-  },
-  {
-    title: "Gift learner memberships",
-    desc: "Offer complimentary memberships to your clients.",
-  },
-  {
-    title: "Practitioner Network",
-    desc: "Peer Supervision Groups with fellow verified practitioners.",
-  },
-  {
-    title: "Circle analytics",
-    desc: "See attendance, engagement and client retention at a glance.",
-  },
-]
+
 
 export default function OHPricingSection({
   defaultRole = "practitioner",
+  role,
+  onRoleChange,
   title,
   subtitle,
   hideRoleSwitcher = false,
   isModal = false,
   onSuccess,
 }) {
-  const [activeTab, setActiveTab] = useState(defaultRole) // "learner" | "practitioner"
+  const [internalTab, setInternalTab] = useState(defaultRole) // "learner" | "practitioner"
+  const activeTab = role !== undefined ? role : internalTab
+
+  const handleTabChange = (newTab) => {
+    setInternalTab(newTab)
+    if (onRoleChange) {
+      onRoleChange(newTab)
+    }
+  }
+
+  const [billingCycle, setBillingCycle] = useState("monthly") // "monthly" | "yearly"
   const [payingPlan, setPayingPlan] = useState(null)
-  const [subStatus, setSubStatus] = useState(null)
 
   useEffect(() => {
-    setActiveTab(defaultRole)
-  }, [defaultRole])
+    if (role === undefined) {
+      setInternalTab(defaultRole)
+    }
+  }, [defaultRole, role])
 
   const { token } = useSelector((state) => state.auth)
   const { user } = useSelector((state) => state.profile)
   const navigate = useNavigate()
-
-  useEffect(() => {
-    if (token) {
-      apiConnector("GET", "/api/v1/payments/subscription/mine", null, {
-        Authorization: `Bearer ${token}`,
-      })
-        .then((res) => {
-          if (res?.data?.success) {
-            setSubStatus(res.data)
-          }
-        })
-        .catch(() => {})
-    }
-  }, [token])
 
   const loadRazorpaySDK = () => {
     return new Promise((resolve) => {
@@ -195,9 +143,8 @@ export default function OHPricingSection({
               const subRes = await apiConnector("GET", "/api/v1/payments/subscription/mine", null, {
                 Authorization: `Bearer ${token}`,
               })
-              if (subRes?.data?.success) {
-                setSubStatus(subRes.data)
-                if (onSuccess) onSuccess(subRes.data)
+              if (subRes?.data?.success && onSuccess) {
+                onSuccess(subRes.data)
               } else if (onSuccess) {
                 onSuccess()
               }
@@ -233,11 +180,11 @@ export default function OHPricingSection({
   }
 
   return (
-    <section className={isModal ? "py-6 bg-transparent" : "oh-sec py-16 bg-slate-50 border-t border-b border-slate-200"} id="pricing">
-      <div className="oh-wrap max-w-[1360px] mx-auto px-4">
+    <section className={isModal ? "py-6 bg-transparent" : "bg-white border-b border-slate-200/80"} id="pricing" style={isModal ? {} : { paddingTop: "44px", paddingBottom: "64px" }}>
+      <div className="w-full max-w-[1540px] mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
-        <div className="text-center max-w-5xl mx-auto mb-10">
+        <div className="text-center max-w-5xl mx-auto mb-2">
           
           {activeTab === "practitioner" ? (
             <>
@@ -263,130 +210,63 @@ export default function OHPricingSection({
                 className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight my-3 leading-[1.15]"
                 style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
               >
-                Build your practice on OpenHand. <br />
-                <span style={{ color: "#2563EB" }}>
-                  Keep every rupee you earn.
+                We don't just host your practice. <br />
+                <span className="italic font-bold" style={{ color: "#2563EB" }}>
+                  We grow it with you.
                 </span>
               </h1>
 
               <p className="text-slate-600 text-sm sm:text-base font-medium leading-relaxed max-w-2xl mx-auto">
-                One flat membership. Zero commission on your sessions. Your clients pay you directly, and OpenHand never stands between you and your income.
+                Other platforms just give you tools. OpenHand actively brings you mentees, builds your reach, and grows your practice — for a flat 10%, with ₹0 to start.
               </p>
 
-              {/* 3 Green Dots Strip */}
-              <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 mt-5 text-xs sm:text-sm font-semibold text-slate-700">
-                <span className="flex items-center gap-2">
-                  <span
-                    style={{
-                      width: "8px",
-                      height: "8px",
-                      borderRadius: "9999px",
-                      backgroundColor: "#059669",
-                      display: "inline-block",
-                      flexShrink: 0,
-                    }}
-                  />
-                  0% commission, always
-                </span>
-                <span className="flex items-center gap-2">
-                  <span
-                    style={{
-                      width: "8px",
-                      height: "8px",
-                      borderRadius: "9999px",
-                      backgroundColor: "#059669",
-                      display: "inline-block",
-                      flexShrink: 0,
-                    }}
-                  />
-                  Direct payments to you
-                </span>
-                <span className="flex items-center gap-2">
-                  <span
-                    style={{
-                      width: "8px",
-                      height: "8px",
-                      borderRadius: "9999px",
-                      backgroundColor: "#059669",
-                      display: "inline-block",
-                      flexShrink: 0,
-                    }}
-                  />
-                  Verified practitioners only
-                </span>
+              {/* 3 Metric Highlights as Points */}
+              <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 mt-6 max-w-3xl mx-auto">
+                <div className="flex items-center gap-2.5 text-slate-700 font-semibold text-sm sm:text-[15px]">
+                  <span className="w-5 h-5 rounded-full bg-blue-100 text-[#2563EB] flex items-center justify-center text-xs font-black shrink-0">
+                    ✓
+                  </span>
+                  <span><strong className="text-slate-900 font-extrabold">₹0</strong> to start</span>
+                </div>
+                <div className="flex items-center gap-2.5 text-slate-700 font-semibold text-sm sm:text-[15px]">
+                  <span className="w-5 h-5 rounded-full bg-emerald-100 text-[#059669] flex items-center justify-center text-xs font-black shrink-0">
+                    ✓
+                  </span>
+                  <span><strong className="text-slate-900 font-extrabold">10%</strong> flat, every channel</span>
+                </div>
+                <div className="flex items-center gap-2.5 text-slate-700 font-semibold text-sm sm:text-[15px]">
+                  <span className="w-5 h-5 rounded-full bg-purple-100 text-[#7C3AED] flex items-center justify-center text-xs font-black shrink-0">
+                    ✓
+                  </span>
+                  <span><strong className="text-slate-900 font-extrabold">1</strong> growth partner, every plan</span>
+                </div>
               </div>
             </>
           ) : (
             <>
               <OHEyebrow>100% Free for Learners</OHEyebrow>
-              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[42px] font-black text-slate-900 tracking-tight my-4">
+              <h2
+                className="text-2xl sm:text-3xl md:text-4xl lg:text-[42px] font-black text-slate-900 tracking-tight my-4"
+                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+              >
                 OpenHand is{" "}
-                <span className="oh-grad-text bg-gradient-to-r from-emerald-600 via-teal-600 to-blue-600 bg-clip-text text-transparent">
+                <span className="italic font-bold" style={{ color: "#2563EB" }}>
                   100% Completely Free
                 </span>{" "}
                 for Learners
               </h2>
-              <p className="text-slate-600 text-base sm:text-lg font-medium leading-relaxed max-w-2xl mx-auto">
+              <p className="text-slate-600 text-base sm:text-lg font-medium leading-relaxed max-w-3xl mx-auto">
                 No subscriptions. No credit card required. Register, log in, and access practitioner free courses, live circles, daily check-ins, and AURA AI freely.
               </p>
             </>
           )}
 
-          {/* User Active Plan / Status Banner */}
-          {token && subStatus && (
-            <div
-              className="max-w-xl mx-auto mt-6 p-4 rounded-2xl border text-sm font-semibold flex items-center justify-between gap-4 shadow-sm"
-              style={{
-                background: subStatus.isFreeLearner
-                  ? "#F0FDF4"
-                  : subStatus.hasActiveSubscription
-                  ? "#F0FDF4"
-                  : subStatus.isTrialActive
-                  ? "#F3E8FF"
-                  : "#FEF2F2",
-                borderColor: subStatus.isFreeLearner
-                  ? "#BBF7D0"
-                  : subStatus.hasActiveSubscription
-                  ? "#BBF7D0"
-                  : subStatus.isTrialActive
-                  ? "#E9D5FF"
-                  : "#FCA5A5",
-                color: subStatus.isFreeLearner
-                  ? "#166534"
-                  : subStatus.hasActiveSubscription
-                  ? "#166534"
-                  : subStatus.isTrialActive
-                  ? "#7E22CE"
-                  : "#DC2626",
-              }}
-            >
-              <div className="flex items-center gap-2">
-                <FiShield size={18} />
-                {subStatus.isFreeLearner ? (
-                  <span>
-                    🎓 <strong>Free Learner Account:</strong> You have 100% free unlimited access to the entire platform!
-                  </span>
-                ) : subStatus.hasActiveSubscription ? (
-                  <span>
-                    Active Subscription: <strong>{subStatus.subscription?.planName || "Active Plan"}</strong>
-                  </span>
-                ) : subStatus.isTrialActive ? (
-                  <span>
-                    ⚡ 14-Day Free Trial Active: <strong>{subStatus.trialDaysRemaining} days remaining</strong>
-                  </span>
-                ) : (
-                  <span>⚠️ 14-Day Free Trial Expired — Subscribe below to unlock all practice features</span>
-                )}
-              </div>
-            </div>
-          )}
-
           {/* Role Switcher Tabs */}
           {!hideRoleSwitcher && (
-            <div className="inline-flex flex-col sm:flex-row items-center p-1.5 rounded-2xl mt-8 shadow-sm border border-slate-300 max-w-full gap-1.5" style={{ backgroundColor: "#E2E8F0" }}>
+            <div className="inline-flex flex-col sm:flex-row items-center p-1.5 rounded-2xl mt-5 shadow-sm border border-slate-300 max-w-full gap-1.5" style={{ backgroundColor: "#E2E8F0" }}>
               <button
                 type="button"
-                onClick={() => setActiveTab("practitioner")}
+                onClick={() => handleTabChange("practitioner")}
                 className="w-full sm:w-auto px-6 py-3 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-200 min-h-[44px] flex items-center justify-center cursor-pointer"
                 style={{
                   backgroundColor: activeTab === "practitioner" ? "#0F172A" : "transparent",
@@ -395,11 +275,11 @@ export default function OHPricingSection({
                   transform: activeTab === "practitioner" ? "scale(1.02)" : "scale(1)",
                 }}
               >
-                🩺 For Practitioners (0% Commission)
+                🩺 For Practitioners
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab("learner")}
+                onClick={() => handleTabChange("learner")}
                 className="w-full sm:w-auto px-6 py-3 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-200 min-h-[44px] flex items-center justify-center cursor-pointer"
                 style={{
                   backgroundColor: activeTab === "learner" ? "#2563EB" : "transparent",
@@ -521,585 +401,265 @@ export default function OHPricingSection({
             </div>
           </div>
         ) : (
-          /* ─── PRACTITIONER PRICING 3-CARDS + 12-FEATURES GRID ─── */
-          <div className="pt-2">
+          /* ─── NEW PRACTITIONER PRICING 3-CARDS WITH MONTHLY / YEARLY TOGGLE ─── */
+          <div className="pt-0">
             
+            {/* Top Monthly / Yearly Toggle Pill */}
+            <div className="flex items-center justify-center mt-3 mb-8">
+              <div className="inline-flex items-center p-1.5 rounded-full bg-white border border-slate-200 shadow-sm gap-1">
+                <button
+                  type="button"
+                  onClick={() => setBillingCycle("monthly")}
+                  className={`px-6 py-2.5 rounded-full text-xs sm:text-sm font-extrabold transition-all duration-200 cursor-pointer ${
+                    billingCycle === "monthly"
+                      ? "bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-md"
+                      : "text-slate-600 hover:text-slate-900 bg-transparent"
+                  }`}
+                >
+                  Monthly
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBillingCycle("yearly")}
+                  className={`px-6 py-2.5 rounded-full text-xs sm:text-sm font-extrabold transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
+                    billingCycle === "yearly"
+                      ? "bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-md"
+                      : "text-slate-600 hover:text-slate-900 bg-transparent"
+                  }`}
+                >
+                  <span>Yearly</span>
+                  <span className={`text-[11px] font-extrabold ${billingCycle === "yearly" ? "text-blue-100" : "text-indigo-600 font-black"}`}>
+                    save 20%
+                  </span>
+                </button>
+              </div>
+            </div>
+
             {/* 3 Cards Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch w-full max-w-[1540px] mx-auto">
               
-              {/* Card 1: Monthly Practitioner Pro */}
-              <div className="bg-white rounded-3xl p-7 sm:p-8 flex flex-col justify-between border border-slate-200 shadow-sm hover:shadow-md transition-all">
+              {/* Card 1: Open */}
+              <div className="bg-white rounded-[28px] p-7 sm:p-9 flex flex-col justify-between border border-slate-200 shadow-sm hover:shadow-md transition-all">
                 <div>
-                  <div className="text-[11px] font-extrabold tracking-widest text-slate-500 uppercase mb-2">
-                    MONTHLY
-                  </div>
-                  <h3 
-                    className="text-2xl sm:text-3xl font-bold text-slate-900 mb-1"
-                    style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                  >
-                    Practitioner Pro
+                  <h3 className="text-3xl font-black text-slate-900 mb-1.5 font-outfit">
+                    Open
                   </h3>
-                  <p className="text-xs text-slate-500 min-h-[34px] leading-relaxed">
-                    The complete practitioner toolkit, billed month to month.
+                  <p className="text-xs sm:text-[13px] text-slate-500 min-h-[36px] leading-relaxed font-medium">
+                    Start your practice. We start bringing mentees.
                   </p>
 
-                  <div className="mt-4 mb-1">
-                    <span className="text-4xl sm:text-5xl font-extrabold text-slate-900">₹6,000</span>
-                    <span className="text-sm font-semibold text-slate-500 ml-1">/month</span>
+                  <div className="mt-5 mb-1 flex items-baseline gap-1">
+                    <span className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">₹0</span>
+                    <span className="text-sm font-bold text-slate-500">/ month</span>
                   </div>
-                  <div className="text-xs text-slate-500 mb-6 font-medium">
-                    ₹72,000 billed across 12 months
+                  <div className="text-xs text-slate-800 mb-7 font-bold">
+                    <strong className="text-slate-900 font-extrabold">10%</strong> per booking · every channel
                   </div>
 
                   <button
                     type="button"
-                    onClick={() => handlePayNow("pro_monthly")}
-                    disabled={payingPlan === "pro_monthly"}
-                    className="w-full py-3.5 px-6 rounded-full font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer mb-8 hover:opacity-90"
-                    style={{ backgroundColor: "#0F172A", color: "#FFFFFF" }}
+                    onClick={() => navigate(token ? "/dashboard" : "/signup?role=practitioner")}
+                    className="w-full py-3.5 px-6 rounded-2xl font-extrabold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer mb-8 hover:bg-blue-100 active:scale-[0.98]"
+                    style={{ backgroundColor: "#EFF6FF", color: "#1D4ED8", border: "1px solid #DBEAFE" }}
                   >
-                    <span>{payingPlan === "pro_monthly" ? "Opening Razorpay..." : "Join as a Practitioner →"}</span>
+                    <span>Start free →</span>
                   </button>
 
-                  <ul className="space-y-3.5 text-xs text-slate-700 font-medium">
-                    <li className="flex items-start gap-2.5">
-                      <span
-                        style={{
-                          width: "18px",
-                          height: "18px",
-                          borderRadius: "9999px",
-                          backgroundColor: "#059669",
-                          color: "#FFFFFF",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                          marginTop: "2px",
-                        }}
-                      >
-                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
-                        </svg>
-                      </span>
-                      <span>0% commission. Keep 100% of your fees</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span
-                        style={{
-                          width: "18px",
-                          height: "18px",
-                          borderRadius: "9999px",
-                          backgroundColor: "#059669",
-                          color: "#FFFFFF",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                          marginTop: "2px",
-                        }}
-                      >
-                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
-                        </svg>
-                      </span>
-                      <span>Clients pay you directly</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span
-                        style={{
-                          width: "18px",
-                          height: "18px",
-                          borderRadius: "9999px",
-                          backgroundColor: "#059669",
-                          color: "#FFFFFF",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                          marginTop: "2px",
-                        }}
-                      >
-                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
-                        </svg>
-                      </span>
-                      <span>Verified profile &amp; priority placement</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span
-                        style={{
-                          width: "18px",
-                          height: "18px",
-                          borderRadius: "9999px",
-                          backgroundColor: "#059669",
-                          color: "#FFFFFF",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                          marginTop: "2px",
-                        }}
-                      >
-                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
-                        </svg>
-                      </span>
-                      <span>Unlimited sessions, Circles and offers</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span
-                        style={{
-                          width: "18px",
-                          height: "18px",
-                          borderRadius: "9999px",
-                          backgroundColor: "#059669",
-                          color: "#FFFFFF",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                          marginTop: "2px",
-                        }}
-                      >
-                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
-                        </svg>
-                      </span>
-                      <span>AURA Aftercare Notes &amp; client sequences</span>
-                    </li>
+                  <ul className="space-y-3.5 text-xs sm:text-[13px] text-slate-700 font-medium">
+                    {[
+                      "Flat 10% on every booking — your link or ours",
+                      "Growth Hand onboarding: profile & positioning review",
+                      "Listed in OpenHand mentee discovery",
+                      "1:1, group sessions, webinars & packages",
+                      "Built-in HD Session Room",
+                      "Verified Practitioner badge",
+                      "Instant UPI / bank payouts",
+                    ].map((feature, idx) => (
+                      <li key={idx} className="flex items-start gap-3">
+                        <span
+                          style={{
+                            width: "18px",
+                            height: "18px",
+                            borderRadius: "9999px",
+                            backgroundColor: "#3B82F6",
+                            color: "#FFFFFF",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                            marginTop: "2px",
+                          }}
+                        >
+                          <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
+                          </svg>
+                        </span>
+                        <span className="leading-snug">{feature}</span>
+                      </li>
+                    ))}
                   </ul>
-                </div>
-
-                <div className="border-t border-dashed border-slate-200 pt-4 mt-8 text-center text-xs font-semibold text-slate-500">
-                  0% commission · You keep 100%
                 </div>
               </div>
 
-              {/* Card 2: Annual Practitioner Pro (Best Value) */}
+              {/* Card 2: Pro (Most Chosen) */}
               <div
-                className="bg-white rounded-3xl p-7 sm:p-8 flex flex-col justify-between relative shadow-xl transform lg:-translate-y-2"
-                style={{ border: "2px solid #2563EB" }}
+                className="bg-white rounded-[28px] p-7 sm:p-9 flex flex-col justify-between relative shadow-xl transform lg:-translate-y-1"
+                style={{ border: "2px solid #6366F1" }}
               >
-                {/* Floating "Best value" Badge */}
+                {/* Floating "Most chosen" Badge */}
                 <span
                   style={{
                     position: "absolute",
                     top: "-14px",
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    backgroundColor: "#2563EB",
+                    right: "24px",
+                    background: "linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)",
                     color: "#FFFFFF",
                     fontSize: "11px",
                     fontWeight: 800,
                     textTransform: "uppercase",
-                    letterSpacing: "0.08em",
-                    padding: "4px 16px",
+                    letterSpacing: "0.06em",
+                    padding: "4px 14px",
                     borderRadius: "9999px",
-                    boxShadow: "0 4px 14px rgba(37, 99, 235, 0.35)",
+                    boxShadow: "0 4px 14px rgba(79, 70, 229, 0.4)",
                     whiteSpace: "nowrap",
                   }}
                 >
-                  Best value
+                  Most chosen
                 </span>
 
                 <div>
-                  <div className="text-[11px] font-extrabold tracking-widest text-slate-500 uppercase mb-2">
-                    ANNUAL
-                  </div>
-                  <h3 
-                    className="text-2xl sm:text-3xl font-bold text-slate-900 mb-1"
-                    style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                  >
-                    Practitioner Pro
+                  <h3 className="text-3xl font-black text-slate-900 mb-1.5 font-outfit">
+                    Pro
                   </h3>
-                  <p className="text-xs text-slate-500 min-h-[34px] leading-relaxed">
-                    The same complete toolkit, with a year of extras.
+                  <p className="text-xs sm:text-[13px] text-slate-500 min-h-[36px] leading-relaxed font-medium">
+                    A growth partner working on your practice every month.
                   </p>
 
-                  <div className="mt-4 mb-1">
-                    <span className="text-4xl sm:text-5xl font-extrabold text-slate-900">₹50,000</span>
-                    <span className="text-sm font-semibold text-slate-500 ml-1">/year</span>
+                  <div className="mt-5 mb-1 flex items-baseline gap-1">
+                    <span className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">
+                      {billingCycle === "yearly" ? "₹799" : "₹999"}
+                    </span>
+                    <span className="text-sm font-bold text-slate-500">
+                      {billingCycle === "yearly" ? "/ month, billed yearly" : "/ month"}
+                    </span>
                   </div>
-                  <div className="text-xs text-slate-500 mb-6 font-medium">
-                    Works out to ₹4,167/month · <span style={{ color: "#2563EB", fontWeight: 800 }}>Save ₹22,000</span>
+                  <div className="text-xs text-slate-800 mb-7 font-bold">
+                    <strong className="text-slate-900 font-extrabold">5%</strong> per booking · every channel
                   </div>
 
                   <button
                     type="button"
-                    onClick={() => handlePayNow("pro_annual")}
-                    disabled={payingPlan === "pro_annual"}
-                    className="w-full py-3.5 px-6 rounded-full font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer mb-8 text-white hover:opacity-95"
-                    style={{ backgroundColor: "#2563EB", boxShadow: "0 10px 24px rgba(37, 99, 235, 0.28)" }}
+                    onClick={() => handlePayNow(billingCycle === "yearly" ? "pro_yearly" : "pro_monthly")}
+                    disabled={payingPlan === (billingCycle === "yearly" ? "pro_yearly" : "pro_monthly")}
+                    className="w-full py-3.5 px-6 rounded-2xl font-extrabold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer mb-8 text-white shadow-lg hover:opacity-95 active:scale-[0.98]"
+                    style={{
+                      background: "linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)",
+                      boxShadow: "0 10px 24px rgba(79, 70, 229, 0.35)",
+                    }}
                   >
-                    <span>{payingPlan === "pro_annual" ? "Opening Razorpay..." : "Join for the Year →"}</span>
+                    <span>
+                      {payingPlan === (billingCycle === "yearly" ? "pro_yearly" : "pro_monthly")
+                        ? "Opening Razorpay..."
+                        : "Grow with Pro →"}
+                    </span>
                   </button>
 
-                  <div className="text-[11px] font-black uppercase tracking-wider text-slate-700 mb-3">
-                    EVERYTHING IN MONTHLY, PLUS
-                  </div>
-
-                  <ul className="space-y-3.5 text-xs text-slate-700 font-medium">
-                    <li className="flex items-start gap-2.5">
-                      <span
-                        style={{
-                          width: "18px",
-                          height: "18px",
-                          borderRadius: "9999px",
-                          backgroundColor: "#059669",
-                          color: "#FFFFFF",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                          marginTop: "2px",
-                        }}
-                      >
-                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
-                        </svg>
-                      </span>
-                      <span>About 3.5 months free every year</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span
-                        style={{
-                          width: "18px",
-                          height: "18px",
-                          borderRadius: "9999px",
-                          backgroundColor: "#059669",
-                          color: "#FFFFFF",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                          marginTop: "2px",
-                        }}
-                      >
-                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
-                        </svg>
-                      </span>
-                      <span>Your price locked for 12 months</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span
-                        style={{
-                          width: "18px",
-                          height: "18px",
-                          borderRadius: "9999px",
-                          backgroundColor: "#059669",
-                          color: "#FFFFFF",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                          marginTop: "2px",
-                        }}
-                      >
-                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
-                        </svg>
-                      </span>
-                      <span>Featured Spotlight in the directory</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span
-                        style={{
-                          width: "18px",
-                          height: "18px",
-                          borderRadius: "9999px",
-                          backgroundColor: "#059669",
-                          color: "#FFFFFF",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                          marginTop: "2px",
-                        }}
-                      >
-                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
-                        </svg>
-                      </span>
-                      <span>Concierge onboarding: we set up your profile and first offers</span>
-                    </li>
+                  <ul className="space-y-3.5 text-xs sm:text-[13px] text-slate-700 font-medium">
+                    {[
+                      "Everything in Open — commission drops to 5%",
+                      "Monthly growth review with an OpenHand mentor",
+                      "Priority mentee matching & featured placement",
+                      "Visibility campaigns: spotlights, collaborations, events",
+                      "Programs, cohorts & memberships",
+                      "AI session notes & client progress insights",
+                      "Custom domain & white-label booking page",
+                    ].map((feature, idx) => (
+                      <li key={idx} className="flex items-start gap-3">
+                        <span
+                          style={{
+                            width: "18px",
+                            height: "18px",
+                            borderRadius: "9999px",
+                            backgroundColor: "#3B82F6",
+                            color: "#FFFFFF",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                            marginTop: "2px",
+                          }}
+                        >
+                          <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
+                          </svg>
+                        </span>
+                        <span className="leading-snug">{feature}</span>
+                      </li>
+                    ))}
                   </ul>
-                </div>
-
-                <div className="border-t border-dashed border-slate-200 pt-4 mt-8 text-center text-xs font-semibold text-slate-500">
-                  0% commission · You keep 100%
                 </div>
               </div>
 
-              {/* Card 3: White Label Master Studio */}
-              <div
-                className="rounded-3xl p-7 sm:p-8 flex flex-col justify-between shadow-2xl text-white relative"
-                style={{ backgroundColor: "#0F172A", border: "1px solid #1E293B" }}
-              >
+              {/* Card 3: Institution */}
+              <div className="bg-white rounded-[28px] p-7 sm:p-9 flex flex-col justify-between border border-slate-200 shadow-sm hover:shadow-md transition-all">
                 <div>
-                  <div className="text-[11px] font-extrabold tracking-widest text-slate-300 uppercase mb-2">
-                    WHITE LABEL
-                  </div>
-                  <h3 
-                    className="text-2xl sm:text-3xl font-bold text-white mb-1"
-                    style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                  >
-                    Master Studio
+                  <h3 className="text-3xl font-black text-slate-900 mb-1.5 font-outfit">
+                    Institution
                   </h3>
-                  <p className="text-xs text-slate-300 min-h-[34px] leading-relaxed">
-                    Your own coaching platform, powered by OpenHand.
+                  <p className="text-xs sm:text-[13px] text-slate-500 min-h-[36px] leading-relaxed font-medium">
+                    Academies, colleges &amp; coaching firms.
                   </p>
 
-                  <div className="mt-4 mb-1">
-                    <span className="text-4xl sm:text-5xl font-extrabold text-white">Tailored</span>
+                  <div className="mt-5 mb-1 flex items-baseline gap-1">
+                    <span className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">Custom</span>
                   </div>
-                  <div className="text-xs text-slate-300 mb-6 font-medium">
-                    Priced around your studio's size and needs
+                  <div className="text-xs text-slate-800 mb-7 font-bold">
+                    Custom commission
                   </div>
 
                   <Link
                     to="/contact-us"
-                    className="w-full py-3.5 px-6 rounded-full font-extrabold text-sm transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer mb-8 hover:bg-slate-100"
-                    style={{ backgroundColor: "#FFFFFF", color: "#0F172A" }}
+                    className="w-full py-3.5 px-6 rounded-2xl font-extrabold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer mb-8 hover:bg-slate-200 active:scale-[0.98]"
+                    style={{ backgroundColor: "#F1F5F9", color: "#0F172A", border: "1px solid #E2E8F0" }}
                   >
-                    <span>Talk to Us →</span>
+                    <span>Talk to us →</span>
                   </Link>
 
-                  <div className="text-[11px] font-black uppercase tracking-wider text-slate-300 mb-3">
-                    EVERYTHING IN PRACTITIONER PRO, PLUS
-                  </div>
-
-                  <ul className="space-y-3.5 text-xs text-slate-200 font-medium">
-                    <li className="flex items-start gap-2.5">
-                      <span
-                        style={{
-                          width: "18px",
-                          height: "18px",
-                          borderRadius: "9999px",
-                          backgroundColor: "rgba(255, 255, 255, 0.18)",
-                          color: "#FFFFFF",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                          marginTop: "2px",
-                        }}
-                      >
-                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
-                        </svg>
-                      </span>
-                      <span>Your brand and your domain, with no OpenHand branding</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span
-                        style={{
-                          width: "18px",
-                          height: "18px",
-                          borderRadius: "9999px",
-                          backgroundColor: "rgba(255, 255, 255, 0.18)",
-                          color: "#FFFFFF",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                          marginTop: "2px",
-                        }}
-                      >
-                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
-                        </svg>
-                      </span>
-                      <span>Branded mobile app with your name and logo</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span
-                        style={{
-                          width: "18px",
-                          height: "18px",
-                          borderRadius: "9999px",
-                          backgroundColor: "rgba(255, 255, 255, 0.18)",
-                          color: "#FFFFFF",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                          marginTop: "2px",
-                        }}
-                      >
-                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
-                        </svg>
-                      </span>
-                      <span>Add your team of coaches under one studio</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span
-                        style={{
-                          width: "18px",
-                          height: "18px",
-                          borderRadius: "9999px",
-                          backgroundColor: "rgba(255, 255, 255, 0.18)",
-                          color: "#FFFFFF",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                          marginTop: "2px",
-                        }}
-                      >
-                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
-                        </svg>
-                      </span>
-                      <span>Run your own programmes, cohorts and certifications</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span
-                        style={{
-                          width: "18px",
-                          height: "18px",
-                          borderRadius: "9999px",
-                          backgroundColor: "rgba(255, 255, 255, 0.18)",
-                          color: "#FFFFFF",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                          marginTop: "2px",
-                        }}
-                      >
-                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
-                        </svg>
-                      </span>
-                      <span>Connect your own payment account. Money goes straight to you</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span
-                        style={{
-                          width: "18px",
-                          height: "18px",
-                          borderRadius: "9999px",
-                          backgroundColor: "rgba(255, 255, 255, 0.18)",
-                          color: "#FFFFFF",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                          marginTop: "2px",
-                        }}
-                      >
-                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
-                        </svg>
-                      </span>
-                      <span>Zapier &amp; API integration</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span
-                        style={{
-                          width: "18px",
-                          height: "18px",
-                          borderRadius: "9999px",
-                          backgroundColor: "rgba(255, 255, 255, 0.18)",
-                          color: "#FFFFFF",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                          marginTop: "2px",
-                        }}
-                      >
-                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
-                        </svg>
-                      </span>
-                      <span>Dedicated account manager</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span
-                        style={{
-                          width: "18px",
-                          height: "18px",
-                          borderRadius: "9999px",
-                          backgroundColor: "rgba(255, 255, 255, 0.18)",
-                          color: "#FFFFFF",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                          marginTop: "2px",
-                        }}
-                      >
-                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
-                        </svg>
-                      </span>
-                      <span>White-glove migration of your existing clients</span>
-                    </li>
+                  <ul className="space-y-3.5 text-xs sm:text-[13px] text-slate-700 font-medium">
+                    {[
+                      "Everything in Pro",
+                      "Custom commission — as low as 0%",
+                      "Dedicated growth & success manager",
+                      "Multi-practitioner teams & roles",
+                      "LMS, certification & cohort workflows",
+                      "API, SSO & data export",
+                    ].map((feature, idx) => (
+                      <li key={idx} className="flex items-start gap-3">
+                        <span
+                          style={{
+                            width: "18px",
+                            height: "18px",
+                            borderRadius: "9999px",
+                            backgroundColor: "#3B82F6",
+                            color: "#FFFFFF",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                            marginTop: "2px",
+                          }}
+                        >
+                          <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
+                          </svg>
+                        </span>
+                        <span className="leading-snug">{feature}</span>
+                      </li>
+                    ))}
                   </ul>
                 </div>
-
-                <div className="border-t border-dashed border-slate-700 pt-4 mt-8 text-center text-xs font-semibold text-slate-400">
-                  White label · 0% commission
-                </div>
               </div>
 
-            </div>
-
-            {/* ─── 12-Item Feature Breakdown Section (Screenshot 2) ─── */}
-            <div 
-              className="mt-16 sm:mt-20 rounded-[32px] p-6 sm:p-12 shadow-xs max-w-7xl mx-auto"
-              style={{ backgroundColor: "#F8FAFC", border: "1px solid #E2E8F0" }}
-            >
-              <div className="text-center max-w-3xl mx-auto mb-10">
-                <h3 
-                  className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight"
-                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                >
-                  Every Practitioner Pro membership includes
-                </h3>
-                <p className="text-slate-600 text-sm sm:text-base font-medium mt-2">
-                  Monthly or annual, you get the full toolkit from day one.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-                {INCLUDED_PRACTITIONER_FEATURES.map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-start gap-3.5 hover:border-slate-300 hover:shadow-sm transition-all"
-                  >
-                    <span
-                      style={{
-                        width: "22px",
-                        height: "22px",
-                        borderRadius: "9999px",
-                        backgroundColor: "#059669",
-                        color: "#FFFFFF",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                        marginTop: "2px",
-                      }}
-                    >
-                      <svg width="12" height="9" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="1.5 4 3.8 6.3 8.5 1.5" />
-                      </svg>
-                    </span>
-                    <div>
-                      <h4 className="font-extrabold text-slate-900 text-sm mb-1 leading-snug">
-                        {item.title}
-                      </h4>
-                      <p className="text-slate-600 text-xs leading-relaxed font-medium">
-                        {item.desc}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
 
           </div>

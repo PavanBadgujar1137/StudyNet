@@ -765,3 +765,34 @@ exports.changePassword = async (req, res) => {
     })
   }
 }
+
+// Accept Consent Terms
+exports.acceptConsent = async (req, res) => {
+  try {
+    const userId = req.user.id
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "User not authenticated" })
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { hasConsented: true },
+      { new: true }
+    )
+
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: "User not found" })
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Consent accepted successfully",
+    })
+  } catch (error) {
+    console.error("Error accepting consent:", error)
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    })
+  }
+}

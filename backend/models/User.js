@@ -59,6 +59,10 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    hasConsented: {
+      type: Boolean,
+      default: false,
+    },
     additionalDetails: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,

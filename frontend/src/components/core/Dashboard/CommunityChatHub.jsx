@@ -453,7 +453,7 @@ export default function CommunityChatHub({ defaultPractitionerId = null }) {
             Community Channels
           </div>
           <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#0F172A", margin: "4px 0 0 0" }}>
-            Chat Hub
+            Community Chats
           </h2>
         </div>
 
@@ -479,9 +479,9 @@ export default function CommunityChatHub({ defaultPractitionerId = null }) {
           >
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <FiGlobe size={15} />
-              <span># global-lounge</span>
+              <span># Openhand lounge</span>
             </div>
-            <span style={{ fontSize: "9px", padding: "2px 5px", borderRadius: "4px", background: activeTab === "global" ? "rgba(255,255,255,0.2)" : "#E2E8F0", color: activeTab === "global" ? "#FFF" : "#64748B" }}>
+            <span style={{ fontSize: "11px", padding: "2px 5px", borderRadius: "4px", background: activeTab === "global" ? "rgba(255,255,255,0.2)" : "#E2E8F0", color: activeTab === "global" ? "#FFF" : "#64748B" }}>
               Public
             </span>
           </button>
@@ -509,9 +509,9 @@ export default function CommunityChatHub({ defaultPractitionerId = null }) {
           >
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <FiUsers size={15} />
-              <span># practitioner-circle</span>
+              <span># My Private Circle</span>
             </div>
-            <span style={{ fontSize: "9px", padding: "2px 5px", borderRadius: "4px", background: activeTab === "circle" ? "rgba(255,255,255,0.2)" : "#E2E8F0", color: activeTab === "circle" ? "#FFF" : "#64748B" }}>
+            <span style={{ fontSize: "11px", padding: "2px 5px", borderRadius: "4px", background: activeTab === "circle" ? "rgba(255,255,255,0.2)" : "#E2E8F0", color: activeTab === "circle" ? "#FFF" : "#64748B" }}>
               {userCircles.length} Circle(s)
             </span>
           </button>
@@ -536,9 +536,9 @@ export default function CommunityChatHub({ defaultPractitionerId = null }) {
           >
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <FiMessageSquare size={15} />
-              <span># direct-messages</span>
+              <span># My personal Messages</span>
             </div>
-            <span style={{ fontSize: "9px", padding: "2px 5px", borderRadius: "4px", background: activeTab === "direct" ? "rgba(255,255,255,0.2)" : "#E2E8F0", color: activeTab === "direct" ? "#FFF" : "#64748B" }}>
+            <span style={{ fontSize: "11px", padding: "2px 5px", borderRadius: "4px", background: activeTab === "direct" ? "rgba(255,255,255,0.2)" : "#E2E8F0", color: activeTab === "direct" ? "#FFF" : "#64748B" }}>
               1-on-1
             </span>
           </button>
@@ -737,7 +737,7 @@ export default function CommunityChatHub({ defaultPractitionerId = null }) {
         <div style={{ padding: "14px 20px", borderBottom: "1px solid #E2E8F0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
             <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 800, color: "#0F172A", display: "flex", alignItems: "center", gap: "6px" }}>
-              {activeTab === "global" && <>🌐 # global-lounge</>}
+              {activeTab === "global" && <>🌐 # Openhand lounge</>}
               {activeTab === "circle" && (
                 <>👥 {selectedCircle ? selectedCircle.name : "Practitioner Circle"}</>
               )}
@@ -1177,10 +1177,10 @@ export default function CommunityChatHub({ defaultPractitionerId = null }) {
             type="text"
             placeholder={
               activeTab === "global"
-                ? "Send a message or drop files..."
+                ? "Chat with everyone globally... (Visible to all users)"
                 : activeTab === "circle"
-                ? `Message ${selectedCircle?.name || "this Circle"}...`
-                : `Message ${selectedContact ? selectedContact.firstName : "contact"}...`
+                ? `Message ${selectedCircle?.name || "your private circle"}... (Visible only to circle members)`
+                : `Message ${selectedContact ? selectedContact.firstName : "your contact"}... (Private 1-on-1 direct message)`
             }
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}

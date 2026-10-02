@@ -138,7 +138,9 @@ exports.getPractitioners = async (req, res) => {
     }
 
     // Sort results — null/NA sessionRate (dummy offer) always sorts to the end
-    if (sort === "rating") {
+    if (sort === "featured") {
+      results.sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0))
+    } else if (sort === "rating") {
       results.sort((a, b) => (b.rating || 5) - (a.rating || 5))
     } else if (sort === "rate_low") {
       results.sort((a, b) => {
@@ -311,6 +313,10 @@ exports.getPractitionerByHandle = async (req, res) => {
     const totalSum = practitionerReviews.reduce((sum, r) => sum + Number(r.rating || 5), 0)
     const computedRating = practitionerReviews.length > 0 ? Number((totalSum / practitionerReviews.length).toFixed(1)) : null
     const finalRating = profile.adminVerifiedRating !== undefined && profile.adminVerifiedRating !== null ? profile.adminVerifiedRating : computedRating
+
+    // Increment view count since someone just viewed this profile
+    profile.viewCount = (profile.viewCount || 0) + 1;
+    await profile.save();
 
     const profileObj = profile.toObject()
     profileObj.reviews = practitionerReviews || []

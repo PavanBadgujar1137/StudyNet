@@ -52,6 +52,9 @@ export function socialLogin(provider, socialData, navigate) {
 
       if (user?.accountType === "Admin") {
         navigate("/admin")
+      } else if (!user?.hasConsented) {
+        // New or unconsented user — show consent page first
+        navigate("/consent")
       } else {
         navigate("/dashboard")
       }
@@ -146,7 +149,8 @@ export function signUp(
         sessionStorage.setItem("showCompleteProfilePopup", "true")
         localStorage.setItem("showCompleteProfilePopup", "true")
 
-        navigate("/dashboard")
+        // Always send to consent on fresh registration
+        navigate("/consent")
       } else {
         navigate("/login")
       }

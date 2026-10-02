@@ -213,7 +213,7 @@ export function PractitionerDashboard() {
   )
 
   const rawPracticeItems = [
-    { id: 'dash',      label: 'Practice Cockpit', icon: <FiGrid /> },
+    { id: 'dash',      label: 'My Dashboard', icon: <FiGrid /> },
     { id: 'aura',      label: 'AURA Assistant',   icon: <FiZap />, badge: 'Assistant' },
     { id: 'social',    label: 'Social Posts',     icon: <FiShare2 /> },
     { id: 'community', label: 'Community Hub',    icon: <FiMessageSquare /> },
@@ -483,7 +483,7 @@ export function PractitionerDashboard() {
               className="oh-action-btn"
               style={{ background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)' }}
             >
-              <FiVideo /> Enter Session Room
+              <FiVideo /> Start Live Session
             </button>
 
             {/* Profile Dropdown with working Dashboard & Logout */}
@@ -494,7 +494,7 @@ export function PractitionerDashboard() {
         </div>
 
         {/* View Content */}
-        <div className="oh-view-body main" style={activeSection === 'aura' ? { padding: 0, maxWidth: '100%', width: '100%', flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' } : {}}>
+        <div className="oh-view-body" style={activeSection === 'aura' ? { padding: 0, maxWidth: '100%', width: '100%', flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' } : {}}>
           {isPractitionerExpired && activeSection !== 'profile' ? (
             <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '10px 0 40px' }}>
               {/* Expired Lock Header Banner */}

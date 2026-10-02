@@ -13,48 +13,123 @@ import {
 } from "react-icons/fi"
 
 const PRACTITIONER_PLANS = {
-  master: {
-    name: "Master VIP Plan",
-    price: "₹5,999 / month",
-    type: "Practitioner VIP Tier",
-    badgeColor: "linear-gradient(135deg, #8B5CF6 0%, #D946EF 100%)",
-    textColor: "#C084FC",
-    features: [
-      "VIP clinic profile & multi-practitioner support",
-      "Unlimited live group circles & custom cohorts",
-      "Unlimited course publishing (free & paid pricing)",
-      "Automated client check-in & reflection sequences",
-      "Zero platform commission on all booking transactions",
-      "Dedicated account manager & 24/7 technical support"
-    ]
-  },
-  growth: {
-    name: "Growth Plan",
-    price: "₹2,999 / month",
-    type: "Practitioner Growth Tier",
-    badgeColor: "linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)",
-    textColor: "#60A5FA",
-    features: [
-      "Everything in Starter Plan",
-      "Unlimited live group circles & custom cohorts",
-      "Unlimited course publishing (free & paid pricing)",
-      "Automated client check-in & reflection sequences",
-      "Priority directory placement & verified badge"
-    ]
-  },
-  starter: {
-    name: "Starter Plan",
+  pro_monthly: {
+    name: "Pro Plan (Monthly)",
     price: "₹999 / month",
-    type: "Practitioner Starter Tier",
+    type: "Practitioner Pro Tier",
+    badgeColor: "linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)",
+    textColor: "#818CF8",
+    features: [
+      "Everything in Open — commission drops to 5%",
+      "Monthly growth review with an OpenHand mentor",
+      "Priority mentee matching & featured placement",
+      "Visibility campaigns: spotlights, collaborations, events",
+      "Programs, cohorts & memberships",
+      "AI session notes & client progress insights",
+      "Custom domain & white-label booking page",
+    ],
+  },
+  pro_yearly: {
+    name: "Pro Plan (Yearly)",
+    price: "₹799 / month (₹9,588/year)",
+    type: "Practitioner Pro Annual Tier",
+    badgeColor: "linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)",
+    textColor: "#818CF8",
+    features: [
+      "Everything in Open — commission drops to 5%",
+      "Save 20% compared to monthly plan",
+      "Monthly growth review with an OpenHand mentor",
+      "Priority mentee matching & featured placement",
+      "Visibility campaigns: spotlights, collaborations, events",
+      "Programs, cohorts & memberships",
+      "AI session notes & client progress insights",
+      "Custom domain & white-label booking page",
+    ],
+  },
+  pro: {
+    name: "Pro Plan",
+    price: "₹999 / month",
+    type: "Practitioner Pro Tier",
+    badgeColor: "linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)",
+    textColor: "#818CF8",
+    features: [
+      "Everything in Open — commission drops to 5%",
+      "Monthly growth review with an OpenHand mentor",
+      "Priority mentee matching & featured placement",
+      "Visibility campaigns: spotlights, collaborations, events",
+      "Programs, cohorts & memberships",
+      "AI session notes & client progress insights",
+      "Custom domain & white-label booking page",
+    ],
+  },
+  open: {
+    name: "Open Plan",
+    price: "₹0 / month",
+    type: "Practitioner Free Tier",
     badgeColor: "linear-gradient(135deg, #10B981 0%, #059669 100%)",
     textColor: "#34D399",
     features: [
-      "Publish 1:1 session offers & free/paid courses",
-      "Host 1 live private group circle",
-      "Standard directory listing & client booking link",
-      "Client mood check-in tracking & notes",
-      "Razorpay direct payment gateway integration"
-    ]
+      "Flat 10% on every booking — your link or ours",
+      "Growth Hand onboarding: profile & positioning review",
+      "Listed in OpenHand mentee discovery",
+      "1:1, group sessions, webinars & packages",
+      "Built-in HD Session Room",
+      "Verified Practitioner badge",
+      "Instant UPI / bank payouts",
+    ],
+  },
+  institution: {
+    name: "Institution Plan",
+    price: "Custom Pricing",
+    type: "Institution / Enterprise Tier",
+    badgeColor: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
+    textColor: "#94A3B8",
+    features: [
+      "Everything in Pro",
+      "Custom commission — as low as 0%",
+      "Dedicated growth & success manager",
+      "Multi-practitioner teams & roles",
+      "LMS, certification & cohort workflows",
+      "API, SSO & data export",
+    ],
+  },
+  starter: {
+    name: "Pro Plan",
+    price: "₹999 / month",
+    type: "Practitioner Pro Tier",
+    badgeColor: "linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)",
+    textColor: "#818CF8",
+    features: [
+      "Everything in Open — commission drops to 5%",
+      "Priority mentee matching & featured placement",
+      "Programs, cohorts & memberships",
+      "AI session notes & client progress insights",
+    ],
+  },
+  growth: {
+    name: "Pro Plan",
+    price: "₹999 / month",
+    type: "Practitioner Pro Tier",
+    badgeColor: "linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)",
+    textColor: "#818CF8",
+    features: [
+      "Everything in Open — commission drops to 5%",
+      "Priority mentee matching & featured placement",
+      "Programs, cohorts & memberships",
+      "AI session notes & client progress insights",
+    ],
+  },
+  master: {
+    name: "Pro Plan (Yearly)",
+    price: "₹799 / month (₹9,588/year)",
+    type: "Practitioner Pro Annual Tier",
+    badgeColor: "linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)",
+    textColor: "#818CF8",
+    features: [
+      "Everything in Open — commission drops to 5%",
+      "Priority mentee matching & featured placement",
+      "Custom domain & white-label booking page",
+    ],
   },
   trial: {
     name: "14-Day Free Trial",

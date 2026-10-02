@@ -25,6 +25,9 @@ function LearnerRoute({ children }) {
     user?.accountType === "Learner" ||
     user?.accountType === ACCOUNT_TYPE.STUDENT
   ) {
+    if (!user.hasConsented) {
+      return <Navigate to="/consent" />
+    }
     return children
   }
 
