@@ -24,6 +24,8 @@ export const CONTACT = {
   security:'connect@openhand.live',
   privacy: 'connect@openhand.live',
   hello:   'connect@openhand.live',
+  // Public footer / legal address (OpenHand only — no parent-company names)
+  address: 'Office No. 901 and 905, 41 Evoke, Sr. No. 74, Near Mukai Chowk, Ravet, Pune, Maharashtra - 412101, India',
 }
 
 // ─────────────────────────────────────────────

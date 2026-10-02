@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import logoIcon from "../../assets/Logo/Logo-Icon.png";
 import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from "react-icons/fa";
-import { FiArrowRight, FiCheck, FiMail, FiHeart } from "react-icons/fi";
+import { FiArrowRight, FiCheck, FiMail } from "react-icons/fi";
+import { CONTACT } from "../../config/productConfig";
 
 const Footer = () => {
   const [email, setEmail] = useState("");
@@ -145,12 +146,8 @@ const Footer = () => {
       {/* ── Bottom Bar ── */}
       <div className="oh-footer__bottom">
         <p className="oh-footer__copy">
-          © 2026 OpenHand. All rights reserved. · <a href="mailto:connect@openhand.live" style={{ color: '#60A5FA', fontWeight: 700, textDecoration: 'none' }}>connect@openhand.live</a>
+          {CONTACT.address}
         </p>
-        <p className="oh-footer__made">
-          Made with <FiHeart className="oh-footer__heart" /> for practitioners &amp; clients worldwide
-        </p>
-        <p className="oh-footer__domain">openhand.live</p>
       </div>
     </footer>
   );
