@@ -781,7 +781,7 @@ exports.acceptConsent = async (req, res) => {
     )
 
     if (!updatedUser) {
-      return res.status(404).json({ success: false, message: "User not found" })
+      return res.status(404).json({ success: false, message: "Consent Error: User record not found in database" })
     }
 
     return res.status(200).json({
