@@ -24,9 +24,7 @@ const PRACTITIONER_PLANS = {
       "Monthly growth review with an OpenHand mentor",
       "Priority mentee matching & featured placement",
       "Visibility campaigns: spotlights, collaborations, events",
-      "Programs, cohorts & memberships",
       "AI session notes & client progress insights",
-      "Custom domain & white-label booking page",
     ],
   },
   pro_yearly: {
@@ -41,14 +39,12 @@ const PRACTITIONER_PLANS = {
       "Monthly growth review with an OpenHand mentor",
       "Priority mentee matching & featured placement",
       "Visibility campaigns: spotlights, collaborations, events",
-      "Programs, cohorts & memberships",
       "AI session notes & client progress insights",
-      "Custom domain & white-label booking page",
     ],
   },
   pro: {
     name: "Pro Plan",
-    price: "₹999 / month",
+    price: "₹799 / month, billed yearly",
     type: "Practitioner Pro Tier",
     badgeColor: "linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)",
     textColor: "#818CF8",
@@ -57,9 +53,7 @@ const PRACTITIONER_PLANS = {
       "Monthly growth review with an OpenHand mentor",
       "Priority mentee matching & featured placement",
       "Visibility campaigns: spotlights, collaborations, events",
-      "Programs, cohorts & memberships",
       "AI session notes & client progress insights",
-      "Custom domain & white-label booking page",
     ],
   },
   open: {
@@ -74,14 +68,15 @@ const PRACTITIONER_PLANS = {
       "Listed in OpenHand mentee discovery",
       "1:1, group sessions, webinars & packages",
       "Built-in HD Session Room",
+      "Custom domain",
       "Verified Practitioner badge",
       "72-hour working day payouts (UPI / bank)",
     ],
   },
   institution: {
-    name: "Institution Plan",
+    name: "Custom Plan",
     price: "Custom Pricing",
-    type: "Institution / Enterprise Tier",
+    type: "Enterprise / Custom Tier",
     badgeColor: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
     textColor: "#94A3B8",
     features: [
@@ -90,7 +85,7 @@ const PRACTITIONER_PLANS = {
       "Dedicated growth & success manager",
       "Multi-practitioner teams & roles",
       "LMS, certification & cohort workflows",
-      "API, SSO & data export",
+      "White Label Play Store And IOS Store APP",
     ],
   },
   starter: {
@@ -102,20 +97,18 @@ const PRACTITIONER_PLANS = {
     features: [
       "Everything in Open — commission drops to 5%",
       "Priority mentee matching & featured placement",
-      "Programs, cohorts & memberships",
       "AI session notes & client progress insights",
     ],
   },
   growth: {
     name: "Pro Plan",
-    price: "₹999 / month",
+    price: "₹799 / month, billed yearly",
     type: "Practitioner Pro Tier",
     badgeColor: "linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)",
     textColor: "#818CF8",
     features: [
       "Everything in Open — commission drops to 5%",
       "Priority mentee matching & featured placement",
-      "Programs, cohorts & memberships",
       "AI session notes & client progress insights",
     ],
   },
@@ -128,7 +121,7 @@ const PRACTITIONER_PLANS = {
     features: [
       "Everything in Open — commission drops to 5%",
       "Priority mentee matching & featured placement",
-      "Custom domain & white-label booking page",
+      "AI session notes & client progress insights",
     ],
   },
   trial: {

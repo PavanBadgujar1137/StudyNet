@@ -35,7 +35,6 @@ export default function OHPricingSection({
     }
   }
 
-  const [billingCycle, setBillingCycle] = useState("monthly") // "monthly" | "yearly"
   const [payingPlan, setPayingPlan] = useState(null)
 
   useEffect(() => {
@@ -232,7 +231,7 @@ export default function OHPricingSection({
                   <span className="w-5 h-5 rounded-full bg-emerald-100 text-[#059669] flex items-center justify-center text-xs font-black shrink-0">
                     ✓
                   </span>
-                  <span><strong className="text-slate-900 font-extrabold">10%</strong> flat, every channel</span>
+                  <span><strong className="text-slate-900 font-extrabold">10%</strong> flat, every Offers</span>
                 </div>
                 <div className="flex items-center gap-2.5 text-slate-700 font-semibold text-sm sm:text-[15px]">
                   <span className="w-5 h-5 rounded-full bg-purple-100 text-[#7C3AED] flex items-center justify-center text-xs font-black shrink-0">
@@ -401,42 +400,11 @@ export default function OHPricingSection({
             </div>
           </div>
         ) : (
-          /* ─── NEW PRACTITIONER PRICING 3-CARDS WITH MONTHLY / YEARLY TOGGLE ─── */
-          <div className="pt-0">
-            
-            {/* Top Monthly / Yearly Toggle Pill */}
-            <div className="flex items-center justify-center mt-3 mb-8">
-              <div className="inline-flex items-center p-1.5 rounded-full bg-white border border-slate-200 shadow-sm gap-1">
-                <button
-                  type="button"
-                  onClick={() => setBillingCycle("monthly")}
-                  className={`px-6 py-2.5 rounded-full text-xs sm:text-sm font-extrabold transition-all duration-200 cursor-pointer ${
-                    billingCycle === "monthly"
-                      ? "bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-md"
-                      : "text-slate-600 hover:text-slate-900 bg-transparent"
-                  }`}
-                >
-                  Monthly
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setBillingCycle("yearly")}
-                  className={`px-6 py-2.5 rounded-full text-xs sm:text-sm font-extrabold transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
-                    billingCycle === "yearly"
-                      ? "bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-md"
-                      : "text-slate-600 hover:text-slate-900 bg-transparent"
-                  }`}
-                >
-                  <span>Yearly</span>
-                  <span className={`text-[11px] font-extrabold ${billingCycle === "yearly" ? "text-blue-100" : "text-indigo-600 font-black"}`}>
-                    save 20%
-                  </span>
-                </button>
-              </div>
-            </div>
+          /* ─── PRACTITIONER PRICING 3-CARDS (YEARLY PACK ONLY) ─── */
+          <div className="pt-2">
 
             {/* 3 Cards Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch w-full max-w-[1540px] mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch w-full max-w-[1540px] mx-auto mt-6">
               
               {/* Card 1: Open */}
               <div className="bg-white rounded-[28px] p-7 sm:p-9 flex flex-col justify-between border border-slate-200 shadow-sm hover:shadow-md transition-all">
@@ -450,10 +418,10 @@ export default function OHPricingSection({
 
                   <div className="mt-5 mb-1 flex items-baseline gap-1">
                     <span className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">₹0</span>
-                    <span className="text-sm font-bold text-slate-500">/ month</span>
+                    <span className="text-sm font-bold text-slate-500">/ free forever</span>
                   </div>
                   <div className="text-xs text-slate-800 mb-7 font-bold">
-                    <strong className="text-slate-900 font-extrabold">10%</strong> per booking · every channel
+                    <strong className="text-slate-900 font-extrabold">10%</strong> per booking · every Offers
                   </div>
 
                   <button
@@ -472,6 +440,7 @@ export default function OHPricingSection({
                       "Listed in OpenHand mentee discovery",
                       "1:1, group sessions, webinars & packages",
                       "Built-in HD Session Room",
+                      "Custom domain",
                       "Verified Practitioner badge",
                       "72-hour working day payouts (UPI / bank)",
                     ].map((feature, idx) => (
@@ -537,20 +506,20 @@ export default function OHPricingSection({
 
                   <div className="mt-5 mb-1 flex items-baseline gap-1">
                     <span className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">
-                      {billingCycle === "yearly" ? "₹799" : "₹999"}
+                      ₹799
                     </span>
-                    <span className="text-sm font-bold text-slate-500">
-                      {billingCycle === "yearly" ? "/ month, billed yearly" : "/ month"}
+                    <span className="text-sm font-black text-slate-900 tracking-tight">
+                      / month, billed yearly
                     </span>
                   </div>
                   <div className="text-xs text-slate-800 mb-7 font-bold">
-                    <strong className="text-slate-900 font-extrabold">5%</strong> per booking · every channel
+                    <strong className="text-slate-900 font-extrabold">5%</strong> per booking · every Offers
                   </div>
 
                   <button
                     type="button"
-                    onClick={() => handlePayNow(billingCycle === "yearly" ? "pro_yearly" : "pro_monthly")}
-                    disabled={payingPlan === (billingCycle === "yearly" ? "pro_yearly" : "pro_monthly")}
+                    onClick={() => handlePayNow("pro_yearly")}
+                    disabled={payingPlan === "pro_yearly"}
                     className="w-full py-3.5 px-6 rounded-2xl font-extrabold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer mb-8 text-white shadow-lg hover:opacity-95 active:scale-[0.98]"
                     style={{
                       background: "linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)",
@@ -558,7 +527,7 @@ export default function OHPricingSection({
                     }}
                   >
                     <span>
-                      {payingPlan === (billingCycle === "yearly" ? "pro_yearly" : "pro_monthly")
+                      {payingPlan === "pro_yearly"
                         ? "Opening Razorpay..."
                         : "Grow with Pro →"}
                     </span>
@@ -570,9 +539,7 @@ export default function OHPricingSection({
                       "Monthly growth review with an OpenHand mentor",
                       "Priority mentee matching & featured placement",
                       "Visibility campaigns: spotlights, collaborations, events",
-                      "Programs, cohorts & memberships",
                       "AI session notes & client progress insights",
-                      "Custom domain & white-label booking page",
                     ].map((feature, idx) => (
                       <li key={idx} className="flex items-start gap-3">
                         <span
@@ -600,21 +567,14 @@ export default function OHPricingSection({
                 </div>
               </div>
 
-              {/* Card 3: Institution */}
+              {/* Card 3: Custom */}
               <div className="bg-white rounded-[28px] p-7 sm:p-9 flex flex-col justify-between border border-slate-200 shadow-sm hover:shadow-md transition-all">
                 <div>
-                  <h3 className="text-3xl font-black text-slate-900 mb-1.5 font-outfit">
-                    Institution
-                  </h3>
-                  <p className="text-xs sm:text-[13px] text-slate-500 min-h-[36px] leading-relaxed font-medium">
-                    Academies, colleges &amp; coaching firms.
-                  </p>
-
-                  <div className="mt-5 mb-1 flex items-baseline gap-1">
+                  <div className="mt-1 mb-1 flex items-baseline gap-1">
                     <span className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">Custom</span>
                   </div>
-                  <div className="text-xs text-slate-800 mb-7 font-bold">
-                    Custom commission
+                  <div className="text-base sm:text-lg text-slate-900 mb-7 font-bold leading-snug">
+                    establish Course , Therapist &amp; coaching firms.
                   </div>
 
                   <Link
@@ -632,7 +592,7 @@ export default function OHPricingSection({
                       "Dedicated growth & success manager",
                       "Multi-practitioner teams & roles",
                       "LMS, certification & cohort workflows",
-                      "API, SSO & data export",
+                      "White Label Play Store And IOS Store APP",
                     ].map((feature, idx) => (
                       <li key={idx} className="flex items-start gap-3">
                         <span
