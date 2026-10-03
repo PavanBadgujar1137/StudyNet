@@ -30,6 +30,7 @@ import CoPilot from "./pages/marketing/CoPilot"
 import LearnerJourney from "./pages/marketing/LearnerJourney"
 // import StartFree from "./pages/marketing/StartFree"
 import ContactUs from "./pages/marketing/ContactUs"
+import Careers from "./pages/marketing/Careers"
 import PractitionerOnboarding from "./pages/PractitionerOnboarding"
 
 // OpenHand Footer Pages
@@ -130,6 +131,9 @@ function App() {
         {/* 4.4 — Hard redirect: /contact → /contact-us (fixes nav 404 + stale bookmarks) */}
         <Route path="/contact" element={<Navigate to="/contact-us" replace />} />
         <Route path="/talk-to-human" element={<ContactUs />} />
+        <Route path="/careers" element={<Careers />} />
+        <Route path="/career" element={<Navigate to="/careers" replace />} />
+        <Route path="/carrer" element={<Navigate to="/careers" replace />} />
         <Route path="/social-callback" element={<SocialCallback />} />
 
         {/* Footer Pages */}

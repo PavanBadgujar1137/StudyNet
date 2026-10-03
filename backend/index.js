@@ -136,8 +136,10 @@ const testimonialRoutes = require("./routes/testimonial")
 const couponRoutes = require("./routes/coupon")
 
 const chatRoutes = require("./routes/chat")
+const careerRoutes = require("./routes/career")
 
 app.use("/api/v1/auth", userRoutes)
+app.use("/api/v1/career", careerRoutes)
 app.use("/api/v1/profile", profileRoutes)
 app.use("/api/v1/payment", paymentRoutes)
 app.use("/api/v1/payments", paymentRoutes)

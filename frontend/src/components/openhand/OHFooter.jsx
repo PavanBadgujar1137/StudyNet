@@ -22,6 +22,7 @@ const LINKS = [
       { label: 'Find a practitioner', to: '/find-a-practitioner' },
       { label: 'Pricing',             to: '/pricing' },
       { label: 'AURA',                 to: '/aura', badge: 'AI' },
+      { label: 'Careers',              to: '/careers' },
     ]
   },
   { 
@@ -190,13 +191,16 @@ export function OHFooter() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 text-xs font-semibold" style={{ color: '#E2E8F0' }}>
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-4 pt-8 text-xs font-semibold" style={{ color: '#E2E8F0' }}>
           <p className="inline-flex items-center gap-2 text-center sm:text-left m-0" style={{ color: '#CBD5E1' }}>
             <FiMapPin style={{ color: '#60A5FA', flexShrink: 0 }} />
             <span>{CONTACT.address}</span>
           </p>
 
-          <div>
+          <div className="flex items-center gap-4 flex-wrap justify-center sm:justify-end">
+            <span className="text-xs" style={{ color: '#94A3B8' }}>
+              Built by <span className="font-bold" style={{ color: '#FFFFFF' }}>Pair Kraft Pvt Ltd.</span>
+            </span>
             <button
               onClick={scrollToTop}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full border text-xs font-bold hover:-translate-y-0.5 transition-all duration-200 shadow-md"

@@ -84,6 +84,14 @@ export const socialPostEndpoints = {
   TRACK_SHARE_API: BASE_URL + "/social-posts", // + "/:postId/track-share"
 }
 
+// CAREER ENDPOINTS
+export const careerEndpoints = {
+  APPLY_CAREER_API: BASE_URL + "/career/apply",
+  GET_ALL_APPLICATIONS_API: BASE_URL + "/career/applications",
+  UPDATE_APPLICATION_STATUS_API: BASE_URL + "/career/applications", // + /:id/status
+  DELETE_APPLICATION_API: BASE_URL + "/career/applications", // + /:id
+}
+
 // ADMIN ENDPOINTS
 export const adminEndpoints = {
   DELETE_USER_ADMIN_API: BASE_URL + "/admin/users",
@@ -125,7 +133,4 @@ export const couponEndpoints = {
 export const SOCKET_BASE_URL = process.env.REACT_APP_BASE_URL
   ? process.env.REACT_APP_BASE_URL.replace("/api/v1", "")
   : "http://localhost:4000"
-
-
-
 

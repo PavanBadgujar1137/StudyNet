@@ -144,9 +144,12 @@ const Footer = () => {
       </div>
 
       {/* ── Bottom Bar ── */}
-      <div className="oh-footer__bottom">
-        <p className="oh-footer__copy">
+      <div className="oh-footer__bottom" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+        <p className="oh-footer__copy" style={{ margin: 0 }}>
           {CONTACT.address}
+        </p>
+        <p style={{ margin: 0, fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.65)' }}>
+          Built by <strong style={{ color: '#FFFFFF' }}>Pair Kraft Pvt Ltd.</strong>
         </p>
       </div>
     </footer>

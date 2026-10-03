@@ -8,8 +8,10 @@ import {
   FiX, FiEye, FiArrowUp, FiArrowDown,
   FiShield, FiBookOpen, FiBell, FiUser, FiTrash2, FiAlertTriangle,
   FiVideo, FiDownload, FiPlay, FiClock,
-  FiTag, FiPlus, FiEdit2, FiToggleLeft, FiToggleRight, FiSliders, FiCopy, FiStar
+  FiTag, FiPlus, FiEdit2, FiToggleLeft, FiToggleRight, FiSliders, FiCopy, FiStar,
+  FiBriefcase
 } from 'react-icons/fi'
+import CareerApplicationsTab from '../../components/core/Admin/CareerApplicationsTab'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const fmt = (n) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n || 0)
@@ -3296,6 +3298,7 @@ const TABS = [
   { id: 'subscriptions', label: 'Subscriptions', icon: <FiCreditCard /> },
   { id: 'bookings', label: 'Bookings', icon: <FiCalendar /> },
   { id: 'org', label: 'Org Conversations', icon: <FiMessageSquare /> },
+  { id: 'careers', label: 'Career Applications', icon: <FiBriefcase /> },
 ]
 
 export default function AdminApp() {
@@ -3425,6 +3428,7 @@ export default function AdminApp() {
           {activeTab === 'subscriptions' && <SubscriptionsTab />}
           {activeTab === 'bookings' && <BookingsTab />}
           {activeTab === 'org' && <OrgConversationsTab />}
+          {activeTab === 'careers' && <CareerApplicationsTab />}
         </div>
       </main>
     </div>
