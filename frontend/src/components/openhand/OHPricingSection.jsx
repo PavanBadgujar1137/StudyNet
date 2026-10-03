@@ -180,7 +180,7 @@ export default function OHPricingSection({
   }
 
   return (
-    <section className={isModal ? "py-6 bg-transparent" : "bg-white border-b border-slate-200/80"} id="pricing" style={isModal ? {} : { paddingTop: "44px", paddingBottom: "64px" }}>
+    <section className={isModal ? "py-6 bg-transparent" : "bg-white border-b border-slate-200/80"} id="pricing" style={isModal ? {} : { paddingTop: "96px", paddingBottom: "64px" }}>
       <div className="w-full max-w-[1540px] mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}

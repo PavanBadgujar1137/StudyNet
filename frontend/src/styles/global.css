@@ -951,7 +951,7 @@ textarea.oh-intake-textarea:focus,
 
 /* Marketing: Client Journey */
 .oh-journey-page { min-height: 100vh; display: flex; flex-direction: column; background: var(--oh-mist); color: var(--oh-navy); font-family: var(--oh-font-body); }
-.oh-journey-hero { padding: var(--oh-space-16) 0 var(--oh-space-10); text-align: center; }
+.oh-journey-hero { padding: 96px 0 var(--oh-space-10); text-align: center; }
 .oh-journey-hero__title { font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif !important; font-size: var(--oh-text-5xl); font-weight: 800 !important; max-width: 100% !important; margin: var(--oh-space-4) auto var(--oh-space-4) !important; text-align: center !important; line-height: 1.15; letter-spacing: -0.025em; color: #0F172A !important; }
 .oh-journey-hero__sub { max-width: 58ch; margin: 0 auto; font-size: var(--oh-text-lg); color: #334155 !important; font-weight: 500 !important; line-height: 1.6; }
 .oh-journey-legend { display: flex; align-items: center; justify-content: center; gap: var(--oh-space-6); margin-top: var(--oh-space-8); flex-wrap: wrap; }
@@ -1045,7 +1045,8 @@ textarea.oh-intake-textarea:focus,
 
 /* Marketing: Find a Practitioner */
 .oh-dir-page { min-height: 100vh; display: flex; flex-direction: column; background: #ffffff; }
-.oh-dir-hero { padding: 24px 0 var(--oh-space-4); text-align: center; background: #ffffff; }
+.oh-dir-hero { padding: 88px 0 var(--oh-space-4); text-align: center; background: #ffffff; }
+@media (min-width: 640px) { .oh-dir-hero { padding: 96px 0 var(--oh-space-4); } }
 .dir-title { font-family: var(--oh-font-head); font-size: clamp(28px, 3.8vw, 44px); font-weight: 800; white-space: nowrap; margin: var(--oh-space-2) auto 0; line-height: 1.15; color: var(--oh-navy); }
 .dir-sub { font-size: var(--oh-text-base); color: var(--oh-muted); max-width: 62ch; margin: var(--oh-space-3) auto 0; line-height: 1.6; }
 .dir-trust-pill { display: inline-flex; align-items: center; gap: 12px; padding: 8px 20px; background: rgba(255, 255, 255, 0.85); border: 1px solid rgba(13, 27, 61, 0.08); border-radius: 999px; margin-top: 18px; font-size: 13.5px; font-weight: 600; color: var(--oh-navy); box-shadow: 0 4px 12px rgba(13, 27, 61, 0.03); }
@@ -1056,7 +1057,7 @@ textarea.oh-intake-textarea:focus,
 .dir-sec { padding-top: var(--oh-space-3); background: #ffffff; }
 
 /* Sleek Modern Filter Panel */
-.dir-modern-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(16px); border: 1px solid rgba(13, 27, 61, 0.09); border-radius: 20px; padding: 20px 24px; box-shadow: 0 12px 36px -10px rgba(13, 27, 61, 0.07); margin-bottom: 32px; display: flex; flex-direction: column; gap: 16px; position: sticky; top: 78px; z-index: var(--oh-z-sticky); }
+.dir-modern-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(16px); border: 1px solid rgba(13, 27, 61, 0.09); border-radius: 20px; padding: 16px 20px; box-shadow: 0 12px 36px -10px rgba(13, 27, 61, 0.07); margin-bottom: 32px; display: flex; flex-direction: column; gap: 12px; position: sticky; top: 78px; z-index: var(--oh-z-sticky); }
 
 .dir-category-nav { display: flex; align-items: center; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; border-bottom: 1px solid rgba(13, 27, 61, 0.06); padding-bottom: 12px; }
 .dir-category-nav::-webkit-scrollbar { display: none; }
@@ -2830,9 +2831,15 @@ textarea.oh-intake-textarea:focus,
 
 /* Hero Section */
 .talk-hero {
-  padding: 56px 0 40px;
+  padding: 88px 0 32px;
   text-align: center;
   position: relative;
+}
+
+@media (min-width: 640px) {
+  .talk-hero {
+    padding: 96px 0 36px;
+  }
 }
 
 .talk-status-badge {
@@ -5679,7 +5686,7 @@ textarea.oh-intake-textarea:focus,
   max-width: 1440px;
   width: 100%;
   margin: 0 auto;
-  padding: 24px 28px 48px;
+  padding: 88px 28px 48px;
   box-sizing: border-box;
 }
 

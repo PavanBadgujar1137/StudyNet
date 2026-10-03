@@ -41,7 +41,7 @@ export function Home() {
       {/* ========================================================================= */}
       {/* 1. DUAL-ROLE INTERACTIVE HERO SECTION                                     */}
       {/* ========================================================================= */}
-      <section className="relative pt-4 pb-16 lg:pt-8 lg:pb-24 overflow-hidden bg-white border-b border-slate-200/80">
+      <section className="relative pt-24 pb-16 sm:pt-28 lg:pt-32 lg:pb-24 overflow-hidden bg-white border-b border-slate-200/80">
         <div className="relative max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-8">
           
           {/* Top Toggle Switcher: Centered Glowing Bubble [ I want to grow ] [ I guide others ] */}
@@ -300,7 +300,7 @@ export function Home() {
                       paddingTop: '16px',
                     }}
                   >
-                    {['1:1 bookings', 'Circles', 'UPI & cards', 'AURA notes', 'Referrals'].map((pill) => (
+                    {['1:1 bookings', 'Sell Your Courses', 'Workshops', 'Circles', 'AURA AI'].map((pill) => (
                       <span
                         key={pill}
                         style={{

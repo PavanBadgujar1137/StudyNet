@@ -224,7 +224,7 @@ export default function OpenHandCareers() {
     <div className="min-h-screen bg-[#F8FAFF] text-[#111936] font-sans antialiased">
       
       {/* ── 1. HERO SECTION ── */}
-      <section className="relative overflow-hidden pt-8 pb-16 lg:pt-14 lg:pb-24">
+      <section className="relative overflow-hidden pt-24 pb-16 sm:pt-28 lg:pt-32 lg:pb-24">
         {/* Soft Ambient Light Gradient Background */}
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-b from-blue-300/20 via-violet-300/15 to-transparent rounded-full blur-[140px] pointer-events-none" />
         <div className="absolute -top-32 -left-32 w-[500px] h-[500px] bg-gradient-to-r from-blue-200/25 to-cyan-200/20 rounded-full blur-[120px] pointer-events-none" />

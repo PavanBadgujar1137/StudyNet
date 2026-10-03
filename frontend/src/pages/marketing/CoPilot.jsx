@@ -32,12 +32,12 @@ const NOTE = {
 };
 
 const SESSIONS = [
-  { id: 1, label: "S1", date: "Jun 04", note: "Wants a move into strategy" },
-  { id: 2, label: "S2", date: "Jun 18", note: "Overwhelm — saying yes to everything" },
-  { id: 3, label: "S3", date: "Jul 02", note: "Skipped the leadership offsite" },
-  { id: 4, label: "S4", date: "Jul 16", note: "Let manager present the pitch" },
-  { id: 5, label: "S5", date: "Jul 30", note: "Declined an extra project — first ‘no’" },
-  { id: 6, label: "S6", date: "Aug 13", note: "Presented for 5 minutes. Hands shook. Did it." },
+  { id: 1, label: "Section 1", note: "Wants a move into strategy" },
+  { id: 2, label: "Section 2", note: "Overwhelm — saying yes to everything" },
+  { id: 3, label: "Section 3", note: "Skipped the leadership offsite" },
+  { id: 4, label: "Section 4", note: "Let manager present the pitch" },
+  { id: 5, label: "Section 5", note: "Declined an extra project — first ‘no’" },
+  { id: 6, label: "Section 6", note: "Presented for 5 minutes. Hands shook. Did it." },
 ];
 
 const THEMES = [
@@ -362,6 +362,72 @@ function LiveSession() {
   );
 }
 
+function TypewriterDoc() {
+  const snippets = [
+    {
+      title: "Key Takeaway",
+      content: "Learner resolved to set firm calendar boundaries this week.",
+    },
+    {
+      title: "Action Item",
+      content: "Practice opening 5-minute presentation for team review.",
+    },
+    {
+      title: "Follow-up",
+      content: "Check weekly reflection response prior to Session 5.",
+    },
+    {
+      title: "Breakthrough",
+      content: "Acknowledged readiness to step into leadership role.",
+    },
+  ];
+
+  const [index, setIndex] = useState(0);
+  const [displayedText, setDisplayedText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const fullText = snippets[index].content;
+    const speed = isDeleting ? 18 : 36;
+
+    if (!isDeleting && displayedText === fullText) {
+      const timer = setTimeout(() => setIsDeleting(true), 2400);
+      return () => clearTimeout(timer);
+    }
+
+    if (isDeleting && displayedText === "") {
+      setIsDeleting(false);
+      setIndex((prev) => (prev + 1) % snippets.length);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setDisplayedText(
+        isDeleting
+          ? fullText.slice(0, displayedText.length - 1)
+          : fullText.slice(0, displayedText.length + 1)
+      );
+    }, speed);
+
+    return () => clearTimeout(timer);
+  }, [displayedText, isDeleting, index]);
+
+  const current = snippets[index];
+
+  return (
+    <div className="typewriter-note-box">
+      <div className="typewriter-note-meta">
+        <span className="typewriter-pulse-dot" />
+        <span className="typewriter-label">{current.title}</span>
+      </div>
+      <p className="typewriter-content">
+        "{displayedText}
+        <span className="typewriter-caret">|</span>"
+      </p>
+    </div>
+  );
+}
+
 function Capabilities() {
   const items = [
     { k: "01", t: "It listens", d: "Ambient, consent-gated, and silent. No bots joining calls, no awkward pauses.", viz: "wave" },
@@ -383,7 +449,7 @@ function Capabilities() {
               {it.viz === "wave" && Array.from({ length: 28 }, (_, j) => <i key={j} style={{ animationDelay: `${j * 0.06}s` }} />)}
               {it.viz === "mem" && ["Career transition", "Improve confidence", "Follow up next month"].map((x, j) => <span key={x} style={{ animationDelay: `${j * 0.4}s` }}>{x}</span>)}
               {it.viz === "sug" && <span className="whisper">“How about exploring a new perspective?”</span>}
-              {it.viz === "doc" && <><b /><b /><b /><b /></>}
+              {it.viz === "doc" && <TypewriterDoc />}
             </div>
             <h3>{it.t}</h3>
             <p>{it.d}</p>
@@ -441,13 +507,13 @@ function ThreadMap() {
                 <g key={s.id} className="node" onPointerEnter={() => setHover(s.id)} onPointerLeave={() => setHover(null)} tabIndex="0" onFocus={() => setHover(s.id)} onBlur={() => setHover(null)}>
                   <circle cx={x} cy={y} r={on ? 22 : 14} fill={on ? theme.color : "#E7E9F8"} opacity={on ? 0.18 : 1} />
                   <circle cx={x} cy={y} r={on ? 9 : 6} fill={on ? theme.color : "#B9BFE6"} />
-                  <text x={x} y={y + 50} textAnchor="middle" className="svg-l">{s.label} · {s.date}</text>
+                  <text x={x} y={y + 50} textAnchor="middle" className="svg-l">{s.label}</text>
                 </g>
               );
             })}
           </svg>
           <div className="map-note" aria-live="polite">
-            {hover ? <><span className="mono">{SESSIONS[hover - 1].label}</span> {SESSIONS[hover - 1].note}</> : <>Hover a session to read its moment.</>}
+            {hover ? <><span className="mono">{SESSIONS[hover - 1].label}:</span> {SESSIONS[hover - 1].note}</> : <>Hover a session to read its moment.</>}
           </div>
         </div>
       </div>
@@ -673,7 +739,7 @@ background:conic-gradient(from var(--a),transparent 0 60%,#0C6DFF 72%,#5B2FE0 82
 .au .btn-prime,.au .btn-glass,.au .btn-outline-w{color:#fff}.au .btn-white{color:#1D21A9}.au .btn-ghost{color:var(--ink)}.au .os .btn-ghost{color:#fff}
 
 /* hero */
-.hero{display:grid;grid-template-columns:.95fr 1.05fr;align-items:center;gap:30px;max-width:1300px;margin:0 auto;padding:48px 32px 50px}
+.hero{display:grid;grid-template-columns:.95fr 1.05fr;align-items:center;gap:30px;max-width:1300px;margin:0 auto;padding:96px 32px 50px}
 .eyebrow{display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:.16em;color:var(--violet);margin:0 0 20px;padding:7px 14px 7px 10px;border-radius:999px;background:#fff;border:1px solid var(--line);box-shadow:var(--shadow)}
 .pulse{width:8px;height:8px;border-radius:50%;background:var(--blue);animation:pulse 2s infinite}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(12,109,255,.5)}70%{box-shadow:0 0 0 10px rgba(12,109,255,0)}100%{box-shadow:0 0 0 0 rgba(12,109,255,0)}}
@@ -818,9 +884,14 @@ backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 20px 
 .viz.mem{flex-direction:column;gap:8px}.viz.mem span{font-size:12.5px;font-weight:500;padding:8px 14px;border-radius:12px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);color:#fff;animation:fl 4s ease-in-out infinite}
 @keyframes fl{50%{transform:translateX(8px) translateZ(30px)}}
 .viz.sug .whisper{font-family:var(--serif);font-style:italic;font-size:21px;line-height:1.3;text-align:center;color:var(--violet);padding:16px;border-radius:16px;background:linear-gradient(135deg,#F3EEFF,#EEF4FF);border:1px solid #E1DBFA;transform:translateZ(40px)}
-.viz.doc{flex-direction:column;align-items:stretch;gap:9px;padding:0 10px}.viz.doc b{height:9px;border-radius:9px;background:linear-gradient(90deg,#9137EF,rgba(12,109,255,.1));animation:ln 3s ease-in-out infinite;transform-origin:left}
-.viz.doc b:nth-child(2){width:80%;animation-delay:.2s}.viz.doc b:nth-child(3){width:92%;animation-delay:.4s}.viz.doc b:nth-child(4){width:60%;animation-delay:.6s}
-@keyframes ln{0%{transform:scaleX(0)}40%,100%{transform:scaleX(1)}}
+.viz.doc{width:100%;height:100%;padding:0;display:flex;align-items:center;justify-content:center}
+.typewriter-note-box{width:100%;height:100%;background:linear-gradient(135deg,#FAF8FF 0%,#F3EFFF 100%);border:1.5px solid rgba(145,55,239,.25);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;justify-content:center;box-shadow:0 8px 24px -8px rgba(91,47,224,.15);text-align:left;box-sizing:border-box}
+.typewriter-note-meta{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.typewriter-pulse-dot{width:6px;height:6px;border-radius:50%;background:#9137EF;box-shadow:0 0 6px #9137EF}
+.typewriter-label{font-family:var(--mono);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#7C3AED}
+.typewriter-content{font-size:13px;line-height:1.45;color:#1E293B;font-weight:500;margin:0;min-height:38px}
+.typewriter-caret{display:inline-block;font-weight:700;color:#9137EF;margin-left:2px;animation:caret-blink .9s infinite}
+@keyframes caret-blink{0%,100%{opacity:1}50%{opacity:0}}
 
 /* thread map */
 .threadmap{border-radius:28px;border:1px solid var(--line);background:#fff;box-shadow:var(--shadow);padding:26px}

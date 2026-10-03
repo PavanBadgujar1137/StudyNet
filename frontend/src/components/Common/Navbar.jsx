@@ -144,9 +144,6 @@ export function Navbar() {
         </div>
       </header>
 
-      {/* Layout spacer ensuring fixed floating navbar never overlaps page content */}
-      <div className="h-16 md:h-20 w-full shrink-0 pointer-events-none" aria-hidden="true" />
-
       {/* Floating Mobile Navigation Drawer */}
       {isMobileMenuOpen && (
         <>

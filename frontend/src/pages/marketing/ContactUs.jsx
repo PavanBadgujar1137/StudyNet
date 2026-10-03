@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { OHFooter, OHButton } from '../../components/openhand'
+import { OHFooter } from '../../components/openhand'
 
 import { apiConnector } from '../../services/apiConnector'
 import toast from 'react-hot-toast'
@@ -12,10 +12,7 @@ import {
   FiShield,
   FiCheckCircle,
   FiZap,
-  FiSend,
-  FiMail,
-  FiPhoneCall,
-  FiX
+  FiSend
 } from 'react-icons/fi'
 
 export function ContactUs() {
@@ -25,17 +22,16 @@ export function ContactUs() {
     workType: 'Life or executive coaching',
     message: '',
   })
-  const [selectedDesk, setSelectedDesk] = useState('setup')
   const [selectedTopic, setSelectedTopic] = useState(null)
-  // ITEM 10 FIX: Single active accordion state matching Questions Practitioners Ask & AURA
+  // Single active accordion state matching Questions Practitioners Ask & AURA
   const [activeFaq, setActiveFaq] = useState(0)
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
-  const [directActionModal, setDirectActionModal] = useState(null) // setup | tech | org
 
   const topics = [
     {
       id: 'fit',
+      heading: 'Queries Related to Setup',
       dur: '25 minutes',
       title: `"I'm not sure this fits my practice"`,
       workTypeValue: 'Life or executive coaching',
@@ -45,10 +41,11 @@ export function ContactUs() {
         "We'll tell you honestly if we're wrong for you",
         'No slide decks or forced sales demos',
       ],
-      founderHint: 'Best with Practice Setup Desk',
+      founderHint: 'Recommended for Practice Setup',
     },
     {
       id: 'migration',
+      heading: 'Queries Related to Technology and Ethics',
       dur: '40 minutes',
       title: `"I have learners already — how do I move?"`,
       workTypeValue: 'Counselling or psychotherapy',
@@ -58,10 +55,11 @@ export function ContactUs() {
         'Your existing learner records moved smoothly',
         'Nothing goes live until you explicitly approve',
       ],
-      founderHint: 'Best with Tech & Ethics Desk',
+      founderHint: 'Recommended for Caseload Migration',
     },
     {
       id: 'org',
+      heading: 'Queries Related to B2B',
       dur: '45 minutes',
       title: `"We want this for our employees"`,
       workTypeValue: 'Organisational / employee wellbeing',
@@ -98,7 +96,7 @@ export function ContactUs() {
     setFormData((prev) => ({ ...prev, [e.target.id]: e.target.value }))
   }
 
-  // ITEM 8 FIX: Sync selected topic with both workType AND desk preference
+  // Sync selected topic with workType
   const handleSelectTopic = (index) => {
     setSelectedTopic(index)
     const topic = topics[index]
@@ -107,15 +105,6 @@ export function ContactUs() {
         ...prev,
         workType: topic.workTypeValue,
       }))
-      
-      // Dynamically set matching desk focus!
-      if (topic.id === 'fit') {
-        setSelectedDesk('setup')
-      } else if (topic.id === 'migration') {
-        setSelectedDesk('tech')
-      } else if (topic.id === 'org') {
-        setSelectedDesk('org')
-      }
     }
     // Scroll smoothly to form
     const bookElem = document.getElementById('book')
@@ -124,7 +113,7 @@ export function ContactUs() {
     }
   }
 
-  // ITEM 10 FIX: Single open accordion behavior
+  // Single open accordion behavior
   const toggleFaq = (index) => {
     setActiveFaq((prev) => (prev === index ? null : index))
   }
@@ -139,15 +128,8 @@ export function ContactUs() {
     setLoading(true)
     try {
       const selectedTopicObj = selectedTopic !== null ? topics[selectedTopic] : null
-      const topicTitle = selectedTopicObj ? selectedTopicObj.title : 'General Conversation'
-      const deskPrefText =
-        selectedDesk === 'setup'
-          ? 'Practice Setup Desk'
-          : selectedDesk === 'tech'
-          ? 'Tech & Ethics Desk'
-          : 'Organizations & EAP Desk'
-
-      const fullMessage = `[Desk Preference: ${deskPrefText}] [Focus Topic: ${topicTitle}]\n${formData.message}`
+      const topicTitle = selectedTopicObj ? selectedTopicObj.title : 'General Inquiry'
+      const fullMessage = selectedTopicObj ? `[Focus Topic: ${topicTitle}]\n${formData.message}` : formData.message
 
       const res = await apiConnector('POST', '/api/v1/reach/contact', {
         name: formData.name,
@@ -192,109 +174,6 @@ export function ContactUs() {
   return (
     <div className="talk-page relative min-h-screen">
 
-      {/* Direct Desk Action Modal */}
-      {directActionModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-fadeIn">
-          <div
-            className="relative w-full max-w-md rounded-2xl bg-white border border-slate-200 shadow-2xl p-6 text-left"
-            style={{ backgroundColor: '#FFFFFF', color: '#0F172A', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}
-          >
-            <button
-              type="button"
-              onClick={() => setDirectActionModal(null)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-800 transition-colors p-1"
-              style={{ color: '#64748B' }}
-              aria-label="Close dialog"
-            >
-              <FiX size={20} />
-            </button>
-            <div className="flex items-center gap-3 mb-3">
-              <div
-                className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0"
-                style={{ backgroundColor: '#EEF2FF', borderColor: '#E0E7FF', color: '#4F46E5' }}
-              >
-                {directActionModal === 'setup' ? <FiMessageSquare size={18} /> : directActionModal === 'tech' ? <FiMail size={18} /> : <FiPhoneCall size={18} />}
-              </div>
-              <div>
-                <h3 className="text-lg font-extrabold" style={{ color: '#0F172A', margin: 0, lineHeight: 1.3, fontSize: '18px', fontWeight: 800 }}>
-                  {directActionModal === 'setup'
-                    ? 'Practice Setup Desk Options'
-                    : directActionModal === 'tech'
-                    ? 'Tech & Ethics Desk Options'
-                    : 'Organizations Desk Line'}
-                </h3>
-                <span className="text-xs font-semibold" style={{ color: '#64748B', fontSize: '12px' }}>Direct Communication Channel</span>
-              </div>
-            </div>
-            <p className="text-xs mb-5 leading-relaxed" style={{ color: '#475569', fontSize: '13px', lineHeight: 1.5 }}>
-              {directActionModal === 'setup'
-                ? 'Connect instantly with practice architects for circle pricing and onboarding guidance.'
-                : directActionModal === 'tech'
-                ? 'Direct line for HIPAA/GDPR data security, AURA consent ethics, and caseload migration.'
-                : 'Direct line for enterprise pilot scoping, HR confidentiality agreements, and seat billing.'}
-            </p>
-            <div className="flex flex-col gap-3">
-              <a
-                href={
-                  directActionModal === 'setup'
-                    ? 'mailto:setup@openhand.in?subject=Practice%20Setup%20Desk%20Inquiry'
-                    : directActionModal === 'tech'
-                    ? 'mailto:tech-ethics@openhand.in?subject=Tech%20%26%20Ethics%20Security%20Inquiry'
-                    : 'mailto:enterprise@openhand.in?subject=Organizations%20Pilot%20Inquiry'
-                }
-                className="w-full py-3 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md"
-                style={{
-                  backgroundColor: '#0F172A',
-                  color: '#FFFFFF',
-                  padding: '12px 16px',
-                  borderRadius: '12px',
-                  fontWeight: 700,
-                  fontSize: '13px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  textDecoration: 'none',
-                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.2)',
-                  cursor: 'pointer'
-                }}
-              >
-                <FiMail size={16} style={{ color: '#FFFFFF' }} />
-                <span style={{ color: '#FFFFFF', fontWeight: 700 }}>Send Direct Email (Open Mailbox)</span>
-              </a>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedDesk(directActionModal)
-                  setDirectActionModal(null)
-                  const bookElem = document.getElementById('book')
-                  if (bookElem) bookElem.scrollIntoView({ behavior: 'smooth' })
-                }}
-                className="w-full py-3 px-4 rounded-xl font-semibold text-xs flex items-center justify-center gap-2 transition-all border border-slate-200"
-                style={{
-                  backgroundColor: '#F8FAFC',
-                  color: '#0F172A',
-                  border: '1px solid #CBD5E1',
-                  padding: '12px 16px',
-                  borderRadius: '12px',
-                  fontWeight: 600,
-                  fontSize: '13px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  cursor: 'pointer'
-                }}
-              >
-                <FiSend size={16} style={{ color: '#0F172A' }} />
-                <span style={{ color: '#0F172A', fontWeight: 600 }}>Fill Booking Form</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-
       {/* Hero */}
       <header className="talk-hero">
         <div className="oh-wrap">
@@ -310,7 +189,7 @@ export function ContactUs() {
             Contact <span className="italic font-bold" style={{ color: '#2563EB' }}>OpenHand Team.</span>
           </h1>
           <p className="sub text-slate-600 text-base sm:text-lg max-w-2xl mx-auto font-medium leading-relaxed mb-8">
-            Have questions about OpenHand? Connect directly with our Practice Setup Desk or Tech &amp; Ethics Desk for personalized practice guidance, platform setup, or enterprise inquiries.
+            Have questions about OpenHand? Connect directly with our team for personalized practice guidance, platform setup, or enterprise inquiries.
           </p>
 
           {/* Key Assurance Stats */}
@@ -338,181 +217,7 @@ export function ContactUs() {
         </div>
       </header>
 
-      {/* Executive Contact Desks Section (ITEM 7 FIX) */}
-      <section className="talk-sec">
-        <div className="oh-wrap">
-          <div className="talk-sec-head">
-            <span className="talk-section-tag">Executive Contact Desks</span>
-            <h2 style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>Who would you like to reach out to?</h2>
-            <p>Connect with our specialized Practice Setup Desk or Tech &amp; Ethics Desk based on your specific practice needs.</p>
-          </div>
 
-          <div className="talk-founders-container">
-            <div className="talk-founders grid grid-cols-1 md:grid-cols-3 gap-6">
-
-              {/* Practice Setup Desk Card */}
-              <div
-                className={`talk-fcard ${selectedDesk === 'setup' ? 'active-founder' : ''}`}
-                onClick={() => setSelectedDesk('setup')}
-              >
-                <div className="fcard-header">
-                  <div className="av">PS</div>
-                  <div className="fcard-badge">
-                    <FiClock className="fcard-ic" /> Practice Desk
-                  </div>
-                </div>
-                <div className="fcard-title-block mb-3">
-                  <h3>Practice Setup Desk</h3>
-                  <div className="role">Practice &amp; Offer Architecture</div>
-                </div>
-                <p>
-                  Contact our Practice Setup Desk for Circle architecture, offer design, pricing models, practice setup, and practitioner onboarding support.
-                </p>
-                <div className="talk-tags">
-                  <span>Circle Architecture</span>
-                  <span>Pricing &amp; Offers</span>
-                  <span>Practitioner Setup</span>
-                </div>
-                <div className="flex flex-col gap-2 mt-4">
-                  <button
-                    type="button"
-                    className={`fcard-btn ${selectedDesk === 'setup' ? 'selected' : ''}`}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setSelectedDesk('setup')
-                    }}
-                  >
-                    {selectedDesk === 'setup' ? <><FiCheck /> Practice Setup Selected</> : 'Select Practice Setup Desk'}
-                  </button>
-                  <button
-                    type="button"
-                    className="py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 border cursor-pointer hover:opacity-90 shadow-sm"
-                    style={{
-                      backgroundColor: '#0F172A',
-                      color: '#FFFFFF',
-                      borderColor: '#1E293B',
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setDirectActionModal('setup')
-                    }}
-                  >
-                    <FiMail size={14} style={{ color: '#93C5FD' }} />
-                    <span style={{ color: '#FFFFFF', fontWeight: 700 }}>Open Direct Setup Options</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Tech & Ethics Desk Card */}
-              <div
-                className={`talk-fcard ${selectedDesk === 'tech' ? 'active-founder' : ''}`}
-                onClick={() => setSelectedDesk('tech')}
-              >
-                <div className="fcard-header">
-                  <div className="av">TE</div>
-                  <div className="fcard-badge">
-                    <FiClock className="fcard-ic" /> Platform Desk
-                  </div>
-                </div>
-                <div className="fcard-title-block mb-3">
-                  <h3>Tech &amp; Ethics Desk</h3>
-                  <div className="role">Confidentiality &amp; Platform Architecture</div>
-                </div>
-                <p>
-                  Contact our Tech &amp; Ethics Desk for technical platform integration, data confidentiality, AURA AI ethics, and caseload migration.
-                </p>
-                <div className="talk-tags">
-                  <span>Data Confidentiality</span>
-                  <span>Ethical AI AURA</span>
-                  <span>Caseload Migration</span>
-                </div>
-                <div className="flex flex-col gap-2 mt-4">
-                  <button
-                    type="button"
-                    className={`fcard-btn ${selectedDesk === 'tech' ? 'selected' : ''}`}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setSelectedDesk('tech')
-                    }}
-                  >
-                    {selectedDesk === 'tech' ? <><FiCheck /> Tech &amp; Ethics Selected</> : 'Select Tech &amp; Ethics Desk'}
-                  </button>
-                  <button
-                    type="button"
-                    className="py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 border cursor-pointer hover:opacity-90 shadow-sm"
-                    style={{
-                      backgroundColor: '#0F172A',
-                      color: '#FFFFFF',
-                      borderColor: '#1E293B',
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setDirectActionModal('tech')
-                    }}
-                  >
-                    <FiMail size={14} style={{ color: '#93C5FD' }} />
-                    <span style={{ color: '#FFFFFF', fontWeight: 700 }}>Open Direct Security Mailbox</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Organizations Desk Card */}
-              <div
-                className={`talk-fcard ${selectedDesk === 'org' ? 'active-founder' : ''}`}
-                onClick={() => setSelectedDesk('org')}
-              >
-                <div className="fcard-header">
-                  <div className="av">OD</div>
-                  <div className="fcard-badge">
-                    <FiClock className="fcard-ic" /> Enterprise Desk
-                  </div>
-                </div>
-                <div className="fcard-title-block mb-3">
-                  <h3>Organizations Desk</h3>
-                  <div className="role">B2B EAP &amp; Corporate Wellbeing</div>
-                </div>
-                <p>
-                  Contact our Organizations Desk for team Circle pilots, per-seat B2B billing, HR confidentiality contracts, and enterprise SSO integration.
-                </p>
-                <div className="talk-tags">
-                  <span>B2B EAP Circles</span>
-                  <span>HR Confidentiality</span>
-                  <span>Enterprise Pilots</span>
-                </div>
-                <div className="flex flex-col gap-2 mt-4">
-                  <button
-                    type="button"
-                    className={`fcard-btn ${selectedDesk === 'org' ? 'selected' : ''}`}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setSelectedDesk('org')
-                    }}
-                  >
-                    {selectedDesk === 'org' ? <><FiCheck /> Organizations Selected</> : 'Select Organizations Desk'}
-                  </button>
-                  <button
-                    type="button"
-                    className="py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 border cursor-pointer hover:opacity-90 shadow-sm"
-                    style={{
-                      backgroundColor: '#0F172A',
-                      color: '#FFFFFF',
-                      borderColor: '#1E293B',
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setDirectActionModal('org')
-                    }}
-                  >
-                    <FiPhoneCall size={14} style={{ color: '#93C5FD' }} />
-                    <span style={{ color: '#FFFFFF', fontWeight: 700 }}>Open Enterprise Line Options</span>
-                  </button>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Three Conversations Section (ITEM 8 FIX) */}
       <section className="talk-sec">
@@ -532,18 +237,44 @@ export function ContactUs() {
                   className={`talk-way ${isSelected ? 'selected-way' : ''}`}
                   onClick={() => handleSelectTopic(idx)}
                 >
-                  <div className="way-top-row">
+                  {isSelected && (
+                    <div className="absolute top-3.5 right-4">
+                      <span className="way-selected-badge">
+                        <FiCheck /> Selected
+                      </span>
+                    </div>
+                  )}
+                  <h3
+                    style={{
+                      fontFamily: "'Playfair Display', Georgia, serif",
+                      fontSize: '23px',
+                      fontWeight: 800,
+                      color: '#0F172A',
+                      textAlign: 'center',
+                      margin: '6px 0 10px 0',
+                      lineHeight: 1.25,
+                    }}
+                  >
+                    {t.heading}
+                  </h3>
+                  <div className="flex items-center justify-center mb-3">
                     <span className="dur">
                       <FiClock style={{ display: 'inline', marginRight: '4px' }} />
                       {t.dur}
                     </span>
-                    {isSelected && (
-                      <span className="way-selected-badge">
-                        <FiCheck /> Selected
-                      </span>
-                    )}
                   </div>
-                  <h3>{t.title}</h3>
+                  <div
+                    style={{
+                      fontSize: '14px',
+                      fontStyle: 'italic',
+                      color: '#4F46E5',
+                      fontWeight: 600,
+                      textAlign: 'center',
+                      marginBottom: '12px',
+                    }}
+                  >
+                    {t.title}
+                  </div>
                   <p>{t.desc}</p>
                   <ul>
                     {t.points.map((pt, pIdx) => (
@@ -633,16 +364,7 @@ export function ContactUs() {
                         <span className="text-slate-400">Reply Email:</span>
                         <strong className="text-slate-200">{formData.email}</strong>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">Desk Preference:</span>
-                        <strong className="text-slate-200">
-                          {selectedDesk === 'setup'
-                            ? 'Practice Setup Desk'
-                            : selectedDesk === 'tech'
-                            ? 'Tech & Ethics Desk'
-                            : 'Organizations & EAP Desk'}
-                        </strong>
-                      </div>
+
                       {selectedTopic !== null && (
                         <div className="flex justify-between">
                           <span className="text-slate-400">Focus Topic:</span>
@@ -669,34 +391,6 @@ export function ContactUs() {
                   </div>
                 ) : (
                   <form onSubmit={handleSubmit} className="talk-fields">
-                    {/* Executive Contact Desk Tabs */}
-                    <div className="founder-select-group">
-                      <label className="group-label">Contact Desk Preference</label>
-                      <div className="founder-tabs grid grid-cols-1 sm:grid-cols-3 gap-2">
-                        <button
-                          type="button"
-                          className={`ftab ${selectedDesk === 'setup' ? 'active' : ''}`}
-                          onClick={() => setSelectedDesk('setup')}
-                        >
-                          Practice Setup
-                        </button>
-                        <button
-                          type="button"
-                          className={`ftab ${selectedDesk === 'tech' ? 'active' : ''}`}
-                          onClick={() => setSelectedDesk('tech')}
-                        >
-                          Tech &amp; Ethics
-                        </button>
-                        <button
-                          type="button"
-                          className={`ftab ${selectedDesk === 'org' ? 'active' : ''}`}
-                          onClick={() => setSelectedDesk('org')}
-                        >
-                          Organizations &amp; EAP
-                        </button>
-                      </div>
-                    </div>
-
                     <div className="form-row2">
                       <div>
                         <label htmlFor="name">Your Name</label>
@@ -810,25 +504,7 @@ export function ContactUs() {
         </div>
       </section>
 
-      {/* Closing CTA */}
-      <section className="talk-close">
-        <div className="oh-wrap">
-          <div className="close-card">
-            <h2 style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>Or skip the call and explore directly.</h2>
-            <p>
-              The free plan is open right now. You can create your practice space in seconds and contact us whenever you're ready.
-            </p>
-            <div className="talk-cta-row flex flex-wrap items-center justify-center gap-4 mt-6">
-              <OHButton href="/signup" size="lg">
-                Start Free Practice Space →
-              </OHButton>
-              <OHButton href="/learner-journey" variant="ghost" size="lg">
-                See Learner Journey →
-              </OHButton>
-            </div>
-          </div>
-        </div>
-      </section>
+
 
       <OHFooter />
     </div>

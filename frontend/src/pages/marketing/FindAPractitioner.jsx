@@ -14,13 +14,19 @@ import { FiEye } from 'react-icons/fi'
 
 const SPECIALTIES = [
   { value: 'all', label: 'All Guides' },
-  { value: 'anxiety', label: 'Anxiety & Stress' },
+  { value: 'mental health', label: 'Mental Health' },
   { value: 'relationships', label: 'Relationships' },
-  { value: 'grief', label: 'Grief & Loss' },
+  { value: 'foreign education', label: 'Foreign Education' },
   { value: 'career', label: 'Career & Burnout' },
+  { value: 'startup', label: 'Startup' },
+  { value: 'personality communication', label: 'Personality Communication' },
   { value: 'parenting', label: 'Parenting' },
   { value: 'trauma', label: 'Trauma & Recovery' },
-  { value: 'mindfulness', label: 'Mindfulness' },
+  { value: 'astrology', label: 'Astrology' },
+  { value: 'spiritual', label: 'Spiritual' },
+  { value: 'narcissism', label: 'Narcissism' },
+  { value: 'technology', label: 'Technology' },
+  { value: 'marketing', label: 'Marketing' },
 ]
 
 const FORMATS = [
@@ -310,10 +316,7 @@ export function FindAPractitioner() {
             </span>
             <span className="trust-divider">•</span>
             <span className="trust-item">
-              <span className="star-icon">★</span>{" "}
-              {trustStats.avgRating !== null
-                ? `${Number(trustStats.avgRating).toFixed(1)} Avg. Rating`
-                : "5.0 Avg. Rating"}
+              🌐 Global Practitioner
             </span>
             <span className="trust-divider">•</span>
             <span className="trust-item">
@@ -330,23 +333,10 @@ export function FindAPractitioner() {
           {/* BRAND NEW SLEEK DIRECTORY CONTROL PANEL */}
           <div className="dir-modern-panel">
 
-            {/* 1. Horizontal Category Tabs Row */}
-            <div className="dir-category-nav flex flex-wrap gap-2">
-              {SPECIALTIES.map((spec) => (
-                <button
-                  key={spec.value}
-                  onClick={() => handleFilterChange(setNeedFilter, spec.value)}
-                  className={`dir-cat-tab ${needFilter === spec.value ? 'active' : ''}`}
-                >
-                  {spec.label}
-                </button>
-              ))}
-            </div>
-
-            {/* 2. Unified Search & Dropdown Control Bar */}
-            <div className="dir-action-bar flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+            {/* Unified Search & 4-Dropdown Control Bar */}
+            <div className="dir-action-bar flex flex-col xl:flex-row gap-3 items-stretch xl:items-center">
               {/* Search Field */}
-              <div className="dir-search-box">
+              <div className="dir-search-box flex-1 min-w-[240px]">
                 <span className="search-icon-symbol">🔍</span>
                 <input
                   type="text"
@@ -360,14 +350,29 @@ export function FindAPractitioner() {
                 )}
               </div>
 
-              {/* Select Dropdowns Group */}
-              <div className="dir-selects-group flex flex-wrap gap-2">
-                {/* Format Dropdown */}
+              {/* 4 Select Dropdowns Group */}
+              <div className="dir-selects-group flex flex-wrap gap-2 items-center">
+                {/* 1. Domain / Specialty Dropdown */}
+                <div className="select-pill-wrap">
+                  <select
+                    value={needFilter}
+                    onChange={(e) => handleFilterChange(setNeedFilter, e.target.value)}
+                    className={`dir-select-pill ${needFilter !== 'all' ? 'border-[#2563EB] text-[#2563EB] bg-blue-50/60 font-bold' : ''}`}
+                    aria-label="Filter by Domain"
+                  >
+                    {SPECIALTIES.map((spec) => (
+                      <option key={spec.value} value={spec.value}>{spec.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* 2. Format Dropdown */}
                 <div className="select-pill-wrap">
                   <select
                     value={fmtFilter}
                     onChange={(e) => handleFilterChange(setFmtFilter, e.target.value)}
-                    className="dir-select-pill"
+                    className={`dir-select-pill ${fmtFilter !== 'all' ? 'border-[#2563EB] text-[#2563EB] bg-blue-50/60 font-bold' : ''}`}
+                    aria-label="Filter by Format"
                   >
                     {FORMATS.map((f) => (
                       <option key={f.value} value={f.value}>{f.label}</option>
@@ -375,12 +380,13 @@ export function FindAPractitioner() {
                   </select>
                 </div>
 
-                {/* Language Dropdown */}
+                {/* 3. Language Dropdown */}
                 <div className="select-pill-wrap">
                   <select
                     value={langFilter}
                     onChange={(e) => handleFilterChange(setLangFilter, e.target.value)}
-                    className="dir-select-pill"
+                    className={`dir-select-pill ${langFilter !== 'all' ? 'border-[#2563EB] text-[#2563EB] bg-blue-50/60 font-bold' : ''}`}
+                    aria-label="Filter by Language"
                   >
                     {availableLanguages.map((l) => (
                       <option key={l.value} value={l.value}>{l.label}</option>
@@ -388,12 +394,13 @@ export function FindAPractitioner() {
                   </select>
                 </div>
 
-                {/* Sort Dropdown */}
+                {/* 4. Sort Dropdown */}
                 <div className="select-pill-wrap">
                   <select
                     value={sortBy}
                     onChange={(e) => handleFilterChange(setSortBy, e.target.value)}
                     className="dir-select-pill dir-sort-pill"
+                    aria-label="Sort Practitioners"
                   >
                     {SORT_OPTIONS.map((s) => (
                       <option key={s.value} value={s.value}>{s.label}</option>
@@ -401,15 +408,15 @@ export function FindAPractitioner() {
                   </select>
                 </div>
 
-                {/* Reset Filter Button (ITEM 3 FIX: Always enabled when price sort or filters are active) */}
+                {/* Reset Filter Button */}
                 <button
                   type="button"
                   onClick={resetAllFilters}
                   disabled={!hasActiveFilters}
                   className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border ${
                     hasActiveFilters
-                      ? 'bg-red-500/10 text-red-400 border-red-500/30 hover:bg-red-500/20 cursor-pointer shadow-sm'
-                      : 'bg-slate-800/40 text-slate-500 border-slate-800 cursor-not-allowed opacity-60'
+                      ? 'bg-red-500/10 text-red-500 border-red-500/30 hover:bg-red-500/20 cursor-pointer shadow-sm'
+                      : 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-60'
                   }`}
                   title={hasActiveFilters ? 'Reset price and all active search filters' : 'No filters currently active'}
                 >

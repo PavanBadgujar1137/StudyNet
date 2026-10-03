@@ -82,7 +82,7 @@ export function PractitionerJourney() {
 
 
       {/* Hero */}
-      <header className="oh-pricing-hero pt-14 pb-8 text-center bg-gradient-to-b from-white to-slate-50 border-b border-slate-100">
+      <header className="oh-pricing-hero pt-24 sm:pt-28 pb-8 text-center bg-gradient-to-b from-white to-slate-50 border-b border-slate-100">
         <div className="oh-wrap max-w-5xl mx-auto px-4">
           <OHEyebrow>Practitioner Journey &amp; Pricing</OHEyebrow>
           {/* PJ-1 fix: replaced learner hero copy with practitioner-facing copy */}
