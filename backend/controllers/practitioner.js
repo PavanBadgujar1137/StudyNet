@@ -41,6 +41,32 @@ exports.getPractitioners = async (req, res) => {
         profile = profile.toObject()
       }
 
+      // Ensure a clean handle exists for public profile URLs and view tracking
+      if (!profile.handle) {
+        let baseHandle = `${u.firstName || ''}-${u.lastName || ''}`
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9-]/gi, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '') || `practitioner-${u._id.toString().slice(-4)}`
+
+        let candidateHandle = baseHandle
+        let counter = 1
+        while (await PractitionerProfile.findOne({ handle: candidateHandle, _id: { $ne: profile._id } })) {
+          candidateHandle = `${baseHandle}-${counter}`
+          counter++
+        }
+
+        try {
+          await PractitionerProfile.findByIdAndUpdate(profile._id, { handle: candidateHandle })
+          profile.handle = candidateHandle
+        } catch (handleErr) {
+          console.warn("Handle update error:", handleErr.message)
+          profile.handle = `guide-${profile._id.toString().slice(-6)}`
+        }
+      }
+      profile.viewCount = profile.viewCount || 0
+
       // Populate user field
       profile.user = {
         _id: u._id,
@@ -111,10 +137,10 @@ exports.getPractitioners = async (req, res) => {
       const rawLangs = offerLangs.length > 0
         ? offerLangs
         : (profile.languages && profile.languages.length > 0)
-        ? profile.languages
-        : (u.languages && u.languages.length > 0)
-        ? u.languages
-        : ["English", "Hindi"]
+          ? profile.languages
+          : (u.languages && u.languages.length > 0)
+            ? u.languages
+            : ["English", "Hindi"]
 
       const effectiveLanguages = [...new Set(rawLangs.map((l) => String(l).trim()).filter(Boolean))]
       profile.languages = effectiveLanguages
@@ -137,11 +163,22 @@ exports.getPractitioners = async (req, res) => {
       results.push(profile)
     }
 
-    // Sort results — null/NA sessionRate (dummy offer) always sorts to the end
-    if (sort === "featured") {
-      results.sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0))
+    // Rank by views (view rate / popularity) by default, or when explicitly requested
+    if (sort === "views" || sort === "featured" || !sort) {
+      results.sort((a, b) => {
+        const diff = (b.viewCount || 0) - (a.viewCount || 0)
+        if (diff !== 0) return diff
+        // Secondary sort: highest rating
+        const rDiff = (b.rating || 5) - (a.rating || 5)
+        if (rDiff !== 0) return rDiff
+        return String(b._id).localeCompare(String(a._id))
+      })
     } else if (sort === "rating") {
-      results.sort((a, b) => (b.rating || 5) - (a.rating || 5))
+      results.sort((a, b) => {
+        const rDiff = (b.rating || 5) - (a.rating || 5)
+        if (rDiff !== 0) return rDiff
+        return (b.viewCount || 0) - (a.viewCount || 0)
+      })
     } else if (sort === "rate_low") {
       results.sort((a, b) => {
         if (a.sessionRate == null) return 1
@@ -224,15 +261,34 @@ exports.getPractitionerByHandle = async (req, res) => {
       })
     }
 
-    let profile = await PractitionerProfile.findOne({
-      $or: [
-        { handle: cleanParam },
-        { handle: new RegExp(`^${cleanParam}$`, "i") }
-      ]
-    }).populate({
-      path: "user",
-      select: "firstName lastName email image accountType credentials bio specialties languages",
-    })
+    const mongoose = require("mongoose")
+    const isObjectId = mongoose.Types.ObjectId.isValid(handle)
+
+    let profile = null
+
+    if (isObjectId) {
+      profile = await PractitionerProfile.findOne({
+        $or: [
+          { _id: handle },
+          { user: handle },
+          { handle: cleanParam },
+          { handle: new RegExp(`^${cleanParam}$`, "i") }
+        ]
+      }).populate({
+        path: "user",
+        select: "firstName lastName email image accountType credentials bio specialties languages",
+      })
+    } else {
+      profile = await PractitionerProfile.findOne({
+        $or: [
+          { handle: cleanParam },
+          { handle: new RegExp(`^${cleanParam}$`, "i") }
+        ]
+      }).populate({
+        path: "user",
+        select: "firstName lastName email image accountType credentials bio specialties languages",
+      })
+    }
 
     if (!profile) {
       // Search user by exact name slug (firstName-lastName)
@@ -338,11 +394,12 @@ exports.getPractitionerByHandle = async (req, res) => {
     const computedRating = practitionerReviews.length > 0 ? Number((totalSum / practitionerReviews.length).toFixed(1)) : null
     const finalRating = profile.adminVerifiedRating !== undefined && profile.adminVerifiedRating !== null ? profile.adminVerifiedRating : computedRating
 
-    // Increment view count since someone just viewed this profile
-    profile.viewCount = (profile.viewCount || 0) + 1;
-    await profile.save();
+    // Atomically increment view count in MongoDB
+    await PractitionerProfile.findByIdAndUpdate(profile._id, { $inc: { viewCount: 1 } })
+    const updatedViewCount = (profile.viewCount || 0) + 1
 
     const profileObj = profile.toObject()
+    profileObj.viewCount = updatedViewCount
     profileObj.reviews = practitionerReviews || []
     profileObj.rating = finalRating
     profileObj.reviewCount = practitionerReviews.length
@@ -600,8 +657,8 @@ exports.connectClientWithPractitioner = async (req, res) => {
       ? profile.plan === "master" || profile.plan === "practice"
         ? 0
         : profile.plan === "growth"
-        ? 5
-        : 8
+          ? 5
+          : 8
       : 8
 
     const commission = Math.round((grossAmount * commissionRate) / 100)
@@ -1140,5 +1197,53 @@ exports.requestClientReview = async (req, res) => {
     })
   }
 }
+
+exports.trackPractitionerView = async (req, res) => {
+  try {
+    const { id } = req.params
+    if (!id) {
+      return res.status(400).json({ success: false, message: "ID or handle is required" })
+    }
+
+    const mongoose = require("mongoose")
+    let query = {}
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      query = { $or: [{ _id: id }, { user: id }] }
+    } else {
+      const cleanParam = id.toLowerCase().trim().replace(/[^a-z0-9-]/gi, '-')
+      query = {
+        $or: [
+          { handle: cleanParam },
+          { handle: new RegExp(`^${cleanParam}$`, "i") }
+        ]
+      }
+    }
+
+    const updated = await PractitionerProfile.findOneAndUpdate(
+      query,
+      { $inc: { viewCount: 1 } },
+      { new: true }
+    ).select("viewCount handle user")
+
+    if (!updated) {
+      return res.status(404).json({ success: false, message: "Practitioner not found" })
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "View count recorded successfully",
+      viewCount: updated.viewCount,
+      handle: updated.handle,
+    })
+  } catch (error) {
+    console.error("Track Practitioner View Error:", error)
+    return res.status(500).json({
+      success: false,
+      message: "Failed to record view",
+      error: error.message,
+    })
+  }
+}
+
 
 

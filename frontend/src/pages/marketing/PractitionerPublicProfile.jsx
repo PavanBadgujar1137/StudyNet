@@ -4,7 +4,8 @@ import {
   FiCheckCircle,
   FiCalendar,
   FiArrowLeft,
-  FiShield
+  FiShield,
+  FiEye,
 } from 'react-icons/fi'
 import { toast } from 'react-hot-toast'
 import { apiConnector } from '../../services/apiConnector'
@@ -218,6 +219,10 @@ export function PractitionerPublicProfile() {
 
               <span style={{ background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0', padding: '4px 12px', borderRadius: '20px', fontSize: '12.5px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                 <FiCheckCircle color="#059669" /> Verified Guide
+              </span>
+
+              <span style={{ background: '#EEF2FF', color: '#4338CA', border: '1px solid #C7D2FE', padding: '4px 12px', borderRadius: '20px', fontSize: '12.5px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '6px' }} title="Total profile views">
+                <FiEye color="#4338CA" /> {(profile.viewCount || 0).toLocaleString()} {profile.viewCount === 1 ? 'view' : 'views'}
               </span>
             </div>
 

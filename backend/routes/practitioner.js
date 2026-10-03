@@ -17,12 +17,15 @@ const {
   submitIntakeAnswers,
   getIntakeAnswers,
   requestClientReview,
+  trackPractitionerView,
 } = require("../controllers/practitioner")
 const { auth, isPractitioner } = require("../middleware/auth")
 
 // Public routes
 router.get("/", getPractitioners)
 router.get("/handle/:handle", getPractitionerByHandle)
+router.post("/:id/view", trackPractitionerView)
+router.post("/track-view/:id", trackPractitionerView)
 router.get("/intake-questions/:practitionerId", getIntakeQuestions)
 
 // Client connection (Payment & approval flow)

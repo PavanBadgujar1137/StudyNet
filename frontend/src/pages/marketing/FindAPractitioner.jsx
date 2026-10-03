@@ -10,6 +10,7 @@ import {
 import { apiConnector } from '../../services/apiConnector'
 import { toast } from 'react-hot-toast'
 import { formatPractitionerName } from '../../utils/formatName'
+import { FiEye } from 'react-icons/fi'
 
 const SPECIALTIES = [
   { value: 'all', label: 'All Guides' },
@@ -30,8 +31,9 @@ const FORMATS = [
 ]
 
 const SORT_OPTIONS = [
-  { value: 'featured', label: 'Featured Guides' },
-  { value: 'rating', label: 'Highest Rated' },
+  { value: 'views', label: '🔥 Most Viewed & Popular' },
+  { value: 'featured', label: '⭐ Featured Guides' },
+  { value: 'rating', label: '★ Highest Rated' },
   { value: 'rate_low', label: 'Price: Low to High' },
   { value: 'rate_high', label: 'Price: High to Low' },
 ]
@@ -45,7 +47,7 @@ export function FindAPractitioner() {
   const [needFilter, setNeedFilter] = useState('all')
   const [fmtFilter, setFmtFilter] = useState('all')
   const [langFilter, setLangFilter] = useState('all')
-  const [sortBy, setSortBy] = useState('featured')
+  const [sortBy, setSortBy] = useState('views')
   const [connectingId, setConnectingId] = useState(null)
 
   const loadRazorpaySDK = () => {
@@ -232,12 +234,19 @@ export function FindAPractitioner() {
     }
   }
 
+  const handleViewPractitioner = (practitioner) => {
+    const pId = practitioner._id || practitioner.id || practitioner.handle
+    if (pId) {
+      apiConnector('POST', `/api/v1/practitioners/track-view/${pId}`).catch(() => {})
+    }
+  }
+
   const hasActiveFilters = Boolean(
     searchQuery ||
     needFilter !== 'all' ||
     fmtFilter !== 'all' ||
     langFilter !== 'all' ||
-    sortBy !== 'featured'
+    (sortBy !== 'views' && sortBy !== 'featured')
   )
 
   // Dynamically compute unique available languages from registered practitioners
@@ -270,7 +279,7 @@ export function FindAPractitioner() {
     setNeedFilter('all')
     setFmtFilter('all')
     setLangFilter('all')
-    setSortBy('featured')
+    setSortBy('views')
     setPage(1)
   }
 
@@ -459,7 +468,7 @@ export function FindAPractitioner() {
                     }
                     return true
                   })
-                  .map((p) => {
+                  .map((p, idx) => {
                   const name = formatPractitionerName(p.user || p, 'Practitioner')
                   const isVerified = p.verificationStatus === 'verified' || true
                   const userImg = p.user?.image || p.image || p.avatar || null
@@ -500,22 +509,64 @@ export function FindAPractitioner() {
                         <div className="p-meta-wrap">
                           <div className="p-name-row">
                             <h3 className="p-name">{name}</h3>
-                            {isVerified && (
-                              <span className="p-verified-badge" title="Verified Credential">✓ Verified</span>
-                            )}
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              {idx === 0 && (p.viewCount || 0) > 0 && (sortBy === 'views' || sortBy === 'featured') && (
+                                <span
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '3px',
+                                    fontSize: '10.5px',
+                                    fontWeight: 800,
+                                    color: '#B45309',
+                                    background: '#FEF3C7',
+                                    border: '1px solid #FDE68A',
+                                    padding: '2px 7px',
+                                    borderRadius: '6px',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.3px',
+                                  }}
+                                  title="Top Ranked by Community Views"
+                                >
+                                  🔥 #1 Most Viewed
+                                </span>
+                              )}
+                              {isVerified && (
+                                <span className="p-verified-badge" title="Verified Credential">✓ Verified</span>
+                              )}
+                            </div>
                           </div>
                           {p.credentials && <div className="p-credentials">{p.credentials}</div>}
-                          <div className="p-rating-row">
-                            {p.reviewCount ? (
-                              <>
-                                <span className="p-rating-star">★ {p.rating || 5.0}</span>
-                                <span className="p-rating-count">({p.reviewCount} reviews)</span>
-                              </>
-                            ) : (
-                              <span className="p-rating-count" style={{ color: '#059669', fontWeight: 700 }}>
-                                ✨ New Verified Guide
-                              </span>
-                            )}
+                          <div className="p-rating-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              {p.reviewCount ? (
+                                <>
+                                  <span className="p-rating-star">★ {p.rating || 5.0}</span>
+                                  <span className="p-rating-count">({p.reviewCount} reviews)</span>
+                                </>
+                              ) : (
+                                <span className="p-rating-count" style={{ color: '#059669', fontWeight: 700 }}>
+                                  ✨ New Verified Guide
+                                </span>
+                              )}
+                            </div>
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                color: '#4338CA',
+                                background: '#EEF2FF',
+                                border: '1px solid #C7D2FE',
+                                padding: '2px 8px',
+                                borderRadius: '9999px',
+                              }}
+                              title="Total Profile Views"
+                            >
+                              <FiEye size={12} /> {(p.viewCount || 0).toLocaleString()} {p.viewCount === 1 ? 'view' : 'views'}
+                            </span>
                           </div>
                         </div>
 
@@ -590,20 +641,31 @@ export function FindAPractitioner() {
                       {/* CTA Buttons: Connect & Book & View Profile */}
                       <div className="flex gap-2 w-full mt-3">
                         {isDummyOnly ? (
-                          <OHButton href={`/practitioner/${p.handle || p._id || ''}`} className="flex-1 p-book-btn">
+                          <OHButton
+                            href={`/practitioner/${p.handle || p._id || ''}`}
+                            onClick={() => handleViewPractitioner(p)}
+                            className="flex-1 p-book-btn"
+                          >
                             View Profile →
                           </OHButton>
                         ) : (
                           <>
                             <button
                               type="button"
-                              onClick={() => handleConnectPractitioner(p)}
+                              onClick={() => {
+                                handleViewPractitioner(p)
+                                handleConnectPractitioner(p)
+                              }}
                               disabled={connectingId === (p._id || p.id)}
                               className="flex-1 py-2.5 px-3 rounded-xl border border-indigo-200 text-indigo-700 bg-indigo-50/70 hover:bg-indigo-100 font-bold text-xs transition-all flex items-center justify-center gap-1"
                             >
                               {connectingId === (p._id || p.id) ? 'Connecting...' : '🤝 Connect & Book'}
                             </button>
-                            <OHButton href={`/practitioner/${p.handle || p._id || ''}`} className="flex-1 p-book-btn">
+                            <OHButton
+                              href={`/practitioner/${p.handle || p._id || ''}`}
+                              onClick={() => handleViewPractitioner(p)}
+                              className="flex-1 p-book-btn"
+                            >
                               View Profile →
                             </OHButton>
                           </>

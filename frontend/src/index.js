@@ -16,6 +16,23 @@ const store = configureStore({
   reducer: rootReducer,
 });
 
+// Auto-recover if browser has cached an older HTML pointing to replaced JS chunks
+window.addEventListener("error", (e) => {
+  const msg = e?.message || "";
+  if (
+    msg.includes("Unexpected token '<'") ||
+    msg.includes("Loading chunk") ||
+    msg.includes("ChunkLoadError")
+  ) {
+    const lastReload = sessionStorage.getItem("chunk_reload_ts");
+    const now = Date.now();
+    if (!lastReload || now - Number(lastReload) > 10000) {
+      sessionStorage.setItem("chunk_reload_ts", String(now));
+      window.location.reload();
+    }
+  }
+});
+
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
