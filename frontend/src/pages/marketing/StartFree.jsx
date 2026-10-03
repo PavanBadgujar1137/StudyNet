@@ -1,0 +1,206 @@
+import React from 'react'
+import {
+  OHFooter,
+  OHButton,
+  OHEyebrow,
+  OHCard,
+  OHRangeCalculator,
+} from '../../components/openhand'
+
+export function StartFree() {
+  // ... calcCompute and calcSliders remain ...
+  const calcCompute = (val) => {
+    const clients = val.cIn || 0
+    const price = val.pIn || 0
+    const mem = val.mIn || 0
+    const gross = clients * price + mem * 799
+    const fee = Math.round(gross * 0.05)
+    return {
+      gross,
+      fee,
+      net: gross - fee,
+    }
+  }
+
+  const calcSliders = [
+    { id: 'cIn', label: 'Learners you see per month', min: 2, max: 60, value: 12 },
+    { id: 'pIn', label: 'Your average price', min: 500, max: 15000, step: 250, value: 2500, format: (v) => `₹${v.toLocaleString('en-IN')}` },
+    { id: 'mIn', label: 'Members in your circle', min: 0, max: 200, value: 0 },
+  ]
+
+  return (
+    <div className="oh-startfree-page relative min-h-screen">
+
+
+      {/* Hero */}
+      <header className="oh-startfree-hero">
+        <div className="oh-wrap">
+          <OHEyebrow>Step one of three</OHEyebrow>
+          <h1 className="whitespace-nowrap text-center w-full mx-auto">
+            Your practice, <span className="oh-grad-text">live in 20 minutes.</span>
+          </h1>
+          <p className="sub">
+            No card. No sales call. No time limit. Set up your space, invite your first learner, and only pay us when you actually get paid.
+          </p>
+          <div className="cta-row">
+            <OHButton href="/signup" size="lg">Create my practice space</OHButton>
+            <OHButton href="/learner-journey" variant="ghost" size="lg">See a learner journey →</OHButton>
+          </div>
+          <p className="trust-note text-center w-full mx-auto">Free forever on the Starter plan · You keep 100% until your first ₹25,000</p>
+        </div>
+      </header>
+
+      {/* 4-step ribbon */}
+      <section className="oh-sec pt-2 pb-6" id="setup">
+        <div className="oh-wrap max-w-[1400px] mx-auto">
+          <div className="w-full text-center flex flex-col items-center justify-center mx-auto mb-6">
+            <h2 className="text-center w-full text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight mb-2" style={{ color: '#0F172A' }}>
+              Four steps between you and your first paid learner
+            </h2>
+            <p className="text-center w-full text-sm sm:text-base font-bold leading-relaxed" style={{ color: '#334155' }}>
+              Most practitioners finish this in a single sitting. You can stop anywhere and come back — nothing is lost.
+            </p>
+          </div>
+
+          <div className="ribbon-vertical">
+            <div className="step-node-item">
+              <div className="node-badge">1</div>
+              <div>
+                <h3>Claim your space</h3>
+                <p>Pick your handle — openhand.live/yourname — add your photo, your credentials, and the two or three sentences that describe what you actually help people with.</p>
+                <span className="step-time-tag">~3 minutes</span>
+              </div>
+            </div>
+
+            <div className="step-node-item">
+              <div className="node-badge">2</div>
+              <div>
+                <h3>Add one offer</h3>
+                <p>A single 1:1 session, a six-week Circle, or a self-paced program. Start with one. You can add the rest once you see how people respond to the first.</p>
+                <span className="step-time-tag">~6 minutes</span>
+              </div>
+            </div>
+
+            <div className="step-node-item">
+              <div className="node-badge">3</div>
+              <div>
+                <h3>Connect payments</h3>
+                <p>UPI, cards, net banking, and international payments through Razorpay and Stripe. Money lands in your bank account, not in a platform wallet you have to withdraw from.</p>
+                <span className="step-time-tag">~5 minutes · PAN + bank details needed</span>
+              </div>
+            </div>
+
+            <div className="step-node-item">
+              <div className="node-badge">4</div>
+              <div>
+                <h3>Share your link</h3>
+                <p>One link for your Instagram bio, your WhatsApp broadcast, your email signature. Bookings, payments, reminders, and follow-ups run themselves from here.</p>
+                <span className="step-time-tag">~1 minute</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Revenue Streams */}
+      <section className="oh-sec" id="money">
+        <div className="oh-wrap">
+          <OHCard surface="navy" pad="lg" className="revenue-card">
+            <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-10">
+              <h2 className="text-3xl font-bold text-white mb-3">How you actually get paid</h2>
+              <p className="text-indigo-200 text-base max-w-2xl text-center">You hold space. OpenHand handles the invoice, the reminder, the receipt, the GST line, and the follow-up. Three ways money reaches you — and you can run all three at once.</p>
+            </div>
+
+            <div className="streams-grid">
+              <div className="stream-box">
+                <span className="stream-tag">Stream one</span>
+                <h3>Sessions</h3>
+                <p>One-to-one bookings, paid at the time of booking. No chasing, no awkward reminder messages.</p>
+                <span className="stream-num">₹1,500–₹6,000</span>
+                <span className="stream-per">typical per session</span>
+              </div>
+
+              <div className="stream-box">
+                <span className="stream-tag">Stream two</span>
+                <h3>Circles</h3>
+                <p>Run eight people through a six-week container for the same hours you'd spend on two learners.</p>
+                <span className="stream-num">₹15,000–₹45,000</span>
+                <span className="stream-per">typical per seat, per Circle</span>
+              </div>
+
+              <div className="stream-box">
+                <span className="stream-tag">Stream three</span>
+                <h3>Memberships</h3>
+                <p>Recurring monthly access to your circle, your recordings, and your check-ins. Income that doesn't reset every month.</p>
+                <span className="stream-num">₹499–₹2,500</span>
+                <span className="stream-per">typical per member, per month</span>
+              </div>
+            </div>
+
+            <OHRangeCalculator
+              sliders={calcSliders}
+              compute={calcCompute}
+              note="Illustrative only. Assumes ₹799/month membership pricing and the Growth plan's 5% fee. Payment gateway charges and GST are additional and depend on your registration status — check with your accountant."
+            />
+
+            <div className="fees-table-wrap">
+              <table className="fees-table">
+                <thead>
+                  <tr><th>Plan</th><th>Monthly</th><th>We take</th><th>Best when</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>Starter</td><td>₹999/mo</td><td>8% of what you earn</td><td>You're testing whether this works at all</td></tr>
+                  <tr><td>Growth</td><td>₹2,999/mo</td><td>5% of what you earn</td><td>You're past ₹40,000/month and want the fee to stop stinging</td></tr>
+                  <tr><td>Master</td><td>₹5,999/mo</td><td>0% — you keep everything</td><td>You're running Circles and want your own branded app</td></tr>
+
+                </tbody>
+              </table>
+            </div>
+          </OHCard>
+        </div>
+      </section>
+
+      {/* What's in the free plan */}
+      <section className="oh-sec">
+        <div className="oh-wrap">
+          <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-10">
+            <h2 className="oh-sec-title text-center mx-auto mb-3">What's in the free plan</h2>
+            <p className="sub text-center mx-auto max-w-2xl">Not a crippled trial. A real, working practice you can earn from indefinitely.</p>
+          </div>
+          <div className="oh-grid-3">
+            <OHCard surface="white" pad="lg">
+              <h3>Bookings &amp; reminders</h3>
+              <p>Your calendar, your buffer times, your cancellation rules. Learners get WhatsApp and email reminders automatically.</p>
+            </OHCard>
+            <OHCard surface="white" pad="lg">
+              <h3>One private Circle</h3>
+              <p>A closed group container with its own feed, resources, and check-ins. Nobody wanders in from outside.</p>
+            </OHCard>
+            <OHCard surface="white" pad="lg">
+              <h3>Payments that clear to your bank</h3>
+              <p>UPI, cards, net banking, international. Settled to your account on a two-day cycle, with GST-ready invoices.</p>
+            </OHCard>
+          </div>
+        </div>
+      </section>
+
+      {/* Closing CTA */}
+      <section className="oh-sec text-center">
+        <div className="oh-wrap">
+          <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-10">
+            <h2 className="oh-sec-title text-center mx-auto mb-3">You already know how to hold space.</h2>
+            <p className="sub text-center mx-auto max-w-2xl">The rest — the booking link, the invoice, the reminder, the receipt — is what we're for.</p>
+          </div>
+          <div className="cta-row center-row">
+            <OHButton href="/signup" size="lg">Create my practice space</OHButton>
+            <OHButton href="/contact-us" variant="ghost" size="lg">Talk to a real human →</OHButton>
+          </div>
+        </div>
+      </section>
+
+      <OHFooter />
+    </div>
+  )
+}
+
+export default StartFree
