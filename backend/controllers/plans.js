@@ -14,7 +14,7 @@ const DEFAULT_PLANS = [
       "1:1, group sessions, webinars & packages",
       "Built-in HD Session Room",
       "Verified Practitioner badge",
-      "Instant UPI / bank payouts",
+      "72-hour working day payouts (UPI / bank)",
     ],
   },
   {

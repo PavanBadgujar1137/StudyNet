@@ -173,8 +173,16 @@ export function Home() {
                     </button>
                   </form>
 
-                  {/* Suggestion Topic Pills */}
-                  <div className="flex flex-wrap items-center gap-2.5 pt-3">
+                  {/* Suggestion Topic Cylinder Pills (Always Visible Big Cylinder Boxes) */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      alignItems: 'center',
+                      gap: '12px',
+                      paddingTop: '16px',
+                    }}
+                  >
                     {['Burnout', 'Career change', 'Anxiety at work', 'Leadership', 'Parenting'].map((topic) => (
                       <button
                         key={topic}
@@ -183,10 +191,37 @@ export function Home() {
                           setLearnerQuery(topic)
                           navigate(`/find-a-practitioner?search=${encodeURIComponent(topic)}`)
                         }}
-                        className="px-5 py-2 rounded-full text-sm font-bold bg-white border-2 hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50/40 hover:shadow-sm transition-all cursor-pointer whitespace-nowrap"
                         style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '10px 22px',
+                          borderRadius: '9999px',
+                          backgroundColor: '#FFFFFF',
+                          border: '1.5px solid #D0D5DD',
                           color: '#1E293B',
-                          borderColor: '#CBD5E1',
+                          fontSize: '15px',
+                          fontWeight: 600,
+                          lineHeight: '1.4',
+                          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                          transition: 'all 0.18s ease-in-out',
+                          outline: 'none',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = '#2563EB'
+                          e.currentTarget.style.color = '#2563EB'
+                          e.currentTarget.style.backgroundColor = '#F0F7FF'
+                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(37, 99, 235, 0.15)'
+                          e.currentTarget.style.transform = 'translateY(-1px)'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = '#D0D5DD'
+                          e.currentTarget.style.color = '#1E293B'
+                          e.currentTarget.style.backgroundColor = '#FFFFFF'
+                          e.currentTarget.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.04)'
+                          e.currentTarget.style.transform = 'translateY(0)'
                         }}
                       >
                         {topic}
@@ -255,13 +290,35 @@ export function Home() {
                     </button>
                   </form>
 
-                  {/* Feature Checklist Pills */}
-                  <div className="flex flex-wrap items-center gap-2 pt-2">
+                  {/* Feature Checklist Pills (Always Visible Big Cylinder Boxes) */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      alignItems: 'center',
+                      gap: '12px',
+                      paddingTop: '16px',
+                    }}
+                  >
                     {['1:1 bookings', 'Circles', 'UPI & cards', 'AURA notes', 'Referrals'].map((pill) => (
                       <span
                         key={pill}
-                        className="px-4 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 shadow-2xs"
-                        style={{ color: '#334155' }}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '10px 22px',
+                          borderRadius: '9999px',
+                          backgroundColor: '#FFFFFF',
+                          border: '1.5px solid #D0D5DD',
+                          color: '#1E293B',
+                          fontSize: '15px',
+                          fontWeight: 600,
+                          lineHeight: '1.4',
+                          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+                          whiteSpace: 'nowrap',
+                          transition: 'all 0.18s ease-in-out',
+                        }}
                       >
                         {pill}
                       </span>

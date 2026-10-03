@@ -165,10 +165,34 @@ exports.getPractitioners = async (req, res) => {
     const startIndex = (pageNum - 1) * limitNum
     const paginatedProfiles = results.slice(startIndex, startIndex + limitNum)
 
+    // Real-time aggregate trust metrics
+    const totalVerifiedGuides = await User.countDocuments({
+      accountType: { $in: ["Practitioner", "Instructor"] },
+    })
+
+    const RatingAndReview = require("../models/RatingandReview")
+    const reviews = await RatingAndReview.find({ rating: { $gt: 0 } }).select("rating").lean()
+    let avgRating = 5.0
+    if (reviews.length > 0) {
+      const sum = reviews.reduce((acc, r) => acc + (Number(r.rating) || 0), 0)
+      avgRating = Number((sum / reviews.length).toFixed(1))
+    } else {
+      const ratedProfiles = results.filter((r) => r.rating && r.rating > 0)
+      if (ratedProfiles.length > 0) {
+        const sum = ratedProfiles.reduce((acc, r) => acc + Number(r.rating), 0)
+        avgRating = Number((sum / ratedProfiles.length).toFixed(1))
+      }
+    }
+
     return res.status(200).json({
       success: true,
       data: paginatedProfiles,
       practitioners: paginatedProfiles,
+      stats: {
+        totalGuides: totalVerifiedGuides || results.length,
+        avgRating,
+        totalReviews: reviews.length,
+      },
       pagination: {
         currentPage: pageNum,
         totalPages,

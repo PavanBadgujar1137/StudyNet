@@ -9,7 +9,7 @@ import React from "react";
 export const DEFAULT_BRANDS = [
   {
     name: "Razorpay",
-    tagline: "Instant UPI Payouts",
+    tagline: "72-Hour Working Day Payouts",
     badge: "Payments",
     svg: (
       <svg className="h-6 w-auto" viewBox="0 0 120 32" fill="currentColor">

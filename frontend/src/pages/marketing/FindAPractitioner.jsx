@@ -165,6 +165,12 @@ export function FindAPractitioner() {
     hasNext: false,
   })
 
+  // Real-time dynamic trust metrics state
+  const [trustStats, setTrustStats] = useState({
+    totalGuides: null,
+    avgRating: null,
+  })
+
 
   // Reset to page 1 whenever search filters or sort change
   const handleFilterChange = (setter, value) => {
@@ -188,6 +194,9 @@ export function FindAPractitioner() {
         const res = await apiConnector('GET', `/api/v1/practitioners?${params.toString()}`)
         if (res?.data?.success && Array.isArray(res.data.data)) {
           setPractitioners(res.data.data)
+          if (res.data.stats) {
+            setTrustStats(res.data.stats)
+          }
           if (res.data.pagination) {
             setPagination(res.data.pagination)
           } else {
@@ -280,14 +289,22 @@ export function FindAPractitioner() {
             Every practitioner here is verified, works independently on OpenHand, and shows real availability. No middle agency, no algorithms deciding for you.
           </p>
 
-          {/* Trust Metrics Pill */}
+          {/* Trust Metrics Pill (Real-Time Dynamic Stats) */}
           <div className="dir-trust-pill">
             <span className="trust-item">
-              <span className="green-pulse-dot" /> 120+ Verified Guides
+              <span className="green-pulse-dot" />{" "}
+              {trustStats.totalGuides !== null
+                ? `${trustStats.totalGuides} Verified Guide${trustStats.totalGuides === 1 ? "" : "s"}`
+                : pagination.totalPractitioners
+                ? `${pagination.totalPractitioners} Verified Guide${pagination.totalPractitioners === 1 ? "" : "s"}`
+                : "Verified Guides"}
             </span>
             <span className="trust-divider">•</span>
             <span className="trust-item">
-              <span className="star-icon">★</span> 4.9 Avg. Rating
+              <span className="star-icon">★</span>{" "}
+              {trustStats.avgRating !== null
+                ? `${Number(trustStats.avgRating).toFixed(1)} Avg. Rating`
+                : "5.0 Avg. Rating"}
             </span>
             <span className="trust-divider">•</span>
             <span className="trust-item">

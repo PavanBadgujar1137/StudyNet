@@ -473,7 +473,7 @@ export default function OHPricingSection({
                       "1:1, group sessions, webinars & packages",
                       "Built-in HD Session Room",
                       "Verified Practitioner badge",
-                      "Instant UPI / bank payouts",
+                      "72-hour working day payouts (UPI / bank)",
                     ].map((feature, idx) => (
                       <li key={idx} className="flex items-start gap-3">
                         <span
