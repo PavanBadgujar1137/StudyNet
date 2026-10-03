@@ -35,6 +35,7 @@ import CommunityChatHub from '../CommunityChatHub'
 import AuraChat from '../AuraChat'
 import { PractitionerOnboarding } from '../../../../pages/PractitionerOnboarding'
 import OHPricingSection from '../../../openhand/OHPricingSection'
+import OHPricingModal from '../../../openhand/OHPricingModal'
 import { toast } from 'react-hot-toast'
 import { apiConnector } from '../../../../services/apiConnector'
 import { fetchPractitionerDashboardData } from '../../../../services/operations/dashboardAPI'
@@ -589,148 +590,16 @@ export function PractitionerDashboard() {
         </div>
 
         {/* Plan Upgrade Selection Modal */}
-        {isPlanModalOpen && (
-          <div 
-            style={{
-              position: 'fixed',
-              inset: 0,
-              zIndex: 999,
-              background: 'rgba(15, 23, 42, 0.65)',
-              backdropFilter: 'blur(6px)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '20px'
-            }}
-            onClick={() => setIsPlanModalOpen(false)}
-          >
-            <div 
-              style={{
-                background: '#FFFFFF',
-                borderRadius: '24px',
-                padding: '32px 28px',
-                maxWidth: '920px',
-                width: '100%',
-                maxHeight: '90vh',
-                overflowY: 'auto',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-                position: 'relative'
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                onClick={() => setIsPlanModalOpen(false)}
-                style={{
-                  position: 'absolute',
-                  top: 20,
-                  right: 20,
-                  background: '#F1F5F9',
-                  border: 'none',
-                  borderRadius: '50%',
-                  width: 36,
-                  height: 36,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  color: '#475569'
-                }}
-              >
-                <FiX fontSize={18} />
-              </button>
-
-              <div style={{ textAlign: 'center', marginBottom: 28 }}>
-                <div style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '4px 12px',
-                  borderRadius: 20,
-                  background: '#EEF2FF',
-                  color: '#4F46E5',
-                  fontSize: 12,
-                  fontWeight: 700,
-                  marginBottom: 10
-                }}>
-                  ✨ PRACTITIONER PLATFORM
-                </div>
-                <h2 style={{ margin: '0 0 8px', color: '#0F172A', fontSize: 26, fontWeight: 800 }}>
-                  Unlock More for Your Practice
-                </h2>
-                <p style={{ margin: 0, color: '#64748B', fontSize: 14 }}>
-                  Free tier: 1 offer, directory listing, and session notes.
-                  Upgrade to add Circles, automations, custom branding, and more.
-                </p>
-              </div>
-
-              {/* Plans Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 20, textAlign: 'left' }}>
-                {/* Starter Plan */}
-                <div style={{ background: '#F8FAFC', border: '1.5px solid #E2E8F0', borderRadius: 20, padding: 22, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <div>
-                    <div style={{ color: '#0F172A', fontWeight: 800, fontSize: 18, marginBottom: 4 }}>Starter Plan</div>
-                    <div style={{ color: '#0F172A', fontSize: 28, fontWeight: 900, marginBottom: 14 }}>₹999<small style={{ fontSize: 13, color: '#64748B' }}>/mo</small></div>
-                    <ul style={{ margin: '0 0 20px', padding: 0, listStyle: 'none', fontSize: 13, color: '#475569', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      <li>✓ Publish courses & 1:1 session offers</li>
-                      <li>✓ 1 Live group circle</li>
-                      <li>✓ Directory listing & client booking link</li>
-                    </ul>
-                  </div>
-                  <button
-                    onClick={() => { handlePayNow('starter'); setIsPlanModalOpen(false); }}
-                    disabled={payingPlan === 'starter'}
-                    style={{ width: '100%', padding: '12px', background: '#0F172A', border: 'none', borderRadius: 12, color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: 13.5 }}
-                  >
-                    {payingPlan === 'starter' ? 'Opening Razorpay...' : 'Subscribe Starter — ₹999'}
-                  </button>
-                </div>
-
-                {/* Growth Plan (Featured) */}
-                <div style={{ background: '#0F172A', border: '2px solid #6366F1', borderRadius: 20, padding: 22, color: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', position: 'relative' }}>
-                  <span style={{ position: 'absolute', top: -11, right: 16, background: '#6366F1', color: '#fff', fontSize: 10, fontWeight: 800, padding: '3px 10px', borderRadius: 10 }}>MOST POPULAR</span>
-                  <div>
-                    <div style={{ color: '#fff', fontWeight: 800, fontSize: 18, marginBottom: 4 }}>Growth Plan</div>
-                    <div style={{ color: '#fff', fontSize: 28, fontWeight: 900, marginBottom: 14 }}>₹2,999<small style={{ fontSize: 13, color: '#94A3B8' }}>/mo</small></div>
-                    <ul style={{ margin: '0 0 20px', padding: 0, listStyle: 'none', fontSize: 13, color: '#CBD5E1', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      <li>✓ Everything in Starter</li>
-                      <li>✓ Unlimited live Circles</li>
-                      <li>✓ Automated Check-in sequences</li>
-                      <li>✓ Priority directory badge</li>
-                    </ul>
-                  </div>
-                  <button
-                    onClick={() => { handlePayNow('growth'); setIsPlanModalOpen(false); }}
-                    disabled={payingPlan === 'growth'}
-                    style={{ width: '100%', padding: '12px', background: 'linear-gradient(135deg, #3B82F6, #1D4ED8)', border: 'none', borderRadius: 12, color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: 13.5 }}
-                  >
-                    {payingPlan === 'growth' ? 'Opening Razorpay...' : 'Subscribe Growth — ₹2,999'}
-                  </button>
-                </div>
-
-                {/* Master VIP Plan */}
-                <div style={{ background: '#F8FAFC', border: '1.5px solid #E2E8F0', borderRadius: 20, padding: 22, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <div>
-                  <div style={{ color: '#0F172A', fontWeight: 800, fontSize: 18, marginBottom: 4 }}>Master Plan</div>
-                    <div style={{ color: '#0F172A', fontSize: 28, fontWeight: 900, marginBottom: 14 }}>₹5,999<small style={{ fontSize: 13, color: '#64748B' }}>/mo</small></div>
-                    <ul style={{ margin: '0 0 20px', padding: 0, listStyle: 'none', fontSize: 13, color: '#475569', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      <li>✓ Everything in Growth</li>
-                      <li>✓ White-label portal & custom domain</li>
-                      <li>✓ Branded app</li>
-                      <li>✓ Dedicated account manager</li>
-                    </ul>
-                  </div>
-                  <button
-                    onClick={() => { handlePayNow('master'); setIsPlanModalOpen(false); }}
-                    disabled={payingPlan === 'master'}
-                    style={{ width: '100%', padding: '12px', background: '#0F172A', border: 'none', borderRadius: 12, color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: 13.5 }}
-                  >
-                    {payingPlan === 'master' ? 'Opening Razorpay...' : 'Subscribe Master — ₹5,999'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        <OHPricingModal
+          isOpen={isPlanModalOpen}
+          onClose={() => setIsPlanModalOpen(false)}
+          defaultRole="practitioner"
+          hideRoleSwitcher={true}
+          onSuccess={() => {
+            loadData()
+            setIsPlanModalOpen(false)
+          }}
+        />
       </main>
     </div>
   )

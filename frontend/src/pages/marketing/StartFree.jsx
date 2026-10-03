@@ -146,12 +146,12 @@ export function StartFree() {
             <div className="fees-table-wrap">
               <table className="fees-table">
                 <thead>
-                  <tr><th>Plan</th><th>Monthly</th><th>We take</th><th>Best when</th></tr>
+                  <tr><th>Plan</th><th>Pricing</th><th>We take</th><th>Best when</th></tr>
                 </thead>
                 <tbody>
-                  <tr><td>Starter</td><td>₹999/mo</td><td>8% of what you earn</td><td>You're testing whether this works at all</td></tr>
-                  <tr><td>Growth</td><td>₹2,999/mo</td><td>5% of what you earn</td><td>You're past ₹40,000/month and want the fee to stop stinging</td></tr>
-                  <tr><td>Master</td><td>₹5,999/mo</td><td>0% — you keep everything</td><td>You're running Circles and want your own branded app</td></tr>
+                  <tr><td>Open</td><td>₹0 free forever</td><td>10% per booking · every Offers</td><td>Start your practice. We start bringing mentees.</td></tr>
+                  <tr><td>Pro</td><td>₹799/mo (billed yearly)</td><td>5% per booking · every Offers</td><td>A growth partner working on your practice every month.</td></tr>
+                  <tr><td>Custom</td><td>Custom</td><td>Custom commission</td><td>establish Course , Therapist &amp; coaching firms.</td></tr>
 
                 </tbody>
               </table>

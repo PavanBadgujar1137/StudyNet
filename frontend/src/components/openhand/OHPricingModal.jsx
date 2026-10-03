@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux'
 import { FiX } from 'react-icons/fi'
 import OHPricingSection from './OHPricingSection'
 
-export default function OHPricingModal({ isOpen, onClose, defaultRole, hideRoleSwitcher = true }) {
+export default function OHPricingModal({ isOpen, onClose, defaultRole, hideRoleSwitcher = true, onSuccess }) {
   const { user } = useSelector((state) => state.profile)
   const isPractitioner = user?.accountType === 'Practitioner' || user?.accountType === 'Instructor'
   const resolvedRole = defaultRole || (isPractitioner ? 'practitioner' : 'learner')
@@ -116,6 +116,7 @@ export default function OHPricingModal({ isOpen, onClose, defaultRole, hideRoleS
               : 'Enjoy full free access to practitioner courses, live growth circles, daily check-ins, and AURA AI.'}
             isModal={true}
             hideRoleSwitcher={hideRoleSwitcher}
+            onSuccess={onSuccess}
           />
         </div>
       </div>

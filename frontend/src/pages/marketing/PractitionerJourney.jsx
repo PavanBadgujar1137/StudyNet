@@ -48,7 +48,7 @@ export function PractitionerJourney() {
     {
       cat: 'Commission & Take-Rate',
       q: 'What take-rate or commission does OpenHand charge?',
-      a: 'OpenHand charges 0% platform commission on your earnings. Tiered platform subscription plans (Starter ₹999, Growth ₹2,999, Master ₹5,999) cover platform hosting, AURA intelligence, and payment gateway infrastructure with direct T+2 bank payouts.',
+      a: 'OpenHand charges 10% per booking on the free Open plan, and 5% per booking on the Pro plan (₹799/month, billed yearly). These include platform hosting, AURA intelligence, and direct bank payouts.',
     },
     {
       cat: 'AURA & Privacy',

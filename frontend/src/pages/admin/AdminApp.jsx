@@ -400,9 +400,12 @@ function ClientsTab() {
                   {(planModal.accountType === 'Practitioner' || planModal.accountType === 'Instructor') ? (
                     <>
                       <option value="trial">Keep Active Free Trial</option>
-                      <option value="starter">Starter Plan (₹999/mo)</option>
-                      <option value="growth">Growth Plan (₹2,999/mo)</option>
-                      <option value="master">Master Plan (₹5,999/mo)</option>
+                      <option value="open">Open Plan (₹0 Free Forever · 10% commission)</option>
+                      <option value="pro_yearly">Pro Plan (₹799/mo billed yearly · 5% commission)</option>
+                      <option value="custom">Custom Plan (Establish Course, Therapist & Coaching Firms)</option>
+                      <option value="starter">Starter Plan (Legacy ₹999/mo)</option>
+                      <option value="growth">Growth Plan (Legacy ₹2,999/mo)</option>
+                      <option value="master">Master Plan (Legacy ₹5,999/mo)</option>
                       <option value="none">No Active Plan (Trial Expired)</option>
                     </>
                   ) : (
@@ -1274,9 +1277,12 @@ function PractitionersTab() {
                 <select value={selectedPlan} onChange={e => setSelectedPlan(e.target.value)}
                   style={{ width: '100%', background: '#FFFFFF', border: '1.5px solid #CBD5E1', borderRadius: 10, padding: '10px 14px', color: '#0F172A', fontSize: 14, outline: 'none' }}>
                   <option value="trial">Keep Active 14-Day Free Trial</option>
-                  <option value="starter">Starter Plan (₹999/mo)</option>
-                  <option value="growth">Growth Plan (₹2,999/mo)</option>
-                  <option value="master">Master Plan (₹5,999/mo)</option>
+                  <option value="open">Open Plan (₹0 Free Forever · 10% commission)</option>
+                  <option value="pro_yearly">Pro Plan (₹799/mo billed yearly · 5% commission)</option>
+                  <option value="custom">Custom Plan (Establish Course, Therapist & Coaching Firms)</option>
+                  <option value="starter">Starter Plan (Legacy ₹999/mo)</option>
+                  <option value="growth">Growth Plan (Legacy ₹2,999/mo)</option>
+                  <option value="master">Master Plan (Legacy ₹5,999/mo)</option>
                   <option value="none">No Active Plan (Trial Expired)</option>
                 </select>
               </div>
