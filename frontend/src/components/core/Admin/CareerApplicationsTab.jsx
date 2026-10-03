@@ -20,7 +20,8 @@ import {
   FiCalendar,
   FiChevronLeft,
   FiChevronRight,
-  FiAlertTriangle
+  FiAlertTriangle,
+  FiFileText
 } from "react-icons/fi";
 import { toast } from "react-hot-toast";
 import {
@@ -715,57 +716,237 @@ export default function CareerApplicationsTab() {
                 </div>
               </div>
 
-              {/* Links & Resume */}
-              <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-                {selectedApp.linkedin && (
-                  <a
-                    href={selectedApp.linkedin.startsWith("http") ? selectedApp.linkedin : `https://${selectedApp.linkedin}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 6,
-                      padding: "8px 16px",
-                      borderRadius: 10,
-                      background: "#0A66C2",
-                      color: "#FFFFFF",
-                      fontSize: 12,
-                      fontWeight: 700,
-                      textDecoration: "none",
-                    }}
-                  >
-                    <FiExternalLink />
-                    <span>View LinkedIn Profile</span>
-                  </a>
-                )}
+              {/* External Profile Links */}
+              {(selectedApp.linkedin || selectedApp.portfolio) && (
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                  {selectedApp.linkedin && (
+                    <a
+                      href={selectedApp.linkedin.startsWith("http") ? selectedApp.linkedin : `https://${selectedApp.linkedin}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: "8px 16px",
+                        borderRadius: 10,
+                        background: "#0A66C2",
+                        color: "#FFFFFF",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        textDecoration: "none",
+                      }}
+                    >
+                      <FiExternalLink />
+                      <span>View LinkedIn Profile</span>
+                    </a>
+                  )}
+                  {selectedApp.portfolio && (
+                    <a
+                      href={selectedApp.portfolio.startsWith("http") ? selectedApp.portfolio : `https://${selectedApp.portfolio}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: "8px 16px",
+                        borderRadius: 10,
+                        background: "#F1F5F9",
+                        color: "#0F172A",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        textDecoration: "none",
+                        border: "1px solid #CBD5E1",
+                      }}
+                    >
+                      <FiExternalLink />
+                      <span>View Portfolio / Website</span>
+                    </a>
+                  )}
+                </div>
+              )}
+
+              {/* Dedicated Resume / CV Card */}
+              <div
+                style={{
+                  background: "#F8FAFC",
+                  padding: "16px 20px",
+                  borderRadius: 16,
+                  border: "1px solid #E2E8F0",
+                }}
+              >
+                <div
+                  style={{
+                    color: "#475569",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: 0.5,
+                    marginBottom: 10,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <span style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                    <FiFileText size={15} style={{ color: "#7C3AED" }} />
+                    <span>Resume / CV</span>
+                  </span>
+                  {selectedApp.resumeUrl ? (
+                    <span
+                      style={{
+                        fontSize: 11,
+                        color: "#15803D",
+                        background: "#DCFCE7",
+                        padding: "2px 8px",
+                        borderRadius: 12,
+                        fontWeight: 700,
+                      }}
+                    >
+                      Attached
+                    </span>
+                  ) : (
+                    <span
+                      style={{
+                        fontSize: 11,
+                        color: "#B45309",
+                        background: "#FEF3C7",
+                        padding: "2px 8px",
+                        borderRadius: 12,
+                        fontWeight: 600,
+                      }}
+                    >
+                      {selectedApp.resumeName ? "File Name Only" : "Not Provided"}
+                    </span>
+                  )}
+                </div>
 
                 {selectedApp.resumeUrl ? (
-                  <a
-                    href={selectedApp.resumeUrl}
-                    target="_blank"
-                    rel="noreferrer"
+                  <div
                     style={{
-                      display: "inline-flex",
+                      display: "flex",
                       alignItems: "center",
-                      gap: 6,
-                      padding: "8px 16px",
-                      borderRadius: 10,
-                      background: "#2563EB",
-                      color: "#FFFFFF",
-                      fontSize: 12,
-                      fontWeight: 700,
-                      textDecoration: "none",
+                      justifyContent: "space-between",
+                      background: "#FFFFFF",
+                      padding: "14px 16px",
+                      borderRadius: 12,
+                      border: "1px solid #E2E8F0",
+                      flexWrap: "wrap",
+                      gap: 12,
                     }}
                   >
-                    <FiDownload />
-                    <span>Download / View Resume</span>
-                  </a>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <div
+                        style={{
+                          width: 42,
+                          height: 42,
+                          borderRadius: 10,
+                          background: "#EEF2FF",
+                          color: "#4F46E5",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: 20,
+                          flexShrink: 0,
+                        }}
+                      >
+                        📄
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: "#0F172A" }}>
+                          {selectedApp.resumeName || "Candidate_Resume.pdf"}
+                        </div>
+                        <div style={{ fontSize: 11, color: "#64748B", marginTop: 2 }}>
+                          Uploaded document • Click button to view or download
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <a
+                        href={selectedApp.resumeUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6,
+                          padding: "8px 16px",
+                          borderRadius: 10,
+                          background: "#2563EB",
+                          color: "#FFFFFF",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          textDecoration: "none",
+                          boxShadow: "0 2px 6px rgba(37,99,235,0.25)",
+                        }}
+                      >
+                        <FiDownload size={14} />
+                        <span>Download Resume</span>
+                      </a>
+                      <a
+                        href={selectedApp.resumeUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6,
+                          padding: "8px 14px",
+                          borderRadius: 10,
+                          background: "#F1F5F9",
+                          color: "#334155",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          textDecoration: "none",
+                        }}
+                      >
+                        <FiExternalLink size={14} />
+                        <span>Open In Tab</span>
+                      </a>
+                    </div>
+                  </div>
                 ) : selectedApp.resumeName ? (
-                  <span style={{ fontSize: 12, color: "#64748B" }}>
-                    📄 Resume file uploaded: <strong>{selectedApp.resumeName}</strong>
-                  </span>
-                ) : null}
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      background: "#FFFFFF",
+                      padding: "12px 16px",
+                      borderRadius: 12,
+                      border: "1px solid #E2E8F0",
+                      gap: 12,
+                    }}
+                  >
+                    <span style={{ fontSize: 22 }}>📄</span>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "#0F172A" }}>
+                        {selectedApp.resumeName}
+                      </div>
+                      <div style={{ fontSize: 11, color: "#64748B", marginTop: 2 }}>
+                        File name recorded during application
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      padding: "14px 16px",
+                      borderRadius: 12,
+                      background: "#FFFBEB",
+                      border: "1px dashed #FCD34D",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                    }}
+                  >
+                    <span style={{ fontSize: 18 }}>⚠️</span>
+                    <span style={{ fontSize: 12, color: "#92400E" }}>
+                      No resume file was attached with this application.
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Cover Note / Why OpenHand? */}

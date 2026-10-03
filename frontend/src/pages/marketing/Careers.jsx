@@ -23,6 +23,7 @@ import {
   Cpu
 } from "lucide-react";
 import { submitCareerApplication } from "../../services/operations/careerAPI";
+import toast from "react-hot-toast";
 import { OHFooter } from "../../components/openhand";
 import heroInfinityImg from "../../assets/Images/careers_hero_infinity.jpg";
 import teamJourneyImg from "../../assets/Images/careers_team_journey.jpg";
@@ -178,6 +179,11 @@ export default function OpenHandCareers() {
   const handleEmbeddedSubmit = async (e) => {
     e.preventDefault();
     if (!agreeConsent) {
+      toast.error("Please agree to the consent declaration before submitting.");
+      return;
+    }
+    if (!resumeFile && !fileName) {
+      toast.error("Please upload your Resume / CV before submitting.");
       return;
     }
     setSubmitting(true);
@@ -887,6 +893,7 @@ export default function OpenHandCareers() {
                         <p className="text-[11px] text-slate-500 mt-1">PDF, DOC or DOCX (Max 5 MB)</p>
                         <input
                           type="file"
+                          name="resume"
                           accept=".pdf,.doc,.docx"
                           onChange={handleFileChange}
                           className="hidden"
@@ -1022,6 +1029,10 @@ function ApplicationModal({ job, onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!modalFile && !resumeName) {
+      toast.error("Please upload your Resume / CV before submitting.");
+      return;
+    }
     setSubmitting(true);
     try {
       const formData = new FormData(e.target);
@@ -1175,6 +1186,7 @@ function ApplicationModal({ job, onClose }) {
               <p className="text-[11px] text-slate-500 mt-1">PDF, DOC or DOCX · Max 5 MB</p>
               <input
                 type="file"
+                name="resume"
                 accept=".pdf,.doc,.docx"
                 onChange={(e) => {
                   if (e.target.files && e.target.files[0]) {
