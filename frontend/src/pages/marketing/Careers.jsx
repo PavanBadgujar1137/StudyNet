@@ -1,5 +1,4 @@
 import React, { useState, useRef } from "react";
-import { Link } from "react-router-dom";
 import {
   ArrowRight,
   Briefcase,
@@ -12,12 +11,10 @@ import {
   Upload,
   CheckCircle2,
   Play,
-  Check,
   Send,
   Target,
   Lightbulb,
   TrendingUp,
-  Award,
   FileText,
   Heart,
   Cpu

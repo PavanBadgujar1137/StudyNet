@@ -4,26 +4,14 @@ import {
   FiBriefcase,
   FiSearch,
   FiRefreshCw,
-  FiFilter,
   FiEye,
   FiTrash2,
-  FiMail,
-  FiPhone,
-  FiMapPin,
   FiExternalLink,
   FiDownload,
-  FiCheckCircle,
-  FiClock,
   FiX,
-  FiMessageSquare,
-  FiUser,
-  FiCalendar,
-  FiChevronLeft,
-  FiChevronRight,
   FiAlertTriangle,
   FiFileText
 } from "react-icons/fi";
-import { toast } from "react-hot-toast";
 import {
   getAllCareerApplications,
   updateCareerApplicationStatus,
