@@ -56,6 +56,28 @@ exports.resetPasswordToken = async (req, res) => {
       passwordResetEmail(url, user.firstName || "User")
     )
 
+    try {
+      const phone = user.whatsappNumber || user.contactNumber || user.additionalDetails?.contactNumber
+      if (phone) {
+        const { sendWhatsAppMessage } = require("../utils/whatsappSender")
+        const waText = `🔐 *OpenHand — Password Reset Request*
+
+Dear *${user.firstName || "User"}*,
+We received a request to reset your OpenHand password.
+
+👉 *Click to reset password:*
+${url}
+
+If you did not request this, please ignore this message.
+
+Warmly,
+*OpenHand Security Team*`
+        sendWhatsAppMessage(phone, waText).catch(e => console.warn("Reset WA send warning:", e.message))
+      }
+    } catch (waErr) {
+      console.warn("Reset WA dispatch warning:", waErr.message)
+    }
+
     res.json({
       success: true,
       message:
@@ -122,6 +144,19 @@ exports.resetPassword = async (req, res) => {
         "Password Updated Successfully - OpenHand",
         passwordUpdated(updatedUser.email, updatedUser.firstName || "User")
       )
+
+      const phone = updatedUser.whatsappNumber || updatedUser.contactNumber || updatedUser.additionalDetails?.contactNumber
+      if (phone) {
+        const { sendWhatsAppMessage } = require("../utils/whatsappSender")
+        const waText = `✅ *OpenHand — Password Changed*
+
+Dear *${updatedUser.firstName || "User"}*,
+Your OpenHand account password has been updated successfully.
+
+If you did not perform this action, please contact support immediately:
+connect@openhand.live`
+        sendWhatsAppMessage(phone, waText).catch(e => console.warn("Password updated WA warning:", e.message))
+      }
     } catch (mailErr) {
       console.error("Failed to send password update confirmation email:", mailErr.message)
     }

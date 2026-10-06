@@ -105,6 +105,18 @@ exports.scheduleLiveClass = async (req, res) => {
       })
 
       createdClasses.push(liveClass)
+
+      // Multi-Channel Notification to Learner (WhatsApp + Email)
+      if (liveClass.client) {
+        try {
+          const { sendSessionPurchaseNotification } = require("../services/notificationService")
+          sendSessionPurchaseNotification(liveClass._id).catch(err =>
+            console.warn("LiveClass purchase notif warning:", err.message)
+          )
+        } catch (notifErr) {
+          console.warn("LiveClass notif service warning:", notifErr.message)
+        }
+      }
     }
 
     return res.status(201).json({

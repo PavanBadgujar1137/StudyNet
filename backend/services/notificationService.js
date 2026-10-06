@@ -65,10 +65,48 @@ async function sendSessionPurchaseNotification(bookingIdOrDoc) {
   try {
     let booking = bookingIdOrDoc
     if (typeof booking === "string" || !booking.client?.email) {
-      booking = await Booking.findById(booking._id || booking)
+      const foundBooking = await Booking.findById(booking._id || booking)
         .populate("client", "firstName lastName email contactNumber whatsappNumber additionalDetails")
         .populate("practitioner", "firstName lastName email credentials")
         .populate("offer", "title type price durationMinutes")
+
+      if (foundBooking) {
+        booking = foundBooking
+      } else {
+        const foundLiveClass = await LiveClass.findById(booking._id || booking)
+          .populate("client", "firstName lastName email contactNumber whatsappNumber additionalDetails")
+          .populate("instructor", "firstName lastName email credentials")
+        if (foundLiveClass) {
+          booking = {
+            _id: foundLiveClass._id,
+            client: foundLiveClass.client,
+            practitioner: foundLiveClass.instructor,
+            offer: {
+              title: foundLiveClass.title,
+              durationMinutes: Math.round(((foundLiveClass.scheduledEnd - foundLiveClass.scheduledStart) || 3000000) / 60000),
+            },
+            scheduledAt: foundLiveClass.scheduledStart,
+            meetingLink: `${FRONTEND_URL}/live-classroom/${foundLiveClass._id}?role=learner`,
+            save: async () => {
+              foundLiveClass.reminderPurchaseSent = true
+              await foundLiveClass.save()
+            },
+          }
+        }
+      }
+    } else {
+      if (booking.instructor && !booking.practitioner) {
+        booking.practitioner = booking.instructor
+      }
+      if (booking.scheduledStart && !booking.scheduledAt) {
+        booking.scheduledAt = booking.scheduledStart
+      }
+      if (booking.title && !booking.offer) {
+        booking.offer = {
+          title: booking.title,
+          durationMinutes: Math.round(((booking.scheduledEnd - booking.scheduledStart) || 3000000) / 60000),
+        }
+      }
     }
 
     if (!booking || !booking.client) {
@@ -485,10 +523,94 @@ Happy learning,
   }
 }
 
+async function sendCoursePurchaseNotification({ courseId, userId, clientPhone = "", clientEmail = "" }) {
+  try {
+    const course = await Course.findById(courseId).populate("practitioner", "firstName lastName email")
+    if (!course) return
+
+    const user = await User.findById(userId).select("firstName lastName email contactNumber whatsappNumber additionalDetails")
+    if (!user) return
+
+    const learnerName = `${user.firstName || "Valued"} ${user.lastName || "Learner"}`.trim()
+    const practitionerName = course.practitioner
+      ? `${course.practitioner.firstName || ""} ${course.practitioner.lastName || ""}`.trim()
+      : "Your Instructor"
+
+    const phone = clientPhone || resolveUserPhone(user)
+    const email = clientEmail || user.email
+    const courseWatchUrl = `${FRONTEND_URL}/dashboard/enrolled-courses`
+
+    // A. WhatsApp Message
+    const whatsappText = `📚 *OpenHand — Course Enrollment Confirmed!*
+
+Dear *${learnerName}*,
+You have successfully enrolled in:
+🎓 *${course.title}*
+👨‍🏫 *Instructor:* ${practitionerName}
+
+👉 *Start watching lessons now:*
+🔗 ${courseWatchUrl}
+
+🔔 *Automated Curriculum Notifications:*
+Whenever ${practitionerName} uploads any new video lecture to this course, you will receive instant alerts on WhatsApp & Email with direct lesson links!
+
+Happy Learning,
+*OpenHand Education Team*`
+
+    if (phone) {
+      await sendWhatsAppMessage(phone, whatsappText)
+    }
+
+    // B. Email Notification
+    if (email) {
+      const emailHtml = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Course Enrolled — OpenHand</title></head>
+<body style="background-color: #F8FAFC; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 24px; color: #0F172A;">
+  <div style="max-width: 600px; margin: 0 auto; background: #FFFFFF; border-radius: 20px; border: 1px solid #E2E8F0; padding: 36px; box-shadow: 0 10px 25px rgba(15, 23, 42, 0.04);">
+    <div style="text-align: center; padding-bottom: 24px; border-bottom: 1px solid #F1F5F9;">
+      <a href="https://openhand.live" style="text-decoration: none; font-size: 26px; font-weight: 800; color: #0F172A;">
+        Open<span style="color: #2563EB;">Hand</span>
+      </a>
+      <div style="margin-top: 10px;">
+        <span style="background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; padding: 4px 14px; border-radius: 20px; font-size: 11.5px; font-weight: 700; text-transform: uppercase;">
+          🎓 Course Enrolled
+        </span>
+      </div>
+    </div>
+    <div style="padding: 24px 0 12px 0;">
+      <h2 style="font-size: 22px; font-weight: 800; color: #0F172A; margin: 0 0 12px 0;">
+        Welcome to ${course.title}!
+      </h2>
+      <p style="font-size: 15px; color: #475569; line-height: 1.6; margin: 0 0 24px 0;">
+        Hello <strong>${learnerName}</strong>, you now have complete access to <strong>${course.title}</strong> taught by <strong>${practitionerName}</strong>.
+      </p>
+      <div style="text-align: center; margin: 28px 0;">
+        <a href="${courseWatchUrl}" style="background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); color: #FFFFFF; text-decoration: none; padding: 14px 28px; border-radius: 30px; font-weight: 800; font-size: 15px; display: inline-block;">
+          Go to Course Dashboard →
+        </a>
+      </div>
+      <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 12px; padding: 14px; font-size: 13px; color: #1E40AF; line-height: 1.5;">
+        🎬 <strong>Automatic Video Upload Alerts Enabled:</strong> You will receive an instant notification on WhatsApp and Email whenever new video lectures are added to this course.
+      </div>
+    </div>
+  </div>
+</body>
+</html>`
+      await mailSender(email, `Enrolled: ${course.title} on OpenHand`, emailHtml)
+    }
+
+    console.log(`[NotificationService] ✅ Course purchase notifications dispatched for "${course.title}" to ${learnerName}`)
+  } catch (err) {
+    console.error("[NotificationService] Error sending course purchase notification:", err.message)
+  }
+}
+
 module.exports = {
   sendSessionPurchaseNotification,
   sendSessionReminder1Hour,
   sendSessionReminder15Min,
   sendSessionReminder2Min,
+  sendCoursePurchaseNotification,
   sendCourseNewVideoNotification,
 }

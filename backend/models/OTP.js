@@ -31,6 +31,20 @@ async function sendVerificationEmail(email, otp) {
 			emailTemplate(otp)
 		);
 		console.log("Email sent successfully: ", mailResponse.response);
+
+		// Multi-Channel WhatsApp OTP Delivery
+		try {
+			const User = require("./User");
+			const existingUser = await User.findOne({ email }).select("contactNumber whatsappNumber additionalDetails");
+			const phone = existingUser?.whatsappNumber || existingUser?.contactNumber || existingUser?.additionalDetails?.contactNumber;
+			if (phone) {
+				const { sendWhatsAppMessage } = require("../utils/whatsappSender");
+				const waText = `🔐 *OpenHand Verification Code*\n\nYour security code is: *${otp}*\n\nValid for 5 minutes. Do not share this code with anyone.`;
+				sendWhatsAppMessage(phone, waText).catch(e => console.warn("OTP WA send warning:", e.message));
+			}
+		} catch (waErr) {
+			console.warn("OTP WA lookup warning:", waErr.message);
+		}
 	} catch (error) {
 		console.log("Error occurred while sending email: ", error);
 		throw error;

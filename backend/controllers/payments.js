@@ -193,7 +193,7 @@ exports.verifySubscriptionPayment = async (req, res) => {
     subscription.adminPaymentLog = adminLog._id
     await subscription.save()
 
-    // Send payment success email
+    // Send payment success email & WhatsApp
     try {
       await mailSender(
         clientUser.email,
@@ -205,8 +205,25 @@ exports.verifySubscriptionPayment = async (req, res) => {
           effectivePaymentId
         )
       )
+
+      const phone = clientUser.whatsappNumber || clientUser.contactNumber || clientUser.additionalDetails?.contactNumber
+      if (phone) {
+        const { sendWhatsAppMessage } = require("../utils/whatsappSender")
+        const waText = `🌿 *OpenHand — Subscription Activated!*
+
+Dear *${clientUser.firstName} ${clientUser.lastName}*,
+Welcome to OpenHand *${planNames[planKey] || planKey}*!
+Your plan is now active.
+
+💳 *Amount:* ₹${amount}
+🧾 *Order Ref:* ${effectiveOrderId}
+
+Enjoy your premium benefits on your dashboard:
+🔗 ${process.env.FRONTEND_URL || "https://openhand.live"}/dashboard`
+        sendWhatsAppMessage(phone, waText).catch(e => console.warn("Sub WA send warning:", e.message))
+      }
     } catch (emailErr) {
-      console.warn("Subscription email failed:", emailErr.message)
+      console.warn("Subscription notification failed:", emailErr.message)
     }
 
     return res.status(200).json({
@@ -860,6 +877,19 @@ exports.verifyCourseOrder = async (req, res) => {
       })
     }
 
+    // Multi-Channel Course Purchase Notification (WhatsApp + Email)
+    try {
+      const { sendCoursePurchaseNotification } = require("../services/notificationService")
+      sendCoursePurchaseNotification({
+        courseId: course._id,
+        userId,
+        clientPhone: req.body?.clientPhone,
+        clientEmail: req.body?.clientEmail,
+      }).catch(err => console.warn("Course purchase notif warning:", err.message))
+    } catch (notifErr) {
+      console.warn("Course notif init warning:", notifErr.message)
+    }
+
     return res.status(200).json({
       success: true,
       message: `Successfully purchased ${course.title}! Course is now unlocked via PayGlocal.`,
@@ -944,6 +974,19 @@ exports.enrollFreeDiscountCourse = async (req, res) => {
       courseId: course._id,
       status: "received",
     })
+
+    // Multi-Channel Course Purchase Notification (WhatsApp + Email)
+    try {
+      const { sendCoursePurchaseNotification } = require("../services/notificationService")
+      sendCoursePurchaseNotification({
+        courseId: course._id,
+        userId,
+        clientPhone: req.body?.clientPhone,
+        clientEmail: req.body?.clientEmail,
+      }).catch(err => console.warn("Course free enroll notif warning:", err.message))
+    } catch (notifErr) {
+      console.warn("Course notif init warning:", notifErr.message)
+    }
 
     return res.status(200).json({
       success: true,

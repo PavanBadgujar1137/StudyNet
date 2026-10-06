@@ -1268,6 +1268,28 @@ exports.requestClientReview = async (req, res) => {
 
     await mailSender(clientEmail, emailTitle, emailBody)
 
+    // Multi-Channel WhatsApp Review Invitation
+    try {
+      const clientUser = await User.findOne({ email: clientEmail.toLowerCase().trim() }).select("contactNumber whatsappNumber additionalDetails")
+      const clientPhone = clientUser?.whatsappNumber || clientUser?.contactNumber || clientUser?.additionalDetails?.contactNumber
+      if (clientPhone) {
+        const { sendWhatsAppMessage } = require("../utils/whatsappSender")
+        const waText = `🌿 *OpenHand — Feedback for ${pName}*
+
+Dear *${clientName || "Valued Learner"}*,
+Thank you for your recent session with *${pName}*!
+
+We would love to hear your feedback and reflections. Your review helps guide other learners on their journey:
+✍️ ${reviewUrl}
+
+Warmly,
+*OpenHand Care Team*`
+        sendWhatsAppMessage(clientPhone, waText).catch(e => console.warn("WA review dispatch warning:", e.message))
+      }
+    } catch (waErr) {
+      console.warn("WA review dispatch warning:", waErr.message)
+    }
+
     return res.status(200).json({
       success: true,
       message: `Review invitation email sent successfully to ${clientEmail}`,
