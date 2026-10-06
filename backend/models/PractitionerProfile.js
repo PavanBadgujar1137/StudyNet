@@ -34,11 +34,19 @@ const practitionerProfileSchema = new mongoose.Schema(
     rating: { type: Number, default: null },
     viewCount: { type: Number, default: 0 }, // Used for ranking based on profile views
 
-    // Payout & Bank Details for Admin Salary Transfer
+    // Payout & Bank Details for Admin Salary Transfer (Domestic & Worldwide International)
+    payoutCountry: { type: String, default: "India", trim: true },
+    payoutMethod: { type: String, default: "bank", trim: true }, // "bank", "iban", "stripe", "paypal", "upi"
     bankAccountName: { type: String, trim: true },
     bankAccountNumber: { type: String, trim: true },
     bankIfscCode: { type: String, trim: true, uppercase: true },
     bankName: { type: String, trim: true },
+    bankIban: { type: String, trim: true, uppercase: true },
+    bankSwiftBic: { type: String, trim: true, uppercase: true },
+    bankCity: { type: String, trim: true },
+    upiId: { type: String, trim: true },
+    stripeAccountId: { type: String, trim: true },
+    paypalEmail: { type: String, trim: true, lowercase: true },
     // Intake Questionnaire Customization (Stage 02)
     intakeQuestions: {
       type: [String],

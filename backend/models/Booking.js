@@ -54,6 +54,17 @@ const bookingSchema = new mongoose.Schema(
         answer: { type: String },
       },
     ],
+
+    // Client Contact & Session Room Link for Multi-Channel Reminders
+    clientPhone: { type: String, trim: true, default: "" },
+    clientEmail: { type: String, trim: true, default: "" },
+    meetingLink: { type: String, trim: true, default: "" },
+
+    // Automated Notification Tracking Flags (WhatsApp + Email)
+    reminderPurchaseSent: { type: Boolean, default: false },
+    reminder1hSent: { type: Boolean, default: false },
+    reminder15mSent: { type: Boolean, default: false },
+    reminder2mSent: { type: Boolean, default: false },
   },
   { timestamps: true }
 )

@@ -10,6 +10,7 @@ import {
 import { apiConnector } from '../../services/apiConnector'
 import { toast } from 'react-hot-toast'
 import { formatPractitionerName } from '../../utils/formatName'
+import { getOptimizedImageUrl } from '../../utils/imageOptimizer'
 import { FiEye } from 'react-icons/fi'
 import PayGlocalCheckoutModal from '../../components/openhand/PayGlocalCheckoutModal'
 
@@ -466,8 +467,10 @@ export function FindAPractitioner() {
                       <div className="p-avatar-large-wrap">
                         {userImg ? (
                           <img
-                            src={userImg}
+                            src={getOptimizedImageUrl(userImg, 800)}
                             alt={name}
+                            loading="lazy"
+                            decoding="async"
                             className="p-avatar-large-img"
                             onError={(e) => {
                               e.currentTarget.style.display = 'none'

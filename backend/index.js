@@ -184,6 +184,14 @@ server.listen(PORT, () => {
       "INFO: PayGlocal credentials running with development / sandbox fallback"
     )
   }
+
+  // Start Multi-Channel Automated Session Reminders (WhatsApp + Email: 1h, 15m, 2m)
+  try {
+    const { startSessionReminderScheduler } = require("./services/sessionReminderScheduler")
+    startSessionReminderScheduler()
+  } catch (schedErr) {
+    console.error("Failed to start session reminder scheduler:", schedErr.message)
+  }
 })
 
 // Configure HTTP timeouts for large video uploads (up to 20GB)

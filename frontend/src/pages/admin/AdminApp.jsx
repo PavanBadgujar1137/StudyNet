@@ -1212,9 +1212,15 @@ function PractitionersTab() {
   }
 
   const handlePayout = async () => {
-    const hasBankDetails = !!((payoutModal?.profile?.bankAccountNumber && payoutModal?.profile?.bankIfscCode) || payoutModal?.profile?.upiId)
+    const hasBankDetails = !!(
+      (payoutModal?.profile?.bankAccountNumber && (payoutModal?.profile?.bankIfscCode || payoutModal?.profile?.bankSwiftBic)) ||
+      payoutModal?.profile?.bankIban ||
+      payoutModal?.profile?.upiId ||
+      payoutModal?.profile?.stripeAccountId ||
+      payoutModal?.profile?.paypalEmail
+    )
     if (!hasBankDetails) {
-      return toast.error('Cannot process payout: Practitioner has not added bank account or UPI details yet.')
+      return toast.error('Cannot process payout: Practitioner has not added bank, IBAN, Stripe, or PayPal details yet.')
     }
     const amountNum = Number(payoutAmount)
     if (!payoutAmount || isNaN(amountNum) || amountNum <= 0) {
@@ -1258,7 +1264,13 @@ function PractitionersTab() {
     setDeletingUser(false)
   }
 
-  const hasBankDetails = !!((payoutModal?.profile?.bankAccountNumber && payoutModal?.profile?.bankIfscCode) || payoutModal?.profile?.upiId)
+  const hasBankDetails = !!(
+    (payoutModal?.profile?.bankAccountNumber && (payoutModal?.profile?.bankIfscCode || payoutModal?.profile?.bankSwiftBic)) ||
+    payoutModal?.profile?.bankIban ||
+    payoutModal?.profile?.upiId ||
+    payoutModal?.profile?.stripeAccountId ||
+    payoutModal?.profile?.paypalEmail
+  )
   const amountNum = Number(payoutAmount)
   const isAmountValid = !isNaN(amountNum) && amountNum > 0 && amountNum <= (payoutModal?.salaryOwed || 0)
   const canSubmitPayout = hasBankDetails && (payoutModal?.salaryOwed > 0) && isAmountValid
@@ -1331,21 +1343,52 @@ function PractitionersTab() {
               </div>
             )}
 
-            {/* Practitioner Bank & UPI Details */}
+            {/* Practitioner Payout Details (Domestic & International) */}
             <div style={{ background: '#F8FAFC', borderRadius: 12, padding: '14px 16px', margin: '0 0 20px', border: '1px solid #E2E8F0', fontSize: 13 }}>
-              <div style={{ color: '#1F5FE0', fontWeight: 700, marginBottom: 8 }}>Practitioner Payout Info:</div>
-              {payoutModal.profile?.bankAccountNumber ? (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <span style={{ color: '#1F5FE0', fontWeight: 700 }}>Practitioner Payout Info:</span>
+                {payoutModal.profile?.payoutCountry && (
+                  <span style={{ fontSize: 11, fontWeight: 700, background: '#EFF6FF', color: '#2563EB', padding: '2px 8px', borderRadius: 6, border: '1px solid #DBEAFE' }}>
+                    🌐 {payoutModal.profile.payoutCountry}
+                  </span>
+                )}
+              </div>
+
+              {payoutModal.profile?.bankIban || payoutModal.profile?.bankAccountNumber ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   <div style={{ color: '#334155' }}><strong>Bank:</strong> {payoutModal.profile.bankName || 'N/A'}</div>
                   <div style={{ color: '#334155' }}><strong>Account Holder:</strong> {payoutModal.profile.bankAccountName || `${payoutModal.firstName} ${payoutModal.lastName}`}</div>
-                  <div style={{ color: '#334155' }}><strong>Account No:</strong> <span style={{ fontFamily: 'monospace', color: '#0F172A', fontWeight: 600 }}>{payoutModal.profile.bankAccountNumber}</span></div>
-                  <div style={{ color: '#334155' }}><strong>IFSC:</strong> <span style={{ fontFamily: 'monospace', color: '#0F172A', fontWeight: 600 }}>{payoutModal.profile.bankIfscCode}</span></div>
-                  {payoutModal.profile.upiId && <div style={{ color: '#059669', marginTop: 4 }}><strong>UPI ID:</strong> {payoutModal.profile.upiId}</div>}
+                  {payoutModal.profile.bankIban && (
+                    <div style={{ color: '#334155' }}><strong>IBAN:</strong> <span style={{ fontFamily: 'monospace', color: '#0F172A', fontWeight: 700 }}>{payoutModal.profile.bankIban}</span></div>
+                  )}
+                  {payoutModal.profile.bankSwiftBic && (
+                    <div style={{ color: '#334155' }}><strong>SWIFT / BIC:</strong> <span style={{ fontFamily: 'monospace', color: '#0F172A', fontWeight: 700 }}>{payoutModal.profile.bankSwiftBic}</span></div>
+                  )}
+                  {payoutModal.profile.bankAccountNumber && (
+                    <div style={{ color: '#334155' }}><strong>Account No:</strong> <span style={{ fontFamily: 'monospace', color: '#0F172A', fontWeight: 600 }}>{payoutModal.profile.bankAccountNumber}</span></div>
+                  )}
+                  {payoutModal.profile.bankIfscCode && (
+                    <div style={{ color: '#334155' }}><strong>IFSC:</strong> <span style={{ fontFamily: 'monospace', color: '#0F172A', fontWeight: 600 }}>{payoutModal.profile.bankIfscCode}</span></div>
+                  )}
+                  {payoutModal.profile.upiId && <div style={{ color: '#059669', marginTop: 2 }}><strong>UPI ID:</strong> {payoutModal.profile.upiId}</div>}
+                  {payoutModal.profile.stripeAccountId && <div style={{ color: '#6366F1', marginTop: 2 }}><strong>Stripe:</strong> {payoutModal.profile.stripeAccountId}</div>}
+                  {payoutModal.profile.paypalEmail && <div style={{ color: '#0284C7', marginTop: 2 }}><strong>PayPal:</strong> {payoutModal.profile.paypalEmail}</div>}
+                </div>
+              ) : payoutModal.profile?.stripeAccountId ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <div style={{ color: '#334155' }}><strong>Account Holder:</strong> {payoutModal.profile.bankAccountName || `${payoutModal.firstName} ${payoutModal.lastName}`}</div>
+                  <div style={{ color: '#6366F1' }}><strong>Stripe Account / Email:</strong> <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>{payoutModal.profile.stripeAccountId}</span></div>
+                  {payoutModal.profile.paypalEmail && <div style={{ color: '#0284C7' }}><strong>PayPal:</strong> {payoutModal.profile.paypalEmail}</div>}
+                </div>
+              ) : payoutModal.profile?.paypalEmail ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <div style={{ color: '#334155' }}><strong>Account Holder:</strong> {payoutModal.profile.bankAccountName || `${payoutModal.firstName} ${payoutModal.lastName}`}</div>
+                  <div style={{ color: '#0284C7' }}><strong>PayPal Email:</strong> <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>{payoutModal.profile.paypalEmail}</span></div>
                 </div>
               ) : payoutModal.profile?.upiId ? (
                 <div style={{ color: '#059669' }}><strong>UPI ID:</strong> {payoutModal.profile.upiId}</div>
               ) : (
-                <div style={{ color: '#DC2626', fontWeight: 600 }}>❌ Bank Account &amp; UPI ID not added.</div>
+                <div style={{ color: '#DC2626', fontWeight: 600 }}>❌ Bank, IBAN, Stripe, or PayPal details not added yet.</div>
               )}
             </div>
 

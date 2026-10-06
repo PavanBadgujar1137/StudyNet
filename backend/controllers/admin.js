@@ -372,11 +372,18 @@ exports.getAllPractitioners = async (req, res) => {
             verificationStatus: profile.verificationStatus,
             sessionRate: profile.sessionRate,
             experienceYears: profile.experienceYears,
+            payoutCountry: profile.payoutCountry || "India",
+            payoutMethod: profile.payoutMethod || "bank",
             bankAccountName: profile.bankAccountName || "",
             bankAccountNumber: profile.bankAccountNumber || "",
             bankIfscCode: profile.bankIfscCode || "",
             bankName: profile.bankName || "",
+            bankIban: profile.bankIban || "",
+            bankSwiftBic: profile.bankSwiftBic || "",
+            bankCity: profile.bankCity || "",
             upiId: profile.upiId || "",
+            stripeAccountId: profile.stripeAccountId || "",
+            paypalEmail: profile.paypalEmail || "",
           } : null,
           sessionsDelivered: bookingsCount,
           salaryOwed: totalOwed[0]?.total || 0,
@@ -602,14 +609,20 @@ exports.processMonthlyPayout = async (req, res) => {
       return res.status(404).json({ success: false, message: "Practitioner not found" })
     }
 
-    // 2. Verify practitioner bank / UPI details exist
+    // 2. Verify practitioner bank / UPI / International details exist
     const PractitionerProfile = require("../models/PractitionerProfile")
     const profile = await PractitionerProfile.findOne({ user: practitionerId }).lean()
-    const hasBankDetails = !!((profile?.bankAccountNumber && profile?.bankIfscCode) || profile?.upiId)
+    const hasBankDetails = !!(
+      (profile?.bankAccountNumber && (profile?.bankIfscCode || profile?.bankSwiftBic)) ||
+      profile?.bankIban ||
+      profile?.upiId ||
+      profile?.stripeAccountId ||
+      profile?.paypalEmail
+    )
     if (!hasBankDetails) {
       return res.status(400).json({
         success: false,
-        message: `Cannot process payout: Dr. ${practitioner.firstName} ${practitioner.lastName} has not entered bank account or UPI details yet.`,
+        message: `Cannot process payout: Dr. ${practitioner.firstName} ${practitioner.lastName} has not entered payout details (Bank, IBAN, Stripe, or PayPal) yet.`,
       })
     }
 

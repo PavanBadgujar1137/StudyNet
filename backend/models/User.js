@@ -51,6 +51,11 @@ const userSchema = new mongoose.Schema(
       default: "",
       trim: true,
     },
+    whatsappNumber: {
+      type: String,
+      default: "",
+      trim: true,
+    },
     active: {
       type: Boolean,
       default: true,

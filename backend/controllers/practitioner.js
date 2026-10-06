@@ -66,13 +66,17 @@ exports.getPractitioners = async (req, res) => {
       }
       profile.viewCount = profile.viewCount || 0
 
-      // Populate user field
+      // Populate user field with crisp high-resolution image
+      let highResImage = u.image
+      if (highResImage && highResImage.includes("googleusercontent.com")) {
+        highResImage = highResImage.replace(/=s\d+(-[a-zA-Z0-9]+)?/i, "=s800-c")
+      }
       profile.user = {
         _id: u._id,
         firstName: u.firstName,
         lastName: u.lastName,
         email: u.email,
-        image: u.image,
+        image: highResImage,
         accountType: u.accountType,
       }
 
@@ -354,8 +358,20 @@ exports.getPractitionerByHandle = async (req, res) => {
       status: "published",
     }).lean()
 
-    const practitionerCourses = await Course.find({ instructor: practUserId }).select("_id").lean()
-    const courseIds = practitionerCourses.map(c => c._id)
+    // Fetch all courses created by this practitioner (published & active)
+    const practitionerCourses = await Course.find({
+      $or: [
+        { practitioner: practUserId },
+        { instructor: practUserId },
+        { practitioner: profile._id },
+      ],
+      status: { $in: ["published", "ready_for_publish", "draft"] },
+    })
+      .populate("videos", "title durationSeconds duration isFree")
+      .sort({ createdAt: -1 })
+      .lean()
+
+    const courseIds = (practitionerCourses || []).map(c => c._id)
 
     const testimonials = await Testimonial.find({
       practitioner: practUserId,
@@ -402,26 +418,29 @@ exports.getPractitionerByHandle = async (req, res) => {
     profileObj.reviews = practitionerReviews || []
     profileObj.rating = finalRating
     profileObj.reviewCount = practitionerReviews.length
+    profileObj.courses = practitionerCourses || []
 
     if (userOffers.length > 0) {
       profileObj.offers = userOffers
       profileObj.userOffers = userOffers
       profileObj.hasDummyOffer = false
     } else {
-      // No real offers yet — attach dummy placeholder so the public profile is not empty
-      const dummyOffer = {
-        _id: `dummy_${profileObj._id}`,
-        title: "1:1 consultation",
+      // No custom offer packages created yet — provide standard direct consultation offer
+      const defaultSessionOffer = {
+        _id: `session_${profileObj._id}`,
+        title: "1:1 Consultation",
         type: "session",
-        price: null,
+        price: profileObj.sessionRate > 0 ? profileObj.sessionRate : null,
         durationMinutes: 50,
         status: "published",
-        isDummy: true,
-        description: "1:1 consultation session with this verified practitioner. Pricing details will be listed soon.",
+        isDummy: profileObj.sessionRate > 0 ? false : true,
+        description: profileObj.sessionRate > 0
+          ? `Direct 50-minute consultation session with ${u.firstName || 'this verified practitioner'}.`
+          : "Direct 1-on-1 consultation session with this verified practitioner. Submit intake details to request and coordinate your session.",
       }
-      profileObj.offers = [dummyOffer]
-      profileObj.userOffers = [dummyOffer]
-      profileObj.hasDummyOffer = true
+      profileObj.offers = [defaultSessionOffer]
+      profileObj.userOffers = [defaultSessionOffer]
+      profileObj.hasDummyOffer = profileObj.sessionRate > 0 ? false : true
     }
 
     return res.status(200).json({
@@ -911,7 +930,7 @@ exports.getBankDetails = async (req, res) => {
   try {
     const userId = req.user.id
     const profile = await PractitionerProfile.findOne({ user: userId }).select(
-      "bankAccountName bankAccountNumber bankIfscCode bankName upiId"
+      "payoutCountry payoutMethod bankAccountName bankAccountNumber bankIfscCode bankName bankIban bankSwiftBic bankCity upiId stripeAccountId paypalEmail"
     )
 
     return res.status(200).json({
@@ -927,18 +946,38 @@ exports.getBankDetails = async (req, res) => {
 exports.updateBankDetails = async (req, res) => {
   try {
     const userId = req.user.id
-    const { bankAccountName, bankAccountNumber, bankIfscCode, bankName, upiId } = req.body
+    const {
+      payoutCountry,
+      payoutMethod,
+      bankAccountName,
+      bankAccountNumber,
+      bankIfscCode,
+      bankName,
+      bankIban,
+      bankSwiftBic,
+      bankCity,
+      upiId,
+      stripeAccountId,
+      paypalEmail,
+    } = req.body
 
     let profile = await PractitionerProfile.findOne({ user: userId })
     if (!profile) {
       profile = await PractitionerProfile.create({ user: userId })
     }
 
+    if (payoutCountry !== undefined) profile.payoutCountry = payoutCountry
+    if (payoutMethod !== undefined) profile.payoutMethod = payoutMethod
     if (bankAccountName !== undefined) profile.bankAccountName = bankAccountName
     if (bankAccountNumber !== undefined) profile.bankAccountNumber = bankAccountNumber
     if (bankIfscCode !== undefined) profile.bankIfscCode = bankIfscCode
     if (bankName !== undefined) profile.bankName = bankName
+    if (bankIban !== undefined) profile.bankIban = bankIban
+    if (bankSwiftBic !== undefined) profile.bankSwiftBic = bankSwiftBic
+    if (bankCity !== undefined) profile.bankCity = bankCity
     if (upiId !== undefined) profile.upiId = upiId
+    if (stripeAccountId !== undefined) profile.stripeAccountId = stripeAccountId
+    if (paypalEmail !== undefined) profile.paypalEmail = paypalEmail
 
     await profile.save()
 
@@ -946,11 +985,18 @@ exports.updateBankDetails = async (req, res) => {
       success: true,
       message: "Bank & payout details updated successfully",
       bankDetails: {
+        payoutCountry: profile.payoutCountry,
+        payoutMethod: profile.payoutMethod,
         bankAccountName: profile.bankAccountName,
         bankAccountNumber: profile.bankAccountNumber,
         bankIfscCode: profile.bankIfscCode,
         bankName: profile.bankName,
+        bankIban: profile.bankIban,
+        bankSwiftBic: profile.bankSwiftBic,
+        bankCity: profile.bankCity,
         upiId: profile.upiId,
+        stripeAccountId: profile.stripeAccountId,
+        paypalEmail: profile.paypalEmail,
       },
     })
   } catch (error) {
@@ -972,10 +1018,18 @@ exports.updatePractitionerProfile = async (req, res) => {
       experienceYears,
       availabilityText,
       formats,
+      payoutCountry,
+      payoutMethod,
       bankAccountName,
       bankAccountNumber,
       bankIfscCode,
       bankName,
+      bankIban,
+      bankSwiftBic,
+      bankCity,
+      upiId,
+      stripeAccountId,
+      paypalEmail,
     } = req.body
 
     let profile = await PractitionerProfile.findOne({ user: userId })
@@ -1012,10 +1066,18 @@ exports.updatePractitionerProfile = async (req, res) => {
     if (experienceYears !== undefined) profile.experienceYears = Number(experienceYears)
     if (availabilityText !== undefined) profile.availabilityText = availabilityText
     if (Array.isArray(formats)) profile.formats = formats
+    if (payoutCountry !== undefined) profile.payoutCountry = payoutCountry
+    if (payoutMethod !== undefined) profile.payoutMethod = payoutMethod
     if (bankAccountName !== undefined) profile.bankAccountName = bankAccountName
     if (bankAccountNumber !== undefined) profile.bankAccountNumber = bankAccountNumber
     if (bankIfscCode !== undefined) profile.bankIfscCode = bankIfscCode
     if (bankName !== undefined) profile.bankName = bankName
+    if (bankIban !== undefined) profile.bankIban = bankIban
+    if (bankSwiftBic !== undefined) profile.bankSwiftBic = bankSwiftBic
+    if (bankCity !== undefined) profile.bankCity = bankCity
+    if (upiId !== undefined) profile.upiId = upiId
+    if (stripeAccountId !== undefined) profile.stripeAccountId = stripeAccountId
+    if (paypalEmail !== undefined) profile.paypalEmail = paypalEmail
 
     await profile.save()
 

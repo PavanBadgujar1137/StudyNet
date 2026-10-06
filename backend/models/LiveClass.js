@@ -85,8 +85,12 @@ const liveClassSchema = new mongoose.Schema(
     // Recurring class grouping — all docs in a series share this UUID
     recurrenceGroup: { type: String },
 
-    // Reminder notification sent flag
+    // Reminder notification tracking flags (WhatsApp + Email)
     reminderSent: { type: Boolean, default: false },
+    reminderPurchaseSent: { type: Boolean, default: false },
+    reminder1hSent: { type: Boolean, default: false },
+    reminder15mSent: { type: Boolean, default: false },
+    reminder2mSent: { type: Boolean, default: false },
   },
   { timestamps: true }
 )

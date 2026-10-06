@@ -1093,7 +1093,7 @@ textarea.oh-intake-textarea:focus,
 .practitioner-card-body { padding: 24px; display: flex; flex-direction: column; flex: 1; }
 
 .p-avatar-large-wrap { position: relative; width: 100%; aspect-ratio: 1 / 1; background-color: #0d3b36; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-.p-avatar-large-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.p-avatar-large-img { width: 100%; height: 100%; object-fit: cover; display: block; image-rendering: -webkit-optimize-contrast; image-rendering: auto; transform: translateZ(0); backface-visibility: hidden; }
 .p-avatar-large-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-family: var(--oh-font-head); font-weight: 500; font-size: 120px; color: #ffffff; }
 
 .p-card-head { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
