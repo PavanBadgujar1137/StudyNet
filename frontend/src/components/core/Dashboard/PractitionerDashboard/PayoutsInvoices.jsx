@@ -144,56 +144,65 @@ export function PayoutsInvoices({ telemetryData }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', marginBottom: '24px' }}>
         <div style={{ background: '#FFFFFF', padding: '24px', borderRadius: '16px', border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
           <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <FiShield style={{ color: '#2563EB' }} /> Payment &amp; Salary Workflow
+            <FiShield style={{ color: '#2563EB' }} /> Payment &amp; Salary Workflow (72-Hour PayGlocal Settlement)
           </h3>
           <div className="tl" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div style={{ borderLeft: '3px solid #10B981', paddingLeft: '12px' }}>
-              <b style={{ fontSize: '13px', color: '#0F172A', display: 'block' }}>1. Practitioner Sets Offer Prices</b>
-              <span style={{ fontSize: '12px', color: '#64748B' }}>You set custom session &amp; Circle prices in 'Offers'.</span>
+              <b style={{ fontSize: '13px', color: '#0F172A', display: 'block' }}>1. Practitioner Sets Offer &amp; Course Prices</b>
+              <span style={{ fontSize: '12px', color: '#64748B' }}>You set custom pricing for 1-on-1 sessions, packages, and courses in your dashboard.</span>
             </div>
             <div style={{ borderLeft: '3px solid #10B981', paddingLeft: '12px' }}>
-              <b style={{ fontSize: '13px', color: '#0F172A', display: 'block' }}>2. Learner Pays Central Admin</b>
-              <span style={{ fontSize: '12px', color: '#64748B' }}>Learners purchase offers or subscriptions. Payment is collected directly by Admin.</span>
+              <b style={{ fontSize: '13px', color: '#0F172A', display: 'block' }}>2. Learner Pays Central OpenHand Account</b>
+              <span style={{ fontSize: '12px', color: '#64748B' }}>Learners purchase courses and sessions directly via PayGlocal. 100% of payment flows into the central OpenHand account.</span>
             </div>
             <div style={{ borderLeft: '3px solid #3B82F6', paddingLeft: '12px' }}>
-              <b style={{ fontSize: '13px', color: '#0F172A', display: 'block' }}>3. Session / Course Delivered</b>
-              <span style={{ fontSize: '12px', color: '#64748B' }}>Sessions and video views are logged automatically in your dashboard telemetry.</span>
+              <b style={{ fontSize: '13px', color: '#0F172A', display: 'block' }}>3. Platform Fee &amp; Tax Deductions</b>
+              <span style={{ fontSize: '12px', color: '#64748B' }}>Transparent platform fee (10% Open / 5% Pro) and 18% GST are automatically deducted from the gross amount.</span>
             </div>
             <div style={{ borderLeft: '3px solid #8B5CF6', paddingLeft: '12px' }}>
-              <b style={{ fontSize: '13px', color: '#0F172A', display: 'block' }}>4. Admin Disburses Monthly Salary</b>
-              <span style={{ fontSize: '12px', color: '#64748B' }}>Admin calculates net earnings and transfers salary directly to your bank account.</span>
+              <b style={{ fontSize: '13px', color: '#0F172A', display: 'block' }}>4. Automated 72-Hour PayGlocal Payout</b>
+              <span style={{ fontSize: '12px', color: '#64748B' }}>Net salary is automatically credited to your bank or UPI within 72 hours via PayGlocal direct transfer.</span>
             </div>
           </div>
         </div>
 
         <div style={{ background: '#FFFFFF', padding: '24px', borderRadius: '16px', border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
           <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <FiCheckCircle style={{ color: '#10B981' }} /> Recent Admin Payouts ({payouts.length})
+            <FiCheckCircle style={{ color: '#10B981' }} /> Your Payout Settlements ({payouts.length})
           </h3>
           {payouts.length > 0 ? (
             payouts.slice(0, 5).map((p) => {
-              const formattedP = formatAmount(p.amount || 0)
+              const netAmt = formatAmount(p.netAmount || p.amount || 0)
+              const grossAmt = formatAmount(p.grossAmount || p.amount || 0)
+              const feeDeducted = (p.platformFeeDeducted || p.commissionDeducted) ? formatAmount(p.platformFeeDeducted || p.commissionDeducted) : null
+              const taxDeducted = p.taxDeducted ? formatAmount(p.taxDeducted) : null
+              const isSettled = p.status === 'settled' || p.status === 'cleared'
+
               return (
                 <div key={p._id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #F1F5F9' }}>
                   <div style={{ maxWidth: '65%' }}>
                     <div 
                       style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                      title={`₹${formattedP}`}
+                      title={`Net: ₹${netAmt}`}
                     >
-                      ₹{formattedP}
+                      ₹{netAmt} <span style={{ fontSize: '11px', color: '#64748B', fontWeight: 500 }}>(Gross: ₹{grossAmt})</span>
                     </div>
-                    <span style={{ fontSize: '12px', color: '#64748B' }}>{new Date(p.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                    <div style={{ fontSize: '11px', color: '#64748B', marginTop: 2 }}>
+                      {new Date(p.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      {feeDeducted ? ` · Fee: -₹${feeDeducted}` : ''}
+                      {taxDeducted ? ` · Tax: -₹${taxDeducted}` : ''}
+                    </div>
                   </div>
                   <span style={{
                     padding: '4px 10px',
                     borderRadius: '20px',
                     fontSize: '11px',
                     fontWeight: 700,
-                    background: p.status === 'cleared' ? '#DCFCE7' : '#FEF3C7',
-                    color: p.status === 'cleared' ? '#15803D' : '#B45309',
+                    background: isSettled ? '#DCFCE7' : '#FEF3C7',
+                    color: isSettled ? '#15803D' : '#B45309',
                     shrink: 0
                   }}>
-                    {p.status ? p.status.toUpperCase() : 'CLEARED'}
+                    {isSettled ? 'SETTLED' : '72H DISBURSEMENT'}
                   </span>
                 </div>
               )

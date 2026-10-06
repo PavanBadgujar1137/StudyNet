@@ -12,6 +12,7 @@ import {
   FiBriefcase
 } from 'react-icons/fi'
 import CareerApplicationsTab from '../../components/core/Admin/CareerApplicationsTab'
+import ScheduledCallsTab from '../../components/core/Admin/ScheduledCallsTab'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const fmt = (n) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n || 0)
@@ -3300,6 +3301,7 @@ const TABS = [
   { id: 'clients', label: 'Learners', icon: <FiUsers /> },
   { id: 'courses', label: 'Courses & Plans', icon: <FiBookOpen /> },
   { id: 'practitioners', label: 'Practitioners', icon: <FiUser /> },
+  { id: 'scheduled_calls', label: '📞 Onboarding & Calls', icon: <FiCalendar /> },
   { id: 'payments', label: 'All Payments', icon: <FiDollarSign /> },
   { id: 'subscriptions', label: 'Subscriptions', icon: <FiCreditCard /> },
   { id: 'bookings', label: 'Bookings', icon: <FiCalendar /> },
@@ -3430,6 +3432,7 @@ export default function AdminApp() {
           {activeTab === 'clients' && <ClientsTab />}
           {activeTab === 'courses' && <CoursesTab />}
           {activeTab === 'practitioners' && <PractitionersTab />}
+          {activeTab === 'scheduled_calls' && <ScheduledCallsTab />}
           {activeTab === 'payments' && <PaymentsTab />}
           {activeTab === 'subscriptions' && <SubscriptionsTab />}
           {activeTab === 'bookings' && <BookingsTab />}

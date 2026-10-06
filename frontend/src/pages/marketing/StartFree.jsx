@@ -85,7 +85,7 @@ export function StartFree() {
               <div className="node-badge">3</div>
               <div>
                 <h3>Connect payments</h3>
-                <p>UPI, cards, net banking, and international payments through Razorpay and Stripe. Money lands in your bank account, not in a platform wallet you have to withdraw from.</p>
+                <p>UPI, cards, net banking, and international payments through PayGlocal and Stripe. Money lands in your bank account, not in a platform wallet you have to withdraw from.</p>
                 <span className="step-time-tag">~5 minutes · PAN + bank details needed</span>
               </div>
             </div>

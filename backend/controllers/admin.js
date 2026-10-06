@@ -7,6 +7,7 @@ const Payout = require("../models/Payout")
 const OrgConversation = require("../models/OrgConversation")
 const PractitionerProfile = require("../models/PractitionerProfile")
 const Course = require("../models/Course")
+const PractitionerScheduleCall = require("../models/PractitionerScheduleCall")
 
 // ─── Admin Dashboard Statistics ──────────────────────────────────────────────
 exports.getAdminDashboardStats = async (req, res) => {
@@ -20,6 +21,8 @@ exports.getAdminDashboardStats = async (req, res) => {
       activeSubscriptions,
       newOrgConversations,
       recentPayments,
+      totalScheduledCalls,
+      pendingCallLinks,
     ] = await Promise.all([
       User.countDocuments({ accountType: { $in: ["Client", "Student", "Learner"] } }),
       User.countDocuments({ accountType: { $in: ["Practitioner", "Instructor"] } }),
@@ -40,6 +43,8 @@ exports.getAdminDashboardStats = async (req, res) => {
         .populate("client", "firstName lastName email")
         .populate("practitioner", "firstName lastName")
         .lean(),
+      PractitionerScheduleCall.countDocuments(),
+      PractitionerScheduleCall.countDocuments({ status: "scheduled" }),
     ])
 
     // Revenue by type
@@ -110,6 +115,8 @@ exports.getAdminDashboardStats = async (req, res) => {
         totalBookings,
         activeSubscriptions,
         newOrgConversations,
+        totalScheduledCalls,
+        pendingCallLinks,
         revenueTrend,
         clientsTrend,
       },
@@ -1199,5 +1206,159 @@ exports.deleteAdminRating = async (req, res) => {
     return res.status(500).json({ success: false, message: error.message })
   }
 }
+
+// ─── PRACTITIONER SCHEDULED CALLS (ADMIN MANAGEMENT) ─────────────────────────
+const mailSender = require("../utils/mailSender")
+const { practitionerCallLinkEmail } = require("../mail/templates/practitionerCallLinkEmail")
+
+// 1. Get All Scheduled Calls
+exports.getScheduledCallsAdmin = async (req, res) => {
+  try {
+    const { status, search } = req.query
+    const query = {}
+
+    if (status && status !== "all") {
+      query.status = status
+    }
+
+    if (search) {
+      query.$or = [
+        { practitionerName: { $regex: search, $options: "i" } },
+        { practitionerEmail: { $regex: search, $options: "i" } },
+        { practitionerPhone: { $regex: search, $options: "i" } },
+        { modality: { $regex: search, $options: "i" } },
+      ]
+    }
+
+    const calls = await PractitionerScheduleCall.find(query)
+      .sort({ createdAt: -1 })
+      .populate("practitioner", "firstName lastName email image contactNumber activePlan")
+      .populate("adminHandledBy", "firstName lastName email")
+      .lean()
+
+    const stats = {
+      total: await PractitionerScheduleCall.countDocuments(),
+      pendingCallLinks: await PractitionerScheduleCall.countDocuments({ status: "scheduled" }),
+      linksSent: await PractitionerScheduleCall.countDocuments({ status: "call_link_sent" }),
+      completed: await PractitionerScheduleCall.countDocuments({ status: "completed" }),
+    }
+
+    return res.status(200).json({
+      success: true,
+      calls,
+      stats,
+    })
+  } catch (error) {
+    console.error("getScheduledCallsAdmin error:", error)
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to fetch scheduled calls",
+    })
+  }
+}
+
+// 2. Send Google Meet Call Link via Email to Practitioner
+exports.sendCallLinkAdmin = async (req, res) => {
+  try {
+    const { callId, googleMeetLink, adminNotes } = req.body
+
+    if (!callId) {
+      return res.status(400).json({ success: false, message: "Call ID is required" })
+    }
+
+    if (!googleMeetLink || !String(googleMeetLink).trim()) {
+      return res.status(400).json({ success: false, message: "Valid Google Meet link is required" })
+    }
+
+    const call = await PractitionerScheduleCall.findById(callId).populate("practitioner", "firstName lastName email")
+    if (!call) {
+      return res.status(404).json({ success: false, message: "Scheduled call record not found" })
+    }
+
+    const cleanMeetLink = String(googleMeetLink).trim()
+
+    call.googleMeetLink = cleanMeetLink
+    call.adminNotes = adminNotes || call.adminNotes || ""
+    call.status = "call_link_sent"
+    call.callLinkSentAt = new Date()
+    call.adminHandledBy = req.user?.id || req.user?._id
+
+    await call.save()
+
+    // Send Google Meet Link Email to Practitioner
+    try {
+      const recipientEmail = call.practitionerEmail || call.practitioner?.email
+      if (recipientEmail) {
+        await mailSender(
+          recipientEmail,
+          `📹 Your OpenHand Onboarding Google Meet Link is Ready: ${call.scheduledDate}`,
+          practitionerCallLinkEmail({
+            name: call.practitionerName || `${call.practitioner?.firstName || 'Practitioner'}`,
+            planName: call.planName || "Pro Plan (Yearly)",
+            scheduledDate: call.scheduledDate,
+            scheduledTimeSlot: call.scheduledTimeSlot,
+            timezone: call.timezone,
+            googleMeetLink: cleanMeetLink,
+            adminNotes: call.adminNotes,
+          })
+        )
+      }
+    } catch (emailErr) {
+      console.warn("Error sending Google Meet link email to practitioner:", emailErr.message)
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `Google Meet link sent to ${call.practitionerEmail} successfully!`,
+      call,
+    })
+  } catch (error) {
+    console.error("sendCallLinkAdmin error:", error)
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to send call link",
+    })
+  }
+}
+
+// 3. Update Scheduled Call Status (e.g. completed, cancelled)
+exports.updateCallStatusAdmin = async (req, res) => {
+  try {
+    const { id } = req.params
+    const { status, adminNotes } = req.body
+
+    const validStatuses = ["scheduled", "call_link_sent", "completed", "cancelled"]
+    if (status && !validStatuses.includes(status)) {
+      return res.status(400).json({ success: false, message: "Invalid status value" })
+    }
+
+    const updateData = {}
+    if (status) updateData.status = status
+    if (adminNotes !== undefined) updateData.adminNotes = adminNotes
+    if (status === "completed") updateData.callCompletedAt = new Date()
+    if (req.user?.id) updateData.adminHandledBy = req.user.id
+
+    const updatedCall = await PractitionerScheduleCall.findByIdAndUpdate(id, updateData, { new: true })
+      .populate("practitioner", "firstName lastName email")
+      .populate("adminHandledBy", "firstName lastName")
+
+    if (!updatedCall) {
+      return res.status(404).json({ success: false, message: "Scheduled call record not found" })
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `Call status updated to ${status}!`,
+      call: updatedCall,
+    })
+  } catch (error) {
+    console.error("updateCallStatusAdmin error:", error)
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to update call status",
+    })
+  }
+}
+
 
 

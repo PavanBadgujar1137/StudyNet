@@ -459,7 +459,7 @@ export function MyLearners({ setActiveSection, telemetryData, onUpdate }) {
                         )}
                       </div>
                       <p style={{ margin: 0, fontSize: '12px', color: '#64748B' }}>
-                        {cl.email} • {cl.contactNumber || cl.additionalDetails?.contactNumber || 'No Phone'} • Paid: <b style={{ color: '#166534' }}>₹{pa.amountPaid || 2500}</b> • Ref: {pa.paymentId || 'Razorpay Verified'}
+                        {cl.email} • {cl.contactNumber || cl.additionalDetails?.contactNumber || 'No Phone'} • Paid: <b style={{ color: '#166534' }}>₹{pa.amountPaid || 2500}</b> • Ref: {pa.paymentId || 'PayGlocal Verified'}
                       </p>
                     </div>
                   </div>

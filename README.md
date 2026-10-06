@@ -1,6 +1,6 @@
 # OpenHand Practice & Education Platform 🚀
 
-**OpenHand** is a modern, enterprise-ready educational LMS and practice-space management platform. Built using the **MERN Stack** (MongoDB, Express.js, React 18, Node.js), it pairs real-time Socket.io communication, an AI Co-Pilot engine (Aura), Cloudinary media delivery, and Razorpay financial infrastructure into a unified experience for students, practitioners, organizations, and platform administrators.
+**OpenHand** is a modern, enterprise-ready educational LMS and practice-space management platform. Built using the **MERN Stack** (MongoDB, Express.js, React 18, Node.js), it pairs real-time Socket.io communication, an AI Co-Pilot engine (Aura), Cloudinary media delivery, and PayGlocal international payment gateway infrastructure into a unified experience for students, practitioners, organizations, and platform administrators.
 
 ---
 
@@ -82,7 +82,7 @@ StudyNet/
 - **Interactive Check-In (`/app/check-in`)**: Daily mood logging (Peaceful, Challenged, Energetic) with reflection journaling.
 - **Course & Space Streamer (`/app/courses`)**: Multi-section video streaming player with chapter navigation and "Mark as Completed" tracking.
 - **Automated Certificate Generation**: Generates downloadable PDF/DOM completion certificates featuring student name, course title, and verified timestamp upon course completion.
-- **Cart & Razorpay Checkout**: Shopping cart management with support for promotional coupons and Razorpay payment gateway integration.
+- **Cart & PayGlocal Checkout**: Shopping cart management with support for promotional coupons and PayGlocal international payment gateway integration (cards, UPI, netbanking, and global currencies).
 
 ---
 
@@ -135,8 +135,8 @@ StudyNet/
 | | `/api/v1/course/showAllCourses` | `GET` | *Public* | Fetches catalog of published courses |
 | **Live Class** | `/api/v1/liveClass/create` | `POST` | `auth`, `isPractitioner` | Schedules a new live video classroom |
 | | `/api/v1/liveClass/session/:id` | `GET` | `auth` | Fetches classroom configuration & token |
-| **Payment** | `/api/v1/payment/capturePayment` | `POST` | `auth`, `isStudent` | Initiates Razorpay payment order |
-| | `/api/v1/payment/verifyPayment` | `POST` | `auth`, `isStudent` | Verifies Razorpay signature & grants enrollment |
+| **Payment** | `/api/v1/payments/create-course-order` | `POST` | `auth` | Initiates PayGlocal checkout order |
+| | `/api/v1/payments/verify-course-order` | `POST` | `auth` | Verifies PayGlocal signature & grants enrollment |
 | **Check-In** | `/api/v1/checkin` | `POST` | `auth` | Records client mood check-in & reflection entry |
 | **Co-Pilot** | `/api/v1/copilot/suggestions` | `GET` | `auth` | Fetches AI Co-Pilot recommendations & prompts |
 | **Admin** | `/api/v1/admin/users` | `GET` | `auth`, `isAdmin` | Lists system-wide user directory |
@@ -184,9 +184,13 @@ StudyNet/
    MAIL_USER=your_email@gmail.com
    MAIL_PASS=your_gmail_app_password
 
-   # Razorpay Payment Gateway Credentials
-   RAZORPAY_KEY=your_razorpay_key_id
-   RAZORPAY_SECRET=your_razorpay_key_secret
+   # PayGlocal Payment Gateway Credentials (The International Payment Gateway India Builds On)
+   PAYGLOCAL_MERCHANT_ID=your_payglocal_merchant_id
+   PAYGLOCAL_KEY_ID=your_payglocal_key_id
+   PAYGLOCAL_API_KEY=your_payglocal_api_key
+   PAYGLOCAL_ENV=sandbox
+   PAYGLOCAL_BASE_URL=https://api.sandbox.payglocal.in
+   PAYGLOCAL_CALLBACK_URL=http://localhost:3000/payment-callback
    ```
 
 4. Start the backend development server:
@@ -225,7 +229,7 @@ StudyNet/
 - **Frontend**: React 18, Redux Toolkit, React Router v6, Tailwind CSS, Recharts / Chart.js, Socket.io Client, DnD Kit, Swiper.js, React Hot Toast.
 - **Backend**: Node.js, Express.js, Socket.io, Mongoose (MongoDB ORM), JWT (JSON Web Tokens), Bcrypt.js, Nodemailer.
 - **Storage & Cloud**: Cloudinary (Video & Image Hosting), MongoDB Atlas / Local MongoDB.
-- **Payments**: Razorpay Node SDK.
+- **Payments**: PayGlocal (The International Payment Gateway India Builds On) & Stripe.
 
 ---
 

@@ -12,6 +12,7 @@ import { HiSparkles } from "react-icons/hi"
 import toast from "react-hot-toast"
 import OHEyebrow from "./OHEyebrow"
 import { apiConnector } from "../../services/apiConnector"
+import PayGlocalCheckoutModal from "./PayGlocalCheckoutModal"
 
 
 
@@ -36,6 +37,8 @@ export default function OHPricingSection({
   }
 
   const [payingPlan, setPayingPlan] = useState(null)
+  const [payglocalOrderData, setPayglocalOrderData] = useState(null)
+  const [isPayglocalOpen, setIsPayglocalOpen] = useState(false)
 
   useEffect(() => {
     if (role === undefined) {
@@ -47,20 +50,6 @@ export default function OHPricingSection({
   const { user } = useSelector((state) => state.profile)
   const navigate = useNavigate()
 
-  const loadRazorpaySDK = () => {
-    return new Promise((resolve) => {
-      if (window.Razorpay) {
-        resolve(true)
-        return
-      }
-      const script = document.createElement("script")
-      script.src = "https://checkout.razorpay.com/v1/checkout.js"
-      script.onload = () => resolve(true)
-      script.onerror = () => resolve(false)
-      document.body.appendChild(script)
-    })
-  }
-
   const handlePayNow = async (planKey) => {
     if (!token) {
       toast.error("Please login or sign up to join as a practitioner.")
@@ -69,17 +58,10 @@ export default function OHPricingSection({
     }
 
     setPayingPlan(planKey)
-    const toastId = toast.loading("Initializing Razorpay Gateway...")
+    const toastId = toast.loading("Initializing PayGlocal Gateway...")
 
     try {
-      const isLoaded = await loadRazorpaySDK()
-      if (!isLoaded) {
-        toast.error("Failed to load Razorpay SDK. Please check your network connection.", { id: toastId })
-        setPayingPlan(null)
-        return
-      }
-
-      // Create Razorpay Order
+      // Create PayGlocal Order
       const res = await apiConnector(
         "POST",
         "/api/v1/plans/create-order",
@@ -88,93 +70,71 @@ export default function OHPricingSection({
       )
 
       if (!res?.data?.success || !res?.data?.order) {
-        toast.error(res?.data?.message || "Failed to create payment order.", { id: toastId })
+        toast.error(res?.data?.message || "Failed to create PayGlocal payment order.", { id: toastId })
         setPayingPlan(null)
         return
       }
 
-      const { order, key, planName } = res.data
       toast.dismiss(toastId)
-
-      const isRealRazorpayOrder =
-        typeof order?.id === "string" &&
-        /^order_[A-Za-z0-9]{14,}$/.test(order.id) &&
-        !order.id.includes("sub") &&
-        !order.id.includes("pract") &&
-        !order.id.includes("mock") &&
-        !order.id.includes("fake")
-
-      const options = {
-        key: key,
-        amount: order.amount,
-        currency: order.currency || "INR",
-        name: "OpenHand Wellbeing Platform",
-        description: `Subscription: ${planName}`,
-        ...(isRealRazorpayOrder ? { order_id: order.id } : {}),
+      setPayglocalOrderData({
+        ...res.data,
+        planKey,
         prefill: {
           name: user ? `${user.firstName || ""} ${user.lastName || ""}`.trim() : "",
           email: user?.email || "",
-          ...(user?.contactNumber ? { contact: String(user.contactNumber).trim() } : {}),
+          contactNumber: user?.contactNumber ? String(user.contactNumber).trim() : "",
         },
-        theme: {
-          color: "#2563EB",
-        },
-        handler: async (response) => {
-          const verifyToastId = toast.loading("Verifying payment with Razorpay...")
-          try {
-            const verifyRes = await apiConnector(
-              "POST",
-              "/api/v1/plans/verify-payment",
-              {
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                planKey: planKey,
-              },
-              { Authorization: `Bearer ${token}` }
-            )
-
-            if (verifyRes?.data?.success) {
-              toast.success(verifyRes.data.message || `Payment Successful! ${planName} Activated 🎉`, {
-                id: verifyToastId,
-              })
-
-              const subRes = await apiConnector("GET", "/api/v1/payments/subscription/mine", null, {
-                Authorization: `Bearer ${token}`,
-              })
-              if (subRes?.data?.success && onSuccess) {
-                onSuccess(subRes.data)
-              } else if (onSuccess) {
-                onSuccess()
-              }
-
-              setTimeout(() => {
-                navigate("/practice")
-              }, 1200)
-            } else {
-              toast.error(verifyRes?.data?.message || "Payment verification failed", { id: verifyToastId })
-            }
-          } catch (err) {
-            console.error("Verification error:", err)
-            toast.error("Payment verification error. Contact support if debited.", { id: verifyToastId })
-          } finally {
-            setPayingPlan(null)
-          }
-        },
-        modal: {
-          ondismiss: () => {
-            setPayingPlan(null)
-            toast.error("Payment window closed.")
-          },
-        },
-      }
-
-      const rzp = new window.Razorpay(options)
-      rzp.open()
+      })
+      setIsPayglocalOpen(true)
     } catch (err) {
       console.error("PayNow Error:", err)
       toast.error("Payment initialization failed.", { id: toastId })
       setPayingPlan(null)
+    }
+  }
+
+  const handlePayGlocalSuccess = async (response) => {
+    const verifyToastId = toast.loading("Verifying payment with PayGlocal...")
+    try {
+      const verifyRes = await apiConnector(
+        "POST",
+        "/api/v1/plans/verify-payment",
+        {
+          payglocal_order_id: response.payglocal_order_id || response.merchantTxnId,
+          payglocal_payment_id: response.payglocal_payment_id || response.gid,
+          payglocal_gid: response.payglocal_gid || response.gid,
+          signature: response.signature,
+          planKey: payglocalOrderData?.planKey,
+        },
+        { Authorization: `Bearer ${token}` }
+      )
+
+      if (verifyRes?.data?.success) {
+        toast.success(verifyRes.data.message || `Payment Successful! ${payglocalOrderData?.planName || "Plan"} Activated 🎉`, {
+          id: verifyToastId,
+        })
+
+        const subRes = await apiConnector("GET", "/api/v1/payments/subscription/mine", null, {
+          Authorization: `Bearer ${token}`,
+        })
+        if (subRes?.data?.success && onSuccess) {
+          onSuccess(subRes.data)
+        } else if (onSuccess) {
+          onSuccess()
+        }
+
+        setTimeout(() => {
+          navigate("/practice")
+        }, 1200)
+      } else {
+        toast.error(verifyRes?.data?.message || "Payment verification failed", { id: verifyToastId })
+      }
+    } catch (err) {
+      console.error("Verification error:", err)
+      toast.error("Payment verification error. Contact support if debited.", { id: verifyToastId })
+    } finally {
+      setPayingPlan(null)
+      setIsPayglocalOpen(false)
     }
   }
 
@@ -255,7 +215,7 @@ export default function OHPricingSection({
                 for Learners
               </h2>
               <p className="text-slate-600 text-base sm:text-lg font-medium leading-relaxed max-w-3xl mx-auto">
-                No subscriptions. No credit card required. Register, log in, and access practitioner free courses, live circles, daily check-ins, and AURA AI freely.
+                No subscription for enrollment — 100% free forever. Learners only pay directly with PayGlocal when purchasing specific courses, 1-on-1 sessions, live circles, or practitioner offers.
               </p>
             </>
           )}
@@ -518,28 +478,26 @@ export default function OHPricingSection({
 
                   <button
                     type="button"
-                    onClick={() => handlePayNow("pro_yearly")}
-                    disabled={payingPlan === "pro_yearly"}
+                    onClick={() => navigate("/schedule-call?plan=pro_yearly")}
                     className="w-full py-3.5 px-6 rounded-2xl font-extrabold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer mb-8 text-white shadow-lg hover:opacity-95 active:scale-[0.98]"
                     style={{
                       background: "linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)",
                       boxShadow: "0 10px 24px rgba(79, 70, 229, 0.35)",
                     }}
                   >
-                    <span>
-                      {payingPlan === "pro_yearly"
-                        ? "Opening Razorpay..."
-                        : "Grow with Pro →"}
-                    </span>
+                    <span>Book a Call and Take Subscription →</span>
                   </button>
 
                   <ul className="space-y-3.5 text-xs sm:text-[13px] text-slate-700 font-medium">
                     {[
-                      "Everything in Open — commission drops to 5%",
+                      "1-on-1 Guiding & Onboarding Call via Google Calendar",
+                      "Flat 5% platform fee on all bookings (drops from 10%)",
+                      "Automated 72-hour PayGlocal payouts to Bank / UPI",
                       "Monthly growth review with an OpenHand mentor",
                       "Priority mentee matching & featured placement",
                       "Visibility campaigns: spotlights, collaborations, events",
                       "AI session notes & client progress insights",
+                      "Transparent platform fee & tax deduction (18% GST)",
                     ].map((feature, idx) => (
                       <li key={idx} className="flex items-start gap-3">
                         <span
@@ -625,6 +583,20 @@ export default function OHPricingSection({
           </div>
         )}
       </div>
+
+      <PayGlocalCheckoutModal
+        isOpen={isPayglocalOpen}
+        onClose={() => {
+          setIsPayglocalOpen(false)
+          setPayingPlan(null)
+        }}
+        orderData={payglocalOrderData}
+        onSuccess={handlePayGlocalSuccess}
+        onDismiss={() => {
+          setPayingPlan(null)
+          toast.error("PayGlocal payment window closed.")
+        }}
+      />
     </section>
   )
 }

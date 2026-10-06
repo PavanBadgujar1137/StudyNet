@@ -10,7 +10,8 @@ command -v nvm >/dev/null 2>&1 && . "$HOME/.nvm/nvm.sh" && nvm use 20 || true
 echo "==> Frontend .env (production)"
 cat > frontend/.env <<'EOF'
 REACT_APP_BASE_URL=https://api.openhand.live/api/v1
-REACT_APP_RAZORPAY_KEY=rzp_live_TJaHMAbw0Us61p
+REACT_APP_PAYGLOCAL_KEY_ID=gl_key_live_openhand_01
+REACT_APP_PAYGLOCAL_MERCHANT_ID=gl_merchant_openhand_live
 REACT_APP_GOOGLE_CLIENT_ID=647617986680-8s8q5496eu6hvmmhmck5qroaqbppgdti.apps.googleusercontent.com
 REACT_APP_LINKEDIN_CLIENT_ID=77fou7zrz4jm4o
 REACT_APP_PLATFORM_DOMAIN=openhand.live

@@ -1,4 +1,4 @@
-const { getRazorpayInstance, getRazorpayKeys } = require("../config/razorpay")
+const { createPayCollectOrder, verifyPayGlocalPayment, getPayGlocalConfig } = require("../config/payglocal")
 const crypto = require("crypto")
 const User = require("../models/User")
 const Offer = require("../models/Offer")
@@ -53,28 +53,36 @@ exports.createSubscriptionOrder = async (req, res) => {
     }
 
     const amount = planPrices[planKey]
-    const { key_id } = getRazorpayKeys()
+    const clientUser = await User.findById(userId).select("firstName lastName email contactNumber")
 
-    const options = {
-      amount: Math.round(amount * 100), // paise
+    const order = await createPayCollectOrder({
+      merchantTxnId: `sub_${planKey}_${Date.now()}`,
+      amount,
       currency: "INR",
-      receipt: `sub_${planKey}_${Date.now()}`,
+      customer: {
+        email: clientUser?.email,
+        firstName: clientUser?.firstName,
+        lastName: clientUser?.lastName,
+        contactNumber: clientUser?.contactNumber,
+      },
       notes: {
         userId: userId.toString(),
         planKey,
         planName: planNames[planKey],
       },
-    }
-
-    const order = await getRazorpayInstance().orders.create(options)
+    })
 
     return res.status(200).json({
       success: true,
       order,
-      key: key_id,
+      gid: order.gid,
+      merchantTxnId: order.merchantTxnId,
+      redirectUrl: order.redirectUrl,
+      key: order.keyId,
       amount,
       planKey,
       planName: planNames[planKey],
+      gateway: "payglocal",
     })
   } catch (error) {
     console.error("createSubscriptionOrder error:", error)
@@ -85,16 +93,32 @@ exports.createSubscriptionOrder = async (req, res) => {
 // ─── 2. VERIFY SUBSCRIPTION PAYMENT ──────────────────────────────────────────
 exports.verifySubscriptionPayment = async (req, res) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, planKey } = req.body
+    const {
+      payglocal_order_id,
+      payglocal_payment_id,
+      payglocal_gid,
+      merchantTxnId,
+      gid,
+      signature,
+      token,
+      planKey,
+    } = req.body
     const userId = req.user.id
 
-    // Signature verification
-    const { key_secret } = getRazorpayKeys()
-    const body = razorpay_order_id + "|" + razorpay_payment_id
-    const expectedSignature = crypto.createHmac("sha256", key_secret).update(body).digest("hex")
+    const effectiveOrderId = payglocal_order_id || merchantTxnId
+    const effectivePaymentId = payglocal_payment_id || gid || payglocal_gid
 
-    if (expectedSignature !== razorpay_signature) {
-      return res.status(400).json({ success: false, message: "Payment verification failed" })
+    const verifyRes = await verifyPayGlocalPayment({
+      gid: effectivePaymentId,
+      merchantTxnId: effectiveOrderId,
+      orderId: effectiveOrderId,
+      paymentId: effectivePaymentId,
+      token,
+      signature,
+    })
+
+    if (!verifyRes?.success) {
+      return res.status(400).json({ success: false, message: "PayGlocal payment verification failed" })
     }
 
     const planPrices = {
@@ -140,9 +164,10 @@ exports.verifySubscriptionPayment = async (req, res) => {
       status: "active",
       startDate,
       endDate,
-      paymentGateway: "razorpay",
-      razorpayOrderId: razorpay_order_id,
-      razorpayPaymentId: razorpay_payment_id,
+      paymentGateway: "payglocal",
+      payglocalOrderId: effectiveOrderId,
+      payglocalPaymentId: effectivePaymentId,
+      payglocalGid: verifyRes.gid || effectivePaymentId,
     })
 
     // Log to admin payment ledger
@@ -156,9 +181,10 @@ exports.verifySubscriptionPayment = async (req, res) => {
       amount,
       currency: "INR",
       amountOwedToPractitioner: 0, // Subscription fees are pure platform revenue
-      paymentGateway: "razorpay",
-      razorpayOrderId: razorpay_order_id,
-      razorpayPaymentId: razorpay_payment_id,
+      paymentGateway: "payglocal",
+      payglocalOrderId: effectiveOrderId,
+      payglocalPaymentId: effectivePaymentId,
+      payglocalGid: verifyRes.gid || effectivePaymentId,
       subscriptionId: subscription._id,
       status: "received",
     })
@@ -175,8 +201,8 @@ exports.verifySubscriptionPayment = async (req, res) => {
         paymentSuccessEmail(
           `${clientUser.firstName} ${clientUser.lastName}`,
           amount,
-          razorpay_order_id,
-          razorpay_payment_id
+          effectiveOrderId,
+          effectivePaymentId
         )
       )
     } catch (emailErr) {
@@ -275,7 +301,7 @@ exports.getMySubscription = async (req, res) => {
 // This replaces the old bookOffer. ALL payment goes to admin.
 exports.bookOffer = async (req, res) => {
   try {
-    const { offerId, scheduledAt, gateway = "razorpay" } = req.body
+    const { offerId, scheduledAt, gateway = "payglocal" } = req.body
     const userId = req.user.id
 
     const offer = await Offer.findById(offerId).populate("practitioner", "firstName lastName email")
@@ -401,11 +427,18 @@ exports.bookOffer = async (req, res) => {
       })
     }
 
-    // Razorpay flow — create order with discounted amount
-    const options = {
-      amount: Math.round(grossAmount * 100),
+    // PayGlocal flow — create order with discounted amount
+    const clientUser = await User.findById(userId).select("firstName lastName email contactNumber")
+    const pglOrder = await createPayCollectOrder({
+      merchantTxnId: `oh_offer_${Date.now()}`,
+      amount: grossAmount,
       currency: "INR",
-      receipt: `oh_offer_${Date.now()}`,
+      customer: {
+        email: clientUser?.email,
+        firstName: clientUser?.firstName,
+        lastName: clientUser?.lastName,
+        contactNumber: clientUser?.contactNumber,
+      },
       notes: {
         offerId: offerId.toString(),
         clientId: userId.toString(),
@@ -413,10 +446,7 @@ exports.bookOffer = async (req, res) => {
         offerType: offer.type,
         discountPercentage: discountPercentage.toString(),
       },
-    }
-
-    const { key_id } = getRazorpayKeys()
-    const rzpOrder = await getRazorpayInstance().orders.create(options)
+    })
 
     const booking = await Booking.create({
       client: userId,
@@ -426,8 +456,9 @@ exports.bookOffer = async (req, res) => {
       amount: grossAmount,
       commission: 0,
       netPayout: practitionerPortion,
-      paymentGateway: "razorpay",
-      razorpayOrderId: rzpOrder.id,
+      paymentGateway: "payglocal",
+      payglocalOrderId: pglOrder.merchantTxnId,
+      payglocalGid: pglOrder.gid,
       status: "pending",
       settlementStatus: "unsettled",
       scheduledAt: scheduledAt ? new Date(scheduledAt) : new Date(Date.now() + 86400000),
@@ -436,12 +467,17 @@ exports.bookOffer = async (req, res) => {
     return res.status(200).json({
       success: true,
       bookingId: booking._id,
-      razorpayOrder: rzpOrder,
-      key: key_id,
+      payglocalOrder: pglOrder,
+      order: pglOrder,
+      gid: pglOrder.gid,
+      merchantTxnId: pglOrder.merchantTxnId,
+      redirectUrl: pglOrder.redirectUrl,
+      key: pglOrder.keyId,
       offerTitle: offer.title,
       offerType: offer.type,
       amount: grossAmount,
       practitionerName: `${practitionerUser.firstName} ${practitionerUser.lastName}`,
+      gateway: "payglocal",
     })
   } catch (error) {
     console.error("bookOffer error:", error)
@@ -452,7 +488,16 @@ exports.bookOffer = async (req, res) => {
 // ─── 5. VERIFY OFFER BOOKING PAYMENT ─────────────────────────────────────────
 exports.verifyOfferBooking = async (req, res) => {
   try {
-    const { bookingId, razorpay_payment_id, razorpay_order_id, razorpay_signature } = req.body
+    const {
+      bookingId,
+      payglocal_payment_id,
+      payglocal_order_id,
+      payglocal_gid,
+      merchantTxnId,
+      gid,
+      signature,
+      token,
+    } = req.body
 
     const booking = await Booking.findById(bookingId)
       .populate("offer", "title type price")
@@ -460,16 +505,26 @@ exports.verifyOfferBooking = async (req, res) => {
       return res.status(404).json({ success: false, message: "Booking not found" })
     }
 
-    // Verify Razorpay signature
-    const { key_secret } = getRazorpayKeys()
-    const body = razorpay_order_id + "|" + razorpay_payment_id
-    const expectedSig = crypto.createHmac("sha256", key_secret).update(body).digest("hex")
+    const effectivePaymentId = payglocal_payment_id || gid || payglocal_gid
+    const effectiveOrderId = payglocal_order_id || merchantTxnId
 
-    if (expectedSig !== razorpay_signature) {
-      return res.status(400).json({ success: false, message: "Payment verification failed" })
+    const verifyRes = await verifyPayGlocalPayment({
+      gid: effectivePaymentId,
+      merchantTxnId: effectiveOrderId,
+      orderId: effectiveOrderId,
+      paymentId: effectivePaymentId,
+      token,
+      signature,
+    })
+
+    if (!verifyRes?.success) {
+      return res.status(400).json({ success: false, message: "PayGlocal payment verification failed" })
     }
 
-    booking.razorpayPaymentId = razorpay_payment_id
+    booking.payglocalPaymentId = effectivePaymentId
+    booking.payglocalOrderId = effectiveOrderId
+    booking.payglocalGid = verifyRes.gid || effectivePaymentId
+    booking.paymentGateway = "payglocal"
     booking.status = "confirmed"
     booking.settlementStatus = "pending_t2"
     await booking.save()
@@ -487,9 +542,9 @@ exports.verifyOfferBooking = async (req, res) => {
       offer: booking.offer,
       grossAmount: booking.amount,
       practitionerPortion: booking.netPayout,
-      gateway: "razorpay",
-      paymentId: razorpay_payment_id,
-      orderId: razorpay_order_id,
+      gateway: "payglocal",
+      paymentId: effectivePaymentId,
+      orderId: effectiveOrderId,
     })
 
     // Email client
@@ -500,8 +555,8 @@ exports.verifyOfferBooking = async (req, res) => {
         paymentSuccessEmail(
           `${clientUser.firstName} ${clientUser.lastName}`,
           booking.amount,
-          razorpay_order_id,
-          razorpay_payment_id
+          effectiveOrderId,
+          effectivePaymentId
         )
       )
     } catch (emailErr) {
@@ -510,7 +565,7 @@ exports.verifyOfferBooking = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Booking confirmed! Your session is scheduled.",
+      message: "Booking confirmed! Your session is scheduled via PayGlocal.",
       booking,
     })
   } catch (error) {
@@ -620,31 +675,39 @@ exports.createCourseOrder = async (req, res) => {
       })
     }
 
-    const { key_id } = getRazorpayKeys()
-    const options = {
-      amount: Math.round(finalPayable * 100),
+    const clientUser = await User.findById(userId).select("firstName lastName email contactNumber")
+    const order = await createPayCollectOrder({
+      merchantTxnId: `crs_${courseId.toString().slice(-6)}_${Date.now()}`,
+      amount: finalPayable,
       currency: "INR",
-      receipt: `crs_${courseId.toString().slice(-6)}_${Date.now()}`,
+      customer: {
+        email: clientUser?.email,
+        firstName: clientUser?.firstName,
+        lastName: clientUser?.lastName,
+        contactNumber: clientUser?.contactNumber,
+      },
       notes: {
         courseId: courseId.toString(),
         clientId: userId.toString(),
         practitionerId: course.practitioner?._id?.toString() || "",
         appliedCoupons: JSON.stringify(discountRes.appliedCoupons.map((c) => ({ code: c.code, type: c.type, id: c.id }))),
       },
-    }
-
-    const order = await getRazorpayInstance().orders.create(options)
+    })
 
     return res.status(200).json({
       success: true,
       order,
-      key: key_id,
+      gid: order.gid,
+      merchantTxnId: order.merchantTxnId,
+      redirectUrl: order.redirectUrl,
+      key: order.keyId,
       amount: finalPayable,
       originalPrice: discountRes.originalPrice,
       totalDiscountAmount: discountRes.totalDiscountAmount,
       appliedCoupons: discountRes.appliedCoupons,
       courseTitle: course.title,
       practitionerName: course.practitioner ? `${course.practitioner.firstName} ${course.practitioner.lastName}` : "Practitioner",
+      gateway: "payglocal",
     })
   } catch (error) {
     console.error("createCourseOrder error:", error)
@@ -654,7 +717,17 @@ exports.createCourseOrder = async (req, res) => {
 
 exports.verifyCourseOrder = async (req, res) => {
   try {
-    const { courseId, razorpay_order_id, razorpay_payment_id, razorpay_signature, couponCodes = [] } = req.body
+    const {
+      courseId,
+      payglocal_order_id,
+      payglocal_payment_id,
+      payglocal_gid,
+      merchantTxnId,
+      gid,
+      signature,
+      token,
+      couponCodes = [],
+    } = req.body
     const userId = req.user.id
 
     const Course = require("../models/Course")
@@ -665,12 +738,20 @@ exports.verifyCourseOrder = async (req, res) => {
       return res.status(404).json({ success: false, message: "Course not found" })
     }
 
-    const { key_secret } = getRazorpayKeys()
-    const body = razorpay_order_id + "|" + razorpay_payment_id
-    const expectedSig = crypto.createHmac("sha256", key_secret).update(body).digest("hex")
+    const effectivePaymentId = payglocal_payment_id || gid || payglocal_gid
+    const effectiveOrderId = payglocal_order_id || merchantTxnId
 
-    if (expectedSig !== razorpay_signature) {
-      return res.status(400).json({ success: false, message: "Razorpay signature verification failed" })
+    const verifyRes = await verifyPayGlocalPayment({
+      gid: effectivePaymentId,
+      merchantTxnId: effectiveOrderId,
+      orderId: effectiveOrderId,
+      paymentId: effectivePaymentId,
+      token,
+      signature,
+    })
+
+    if (!verifyRes?.success) {
+      return res.status(400).json({ success: false, message: "PayGlocal signature verification failed" })
     }
 
     // Enroll user into course
@@ -704,10 +785,18 @@ exports.verifyCourseOrder = async (req, res) => {
         discountAmount: discountRes.totalDiscountAmount,
         finalPrice: finalAmount,
         appliedCoupons: discountRes.appliedCoupons,
-        orderId: razorpay_order_id,
-        paymentId: razorpay_payment_id,
+        orderId: effectiveOrderId,
+        paymentId: effectivePaymentId,
       })
     }
+
+    // Determine plan fee & tax for practitioner payout
+    const coursePractUser = await User.findById(practitionerId).select("activePlan")
+    const coursePractPlan = String(coursePractUser?.activePlan || "").toLowerCase()
+    const feeRate = (coursePractPlan.includes("pro") ? 5 : coursePractPlan.includes("institution") ? 0 : 10)
+    const platformFee = Math.round((finalAmount * feeRate) / 100)
+    const taxDeducted = Math.round(platformFee * 0.18) // 18% GST on platform service
+    const netSalary = Math.max(0, finalAmount - platformFee - taxDeducted)
 
     // Log in Admin Payment Ledger
     await AdminPaymentLog.create({
@@ -716,21 +805,42 @@ exports.verifyCourseOrder = async (req, res) => {
       clientName: clientUser ? `${clientUser.firstName} ${clientUser.lastName}` : "Learner",
       practitioner: practitionerId,
       practitionerName: course.practitioner ? `${course.practitioner.firstName} ${course.practitioner.lastName}` : "Practitioner",
-      description: `Paid Course Purchase: ${course.title} (Discounted: ₹${finalAmount})`,
+      description: `Paid Course Purchase: ${course.title} (Amount: ₹${finalAmount})`,
       offerTitle: course.title,
       offerType: "course",
       amount: finalAmount,
-      amountOwedToPractitioner: practitionerPortion,
-      paymentGateway: "razorpay",
-      razorpayOrderId: razorpay_order_id,
-      razorpayPaymentId: razorpay_payment_id,
+      amountOwedToPractitioner: netSalary,
+      paymentGateway: "payglocal",
+      payglocalOrderId: effectiveOrderId,
+      payglocalPaymentId: effectivePaymentId,
+      payglocalGid: verifyRes.gid || effectivePaymentId,
       courseId: course._id,
       status: "received",
     })
 
+    // Schedule 72-hour automated payout to practitioner
+    if (netSalary > 0) {
+      await Payout.create({
+        practitioner: practitionerId,
+        amount: finalAmount,
+        grossAmount: finalAmount,
+        platformFeeDeducted: platformFee,
+        taxDeducted: taxDeducted,
+        commissionDeducted: platformFee + taxDeducted,
+        netAmount: netSalary,
+        status: "processing",
+        settlementWindowHours: 72,
+        settledAt: new Date(Date.now() + 72 * 60 * 60 * 1000),
+        payoutMethod: "payglocal_direct_transfer",
+        sourceType: "course",
+        sourceId: course._id.toString(),
+        bookingsCount: 1,
+      })
+    }
+
     return res.status(200).json({
       success: true,
-      message: `Successfully purchased ${course.title}! Course is now unlocked.`,
+      message: `Successfully purchased ${course.title}! Course is now unlocked via PayGlocal.`,
       course,
     })
   } catch (error) {
@@ -807,8 +917,8 @@ exports.enrollFreeDiscountCourse = async (req, res) => {
       amount: 0,
       amountOwedToPractitioner: 0,
       paymentGateway: "discount_grant",
-      razorpayOrderId: null,
-      razorpayPaymentId: fakePaymentId,
+      payglocalOrderId: null,
+      payglocalPaymentId: fakePaymentId,
       courseId: course._id,
       status: "received",
     })
@@ -863,7 +973,7 @@ exports.confirmFreeDiscountBooking = async (req, res) => {
       commission: 0,
       netPayout: 0,
       paymentGateway: "discount_grant",
-      razorpayPaymentId: fakePaymentId,
+      payglocalPaymentId: fakePaymentId,
       status: "confirmed",
       settlementStatus: "settled",
       scheduledAt: scheduledAt ? new Date(scheduledAt) : new Date(Date.now() + 86400000),
@@ -957,23 +1067,38 @@ async function _createInvoiceAndAdminLog({
       offerType: offer?.type || "",
       amount: grossAmount,
       amountOwedToPractitioner: practitionerPortion,
-      paymentGateway: gateway,
-      razorpayOrderId: orderId,
-      razorpayPaymentId: paymentId,
+      paymentGateway: gateway || "payglocal",
+      payglocalOrderId: orderId,
+      payglocalPaymentId: paymentId,
+      payglocalGid: paymentId,
       bookingId: booking._id,
       status: "received",
     })
 
-    // Create Payout Record (Stage 01: T+2 Bank Settlement Log)
-    if (practitionerPortion > 0) {
+    // Create Payout Record (Automated 72-Hour PayGlocal Direct Transfer)
+    // Central OpenHand account collects 100%, and deducts platform fee + taxes before disbursing
+    const practPlan = String(practitionerUser?.activePlan || "").toLowerCase()
+    const feeRate = (practPlan.includes("pro") ? 5 : practPlan.includes("institution") ? 0 : 10)
+    const platformFee = Math.round((grossAmount * feeRate) / 100)
+    const taxDeducted = Math.round(platformFee * 0.18) // 18% GST on platform service fee
+    const calculatedNet = Math.max(0, grossAmount - platformFee - taxDeducted)
+    const finalNet = practitionerPortion > 0 ? Math.min(practitionerPortion, calculatedNet) : calculatedNet
+
+    if (finalNet > 0) {
       await Payout.create({
         practitioner: practitionerId,
         amount: grossAmount,
-        commissionDeducted: grossAmount - practitionerPortion,
-        netAmount: practitionerPortion,
+        grossAmount: grossAmount,
+        platformFeeDeducted: platformFee,
+        taxDeducted: taxDeducted,
+        commissionDeducted: platformFee + taxDeducted,
+        netAmount: finalNet,
         status: "processing",
-        settledAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days settlement
-        payoutMethod: "bank_transfer",
+        settlementWindowHours: 72,
+        settledAt: new Date(Date.now() + 72 * 60 * 60 * 1000), // Scheduled in 72 hours
+        payoutMethod: "payglocal_direct_transfer",
+        sourceType: "offer_booking",
+        sourceId: booking._id.toString(),
         bookingsCount: 1,
       })
     }
@@ -993,39 +1118,33 @@ exports.createPractitionerOrder = async (req, res) => {
     }
 
     const numericAmount = Number(amount) || 500
-    const { key_id } = getRazorpayKeys()
+    const clientUser = await User.findById(userId).select("firstName lastName email contactNumber")
 
-    let order = null
-    try {
-      const options = {
-        amount: Math.round(numericAmount * 100), // paise
-        currency: "INR",
-        receipt: `pract_${Date.now().toString().slice(-8)}`,
-        notes: {
-          userId: String(userId),
-          practitionerId: String(practitionerId),
-        },
-      }
-      order = await getRazorpayInstance().orders.create(options)
-    } catch (rzpErr) {
-      console.warn("Razorpay API order create warning:", rzpErr.message)
-      order = {
-        id: `order_pract_${Date.now()}`,
-        entity: "order",
-        amount: Math.round(numericAmount * 100),
-        amount_paid: 0,
-        amount_due: Math.round(numericAmount * 100),
-        currency: "INR",
-        receipt: `pract_${Date.now().toString().slice(-8)}`,
-        status: "created",
-      }
-    }
+    const order = await createPayCollectOrder({
+      merchantTxnId: `pract_${Date.now().toString().slice(-8)}`,
+      amount: numericAmount,
+      currency: "INR",
+      customer: {
+        email: clientUser?.email,
+        firstName: clientUser?.firstName,
+        lastName: clientUser?.lastName,
+        contactNumber: clientUser?.contactNumber,
+      },
+      notes: {
+        userId: String(userId),
+        practitionerId: String(practitionerId),
+      },
+    })
 
     return res.status(200).json({
       success: true,
       order,
-      key: key_id,
+      gid: order.gid,
+      merchantTxnId: order.merchantTxnId,
+      redirectUrl: order.redirectUrl,
+      key: order.keyId,
       amount: numericAmount,
+      gateway: "payglocal",
     })
   } catch (error) {
     console.error("createPractitionerOrder error:", error)

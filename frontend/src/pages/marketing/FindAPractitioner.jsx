@@ -11,6 +11,8 @@ import { apiConnector } from '../../services/apiConnector'
 import { toast } from 'react-hot-toast'
 import { formatPractitionerName } from '../../utils/formatName'
 import { FiEye } from 'react-icons/fi'
+import PayGlocalCheckoutModal from '../../components/openhand/PayGlocalCheckoutModal'
+
 
 const SPECIALTIES = [
   { value: 'all', label: 'All Guides' },
@@ -56,19 +58,9 @@ export function FindAPractitioner() {
   const [sortBy, setSortBy] = useState('views')
   const [connectingId, setConnectingId] = useState(null)
 
-  const loadRazorpaySDK = () => {
-    return new Promise((resolve) => {
-      if (window.Razorpay) {
-        resolve(true)
-        return
-      }
-      const script = document.createElement('script')
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
-      script.onload = () => resolve(true)
-      script.onerror = () => resolve(false)
-      document.body.appendChild(script)
-    })
-  }
+  const [payglocalModalOpen, setPayglocalModalOpen] = useState(false)
+  const [payglocalOrderData, setPayglocalOrderData] = useState(null)
+  const [pendingPractitioner, setPendingPractitioner] = useState(null)
 
   const handleConnectPractitioner = async (practitioner) => {
     try {
@@ -77,14 +69,7 @@ export function FindAPractitioner() {
       const amount = practitioner.sessionRate || 2500
       setConnectingId(pId)
 
-      const isLoaded = await loadRazorpaySDK()
-      if (!isLoaded) {
-        toast.error('Razorpay SDK failed to load.')
-        setConnectingId(null)
-        return
-      }
-
-      // Create order via backend API
+      // Create PayGlocal order via backend API
       const orderRes = await apiConnector('POST', '/api/v1/payment/create-practitioner-order', {
         practitionerId: pId,
         amount,
@@ -98,69 +83,57 @@ export function FindAPractitioner() {
 
       const { order, key, amount: finalAmount } = orderRes.data
 
-      const isRealRazorpayOrder =
-        typeof order?.id === 'string' &&
-        /^order_[A-Za-z0-9]{14,}$/.test(order.id) &&
-        !order.id.includes('pract') &&
-        !order.id.includes('mock') &&
-        !order.id.includes('fake')
-
-      const options = {
-        key: key || process.env.REACT_APP_RAZORPAY_KEY || 'rzp_test_TDhFSRuAl18Gcb',
-        amount: order.amount,
-        currency: order.currency || 'INR',
-        name: 'OpenHand Practice Platform',
-        description: `Counseling Fee for ${pName}`,
-        ...(isRealRazorpayOrder ? { order_id: order.id } : {}),
-        prefill: {
+      const orderData = {
+        orderId: order?.id || order?.merchantTxnId || `txn_pgl_${Date.now()}`,
+        gid: order?.gid || `GL_${Date.now()}`,
+        amount: finalAmount || (order?.amount ? order.amount / 100 : amount),
+        currency: order?.currency || 'INR',
+        planName: `Counseling Fee for ${pName}`,
+        keyId: key || process.env.REACT_APP_PAYGLOCAL_KEY_ID,
+        merchantId: order?.merchantId || process.env.REACT_APP_PAYGLOCAL_MERCHANT_ID,
+        customerData: {
           name: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : '',
           email: user?.email || '',
-          ...(
-            (() => {
-              const rawPhone = user?.additionalDetails?.contactNumber || user?.contactNumber
-              if (rawPhone && rawPhone !== 'null' && rawPhone !== 'undefined') {
-                const trimmed = String(rawPhone).trim()
-                if (trimmed.length > 0) return { contact: trimmed }
-              }
-              return {}
-            })()
-          ),
+          phone: user?.additionalDetails?.contactNumber || user?.contactNumber || '',
         },
-        handler: async function (response) {
-          try {
-            const res = await apiConnector('POST', '/api/v1/practitioners/connect', {
-              practitionerId: pId,
-              amountPaid: finalAmount || amount,
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-            })
-            if (res?.data?.success) {
-              toast.success(`🎉 Connection request & payment of ₹${finalAmount || amount} sent to ${pName}!`)
-            } else {
-              toast.error(res?.data?.message || 'Could not process connection request.')
-            }
-          } catch (err) {
-            toast.error('Connection request failed after payment.')
-          } finally {
-            setConnectingId(null)
-          }
-        },
-        theme: { color: '#1F5FE0' },
       }
 
-      const rzp = new window.Razorpay(options)
-      rzp.on('payment.failed', function () {
-        toast.error('Payment cancelled or failed.')
-        setConnectingId(null)
-      })
-      rzp.open()
+      setPendingPractitioner({ id: pId, name: pName, amount: finalAmount || amount })
+      setPayglocalOrderData(orderData)
+      setPayglocalModalOpen(true)
     } catch (err) {
-      console.error('Connect error:', err)
+      console.error('PayGlocal connect error:', err)
       toast.error('Please log in as a Learner to connect with practitioners.')
+    } finally {
       setConnectingId(null)
     }
   }
+
+  const handlePayGlocalSuccess = async (response) => {
+    if (!pendingPractitioner) return
+    const vToast = toast.loading('Connecting and confirming with PayGlocal...')
+    try {
+      const res = await apiConnector('POST', '/api/v1/practitioners/connect', {
+        practitionerId: pendingPractitioner.id,
+        amountPaid: pendingPractitioner.amount,
+        payglocal_order_id: response.payglocal_order_id || response.merchantTxnId,
+        payglocal_payment_id: response.payglocal_payment_id || response.gid,
+        payglocal_gid: response.payglocal_gid || response.gid,
+        payglocal_signature: response.signature,
+      })
+      if (res?.data?.success) {
+        toast.success(`🎉 Connection request & payment of ₹${pendingPractitioner.amount} sent to ${pendingPractitioner.name}!`, { id: vToast })
+      } else {
+        toast.error(res?.data?.message || 'Could not process connection request.', { id: vToast })
+      }
+    } catch (err) {
+      toast.error('Connection request failed after payment.', { id: vToast })
+    } finally {
+      setPayglocalModalOpen(false)
+      setPendingPractitioner(null)
+    }
+  }
+
 
   // Dynamic API Pagination state
   const [page, setPage] = useState(1)
@@ -741,9 +714,19 @@ export function FindAPractitioner() {
         </div>
       </section>
 
+      {payglocalModalOpen && (
+        <PayGlocalCheckoutModal
+          isOpen={payglocalModalOpen}
+          onClose={() => setPayglocalModalOpen(false)}
+          orderData={payglocalOrderData}
+          onSuccess={handlePayGlocalSuccess}
+        />
+      )}
+
       <OHFooter />
     </div>
   )
 }
+
 
 export default FindAPractitioner

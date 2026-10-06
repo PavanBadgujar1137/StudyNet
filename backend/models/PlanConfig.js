@@ -12,7 +12,8 @@ const planConfigSchema = new mongoose.Schema(
     tagline: { type: String },
     monthlyFee: { type: Number, required: true }, // 999, 2999, 5999
     commissionPercentage: { type: Number, required: true }, // 8, 5, 0
-    razorpayButtonId: { type: String },
+    payglocalPlanId: { type: String },
+    payglocalButtonId: { type: String },
     features: [{ type: String }],
     defaultMembershipPrice: { type: Number, default: 799 }, // dynamic membership price
     nudgeThresholdEarnings: { type: Number, default: 40000 },

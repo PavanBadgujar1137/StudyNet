@@ -11,6 +11,7 @@ import {
   enrollFreeDiscountCourse,
   confirmFreeDiscountBooking,
 } from '../../../services/operations/couponAPI'
+import PayGlocalCheckoutModal from '../../openhand/PayGlocalCheckoutModal'
 
 const fmt = (n) =>
   new Intl.NumberFormat('en-IN', {
@@ -36,6 +37,8 @@ export default function CheckoutCouponModal({
   const [processingPayment, setProcessingPayment] = useState(false)
   const [calculationResult, setCalculationResult] = useState(null)
   const [errorMessage, setErrorMessage] = useState('')
+  const [payglocalOrderData, setPayglocalOrderData] = useState(null)
+  const [isPayglocalOpen, setIsPayglocalOpen] = useState(false)
 
   const productId = product?._id
 
@@ -107,18 +110,6 @@ export default function CheckoutCouponModal({
     fetchCalculation(nextCodes)
   }
 
-  // ─── Load Razorpay SDK ───────────────────────────────────────────────────────
-  const loadRazorpaySDK = () => {
-    return new Promise((resolve) => {
-      if (window.Razorpay) return resolve(true)
-      const script = document.createElement('script')
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
-      script.onload = () => resolve(true)
-      script.onerror = () => resolve(false)
-      document.body.appendChild(script)
-    })
-  }
-
   // ─── Execute Purchase / ₹0 Direct Unlock ────────────────────────────────────
   const handleProceed = async () => {
     if (!token) {
@@ -165,14 +156,7 @@ export default function CheckoutCouponModal({
         return
       }
 
-      // 2. Paid Flow via Razorpay Gateway
-      const isLoaded = await loadRazorpaySDK()
-      if (!isLoaded) {
-        toast.error('Razorpay SDK failed to load')
-        setProcessingPayment(false)
-        return
-      }
-
+      // 2. Paid Flow via PayGlocal Gateway
       let orderRes = null
       if (productType === 'course') {
         orderRes = await apiConnector(
@@ -201,90 +185,82 @@ export default function CheckoutCouponModal({
       }
 
       if (!orderRes?.data?.success) {
-        toast.error(orderRes?.data?.message || 'Failed to initialize payment')
+        toast.error(orderRes?.data?.message || 'Failed to initialize PayGlocal payment')
         setProcessingPayment(false)
         return
       }
 
-      const { order, key } = orderRes.data
-
-      const isRealRazorpayOrder =
-        typeof order?.id === 'string' &&
-        /^order_[A-Za-z0-9]{14,}$/.test(order.id) &&
-        !order.id.includes('pract') &&
-        !order.id.includes('mock')
-
-      const options = {
-        key: key || 'rzp_test_TDhFSRuAl18Gcb',
-        amount: order?.amount || Math.round(finalAmount * 100),
-        currency: order?.currency || 'INR',
-        name: 'OpenHand Platform',
-        description: `Purchase: ${product.title}`,
-        ...(isRealRazorpayOrder ? { order_id: order.id } : {}),
+      setProcessingPayment(false)
+      setPayglocalOrderData({
+        ...orderRes.data,
+        amount: finalAmount,
+        currency: 'INR',
+        productType,
+        bookingId: orderRes.data.bookingId,
+        title: product.title,
         prefill: {
           name: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : '',
           email: user?.email || '',
         },
-        theme: { color: '#1F5FE0' },
-        handler: async (response) => {
-          const vToast = toast.loading('Verifying payment...')
-          try {
-            if (productType === 'course') {
-              const vRes = await apiConnector(
-                'POST',
-                '/api/v1/payments/verify-course-payment',
-                {
-                  courseId: productId,
-                  razorpay_order_id: response.razorpay_order_id,
-                  razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_signature: response.razorpay_signature,
-                  couponCodes: appliedCodes,
-                },
-                { Authorization: `Bearer ${token}` }
-              )
-              if (vRes?.data?.success) {
-                toast.success('🎉 Course unlocked successfully!', { id: vToast })
-                if (onSuccess) onSuccess(vRes.data)
-                onClose()
-              } else {
-                toast.error(vRes?.data?.message || 'Verification failed', { id: vToast })
-              }
-            } else {
-              // Session Booking
-              const vRes = await apiConnector(
-                'POST',
-                '/api/v1/payments/verify-offer-booking',
-                {
-                  bookingId: orderRes.data.bookingId,
-                  razorpay_order_id: response.razorpay_order_id,
-                  razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_signature: response.razorpay_signature,
-                },
-                { Authorization: `Bearer ${token}` }
-              )
-              if (vRes?.data?.success) {
-                toast.success('🎉 Session booked successfully!', { id: vToast })
-                if (onSuccess) onSuccess(vRes.data)
-                onClose()
-              } else {
-                toast.error(vRes?.data?.message || 'Verification failed', { id: vToast })
-              }
-            }
-          } catch (e) {
-            toast.error('Payment verification failed', { id: vToast })
-          } finally {
-            setProcessingPayment(false)
-          }
-        },
-        modal: {
-          ondismiss: () => setProcessingPayment(false),
-        },
-      }
-
-      const rzp = new window.Razorpay(options)
-      rzp.open()
+      })
+      setIsPayglocalOpen(true)
     } catch (error) {
-      toast.error('Payment flow encountered an error')
+      toast.error('PayGlocal payment flow encountered an error')
+      setProcessingPayment(false)
+    }
+  }
+
+  const handlePayGlocalSuccess = async (response) => {
+    const vToast = toast.loading('Verifying payment with PayGlocal...')
+    try {
+      if (productType === 'course') {
+        const vRes = await apiConnector(
+          'POST',
+          '/api/v1/payments/verify-course-payment',
+          {
+            courseId: productId,
+            payglocal_order_id: response.payglocal_order_id || response.merchantTxnId,
+            payglocal_payment_id: response.payglocal_payment_id || response.gid,
+            payglocal_gid: response.payglocal_gid || response.gid,
+            signature: response.signature,
+            couponCodes: appliedCodes,
+          },
+          { Authorization: `Bearer ${token}` }
+        )
+        if (vRes?.data?.success) {
+          toast.success('🎉 Course unlocked successfully via PayGlocal!', { id: vToast })
+          if (onSuccess) onSuccess(vRes.data)
+          setIsPayglocalOpen(false)
+          onClose()
+        } else {
+          toast.error(vRes?.data?.message || 'Verification failed', { id: vToast })
+        }
+      } else {
+        // Session Booking
+        const vRes = await apiConnector(
+          'POST',
+          '/api/v1/payments/verify-offer-booking',
+          {
+            bookingId: payglocalOrderData?.bookingId,
+            payglocal_order_id: response.payglocal_order_id || response.merchantTxnId,
+            payglocal_payment_id: response.payglocal_payment_id || response.gid,
+            payglocal_gid: response.payglocal_gid || response.gid,
+            signature: response.signature,
+          },
+          { Authorization: `Bearer ${token}` }
+        )
+        if (vRes?.data?.success) {
+          toast.success('🎉 Session booked successfully via PayGlocal!', { id: vToast })
+          if (onSuccess) onSuccess(vRes.data)
+          setIsPayglocalOpen(false)
+          onClose()
+        } else {
+          toast.error(vRes?.data?.message || 'Verification failed', { id: vToast })
+        }
+      }
+    } catch (e) {
+      toast.error('PayGlocal payment verification failed', { id: vToast })
+    } finally {
       setProcessingPayment(false)
     }
   }
@@ -749,6 +725,19 @@ export default function CheckoutCouponModal({
           </button>
         </div>
       </div>
+
+      {isPayglocalOpen && (
+        <PayGlocalCheckoutModal
+          isOpen={isPayglocalOpen}
+          onClose={() => {
+            setIsPayglocalOpen(false)
+            setProcessingPayment(false)
+          }}
+          orderData={payglocalOrderData}
+          onSuccess={handlePayGlocalSuccess}
+        />
+      )}
     </div>
   )
 }
+

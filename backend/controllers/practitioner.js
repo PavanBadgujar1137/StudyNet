@@ -1,5 +1,4 @@
-const crypto = require("crypto")
-const { getRazorpayKeys } = require("../config/razorpay")
+const { verifyPayGlocalPayment } = require("../config/payglocal")
 const mailSender = require("../utils/mailSender")
 const User = require("../models/User")
 const PractitionerProfile = require("../models/PractitionerProfile")
@@ -602,9 +601,13 @@ exports.connectClientWithPractitioner = async (req, res) => {
       amountPaid,
       paymentId,
       orderId,
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature,
+      payglocal_payment_id,
+      payglocal_order_id,
+      payglocal_gid,
+      merchantTxnId,
+      gid,
+      signature,
+      token,
       offerId,
     } = req.body
 
@@ -626,26 +629,28 @@ exports.connectClientWithPractitioner = async (req, res) => {
       return res.status(404).json({ success: false, message: "Practitioner not found" })
     }
 
-    const rzpOrderId = razorpay_order_id || orderId || `order_rzp_${Date.now()}`
-    const rzpPaymentId = razorpay_payment_id || paymentId || `pay_rzp_${Date.now()}`
+    const glOrderId = payglocal_order_id || merchantTxnId || orderId || `order_pgl_${Date.now()}`
+    const glPaymentId = payglocal_payment_id || gid || payglocal_gid || paymentId || `pay_pgl_${Date.now()}`
 
-    // Verify Razorpay Signature if provided
-    if (razorpay_signature && (razorpay_order_id || orderId) && (razorpay_payment_id || paymentId)) {
+    // Verify PayGlocal Signature / Token if provided
+    if (signature || token) {
       try {
-        const { key_secret } = getRazorpayKeys()
-        const expectedSig = crypto
-          .createHmac("sha256", key_secret)
-          .update(`${rzpOrderId}|${rzpPaymentId}`)
-          .digest("hex")
-
-        if (expectedSig !== razorpay_signature && key_secret !== "dummy_secret_123456789" && process.env.RAZORPAY_SECRET) {
+        const verifyRes = await verifyPayGlocalPayment({
+          gid: glPaymentId,
+          merchantTxnId: glOrderId,
+          orderId: glOrderId,
+          paymentId: glPaymentId,
+          token,
+          signature,
+        })
+        if (!verifyRes?.success) {
           return res.status(400).json({
             success: false,
-            message: "Razorpay signature verification failed",
+            message: "PayGlocal signature verification failed",
           })
         }
       } catch (sigErr) {
-        console.warn("Razorpay verification warning:", sigErr.message)
+        console.warn("PayGlocal verification warning:", sigErr.message)
       }
     }
 
@@ -653,16 +658,12 @@ exports.connectClientWithPractitioner = async (req, res) => {
 
     // Calculate commission rate based on practitioner profile plan
     let profile = await PractitionerProfile.findOne({ user: practUser._id })
-    const commissionRate = profile
-      ? profile.plan === "master" || profile.plan === "practice"
-        ? 0
-        : profile.plan === "growth"
-          ? 5
-          : 8
-      : 8
+    const activePlan = String(practUser.activePlan || profile?.plan || "").toLowerCase()
+    const commissionRate = activePlan.includes("pro") ? 5 : activePlan.includes("institution") ? 0 : 10
 
-    const commission = Math.round((grossAmount * commissionRate) / 100)
-    const netPayout = grossAmount - commission
+    const platformFee = Math.round((grossAmount * commissionRate) / 100)
+    const taxDeducted = Math.round(platformFee * 0.18) // 18% GST on platform service
+    const netPayout = Math.max(0, grossAmount - platformFee - taxDeducted)
 
     // 1. Create/Update ClientConnection record
     const connection = await ClientConnection.findOneAndUpdate(
@@ -670,8 +671,8 @@ exports.connectClientWithPractitioner = async (req, res) => {
       {
         status: "pending_approval",
         amountPaid: grossAmount,
-        paymentId: rzpPaymentId,
-        orderId: rzpOrderId,
+        paymentId: glPaymentId,
+        orderId: glOrderId,
         paymentStatus: "paid",
       },
       { upsert: true, new: true }
@@ -690,25 +691,32 @@ exports.connectClientWithPractitioner = async (req, res) => {
       offer: targetOfferId || new mongoose.Types.ObjectId(),
       offerType: "session",
       amount: grossAmount,
-      commission,
+      commission: platformFee,
       netPayout,
-      paymentGateway: "razorpay",
-      razorpayOrderId: rzpOrderId,
-      razorpayPaymentId: rzpPaymentId,
+      paymentGateway: "payglocal",
+      payglocalOrderId: glOrderId,
+      payglocalPaymentId: glPaymentId,
+      payglocalGid: glPaymentId,
       status: "confirmed",
       settlementStatus: "pending_t2",
       scheduledAt: new Date(Date.now() + 86400000),
     })
 
-    // 3. Create Payout record crediting practitioner
+    // 3. Create Payout record crediting practitioner (Automated 72-Hour PayGlocal Direct Transfer)
     const payout = await Payout.create({
       practitioner: practUser._id,
       amount: grossAmount,
-      commissionDeducted: commission,
+      grossAmount: grossAmount,
+      platformFeeDeducted: platformFee,
+      taxDeducted: taxDeducted,
+      commissionDeducted: platformFee + taxDeducted,
       netAmount: netPayout,
-      status: "settled",
-      settledAt: new Date(),
-      payoutMethod: "razorpay_direct_transfer",
+      status: "processing",
+      settlementWindowHours: 72,
+      settledAt: new Date(Date.now() + 72 * 60 * 60 * 1000), // Automated 72-hour payout
+      payoutMethod: "payglocal_direct_transfer",
+      sourceType: "session",
+      sourceId: booking._id.toString(),
       bookingsCount: 1,
     })
 
@@ -740,9 +748,10 @@ exports.connectClientWithPractitioner = async (req, res) => {
         description: `Practitioner Connection & Offer Booking`,
         amount: grossAmount,
         amountOwedToPractitioner: netPayout,
-        paymentGateway: "razorpay",
-        razorpayOrderId: rzpOrderId,
-        razorpayPaymentId: rzpPaymentId,
+        paymentGateway: "payglocal",
+        payglocalOrderId: glOrderId,
+        payglocalPaymentId: glPaymentId,
+        payglocalGid: glPaymentId,
         bookingId: booking._id,
         status: "received",
       })
@@ -765,7 +774,7 @@ exports.connectClientWithPractitioner = async (req, res) => {
         await mailSender(
           practUser.email,
           `🎉 New Payment Received — ₹${netPayout} from ${clientName}`,
-          `Hi ${practUser.firstName},\n\nYou received a new client payment of ₹${grossAmount} (Net Payout credited to your dashboard: ₹${netPayout} after ${commissionRate}% platform fee).\n\nClient: ${clientName} (${clientUser?.email || ""})\nPayment Ref: ${rzpPaymentId}\nOrder Ref: ${rzpOrderId}\n\nPlease log in to your dashboard under "My Clients" to review and connect.`
+          `Hi ${practUser.firstName},\n\nYou received a new client payment of ₹${grossAmount} (Net Payout credited to your dashboard: ₹${netPayout} after ${commissionRate}% platform fee).\n\nClient: ${clientName} (${clientUser?.email || ""})\nPayment Ref: ${glPaymentId}\nOrder Ref: ${glOrderId}\n\nPlease log in to your dashboard under "My Clients" to review and connect.`
         )
       }
 
@@ -773,7 +782,7 @@ exports.connectClientWithPractitioner = async (req, res) => {
         await mailSender(
           clientUser.email,
           `Payment Receipt — Counseling Session with ${practUser.firstName} ${practUser.lastName}`,
-          `Hi ${clientUser.firstName},\n\nYour payment of ₹${grossAmount} for practitioner counseling session with ${practUser.firstName} ${practUser.lastName} was processed successfully via Razorpay.\n\nTransaction Ref: ${rzpPaymentId}\nOrder Ref: ${rzpOrderId}\n\nYour connection request is now sent to ${practUser.firstName} for approval.`
+          `Hi ${clientUser.firstName},\n\nYour payment of ₹${grossAmount} for practitioner counseling session with ${practUser.firstName} ${practUser.lastName} was processed successfully via PayGlocal (The international payment gateway India builds on).\n\nTransaction Ref: ${glPaymentId}\nOrder Ref: ${glOrderId}\n\nYour connection request is now sent to ${practUser.firstName} for approval.`
         )
       }
     } catch (mailErr) {

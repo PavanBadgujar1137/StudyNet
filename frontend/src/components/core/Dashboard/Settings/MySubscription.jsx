@@ -401,7 +401,7 @@ export default function MySubscription() {
           </div>
 
           <button
-            onClick={() => navigate("/pricing")}
+            onClick={() => navigate("/schedule-call?plan=pro_yearly")}
             style={{
               background: "linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)",
               color: "#FFFFFF",
@@ -418,7 +418,7 @@ export default function MySubscription() {
               transition: "transform 0.15s ease"
             }}
           >
-            <FiZap /> Upgrade / Change Plan <FiArrowRight />
+            <FiZap /> Book a Call &amp; Take Subscription <FiArrowRight />
           </button>
         </div>
 

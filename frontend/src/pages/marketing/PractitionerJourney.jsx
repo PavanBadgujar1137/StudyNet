@@ -43,7 +43,7 @@ export function PractitionerJourney() {
     {
       cat: 'Payouts & Fees',
       q: 'How and when do I get paid?',
-      a: 'All payments from learners are processed via Razorpay and settled directly to your bank account on a rolling 7-day basis. You can view your full payout ledger under Payouts in your Practice Cockpit.',
+      a: 'All payments from learners are processed via PayGlocal and settled directly to your bank account on a rolling 7-day basis. You can view your full payout ledger under Payouts in your Practice Cockpit.',
     },
     {
       cat: 'Commission & Take-Rate',
@@ -150,7 +150,7 @@ export function PractitionerJourney() {
                     ✓ 0% commission on Starter
                   </span>
                   <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/70">
-                    Direct Razorpay payouts
+                    Direct PayGlocal payouts
                   </span>
                 </div>
 

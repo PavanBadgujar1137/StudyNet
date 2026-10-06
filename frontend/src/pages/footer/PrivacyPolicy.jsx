@@ -234,7 +234,7 @@ export function PrivacyPolicy() {
               <FiShare2 className="text-[#2563EB]" /> Who we share data with
             </h2>
             <ul className="space-y-2 list-disc list-inside font-medium">
-              <li><strong className="text-[#0F172A]">Payment processors</strong> Razorpay / Stripe — to process financial transactions</li>
+              <li><strong className="text-[#0F172A]">Payment processors</strong> PayGlocal / Stripe — to process financial transactions</li>
               <li><strong className="text-[#0F172A]">Cloud infrastructure</strong> (Hosted infrastructure / Local Host)</li>
               <li><strong className="text-[#0F172A]">Analytics</strong> — privacy-preserving analytics only (no third-party trackers on authenticated pages)</li>
               <li><strong className="text-[#0F172A]">Law enforcement</strong> — only when legally compelled, and where legally permitted, we'll notify you first</li>

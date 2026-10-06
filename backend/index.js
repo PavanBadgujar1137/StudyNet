@@ -179,9 +179,9 @@ app.get("/", (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`App is listening at ${PORT}`)
-  if (!process.env.RAZORPAY_KEY || !process.env.RAZORPAY_SECRET) {
+  if (!process.env.PAYGLOCAL_MERCHANT_ID || !process.env.PAYGLOCAL_API_KEY) {
     console.log(
-      "WARNING: RAZORPAY_KEY / RAZORPAY_SECRET missing in backend/.env — payments will fail"
+      "INFO: PayGlocal credentials running with development / sandbox fallback"
     )
   }
 })

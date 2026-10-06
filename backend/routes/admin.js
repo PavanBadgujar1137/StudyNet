@@ -20,6 +20,9 @@ const {
   getAllAdminRatings,
   verifyAdminRating,
   deleteAdminRating,
+  getScheduledCallsAdmin,
+  sendCallLinkAdmin,
+  updateCallStatusAdmin,
 } = require("../controllers/admin")
 
 // ─── Admin Account Setup (one-time, no auth required) ────────────────────────
@@ -64,4 +67,10 @@ router.get("/ratings", auth, isAdmin, getAllAdminRatings)
 router.put("/ratings/:id/verify", auth, isAdmin, verifyAdminRating)
 router.delete("/ratings/:id", auth, isAdmin, deleteAdminRating)
 
+// Practitioner Onboarding & Scheduled Guiding Calls
+router.get("/scheduled-calls", auth, isAdmin, getScheduledCallsAdmin)
+router.post("/send-call-link", auth, isAdmin, sendCallLinkAdmin)
+router.patch("/scheduled-calls/:id/status", auth, isAdmin, updateCallStatusAdmin)
+
 module.exports = router
+

@@ -16,6 +16,7 @@ import {
   FiBriefcase,
   FiUserCheck,
   FiCreditCard,
+  FiCalendar,
 } from 'react-icons/fi'
 
 export function PricingPage() {
@@ -54,7 +55,21 @@ export function PricingPage() {
       categoryTag: 'PAYMENT GATEWAY',
       icon: FiCreditCard,
       q: "What about payment gateway charges?",
-      a: "Gateway fees are passed through at cost and shown on every payout statement. No hidden margin."
+      a: "Gateway fees are processed transparently via PayGlocal at cost and shown on every payout statement. No hidden margin."
+    },
+    {
+      category: 'payment',
+      categoryTag: '72-HOUR PAYOUTS & TAXES',
+      icon: FiCreditCard,
+      q: "How and when do practitioner payouts happen?",
+      a: "100% of learner payments for courses and sessions flow into OpenHand's central account. Platform fees (10% Open, 5% Pro) and standard 18% GST are deducted, and your net earnings are automatically disbursed within 72 hours via PayGlocal direct transfer to your Bank or UPI."
+    },
+    {
+      category: 'practitioner',
+      categoryTag: 'ONBOARDING & CALL',
+      icon: FiCalendar,
+      q: "How does the Practitioner Yearly Subscription work?",
+      a: "Practitioners take the yearly subscription by clicking 'Book a Call & Take Subscription'. Select your slot via Google Calendar, complete payment with PayGlocal, and unlock full practitioner features. You will receive an immediate email confirmation, followed by your Google Meet link from our OpenHand connect team."
     },
     {
       category: 'payment',
@@ -173,7 +188,7 @@ export function PricingPage() {
                     Frequently Asked Questions
                   </h2>
                   <p className="text-slate-600 text-sm sm:text-base font-medium leading-relaxed">
-                    Everything you need to know about OpenHand subscriptions, free trials, Razorpay checkout, and practitioner payouts.
+                    Everything you need to know about OpenHand subscriptions, free trials, PayGlocal checkout, and practitioner payouts.
                   </p>
                 </div>
 

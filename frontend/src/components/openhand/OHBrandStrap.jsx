@@ -8,12 +8,14 @@ import React from "react";
 
 export const DEFAULT_BRANDS = [
   {
-    name: "Razorpay",
-    tagline: "72-Hour Working Day Payouts",
+    name: "PayGlocal",
+    tagline: "The International Gateway India Builds On",
     badge: "Payments",
     svg: (
-      <svg className="h-6 w-auto" viewBox="0 0 120 32" fill="currentColor">
-        <path d="M12 2L2 22h8l2-8h8l2-12H12zm18 0l-4 20h6l1.5-7h5c5 0 8.5-2.5 9.5-7 .8-4-1.5-6-6.5-6h-11.5zm6 4h4c2.5 0 4 1 3.5 3s-2 3-4.5 3h-4l1-6zm16-4l-4 20h6l4-20h-6zm14 0l-4 20h6l1.2-6h5.8l4 6h6.5l-4.5-6.5c3.5-1 5.5-3.5 6-6.5.8-4-1.8-7-6.8-7H66zm6 4h4.2c2.5 0 4 1 3.5 3s-2 3-4.5 3H69l1.2-6zm20-4l-4 20h6l4-20h-6zm12 0l-4 20h14l1-5h-8l1-4h7l1-5h-7l1-6h-6z" />
+      <svg className="h-6 w-auto" viewBox="0 0 130 32" fill="currentColor">
+        <circle cx="14" cy="16" r="10" fill="#1F5FE0" />
+        <path d="M10 16l3 3 7-7" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        <text x="30" y="22" fontFamily="Inter, sans-serif" fontSize="17" fontWeight="800" fill="currentColor" letterSpacing="-0.5px">PayGlocal</text>
       </svg>
     ),
   },

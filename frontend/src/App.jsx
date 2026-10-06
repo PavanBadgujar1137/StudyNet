@@ -24,6 +24,7 @@ import ConsentDeclaration from "./pages/ConsentDeclaration"
 import HomeMarketing from "./pages/marketing/Home"
 import PractitionerJourney from "./pages/marketing/PractitionerJourney"
 import PricingPage from "./pages/marketing/PricingPage"
+import ScheduleSubscriptionCall from "./pages/marketing/ScheduleSubscriptionCall"
 import FindAPractitioner from "./pages/marketing/FindAPractitioner"
 import PractitionerPublicProfile from "./pages/marketing/PractitionerPublicProfile"
 import CoPilot from "./pages/marketing/CoPilot"
@@ -115,6 +116,9 @@ function App() {
         <Route path="/" element={<HomeMarketing />} />
         <Route path="/practitioner-journey" element={<PractitionerJourney />} />
         <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/schedule-call" element={<ScheduleSubscriptionCall />} />
+        <Route path="/book-call" element={<ScheduleSubscriptionCall />} />
+        <Route path="/schedule-subscription" element={<ScheduleSubscriptionCall />} />
         <Route path="/for-organizations" element={<Navigate to="/contact-us" replace />} />
         <Route path="/find-a-practitioner" element={<FindAPractitioner />} />
         <Route path="/practitioner/:handle" element={<PractitionerPublicProfile />} />

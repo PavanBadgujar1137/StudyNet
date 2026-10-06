@@ -13,8 +13,10 @@ import {
 } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import { apiConnector } from '../../../../services/apiConnector'
+import PayGlocalCheckoutModal from '../../../openhand/PayGlocalCheckoutModal'
 
 export function Practitioners({ onUpdate, setActiveTab }) {
+
   const { token } = useSelector((state) => state.auth)
   const { user } = useSelector((state) => state.profile)
 
@@ -24,6 +26,10 @@ export function Practitioners({ onUpdate, setActiveTab }) {
   const [payingId, setPayingId] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedSpecialty, setSelectedSpecialty] = useState('All')
+  const [payglocalModalOpen, setPayglocalModalOpen] = useState(false)
+  const [payglocalOrderData, setPayglocalOrderData] = useState(null)
+  const [pendingPractitioner, setPendingPractitioner] = useState(null)
+
 
   // Map of practitioner ID -> Array of selected offer IDs
   const [selectedOffersMap, setSelectedOffersMap] = useState({})
@@ -111,22 +117,7 @@ export function Practitioners({ onUpdate, setActiveTab }) {
     return selectedOffers.reduce((sum, o) => sum + (o.price || 0), 0)
   }
 
-  // Helper to load Razorpay SDK dynamically
-  const loadRazorpaySDK = () => {
-    return new Promise((resolve) => {
-      if (window.Razorpay) {
-        resolve(true)
-        return
-      }
-      const script = document.createElement('script')
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
-      script.onload = () => resolve(true)
-      script.onerror = () => resolve(false)
-      document.body.appendChild(script)
-    })
-  }
-
-  // Handle client selecting practitioner, paying fee via Razorpay, and submitting connection request
+  // Handle client selecting practitioner, paying fee via PayGlocal, and submitting connection request
   const handlePayAndConnect = async (practitioner) => {
     if (!token) {
       toast.error('Please login to select and connect with a practitioner')
@@ -140,14 +131,7 @@ export function Practitioners({ onUpdate, setActiveTab }) {
     setPayingId(pId)
 
     try {
-      const isLoaded = await loadRazorpaySDK()
-      if (!isLoaded) {
-        toast.error('Razorpay SDK failed to load. Please check your internet connection.')
-        setPayingId(null)
-        return
-      }
-
-      // 1. Create Razorpay order in backend
+      // 1. Create PayGlocal order in backend
       let orderData = null
       try {
         const orderRes = await apiConnector(
@@ -164,94 +148,73 @@ export function Practitioners({ onUpdate, setActiveTab }) {
       }
 
       const orderObj = orderData?.order || {
-        id: `order_pract_${Date.now()}`,
+        id: `txn_pract_${Date.now()}`,
         amount: Math.round(amount * 100),
         currency: 'INR',
       }
-      const keyId = orderData?.key || process.env.REACT_APP_RAZORPAY_KEY || 'rzp_test_TDhFSRuAl18Gcb'
+      const keyId = orderData?.key || process.env.REACT_APP_PAYGLOCAL_KEY_ID
       const finalAmount = orderData?.amount || amount
 
-      const isRealRazorpayOrder =
-        typeof orderObj?.id === 'string' &&
-        /^order_[A-Za-z0-9]{14,}$/.test(orderObj.id) &&
-        !orderObj.id.includes('pract') &&
-        !orderObj.id.includes('mock') &&
-        !orderObj.id.includes('fake')
-
-      // 2. Open Razorpay Checkout modal with authentic order
-      const options = {
-        key: keyId,
-        amount: orderObj.amount || Math.round(amount * 100),
+      const modalOrder = {
+        orderId: orderObj.id || orderObj.merchantTxnId || `txn_pgl_${Date.now()}`,
+        gid: orderObj.gid || `GL_${Date.now()}`,
+        amount: finalAmount || (orderObj.amount ? orderObj.amount / 100 : amount),
         currency: orderObj.currency || 'INR',
-        name: 'OpenHand Practice Platform',
-        description: `Counseling Fee for ${pName}`,
-        ...(isRealRazorpayOrder ? { order_id: orderObj.id } : {}),
-        handler: async function (response) {
-          try {
-            // 3. Verify signature and confirm connection in backend
-            const res = await apiConnector(
-              'POST',
-              '/api/v1/practitioners/connect',
-              {
-                practitionerId: pId,
-                amountPaid: finalAmount || amount,
-                razorpay_order_id: response.razorpay_order_id || orderObj.id,
-                razorpay_payment_id: response.razorpay_payment_id || `pay_${Date.now()}`,
-                razorpay_signature: response.razorpay_signature || '',
-              },
-              { Authorization: `Bearer ${token}` }
-            )
-
-            if (res?.data?.success) {
-              toast.success(`🎉 Payment of ₹${finalAmount || amount} successful! Net payout credited to ${pName}.`)
-              loadData()
-              if (onUpdate) onUpdate()
-            } else {
-              toast.error(res?.data?.message || 'Could not verify payment.')
-            }
-          } catch (err) {
-            console.error('Payment verification error:', err)
-            toast.error('Connection request failed after payment verification.')
-          } finally {
-            setPayingId(null)
-          }
-        },
-        prefill: {
+        planName: `Counseling Fee for ${pName}`,
+        keyId: keyId,
+        merchantId: orderObj.merchantId || process.env.REACT_APP_PAYGLOCAL_MERCHANT_ID,
+        customerData: {
           name: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : '',
           email: user?.email || '',
-          ...(
-            (() => {
-              const rawPhone = user?.additionalDetails?.contactNumber || user?.contactNumber
-              if (rawPhone && rawPhone !== 'null' && rawPhone !== 'undefined') {
-                const trimmed = String(rawPhone).trim()
-                if (trimmed.length > 0) return { contact: trimmed }
-              }
-              return {}
-            })()
-          ),
-        },
-        theme: {
-          color: '#1F5FE0',
-        },
-        modal: {
-          ondismiss: function () {
-            setPayingId(null)
-          },
+          phone: user?.additionalDetails?.contactNumber || user?.contactNumber || '',
         },
       }
 
-      const rzp = new window.Razorpay(options)
-      rzp.on('payment.failed', function (resp) {
-        toast.error(`Payment Failed: ${resp.error?.description || 'Transaction cancelled'}`)
-        setPayingId(null)
-      })
-      rzp.open()
+      setPendingPractitioner({ id: pId, name: pName, amount: finalAmount || amount })
+      setPayglocalOrderData(modalOrder)
+      setPayglocalModalOpen(true)
     } catch (err) {
-      console.error('Razorpay Checkout initiation error:', err)
-      toast.error('Failed to initiate Razorpay checkout. Please try again.')
+      console.error('PayGlocal initiation error:', err)
+      toast.error('Failed to initiate PayGlocal checkout. Please try again.')
+    } finally {
       setPayingId(null)
     }
   }
+
+  const handlePayGlocalSuccess = async (response) => {
+    if (!pendingPractitioner) return
+    const vToast = toast.loading('Confirming connection with PayGlocal...')
+    try {
+      const res = await apiConnector(
+        'POST',
+        '/api/v1/practitioners/connect',
+        {
+          practitionerId: pendingPractitioner.id,
+          amountPaid: pendingPractitioner.amount,
+          payglocal_order_id: response.payglocal_order_id || response.merchantTxnId,
+          payglocal_payment_id: response.payglocal_payment_id || response.gid,
+          payglocal_gid: response.payglocal_gid || response.gid,
+          payglocal_signature: response.signature,
+        },
+        { Authorization: `Bearer ${token}` }
+      )
+
+      if (res?.data?.success) {
+        toast.success(`🎉 Payment of ₹${pendingPractitioner.amount} successful! Net payout credited to ${pendingPractitioner.name}.`, { id: vToast })
+        loadData()
+        if (onUpdate) onUpdate()
+      } else {
+        toast.error(res?.data?.message || 'Could not verify payment.', { id: vToast })
+      }
+    } catch (err) {
+      console.error('Payment verification error:', err)
+      toast.error('Connection request failed after payment verification.', { id: vToast })
+    } finally {
+      setPayglocalModalOpen(false)
+      setPendingPractitioner(null)
+    }
+  }
+
 
   // Filtered practitioners list (ONLY display practitioners who have published at least 1 active offer!)
   const filteredPractitioners = practitioners.filter((p) => {
@@ -597,7 +560,7 @@ export function Practitioners({ onUpdate, setActiveTab }) {
                     </span>
 
                     <span style={{ fontSize: '11px', color: '#64748B' }}>
-                      Razorpay Secured Checkout
+                      PayGlocal Secured Checkout
                     </span>
                   </div>
                 )}
@@ -754,6 +717,18 @@ export function Practitioners({ onUpdate, setActiveTab }) {
         >
           No registered practitioners matched your search query. Try clearing filters.
         </div>
+      )}
+
+      {payglocalModalOpen && (
+        <PayGlocalCheckoutModal
+          isOpen={payglocalModalOpen}
+          onClose={() => {
+            setPayglocalModalOpen(false)
+            setPayingId(null)
+          }}
+          orderData={payglocalOrderData}
+          onSuccess={handlePayGlocalSuccess}
+        />
       )}
     </div>
   )

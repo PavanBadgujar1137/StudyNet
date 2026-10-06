@@ -61,7 +61,7 @@ export function PlatformStatus() {
     },
     {
       name: 'Payments, Invoices & Payouts',
-      desc: 'Checkout forms, recurring subscriptions, invoice generation, Razorpay/Stripe payouts',
+      desc: 'Checkout forms, recurring subscriptions, invoice generation, PayGlocal/Stripe payouts',
       status: 'Operational',
       uptime: 99.98,
       latency: '45 ms',

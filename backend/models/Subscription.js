@@ -9,10 +9,22 @@ const subscriptionSchema = new mongoose.Schema(
       required: true,
     },
 
-    // Plan they subscribed to (matches Pricing page)
     planKey: {
       type: String,
-      enum: ["beginner", "advance", "champion", "starter", "growth", "practice", "master"],
+      enum: [
+        "open",
+        "pro",
+        "pro_monthly",
+        "pro_yearly",
+        "institution",
+        "starter",
+        "growth",
+        "practice",
+        "master",
+        "beginner",
+        "advance",
+        "champion",
+      ],
       required: true,
     },
 
@@ -31,11 +43,12 @@ const subscriptionSchema = new mongoose.Schema(
     // Payment details
     paymentGateway: {
       type: String,
-      enum: ["razorpay", "stripe", "manual"],
-      default: "razorpay",
+      enum: ["payglocal", "stripe", "manual"],
+      default: "payglocal",
     },
-    razorpayOrderId: { type: String },
-    razorpayPaymentId: { type: String },
+    payglocalOrderId: { type: String },
+    payglocalPaymentId: { type: String },
+    payglocalGid: { type: String },
 
     // Link to admin payment log
     adminPaymentLog: {

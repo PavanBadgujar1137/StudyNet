@@ -85,7 +85,7 @@ exports.getPlans = async (req, res) => {
   }
 }
 
-const { getRazorpayInstance, getRazorpayKeys } = require("../config/razorpay")
+const { createPayCollectOrder, verifyPayGlocalPayment, getPayGlocalConfig } = require("../config/payglocal")
 const crypto = require("crypto")
 const User = require("../models/User")
 
@@ -106,37 +106,42 @@ exports.createPlanOrder = async (req, res) => {
     const { planKey = "pro_monthly" } = req.body
     const keyLower = planKey.toLowerCase()
     const planInfo = PLAN_DETAILS[keyLower] || PLAN_DETAILS.pro_monthly
-    const amountInPaise = planInfo.price * 100
+    const user = req.user ? await User.findById(req.user.id).select("firstName lastName email contactNumber") : null
 
-    const { key_id } = getRazorpayKeys()
-    const instance = getRazorpayInstance()
-
-    const options = {
-      amount: amountInPaise,
+    const order = await createPayCollectOrder({
+      merchantTxnId: `plan_rcpt_${keyLower}_${Date.now()}`,
+      amount: planInfo.price,
       currency: "INR",
-      receipt: `plan_rcpt_${keyLower}_${Date.now()}`,
+      customer: {
+        email: user?.email,
+        firstName: user?.firstName,
+        lastName: user?.lastName,
+        contactNumber: user?.contactNumber,
+      },
       notes: {
         planKey: keyLower,
         planName: planInfo.name,
       },
-    }
-
-    const order = await instance.orders.create(options)
+    })
 
     return res.status(200).json({
       success: true,
       order,
-      key: key_id,
+      gid: order.gid,
+      merchantTxnId: order.merchantTxnId,
+      redirectUrl: order.redirectUrl,
+      key: order.keyId,
       amount: planInfo.price,
       planKey: keyLower,
       planName: planInfo.name,
       buttonId: planInfo.buttonId,
+      gateway: "payglocal",
     })
   } catch (error) {
     console.error("createPlanOrder error:", error)
     return res.status(500).json({
       success: false,
-      message: error.message || "Failed to create Razorpay plan order",
+      message: error.message || "Failed to create PayGlocal plan order",
     })
   }
 }
@@ -144,117 +149,129 @@ exports.createPlanOrder = async (req, res) => {
 exports.verifyPlanPayment = async (req, res) => {
   try {
     const {
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature,
+      payglocal_order_id,
+      payglocal_payment_id,
+      payglocal_gid,
+      merchantTxnId,
+      gid,
+      signature,
+      token,
       planKey = "pro_monthly",
     } = req.body
 
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+    const effectiveOrderId = payglocal_order_id || merchantTxnId
+    const effectivePaymentId = payglocal_payment_id || gid || payglocal_gid
+
+    if (!effectiveOrderId && !effectivePaymentId) {
       return res.status(400).json({
         success: false,
-        message: "Missing Razorpay payment verification parameters",
+        message: "Missing PayGlocal payment verification parameters",
       })
     }
 
-    const { key_secret } = getRazorpayKeys()
-    const generated_signature = crypto
-      .createHmac("sha256", key_secret)
-      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-      .digest("hex")
+    const verifyRes = await verifyPayGlocalPayment({
+      gid: effectivePaymentId,
+      merchantTxnId: effectiveOrderId,
+      orderId: effectiveOrderId,
+      paymentId: effectivePaymentId,
+      token,
+      signature,
+    })
 
-    if (generated_signature === razorpay_signature) {
-      const planPrices = {
-        open: 0,
-        pro: 999,
-        pro_monthly: 999,
-        pro_yearly: 9588,
-        pro_annual: 9588,
-        starter: 999,
-        growth: 999,
-        master: 9588,
-      }
-      const planNames = {
-        open: "Open Plan",
-        pro: "Pro Plan",
-        pro_monthly: "Pro Plan (Monthly)",
-        pro_yearly: "Pro Plan (Yearly)",
-        pro_annual: "Pro Plan (Yearly)",
-        institution: "Institution Plan",
-        starter: "Pro Plan",
-        growth: "Pro Plan",
-        master: "Pro Plan (Yearly)",
-      }
-      const keyLower = planKey.toLowerCase()
-      const amount = planPrices[keyLower] || 999
+    if (!verifyRes?.success) {
+      return res.status(400).json({
+        success: false,
+        message: "PayGlocal payment verification failed",
+      })
+    }
 
-      if (req.user?.id) {
-        await User.findByIdAndUpdate(req.user.id, {
-          activePlan: keyLower,
+    const planPrices = {
+      open: 0,
+      pro: 999,
+      pro_monthly: 999,
+      pro_yearly: 9588,
+      pro_annual: 9588,
+      starter: 999,
+      growth: 999,
+      master: 9588,
+    }
+    const planNames = {
+      open: "Open Plan",
+      pro: "Pro Plan",
+      pro_monthly: "Pro Plan (Monthly)",
+      pro_yearly: "Pro Plan (Yearly)",
+      pro_annual: "Pro Plan (Yearly)",
+      institution: "Institution Plan",
+      starter: "Pro Plan",
+      growth: "Pro Plan",
+      master: "Pro Plan (Yearly)",
+    }
+    const keyLower = planKey.toLowerCase()
+    const amount = planPrices[keyLower] || 999
+
+    if (req.user?.id) {
+      await User.findByIdAndUpdate(req.user.id, {
+        activePlan: keyLower,
+      })
+
+      try {
+        const Subscription = require("../models/Subscription")
+        const AdminPaymentLog = require("../models/AdminPaymentLog")
+
+        await Subscription.updateMany({ client: req.user.id, status: "active" }, { status: "expired" })
+
+        const startDate = new Date()
+        const endDate = new Date()
+        if (keyLower.includes("yearly") || keyLower.includes("annual")) {
+          endDate.setFullYear(endDate.getFullYear() + 1)
+        } else {
+          endDate.setMonth(endDate.getMonth() + 1)
+        }
+
+        const sub = await Subscription.create({
+          client: req.user.id,
+          planKey: keyLower,
+          planName: planNames[keyLower] || keyLower,
+          amount,
+          status: "active",
+          startDate,
+          endDate,
+          paymentGateway: "payglocal",
+          payglocalOrderId: effectiveOrderId,
+          payglocalPaymentId: effectivePaymentId,
+          payglocalGid: verifyRes.gid || effectivePaymentId,
         })
 
-        try {
-          const Subscription = require("../models/Subscription")
-          const AdminPaymentLog = require("../models/AdminPaymentLog")
+        const clientUser = await User.findById(req.user.id).select("firstName lastName")
+        const adminLog = await AdminPaymentLog.create({
+          paymentType: "subscription",
+          client: req.user.id,
+          clientName: clientUser ? `${clientUser.firstName} ${clientUser.lastName}` : "Client",
+          description: `${planNames[keyLower] || keyLower} Subscription`,
+          planKey: keyLower,
+          amount,
+          currency: "INR",
+          amountOwedToPractitioner: 0,
+          paymentGateway: "payglocal",
+          payglocalOrderId: effectiveOrderId,
+          payglocalPaymentId: effectivePaymentId,
+          payglocalGid: verifyRes.gid || effectivePaymentId,
+          subscriptionId: sub._id,
+          status: "received",
+        })
 
-          await Subscription.updateMany({ client: req.user.id, status: "active" }, { status: "expired" })
-
-          const startDate = new Date()
-          const endDate = new Date()
-          if (keyLower.includes("yearly") || keyLower.includes("annual")) {
-            endDate.setFullYear(endDate.getFullYear() + 1)
-          } else {
-            endDate.setMonth(endDate.getMonth() + 1)
-          }
-
-          const sub = await Subscription.create({
-            client: req.user.id,
-            planKey: keyLower,
-            planName: planNames[keyLower] || keyLower,
-            amount,
-            status: "active",
-            startDate,
-            endDate,
-            paymentGateway: "razorpay",
-            razorpayOrderId: razorpay_order_id,
-            razorpayPaymentId: razorpay_payment_id,
-          })
-
-          const clientUser = await User.findById(req.user.id).select("firstName lastName")
-          const adminLog = await AdminPaymentLog.create({
-            paymentType: "subscription",
-            client: req.user.id,
-            clientName: clientUser ? `${clientUser.firstName} ${clientUser.lastName}` : "Client",
-            description: `${planNames[keyLower] || keyLower} Subscription`,
-            planKey: keyLower,
-            amount,
-            currency: "INR",
-            amountOwedToPractitioner: 0,
-            paymentGateway: "razorpay",
-            razorpayOrderId: razorpay_order_id,
-            razorpayPaymentId: razorpay_payment_id,
-            subscriptionId: sub._id,
-            status: "received",
-          })
-
-          sub.adminPaymentLog = adminLog._id
-          await sub.save()
-        } catch (subErr) {
-          console.warn("Subscription/AdminLog creation warning in plans controller:", subErr.message)
-        }
+        sub.adminPaymentLog = adminLog._id
+        await sub.save()
+      } catch (subErr) {
+        console.warn("Subscription/AdminLog creation warning in plans controller:", subErr.message)
       }
-
-      return res.status(200).json({
-        success: true,
-        message: `Payment successful! Welcome to the ${planNames[keyLower] || planKey}.`,
-        planKey: keyLower,
-      })
-    } else {
-      return res.status(400).json({
-        success: false,
-        message: "Razorpay signature verification failed",
-      })
     }
+
+    return res.status(200).json({
+      success: true,
+      message: `Payment successful! Welcome to the ${planNames[keyLower] || planKey}.`,
+      planKey: keyLower,
+    })
   } catch (error) {
     console.error("verifyPlanPayment error:", error)
     return res.status(500).json({
@@ -263,4 +280,286 @@ exports.verifyPlanPayment = async (req, res) => {
     })
   }
 }
+
+// ─── 4. CREATE PRACTITIONER CALL + SUBSCRIPTION ORDER ────────────────────────
+exports.createSubscriptionCallOrder = async (req, res) => {
+  try {
+    const {
+      planKey = "pro_yearly",
+      scheduledDate,
+      scheduledTimeSlot,
+      timezone = "Asia/Kolkata (IST)",
+      modality = "General Practice",
+      goals = "",
+      practitionerName = "",
+      practitionerEmail = "",
+      practitionerPhone = "",
+    } = req.body
+
+    const keyLower = planKey.toLowerCase()
+    const planInfo = PLAN_DETAILS[keyLower] || PLAN_DETAILS.pro_yearly
+
+    let user = null
+    if (req.user?.id) {
+      user = await User.findById(req.user.id).select("firstName lastName email contactNumber")
+    }
+
+    const effectiveName = practitionerName || (user ? `${user.firstName || ""} ${user.lastName || ""}`.trim() : "Practitioner")
+    const effectiveEmail = practitionerEmail || user?.email || "practitioner@openhand.live"
+    const effectivePhone = practitionerPhone || user?.contactNumber || ""
+
+    const order = await createPayCollectOrder({
+      merchantTxnId: `call_sub_${keyLower}_${Date.now()}`,
+      amount: planInfo.price,
+      currency: "INR",
+      customer: {
+        email: effectiveEmail,
+        firstName: effectiveName.split(" ")[0] || "Practitioner",
+        lastName: effectiveName.split(" ").slice(1).join(" ") || "",
+        contactNumber: effectivePhone,
+      },
+      notes: {
+        planKey: keyLower,
+        planName: planInfo.name,
+        scheduledDate: scheduledDate || "",
+        scheduledTimeSlot: scheduledTimeSlot || "",
+        timezone: timezone || "Asia/Kolkata (IST)",
+        modality: modality || "",
+        goals: goals || "",
+        practitionerName: effectiveName,
+        practitionerEmail: effectiveEmail,
+      },
+    })
+
+    return res.status(200).json({
+      success: true,
+      order,
+      gid: order.gid,
+      merchantTxnId: order.merchantTxnId,
+      redirectUrl: order.redirectUrl,
+      key: order.keyId,
+      amount: planInfo.price,
+      planKey: keyLower,
+      planName: planInfo.name,
+      buttonId: planInfo.buttonId,
+      gateway: "payglocal",
+    })
+  } catch (error) {
+    console.error("createSubscriptionCallOrder error:", error)
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to initialize PayGlocal call subscription order",
+    })
+  }
+}
+
+// ─── 5. VERIFY PRACTITIONER CALL + SUBSCRIPTION PAYMENT ──────────────────────
+exports.verifySubscriptionCallOrder = async (req, res) => {
+  try {
+    const {
+      payglocal_order_id,
+      payglocal_payment_id,
+      payglocal_gid,
+      merchantTxnId,
+      gid,
+      signature,
+      token,
+      planKey = "pro_yearly",
+      scheduledDate,
+      scheduledTimeSlot,
+      timezone = "Asia/Kolkata (IST)",
+      modality = "General Practice",
+      goals = "",
+      practitionerName = "",
+      practitionerEmail = "",
+      practitionerPhone = "",
+      googleCalendarEventUrl = "",
+    } = req.body
+
+    const effectiveOrderId = payglocal_order_id || merchantTxnId
+    const effectivePaymentId = payglocal_payment_id || gid || payglocal_gid
+
+    if (!effectiveOrderId && !effectivePaymentId) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing PayGlocal payment verification parameters",
+      })
+    }
+
+    const verifyRes = await verifyPayGlocalPayment({
+      gid: effectivePaymentId,
+      merchantTxnId: effectiveOrderId,
+      orderId: effectiveOrderId,
+      paymentId: effectivePaymentId,
+      token,
+      signature,
+    })
+
+    if (!verifyRes?.success) {
+      return res.status(400).json({
+        success: false,
+        message: "PayGlocal payment verification failed",
+      })
+    }
+
+    const keyLower = planKey.toLowerCase()
+    const planInfo = PLAN_DETAILS[keyLower] || PLAN_DETAILS.pro_yearly
+    const amount = planInfo.price
+
+    // Find or link user
+    let user = null
+    if (req.user?.id) {
+      user = await User.findById(req.user.id)
+    } else if (practitionerEmail) {
+      user = await User.findOne({ email: practitionerEmail.toLowerCase().trim() })
+    }
+
+    const effectiveUserId = user?._id || req.user?.id
+    const effectiveName = practitionerName || (user ? `${user.firstName || ""} ${user.lastName || ""}`.trim() : "Practitioner")
+    const effectiveEmail = practitionerEmail || user?.email || "practitioner@openhand.live"
+    const effectivePhone = practitionerPhone || user?.contactNumber || ""
+
+    // 1. Upgrade user if account exists
+    if (user) {
+      user.activePlan = keyLower
+      user.accountType = "Practitioner"
+      await user.save()
+    }
+
+    // 2. Create 1-Year Subscription Record
+    const Subscription = require("../models/Subscription")
+    const AdminPaymentLog = require("../models/AdminPaymentLog")
+    const PractitionerScheduleCall = require("../models/PractitionerScheduleCall")
+    const mailSender = require("../utils/mailSender")
+    const { practitionerCallScheduledEmail } = require("../mail/templates/practitionerCallScheduledEmail")
+    const { adminCallAlertEmail } = require("../mail/templates/adminCallAlertEmail")
+
+    if (effectiveUserId) {
+      await Subscription.updateMany({ client: effectiveUserId, status: "active" }, { status: "expired" })
+    }
+
+    const startDate = new Date()
+    const endDate = new Date()
+    endDate.setFullYear(endDate.getFullYear() + 1) // 1-year yearly subscription
+
+    const sub = await Subscription.create({
+      client: effectiveUserId || new mongoose.Types.ObjectId(),
+      planKey: keyLower,
+      planName: planInfo.name,
+      amount,
+      status: "active",
+      startDate,
+      endDate,
+      paymentGateway: "payglocal",
+      payglocalOrderId: effectiveOrderId,
+      payglocalPaymentId: effectivePaymentId,
+      payglocalGid: verifyRes.gid || effectivePaymentId,
+    })
+
+    // 3. Create Admin Payment Ledger Log (central OpenHand account revenue)
+    const adminLog = await AdminPaymentLog.create({
+      paymentType: "subscription",
+      client: effectiveUserId || null,
+      clientName: effectiveName,
+      description: `Yearly Practitioner Subscription & Onboarding Call: ${planInfo.name}`,
+      planKey: keyLower,
+      amount,
+      currency: "INR",
+      amountOwedToPractitioner: 0, // Central OpenHand account
+      paymentGateway: "payglocal",
+      payglocalOrderId: effectiveOrderId,
+      payglocalPaymentId: effectivePaymentId,
+      payglocalGid: verifyRes.gid || effectivePaymentId,
+      subscriptionId: sub._id,
+      status: "received",
+    })
+
+    sub.adminPaymentLog = adminLog._id
+    await sub.save()
+
+    // 4. Create PractitionerScheduleCall Record
+    const scheduleCall = await PractitionerScheduleCall.create({
+      practitioner: effectiveUserId || sub.client,
+      practitionerName: effectiveName,
+      practitionerEmail: effectiveEmail,
+      practitionerPhone: effectivePhone,
+      modality: modality || "General Practice",
+      planKey: keyLower,
+      planName: planInfo.name,
+      amountPaid: amount,
+      currency: "INR",
+      scheduledDate: scheduledDate || new Date().toISOString().split("T")[0],
+      scheduledTimeSlot: scheduledTimeSlot || "11:00 AM - 11:45 AM IST",
+      timezone: timezone || "Asia/Kolkata (IST)",
+      goals: goals || "",
+      googleCalendarEventUrl: googleCalendarEventUrl || "",
+      status: "scheduled",
+      paymentGateway: "payglocal",
+      payglocalOrderId: effectiveOrderId,
+      payglocalPaymentId: effectivePaymentId,
+      payglocalGid: verifyRes.gid || effectivePaymentId,
+      subscriptionId: sub._id,
+      adminPaymentLog: adminLog._id,
+    })
+
+    // 5. Send Confirmation Email to Practitioner
+    try {
+      await mailSender(
+        effectiveEmail,
+        `🎉 Confirmed: OpenHand ${planInfo.name} & Guiding Call Booked!`,
+        practitionerCallScheduledEmail({
+          name: effectiveName,
+          planName: planInfo.name,
+          amountPaid: amount,
+          scheduledDate: scheduleCall.scheduledDate,
+          scheduledTimeSlot: scheduleCall.scheduledTimeSlot,
+          timezone: scheduleCall.timezone,
+          googleCalendarUrl: googleCalendarEventUrl,
+          orderId: effectiveOrderId,
+          paymentId: effectivePaymentId,
+        })
+      )
+    } catch (emailErr) {
+      console.warn("Practitioner call confirmation email error:", emailErr.message)
+    }
+
+    // 6. Send Alert Email to Admin / Contact Team
+    try {
+      const adminAlertEmailAddress = process.env.ADMIN_ALERT_EMAIL || "connect@openhand.live"
+      await mailSender(
+        adminAlertEmailAddress,
+        `📞 Alert: New Practitioner Call Booked + Paid (₹${amount}) - ${effectiveName}`,
+        adminCallAlertEmail({
+          practitionerName: effectiveName,
+          practitionerEmail: effectiveEmail,
+          practitionerPhone: effectivePhone,
+          modality,
+          planName: planInfo.name,
+          amountPaid: amount,
+          scheduledDate: scheduleCall.scheduledDate,
+          scheduledTimeSlot: scheduleCall.scheduledTimeSlot,
+          goals,
+          paymentId: effectivePaymentId,
+        })
+      )
+    } catch (adminEmailErr) {
+      console.warn("Admin call alert email error:", adminEmailErr.message)
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `🎉 Payment verified & Onboarding Call confirmed for ${scheduleCall.scheduledDate}! Welcome to ${planInfo.name}.`,
+      scheduleCall,
+      subscription: sub,
+      planKey: keyLower,
+    })
+  } catch (error) {
+    console.error("verifySubscriptionCallOrder error:", error)
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to verify PayGlocal call subscription payment",
+    })
+  }
+}
+
 

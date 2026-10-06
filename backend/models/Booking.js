@@ -33,11 +33,12 @@ const bookingSchema = new mongoose.Schema(
     scheduledAt: { type: Date },
     paymentGateway: {
       type: String,
-      enum: ["razorpay", "stripe", "manual"],
-      default: "razorpay",
+      enum: ["payglocal", "stripe", "manual", "discount_grant"],
+      default: "payglocal",
     },
-    razorpayOrderId: { type: String },
-    razorpayPaymentId: { type: String },
+    payglocalOrderId: { type: String },
+    payglocalPaymentId: { type: String },
+    payglocalGid: { type: String },
     stripePaymentIntentId: { type: String },
     settlementStatus: {
       type: String,

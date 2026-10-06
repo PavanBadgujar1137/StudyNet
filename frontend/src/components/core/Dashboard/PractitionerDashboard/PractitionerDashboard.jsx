@@ -36,7 +36,9 @@ import AuraChat from '../AuraChat'
 import { PractitionerOnboarding } from '../../../../pages/PractitionerOnboarding'
 import OHPricingSection from '../../../openhand/OHPricingSection'
 import OHPricingModal from '../../../openhand/OHPricingModal'
+import PayGlocalCheckoutModal from '../../../openhand/PayGlocalCheckoutModal'
 import { toast } from 'react-hot-toast'
+
 import { apiConnector } from '../../../../services/apiConnector'
 import { fetchPractitionerDashboardData } from '../../../../services/operations/dashboardAPI'
 
@@ -78,6 +80,8 @@ export function PractitionerDashboard() {
   const [subStatus, setSubStatus] = useState(null)
   const [payingPlan, setPayingPlan] = useState(null)
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false)
+  const [payglocalModalOpen, setPayglocalModalOpen] = useState(false)
+  const [payglocalOrderData, setPayglocalOrderData] = useState(null)
 
   const { user } = useSelector((state) => state.profile)
   const { token } = useSelector((state) => state.auth)
@@ -112,22 +116,8 @@ export function PractitionerDashboard() {
 
   const handlePayNow = async (planKey) => {
     setPayingPlan(planKey)
-    const toastId = toast.loading('Initializing Razorpay Gateway...')
+    const toastId = toast.loading('Initializing PayGlocal Checkout...')
     try {
-      const isLoaded = await new Promise((resolve) => {
-        if (window.Razorpay) return resolve(true)
-        const script = document.createElement('script')
-        script.src = 'https://checkout.razorpay.com/v1/checkout.js'
-        script.onload = () => resolve(true)
-        script.onerror = () => resolve(false)
-        document.body.appendChild(script)
-      })
-      if (!isLoaded) {
-        toast.error('Failed to load Razorpay SDK', { id: toastId })
-        setPayingPlan(null)
-        return
-      }
-
       const res = await apiConnector('POST', '/api/v1/plans/create-order', { planKey }, { Authorization: `Bearer ${token}` })
       if (!res?.data?.success || !res?.data?.order) {
         toast.error('Failed to create order', { id: toastId })
@@ -138,70 +128,57 @@ export function PractitionerDashboard() {
       const { order, key, planName } = res.data
       toast.dismiss(toastId)
 
-      const isRealRazorpayOrder =
-        typeof order?.id === 'string' &&
-        /^order_[A-Za-z0-9]{14,}$/.test(order.id) &&
-        !order.id.includes('sub') &&
-        !order.id.includes('pract') &&
-        !order.id.includes('mock') &&
-        !order.id.includes('fake')
-
-      const options = {
-        key,
-        amount: order.amount,
-        currency: order.currency || 'INR',
-        name: 'OpenHand Practitioner Platform',
-        description: `Subscription: ${planName}`,
-        ...(isRealRazorpayOrder ? { order_id: order.id } : {}),
-        prefill: {
+      setPayglocalOrderData({
+        orderId: order?.id || order?.merchantTxnId || `txn_plan_${Date.now()}`,
+        gid: order?.gid || `GL_${Date.now()}`,
+        amount: order?.amount ? (order.amount > 1000 ? order.amount / 100 : order.amount) : 0,
+        currency: order?.currency || 'INR',
+        planName: `Subscription: ${planName}`,
+        keyId: key || process.env.REACT_APP_PAYGLOCAL_KEY_ID,
+        merchantId: order?.merchantId || process.env.REACT_APP_PAYGLOCAL_MERCHANT_ID,
+        customerData: {
           name: practitionerName || '',
           email: user?.email || '',
-          ...(
-            (() => {
-              const rawPhone = user?.additionalDetails?.contactNumber || user?.contactNumber
-              if (rawPhone && rawPhone !== 'null' && rawPhone !== 'undefined') {
-                const trimmed = String(rawPhone).trim()
-                if (trimmed.length > 0) return { contact: trimmed }
-              }
-              return {}
-            })()
-          ),
+          phone: user?.additionalDetails?.contactNumber || user?.contactNumber || '',
         },
-        theme: { color: '#1F5FE0' },
-        handler: async (response) => {
-          const vToast = toast.loading('Verifying Razorpay payment...')
-          try {
-            const vRes = await apiConnector('POST', '/api/v1/plans/verify-payment', {
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              planKey,
-            }, { Authorization: `Bearer ${token}` })
-
-            if (vRes?.data?.success) {
-              toast.success(`🎉 ${planName} Activated! Platform Unlocked.`, { id: vToast })
-              fetchSubStatus()
-              loadData()
-            } else {
-              toast.error(vRes?.data?.message || 'Verification failed', { id: vToast })
-            }
-          } catch (e) {
-            toast.error('Payment verification error', { id: vToast })
-          } finally {
-            setPayingPlan(null)
-          }
-        },
-        modal: {
-          ondismiss: () => setPayingPlan(null)
-        }
-      }
-      const rzp = new window.Razorpay(options)
-      rzp.open()
+        planKey,
+        displayPlanName: planName,
+      })
+      setPayglocalModalOpen(true)
     } catch (e) {
       toast.error('Payment initialization failed', { id: toastId })
       setPayingPlan(null)
     }
   }
+
+  const handlePayGlocalSuccess = async (response) => {
+    if (!payglocalOrderData) return
+    const vToast = toast.loading('Verifying PayGlocal payment...')
+    try {
+      const vRes = await apiConnector('POST', '/api/v1/plans/verify-payment', {
+        payglocal_order_id: response.payglocal_order_id || response.merchantTxnId,
+        payglocal_payment_id: response.payglocal_payment_id || response.gid,
+        payglocal_gid: response.payglocal_gid || response.gid,
+        payglocal_signature: response.signature,
+        planKey: payglocalOrderData.planKey,
+      }, { Authorization: `Bearer ${token}` })
+
+      if (vRes?.data?.success) {
+        toast.success(`🎉 ${payglocalOrderData.displayPlanName || 'Plan'} Activated! Platform Unlocked.`, { id: vToast })
+        fetchSubStatus()
+        loadData()
+      } else {
+        toast.error(vRes?.data?.message || 'Verification failed', { id: vToast })
+      }
+    } catch (e) {
+      toast.error('Payment verification error', { id: vToast })
+    } finally {
+      setPayingPlan(null)
+      setPayglocalModalOpen(false)
+      setPayglocalOrderData(null)
+    }
+  }
+
 
   const isPractitionerSubscribed = subStatus?.hasActiveSubscription || ['starter', 'growth', 'practice', 'master'].includes(user?.activePlan)
   const isTrialActive = subStatus?.isTrialActive === true  // only when server confirms a real trial
@@ -530,7 +507,7 @@ export function PractitionerDashboard() {
                   defaultRole="practitioner"
                   hideRoleSwitcher={true}
                   title="Choose a Practitioner Plan to Unlock Practice"
-                  subtitle="Instant Razorpay Checkout — Choose a plan to unlock all features"
+                  subtitle="Instant PayGlocal Checkout — The International Payment Gateway India Builds On"
                   onSuccess={() => loadData()}
                 />
               </div>
@@ -600,8 +577,21 @@ export function PractitionerDashboard() {
             setIsPlanModalOpen(false)
           }}
         />
+
+        {payglocalModalOpen && (
+          <PayGlocalCheckoutModal
+            isOpen={payglocalModalOpen}
+            onClose={() => {
+              setPayglocalModalOpen(false)
+              setPayingPlan(null)
+            }}
+            orderData={payglocalOrderData}
+            onSuccess={handlePayGlocalSuccess}
+          />
+        )}
       </main>
     </div>
+
   )
 }
 
