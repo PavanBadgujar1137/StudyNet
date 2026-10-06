@@ -804,6 +804,13 @@ exports.connectClientWithPractitioner = async (req, res) => {
           `Hi ${clientUser.firstName},\n\nYour payment of ₹${grossAmount} for practitioner counseling session with ${practUser.firstName} ${practUser.lastName} was processed successfully via PayGlocal (The international payment gateway India builds on).\n\nTransaction Ref: ${glPaymentId}\nOrder Ref: ${glOrderId}\n\nYour connection request is now sent to ${practUser.firstName} for approval.`
         )
       }
+      // Multi-Channel Purchase Notification (WhatsApp + Email)
+      try {
+        const { sendSessionPurchaseNotification } = require("../services/notificationService")
+        sendSessionPurchaseNotification(booking).catch(err => console.warn("Purchase notif err:", err.message))
+      } catch (notifErr) {
+        console.warn("Purchase notif init err:", notifErr.message)
+      }
     } catch (mailErr) {
       console.warn("Notification email trigger warning:", mailErr.message)
     }

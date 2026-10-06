@@ -381,6 +381,14 @@ exports.bookOffer = async (req, res) => {
         orderId: null,
       })
 
+      // Multi-Channel Purchase Notification (WhatsApp + Email)
+      try {
+        const { sendSessionPurchaseNotification } = require("../services/notificationService")
+        sendSessionPurchaseNotification(booking._id).catch(err => console.warn("Purchase notif err:", err.message))
+      } catch (notifErr) {
+        console.warn("Purchase notif init err:", notifErr.message)
+      }
+
       return res.status(200).json({
         success: true,
         message: "🎉 1 Free 1:1 Private Session booked! (Included with your Master VIP Plan)",
@@ -418,6 +426,14 @@ exports.bookOffer = async (req, res) => {
         paymentId: mockStripeIntentId,
         orderId: null,
       })
+
+      // Multi-Channel Purchase Notification (WhatsApp + Email)
+      try {
+        const { sendSessionPurchaseNotification } = require("../services/notificationService")
+        sendSessionPurchaseNotification(booking._id).catch(err => console.warn("Purchase notif err:", err.message))
+      } catch (notifErr) {
+        console.warn("Purchase notif init err:", notifErr.message)
+      }
 
       return res.status(200).json({
         success: true,
@@ -547,20 +563,12 @@ exports.verifyOfferBooking = async (req, res) => {
       orderId: effectiveOrderId,
     })
 
-    // Email client
+    // Multi-Channel Purchase Notification (WhatsApp + Email)
     try {
-      await mailSender(
-        clientUser.email,
-        `Booking Confirmed — ${booking.offer?.title || "Session"}`,
-        paymentSuccessEmail(
-          `${clientUser.firstName} ${clientUser.lastName}`,
-          booking.amount,
-          effectiveOrderId,
-          effectivePaymentId
-        )
-      )
-    } catch (emailErr) {
-      console.warn("Booking email failed:", emailErr.message)
+      const { sendSessionPurchaseNotification } = require("../services/notificationService")
+      sendSessionPurchaseNotification(booking).catch(err => console.warn("Purchase notif err:", err.message))
+    } catch (notifErr) {
+      console.warn("Booking notification trigger warning:", notifErr.message)
     }
 
     return res.status(200).json({
