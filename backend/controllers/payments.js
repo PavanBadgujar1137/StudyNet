@@ -301,10 +301,14 @@ exports.getMySubscription = async (req, res) => {
 // This replaces the old bookOffer. ALL payment goes to admin.
 exports.bookOffer = async (req, res) => {
   try {
-    const { offerId, scheduledAt, gateway = "payglocal" } = req.body
+    const { offerId, scheduledAt, gateway = "payglocal", clientPhone, clientEmail } = req.body
     const userId = req.user.id
 
-    const offer = await Offer.findById(offerId).populate("practitioner", "firstName lastName email")
+    const [offer, clientUser] = await Promise.all([
+      Offer.findById(offerId).populate("practitioner", "firstName lastName email"),
+      User.findById(userId).select("firstName lastName email contactNumber whatsappNumber additionalDetails"),
+    ])
+
     if (!offer) {
       return res.status(404).json({ success: false, message: "Offer not found" })
     }
@@ -314,6 +318,8 @@ exports.bookOffer = async (req, res) => {
 
     const practitionerId = offer.practitioner._id
     const practitionerUser = offer.practitioner
+    const resolvedPhone = clientPhone || req.body?.phone || req.body?.whatsappNumber || clientUser?.whatsappNumber || clientUser?.contactNumber || clientUser?.additionalDetails?.contactNumber || ""
+    const resolvedEmail = clientEmail || clientUser?.email || ""
 
     // ── Calculate dynamic amount based on Client Subscription Plan Perks ──
     const activeSub = await Subscription.findOne({ client: userId, status: "active" }).sort({ createdAt: -1 })
@@ -362,6 +368,8 @@ exports.bookOffer = async (req, res) => {
         amount: 0,
         commission: 0,
         netPayout: 0,
+        clientPhone: resolvedPhone,
+        clientEmail: resolvedEmail,
         paymentGateway: "manual",
         status: "confirmed",
         settlementStatus: "settled",
@@ -407,6 +415,8 @@ exports.bookOffer = async (req, res) => {
         amount: grossAmount,
         commission: 0,
         netPayout: practitionerPortion,
+        clientPhone: resolvedPhone,
+        clientEmail: resolvedEmail,
         paymentGateway: "stripe",
         stripePaymentIntentId: mockStripeIntentId,
         status: "confirmed",
@@ -444,16 +454,15 @@ exports.bookOffer = async (req, res) => {
     }
 
     // PayGlocal flow — create order with discounted amount
-    const clientUser = await User.findById(userId).select("firstName lastName email contactNumber")
     const pglOrder = await createPayCollectOrder({
       merchantTxnId: `oh_offer_${Date.now()}`,
       amount: grossAmount,
       currency: "INR",
       customer: {
-        email: clientUser?.email,
+        email: resolvedEmail,
         firstName: clientUser?.firstName,
         lastName: clientUser?.lastName,
-        contactNumber: clientUser?.contactNumber,
+        contactNumber: resolvedPhone,
       },
       notes: {
         offerId: offerId.toString(),
@@ -472,6 +481,8 @@ exports.bookOffer = async (req, res) => {
       amount: grossAmount,
       commission: 0,
       netPayout: practitionerPortion,
+      clientPhone: resolvedPhone,
+      clientEmail: resolvedEmail,
       paymentGateway: "payglocal",
       payglocalOrderId: pglOrder.merchantTxnId,
       payglocalGid: pglOrder.gid,
@@ -543,6 +554,9 @@ exports.verifyOfferBooking = async (req, res) => {
     booking.paymentGateway = "payglocal"
     booking.status = "confirmed"
     booking.settlementStatus = "pending_t2"
+    if (req.body?.clientPhone && !booking.clientPhone) {
+      booking.clientPhone = req.body.clientPhone
+    }
     await booking.save()
 
     const [clientUser, practitionerUser] = await Promise.all([
@@ -972,6 +986,14 @@ exports.confirmFreeDiscountBooking = async (req, res) => {
     const practitionerId = offer.practitioner?._id || offer.practitioner
     const fakePaymentId = `free_sess_${Date.now()}`
 
+    const [clientUser, practitionerUser] = await Promise.all([
+      User.findById(userId).select("firstName lastName email contactNumber whatsappNumber additionalDetails"),
+      User.findById(practitionerId).select("firstName lastName email"),
+    ])
+
+    const resolvedPhone = req.body?.clientPhone || req.body?.phone || req.body?.whatsappNumber || clientUser?.whatsappNumber || clientUser?.contactNumber || clientUser?.additionalDetails?.contactNumber || ""
+    const resolvedEmail = req.body?.clientEmail || clientUser?.email || ""
+
     const booking = await Booking.create({
       client: userId,
       practitioner: practitionerId,
@@ -980,6 +1002,8 @@ exports.confirmFreeDiscountBooking = async (req, res) => {
       amount: 0,
       commission: 0,
       netPayout: 0,
+      clientPhone: resolvedPhone,
+      clientEmail: resolvedEmail,
       paymentGateway: "discount_grant",
       payglocalPaymentId: fakePaymentId,
       status: "confirmed",
@@ -1002,11 +1026,6 @@ exports.confirmFreeDiscountBooking = async (req, res) => {
       })
     }
 
-    const [clientUser, practitionerUser] = await Promise.all([
-      User.findById(userId).select("firstName lastName email"),
-      User.findById(practitionerId).select("firstName lastName email"),
-    ])
-
     await _createInvoiceAndAdminLog({
       booking,
       clientId: userId,
@@ -1019,6 +1038,14 @@ exports.confirmFreeDiscountBooking = async (req, res) => {
       paymentId: fakePaymentId,
       orderId: null,
     })
+
+    // Multi-Channel Purchase Notification (WhatsApp + Email)
+    try {
+      const { sendSessionPurchaseNotification } = require("../services/notificationService")
+      sendSessionPurchaseNotification(booking._id).catch(err => console.warn("Purchase notif err:", err.message))
+    } catch (notifErr) {
+      console.warn("Purchase notif init err:", notifErr.message)
+    }
 
     return res.status(200).json({
       success: true,
@@ -1118,7 +1145,7 @@ async function _createInvoiceAndAdminLog({
 // ─── 5. CREATE PRACTITIONER PAYMENT ORDER ──────────────────────────────────────
 exports.createPractitionerOrder = async (req, res) => {
   try {
-    const { practitionerId, amount } = req.body
+    const { practitionerId, amount, clientPhone, clientEmail } = req.body
     const userId = req.user.id
 
     if (!practitionerId) {
@@ -1126,17 +1153,20 @@ exports.createPractitionerOrder = async (req, res) => {
     }
 
     const numericAmount = Number(amount) || 500
-    const clientUser = await User.findById(userId).select("firstName lastName email contactNumber")
+    const clientUser = await User.findById(userId).select("firstName lastName email contactNumber whatsappNumber")
+
+    const effectivePhone = clientPhone || clientUser?.whatsappNumber || clientUser?.contactNumber || ""
+    const effectiveEmail = clientEmail || clientUser?.email || ""
 
     const order = await createPayCollectOrder({
       merchantTxnId: `pract_${Date.now().toString().slice(-8)}`,
       amount: numericAmount,
       currency: "INR",
       customer: {
-        email: clientUser?.email,
+        email: effectiveEmail,
         firstName: clientUser?.firstName,
         lastName: clientUser?.lastName,
-        contactNumber: clientUser?.contactNumber,
+        contactNumber: effectivePhone,
       },
       notes: {
         userId: String(userId),

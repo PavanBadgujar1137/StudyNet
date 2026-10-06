@@ -704,6 +704,10 @@ exports.connectClientWithPractitioner = async (req, res) => {
       if (defaultOffer) targetOfferId = defaultOffer._id
     }
 
+    const clientUser = await User.findById(clientId).select("firstName lastName email contactNumber whatsappNumber additionalDetails")
+    const resolvedPhone = req.body?.clientPhone || req.body?.phone || req.body?.whatsappNumber || clientUser?.whatsappNumber || clientUser?.contactNumber || clientUser?.additionalDetails?.contactNumber || ""
+    const resolvedEmail = req.body?.clientEmail || clientUser?.email || ""
+
     const booking = await Booking.create({
       client: clientId,
       practitioner: practUser._id,
@@ -712,6 +716,8 @@ exports.connectClientWithPractitioner = async (req, res) => {
       amount: grossAmount,
       commission: platformFee,
       netPayout,
+      clientPhone: resolvedPhone,
+      clientEmail: resolvedEmail,
       paymentGateway: "payglocal",
       payglocalOrderId: glOrderId,
       payglocalPaymentId: glPaymentId,

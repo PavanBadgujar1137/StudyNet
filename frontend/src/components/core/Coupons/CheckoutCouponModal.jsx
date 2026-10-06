@@ -11,6 +11,7 @@ import {
   enrollFreeDiscountCourse,
   confirmFreeDiscountBooking,
 } from '../../../services/operations/couponAPI'
+import { countryCodes } from '../../../data/countryCodes'
 import PayGlocalCheckoutModal from '../../openhand/PayGlocalCheckoutModal'
 
 const fmt = (n) =>
@@ -39,6 +40,33 @@ export default function CheckoutCouponModal({
   const [errorMessage, setErrorMessage] = useState('')
   const [payglocalOrderData, setPayglocalOrderData] = useState(null)
   const [isPayglocalOpen, setIsPayglocalOpen] = useState(false)
+
+  // WhatsApp & Email Notification Phone State
+  const [selectedCountryCode, setSelectedCountryCode] = useState('+91')
+  const [whatsappPhone, setWhatsappPhone] = useState('')
+
+  useEffect(() => {
+    if (user) {
+      const raw =
+        user.whatsappNumber ||
+        user.contactNumber ||
+        user.additionalDetails?.contactNumber ||
+        ''
+      if (raw) {
+        const found = countryCodes.find((c) => raw.startsWith(c.code))
+        if (found) {
+          setSelectedCountryCode(found.code)
+          setWhatsappPhone(raw.slice(found.code.length).replace(/[^\d]/g, ''))
+        } else {
+          setWhatsappPhone(raw.replace(/[^\d]/g, ''))
+        }
+      }
+    }
+  }, [user])
+
+  const fullWhatsAppNumber = whatsappPhone.trim()
+    ? `${selectedCountryCode}${whatsappPhone.trim()}`
+    : ''
 
   const productId = product?._id
 
@@ -144,6 +172,8 @@ export default function CheckoutCouponModal({
               offerId: productId,
               scheduledAt,
               couponCodes: appliedCodes,
+              clientPhone: fullWhatsAppNumber,
+              clientEmail: user?.email,
             },
             token
           )
@@ -165,6 +195,8 @@ export default function CheckoutCouponModal({
           {
             courseId: productId,
             couponCodes: appliedCodes,
+            clientPhone: fullWhatsAppNumber,
+            clientEmail: user?.email,
           },
           { Authorization: `Bearer ${token}` }
         )
@@ -179,6 +211,8 @@ export default function CheckoutCouponModal({
             amount: finalAmount,
             offerId: productId,
             couponCodes: appliedCodes,
+            clientPhone: fullWhatsAppNumber,
+            clientEmail: user?.email,
           },
           { Authorization: `Bearer ${token}` }
         )
@@ -201,6 +235,7 @@ export default function CheckoutCouponModal({
         prefill: {
           name: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : '',
           email: user?.email || '',
+          contactNumber: fullWhatsAppNumber,
         },
       })
       setIsPayglocalOpen(true)
@@ -224,6 +259,7 @@ export default function CheckoutCouponModal({
             payglocal_gid: response.payglocal_gid || response.gid,
             signature: response.signature,
             couponCodes: appliedCodes,
+            clientPhone: fullWhatsAppNumber,
           },
           { Authorization: `Bearer ${token}` }
         )
@@ -246,6 +282,7 @@ export default function CheckoutCouponModal({
             payglocal_payment_id: response.payglocal_payment_id || response.gid,
             payglocal_gid: response.payglocal_gid || response.gid,
             signature: response.signature,
+            clientPhone: fullWhatsAppNumber,
           },
           { Authorization: `Bearer ${token}` }
         )
@@ -420,6 +457,109 @@ export default function CheckoutCouponModal({
               </div>
             </div>
           )}
+
+          {/* Multi-Channel Automated Notification Badge & WhatsApp Phone Input */}
+          <div
+            style={{
+              background: '#F0FDF4',
+              border: '1.5px solid #86EFAC',
+              borderRadius: 14,
+              padding: '14px 16px',
+              marginBottom: 20,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 16 }}>📱</span>
+                <span style={{ fontSize: 13, fontWeight: 800, color: '#166534' }}>
+                  {productType === 'session'
+                    ? 'Automated WhatsApp & Email Session Reminders'
+                    : 'Automated WhatsApp & Email Course Alerts'}
+                </span>
+              </div>
+              <span
+                style={{
+                  background: '#DCFCE7',
+                  border: '1px solid #86EFAC',
+                  color: '#15803D',
+                  fontSize: 10,
+                  fontWeight: 800,
+                  padding: '2px 8px',
+                  borderRadius: 10,
+                  textTransform: 'uppercase',
+                }}
+              >
+                Enabled
+              </span>
+            </div>
+
+            <p style={{ margin: '0 0 10px', fontSize: 12, color: '#15803D', lineHeight: 1.5 }}>
+              {productType === 'session' ? (
+                <>
+                  ✅ Instant booking confirmation + direct room links sent to your <strong>WhatsApp &amp; Email</strong>.
+                  <br />
+                  ⏰ Automated reminders triggered at <strong>1 Hour</strong>, <strong>15 Minutes</strong>, and <strong>2 Minutes</strong> before session starts.
+                </>
+              ) : (
+                <>
+                  ✅ Instant enrollment confirmation sent to your <strong>WhatsApp &amp; Email</strong>.
+                  <br />
+                  🎬 Whenever a new video lecture is uploaded by the practitioner, you receive instant WhatsApp &amp; Email alerts with direct stream links.
+                </>
+              )}
+            </p>
+
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <div style={{ minWidth: 120 }}>
+                <select
+                  value={selectedCountryCode}
+                  onChange={(e) => setSelectedCountryCode(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    borderRadius: 10,
+                    border: '1.5px solid #86EFAC',
+                    background: '#FFFFFF',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: '#14532D',
+                    outline: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {countryCodes.map((c, i) => (
+                    <option key={i} value={c.code}>
+                      {c.flag || ''} {c.code} ({c.name})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ flex: 1 }}>
+                <input
+                  type="tel"
+                  placeholder="WhatsApp Mobile Number"
+                  value={whatsappPhone}
+                  onChange={(e) => setWhatsappPhone(e.target.value.replace(/[^\d]/g, ''))}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: 10,
+                    border: '1.5px solid #86EFAC',
+                    background: '#FFFFFF',
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: '#14532D',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+            </div>
+            <div style={{ marginTop: 5, fontSize: 11, color: '#166534', opacity: 0.85 }}>
+              Verify your mobile number above to ensure direct delivery on WhatsApp.
+            </div>
+          </div>
 
           {/* Coupon Code Input */}
           <div style={{ marginBottom: 20 }}>

@@ -508,7 +508,7 @@ exports.verifySubscriptionCallOrder = async (req, res) => {
       adminPaymentLog: adminLog._id,
     })
 
-    // 5. Send Confirmation Email to Practitioner with Google Meet Link
+    // 5. Send Confirmation Email & WhatsApp to Practitioner with Google Meet Link
     try {
       await mailSender(
         effectiveEmail,
@@ -526,8 +526,26 @@ exports.verifySubscriptionCallOrder = async (req, res) => {
           paymentId: effectivePaymentId,
         })
       )
+
+      if (effectivePhone) {
+        const { sendWhatsAppMessage } = require("../utils/whatsappSender")
+        const waText = `🌿 *OpenHand — Practitioner Onboarding Call Confirmed!*
+
+Dear *${effectiveName}*,
+Your onboarding call for the *${planInfo.name}* has been successfully reserved!
+
+📅 *Scheduled Date:* ${scheduleCall.scheduledDate}
+⏰ *Time:* ${scheduleCall.scheduledTimeSlot} (${scheduleCall.timezone})
+🔗 *Google Meet Room:* ${dynamicMeetLink}
+
+We look forward to meeting you and accelerating your practice on OpenHand.
+
+Warmly,
+*OpenHand Onboarding Team*`
+        sendWhatsAppMessage(effectivePhone, waText).catch(e => console.warn("Practitioner WA send warning:", e.message))
+      }
     } catch (emailErr) {
-      console.warn("Practitioner call confirmation email error:", emailErr.message)
+      console.warn("Practitioner call confirmation notification error:", emailErr.message)
     }
 
     // 6. Send Alert Email to Admin / Contact Team
