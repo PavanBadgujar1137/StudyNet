@@ -16,25 +16,26 @@ const getPayGlocalConfig = () => {
     process.env.PAYGLOCAL_ENV === "production" ||
     process.env.APP_ENV === "production"
 
-  const merchantId =
-    process.env.PAYGLOCAL_MERCHANT_ID || "gl_merchant_openhand_live"
-  const keyId =
-    process.env.PAYGLOCAL_KEY_ID || "gl_key_live_openhand_01"
+  const merchantId = process.env.PAYGLOCAL_MERCHANT_ID || ""
+  const keyId = process.env.PAYGLOCAL_KEY_ID || ""
   const apiKey =
     process.env.PAYGLOCAL_API_KEY ||
     process.env.PAYGLOCAL_SECRET_KEY ||
-    "gl_sec_openhand_production_key"
+    ""
   const publicKey = process.env.PAYGLOCAL_PUBLIC_KEY || ""
   const privateKey = process.env.PAYGLOCAL_PRIVATE_KEY || ""
 
-  const env = isProd ? "production" : "uat"
-  const baseUrl = isProd
-    ? "https://api.prod.payglocal.in"
-    : "https://api.uat.payglocal.in"
+  const env = process.env.PAYGLOCAL_ENV || (isProd ? "production" : "uat")
+  const baseUrl =
+    process.env.PAYGLOCAL_BASE_URL ||
+    (env === "production"
+      ? "https://api.prod.payglocal.in"
+      : "https://api.uat.payglocal.in")
 
   const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000"
   const callbackUrl =
-    process.env.PAYGLOCAL_CALLBACK_URL || `${frontendUrl}/payment-callback`
+    process.env.PAYGLOCAL_CALLBACK_URL ||
+    (isProd ? "https://openhand.live/practice" : `${frontendUrl}/practice`)
 
   return {
     merchantId,

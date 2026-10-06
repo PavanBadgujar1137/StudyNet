@@ -17,6 +17,7 @@ import {
   FiDownload,
   FiChevronLeft,
   FiChevronRight,
+  FiChevronDown,
   FiGlobe,
 } from "react-icons/fi"
 import toast from "react-hot-toast"
@@ -51,6 +52,13 @@ const MODALITIES = [
   "Alternative & Holistic Healing",
   "Relationship & Family Counseling",
   "Other Healing Practice",
+]
+
+const currentSysYear = new Date().getFullYear()
+const YEAR_OPTIONS = [currentSysYear, currentSysYear + 1, currentSysYear + 2]
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
 ]
 
 export default function ScheduleSubscriptionCall() {
@@ -116,6 +124,37 @@ export default function ScheduleSubscriptionCall() {
     const nm = nextMonthDate.getMonth()
     const pad = (n) => String(n).padStart(2, "0")
     setSelectedDate(`${ny}-${pad(nm + 1)}-01`)
+  }
+
+  const handleMonthSelect = (newMonthIndex) => {
+    if (currentYear === today.getFullYear() && newMonthIndex < today.getMonth()) {
+      return
+    }
+    const newDate = new Date(currentYear, newMonthIndex, 1)
+    setCalendarMonth(newDate)
+
+    const pad = (n) => String(n).padStart(2, "0")
+    let targetDay = 1
+    if (currentYear === today.getFullYear() && newMonthIndex === today.getMonth()) {
+      targetDay = today.getDate() + 1
+    }
+    setSelectedDate(`${currentYear}-${pad(newMonthIndex + 1)}-${pad(targetDay)}`)
+  }
+
+  const handleYearSelect = (newYear) => {
+    let targetMonth = currentMonthIndex
+    if (newYear === today.getFullYear() && targetMonth < today.getMonth()) {
+      targetMonth = today.getMonth()
+    }
+    const newDate = new Date(newYear, targetMonth, 1)
+    setCalendarMonth(newDate)
+
+    const pad = (n) => String(n).padStart(2, "0")
+    let targetDay = 1
+    if (newYear === today.getFullYear() && targetMonth === today.getMonth()) {
+      targetDay = today.getDate() + 1
+    }
+    setSelectedDate(`${newYear}-${pad(targetMonth + 1)}-${pad(targetDay)}`)
   }
 
   const getCalendarMonthGrid = () => {
@@ -474,18 +513,32 @@ export default function ScheduleSubscriptionCall() {
         </div>
 
         {/* Hero Title Section */}
-        <div className="text-center max-w-3xl mx-auto mb-10">
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 uppercase tracking-wider mb-3">
-            Practitioner Yearly Onboarding
-          </div>
+        <div className="text-center max-w-5xl mx-auto mb-10">
+          <span
+            style={{
+              color: "#2563EB",
+              backgroundColor: "#EFF6FF",
+              border: "1px solid #BFDBFE",
+              borderRadius: "9999px",
+              padding: "5px 16px",
+              fontSize: "11px",
+              fontWeight: 800,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              display: "inline-block",
+              marginBottom: "12px",
+            }}
+          >
+            PRACTITIONER YEARLY ONBOARDING
+          </span>
           <h1
-            className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight"
-            style={{ fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif" }}
+            className="text-3xl sm:text-4xl lg:text-[44px] font-black tracking-tight my-2 leading-[1.15] text-[#0F172A] whitespace-normal md:whitespace-nowrap"
+            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
           >
             Book an Onboarding Call &amp; Take Subscription
           </h1>
-          <p className="mt-3 text-slate-600 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
-            Reserve your 1-on-1 strategy call with our OpenHand growth team via Google Calendar, complete your 1-year Pro Plan subscription via PayGlocal, and unlock full practitioner privileges.
+          <p className="mt-3 text-slate-600 text-sm sm:text-base max-w-2xl mx-auto font-medium leading-relaxed">
+            Schedule your 1-on-1 strategy call, activate Pro via PayGlocal, and unlock full practitioner privileges.
           </p>
         </div>
 
@@ -653,8 +706,8 @@ export default function ScheduleSubscriptionCall() {
                           1
                         </span>
                         <h3
-                          className="text-base sm:text-lg font-bold text-slate-900 tracking-tight"
-                          style={{ fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif" }}
+                          className="text-base sm:text-lg font-black text-slate-900 tracking-tight"
+                          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                         >
                           Google Calendar Scheduling
                         </h3>
@@ -692,12 +745,47 @@ export default function ScheduleSubscriptionCall() {
                   <div className="md:col-span-7 p-5 sm:p-6">
                     {/* Month Navigator Header */}
                     <div className="flex items-center justify-between mb-4">
-                      <span
-                        className="text-sm font-bold text-slate-900 tracking-tight"
-                        style={{ fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif" }}
-                      >
-                        {currentMonthName} {currentYear}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        {/* Professional Month Selector: Clean Neutral Styling (No Blue Box) */}
+                        <div className="relative inline-flex items-center">
+                          <select
+                            value={currentMonthIndex}
+                            onChange={(e) => handleMonthSelect(Number(e.target.value))}
+                            className="text-xs sm:text-sm font-bold text-slate-800 bg-slate-100/80 hover:bg-slate-200/70 border border-slate-200/90 rounded-md pl-2 pr-5 py-0.5 cursor-pointer focus:outline-none focus:ring-1 focus:ring-slate-400 focus:bg-white transition appearance-none"
+                            style={{ fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif" }}
+                            title="Select Month"
+                          >
+                            {MONTH_NAMES.map((name, idx) => {
+                              const isPastMonth = currentYear === today.getFullYear() && idx < today.getMonth()
+                              return (
+                                <option key={name} value={idx} disabled={isPastMonth}>
+                                  {name}
+                                </option>
+                              )
+                            })}
+                          </select>
+                          <FiChevronDown className="absolute right-1 text-slate-500 pointer-events-none text-xs" />
+                        </div>
+
+                        {/* Professional Year Selector: Clean Neutral Styling (No Blue Box) */}
+                        <div className="relative inline-flex items-center">
+                          <select
+                            value={currentYear}
+                            onChange={(e) => handleYearSelect(Number(e.target.value))}
+                            className="text-xs sm:text-sm font-bold text-slate-800 bg-slate-100/80 hover:bg-slate-200/70 border border-slate-200/90 rounded-md pl-2 pr-5 py-0.5 cursor-pointer focus:outline-none focus:ring-1 focus:ring-slate-400 focus:bg-white transition appearance-none"
+                            style={{ fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif" }}
+                            title="Select Year"
+                          >
+                            {YEAR_OPTIONS.map((year) => (
+                              <option key={year} value={year}>
+                                {year}
+                              </option>
+                            ))}
+                          </select>
+                          <FiChevronDown className="absolute right-1 text-slate-500 pointer-events-none text-xs" />
+                        </div>
+                      </div>
+
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
@@ -852,8 +940,8 @@ export default function ScheduleSubscriptionCall() {
                     2
                   </span>
                   <h3
-                    className="text-base sm:text-lg font-bold text-slate-900 tracking-tight"
-                    style={{ fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif" }}
+                    className="text-lg sm:text-xl font-black text-slate-900 tracking-tight"
+                    style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                   >
                     Practitioner Information
                   </h3>
@@ -975,7 +1063,7 @@ export default function ScheduleSubscriptionCall() {
                   </span>
                   <h3
                     className="text-2xl font-black text-slate-900"
-                    style={{ fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif" }}
+                    style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                   >
                     Pro Plan (1 Year Validity)
                   </h3>

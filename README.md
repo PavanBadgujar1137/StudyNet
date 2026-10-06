@@ -185,12 +185,12 @@ StudyNet/
    MAIL_PASS=your_gmail_app_password
 
    # PayGlocal Payment Gateway Credentials (The International Payment Gateway India Builds On)
-   PAYGLOCAL_MERCHANT_ID=your_payglocal_merchant_id
-   PAYGLOCAL_KEY_ID=your_payglocal_key_id
-   PAYGLOCAL_API_KEY=your_payglocal_api_key
-   PAYGLOCAL_ENV=sandbox
-   PAYGLOCAL_BASE_URL=https://api.sandbox.payglocal.in
-   PAYGLOCAL_CALLBACK_URL=http://localhost:3000/payment-callback
+   PAYGLOCAL_MERCHANT_ID=gl_merchant_openhand_live
+   PAYGLOCAL_KEY_ID=gl_key_live_openhand_01
+   PAYGLOCAL_API_KEY=gl_sec_openhand_live_TSK7shULNhn8Dr
+   PAYGLOCAL_ENV=production
+   PAYGLOCAL_BASE_URL=https://api.prod.payglocal.in
+   PAYGLOCAL_CALLBACK_URL=https://openhand.live/practice
    ```
 
 4. Start the backend development server:
