@@ -12,9 +12,19 @@ function normalizeWhatsAppNumber(raw) {
   let cleaned = String(raw).trim().replace(/[^\d+]/g, "")
   if (!cleaned) return null
 
+  // Handle leading 00 (common international exit code, e.g. 0091 -> +91)
+  if (cleaned.startsWith("00")) {
+    cleaned = "+" + cleaned.slice(2)
+  }
+
+  // Handle leading 0 for domestic mobile (e.g. 09876543210 -> +919876543210)
+  if (cleaned.startsWith("0") && cleaned.length === 11) {
+    cleaned = "+91" + cleaned.slice(1)
+  }
+
   // Ensure leading +
   if (!cleaned.startsWith("+")) {
-    // If 10 digits (typical Indian mobile), default to +91
+    // If 10 digits (typical mobile), default to +91
     if (cleaned.length === 10) {
       cleaned = "+91" + cleaned
     } else {

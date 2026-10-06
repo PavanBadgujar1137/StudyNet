@@ -199,10 +199,43 @@ async function sendSessionReminder1Hour(bookingIdOrDoc) {
   try {
     let booking = bookingIdOrDoc
     if (typeof booking === "string" || !booking.client?.email) {
-      booking = await Booking.findById(booking._id || booking)
-        .populate("client", "firstName lastName email contactNumber whatsappNumber")
+      const foundBooking = await Booking.findById(booking._id || booking)
+        .populate("client", "firstName lastName email contactNumber whatsappNumber additionalDetails")
         .populate("practitioner", "firstName lastName")
         .populate("offer", "title durationMinutes")
+
+      if (foundBooking) {
+        booking = foundBooking
+      } else {
+        const foundLiveClass = await LiveClass.findById(booking._id || booking)
+          .populate("client", "firstName lastName email contactNumber whatsappNumber additionalDetails")
+          .populate("instructor", "firstName lastName")
+
+        if (foundLiveClass) {
+          booking = {
+            _id: foundLiveClass._id,
+            client: foundLiveClass.client,
+            practitioner: foundLiveClass.instructor,
+            offer: {
+              title: foundLiveClass.title,
+              durationMinutes: Math.round(((foundLiveClass.scheduledEnd - foundLiveClass.scheduledStart) || 3000000) / 60000),
+            },
+            scheduledAt: foundLiveClass.scheduledStart,
+            meetingLink: `${FRONTEND_URL}/live-classroom/${foundLiveClass._id}`,
+            reminder1hSent: foundLiveClass.reminder1hSent,
+            save: async () => {
+              foundLiveClass.reminder1hSent = true
+              await foundLiveClass.save()
+            },
+          }
+        }
+      }
+    } else {
+      if (booking.instructor && !booking.practitioner) booking.practitioner = booking.instructor
+      if (booking.scheduledStart && !booking.scheduledAt) booking.scheduledAt = booking.scheduledStart
+      if (booking.title && !booking.offer) {
+        booking.offer = { title: booking.title, durationMinutes: 50 }
+      }
     }
 
     if (!booking || !booking.client || booking.reminder1hSent) return
@@ -266,10 +299,43 @@ async function sendSessionReminder15Min(bookingIdOrDoc) {
   try {
     let booking = bookingIdOrDoc
     if (typeof booking === "string" || !booking.client?.email) {
-      booking = await Booking.findById(booking._id || booking)
-        .populate("client", "firstName lastName email contactNumber whatsappNumber")
+      const foundBooking = await Booking.findById(booking._id || booking)
+        .populate("client", "firstName lastName email contactNumber whatsappNumber additionalDetails")
         .populate("practitioner", "firstName lastName")
         .populate("offer", "title durationMinutes")
+
+      if (foundBooking) {
+        booking = foundBooking
+      } else {
+        const foundLiveClass = await LiveClass.findById(booking._id || booking)
+          .populate("client", "firstName lastName email contactNumber whatsappNumber additionalDetails")
+          .populate("instructor", "firstName lastName")
+
+        if (foundLiveClass) {
+          booking = {
+            _id: foundLiveClass._id,
+            client: foundLiveClass.client,
+            practitioner: foundLiveClass.instructor,
+            offer: {
+              title: foundLiveClass.title,
+              durationMinutes: Math.round(((foundLiveClass.scheduledEnd - foundLiveClass.scheduledStart) || 3000000) / 60000),
+            },
+            scheduledAt: foundLiveClass.scheduledStart,
+            meetingLink: `${FRONTEND_URL}/live-classroom/${foundLiveClass._id}`,
+            reminder15mSent: foundLiveClass.reminder15mSent,
+            save: async () => {
+              foundLiveClass.reminder15mSent = true
+              await foundLiveClass.save()
+            },
+          }
+        }
+      }
+    } else {
+      if (booking.instructor && !booking.practitioner) booking.practitioner = booking.instructor
+      if (booking.scheduledStart && !booking.scheduledAt) booking.scheduledAt = booking.scheduledStart
+      if (booking.title && !booking.offer) {
+        booking.offer = { title: booking.title, durationMinutes: 50 }
+      }
     }
 
     if (!booking || !booking.client || booking.reminder15mSent) return
@@ -329,10 +395,43 @@ async function sendSessionReminder2Min(bookingIdOrDoc) {
   try {
     let booking = bookingIdOrDoc
     if (typeof booking === "string" || !booking.client?.email) {
-      booking = await Booking.findById(booking._id || booking)
-        .populate("client", "firstName lastName email contactNumber whatsappNumber")
+      const foundBooking = await Booking.findById(booking._id || booking)
+        .populate("client", "firstName lastName email contactNumber whatsappNumber additionalDetails")
         .populate("practitioner", "firstName lastName")
         .populate("offer", "title durationMinutes")
+
+      if (foundBooking) {
+        booking = foundBooking
+      } else {
+        const foundLiveClass = await LiveClass.findById(booking._id || booking)
+          .populate("client", "firstName lastName email contactNumber whatsappNumber additionalDetails")
+          .populate("instructor", "firstName lastName")
+
+        if (foundLiveClass) {
+          booking = {
+            _id: foundLiveClass._id,
+            client: foundLiveClass.client,
+            practitioner: foundLiveClass.instructor,
+            offer: {
+              title: foundLiveClass.title,
+              durationMinutes: Math.round(((foundLiveClass.scheduledEnd - foundLiveClass.scheduledStart) || 3000000) / 60000),
+            },
+            scheduledAt: foundLiveClass.scheduledStart,
+            meetingLink: `${FRONTEND_URL}/live-classroom/${foundLiveClass._id}`,
+            reminder2mSent: foundLiveClass.reminder2mSent,
+            save: async () => {
+              foundLiveClass.reminder2mSent = true
+              await foundLiveClass.save()
+            },
+          }
+        }
+      }
+    } else {
+      if (booking.instructor && !booking.practitioner) booking.practitioner = booking.instructor
+      if (booking.scheduledStart && !booking.scheduledAt) booking.scheduledAt = booking.scheduledStart
+      if (booking.title && !booking.offer) {
+        booking.offer = { title: booking.title, durationMinutes: 50 }
+      }
     }
 
     if (!booking || !booking.client || booking.reminder2mSent) return

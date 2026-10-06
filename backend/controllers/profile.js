@@ -69,6 +69,11 @@ exports.updateProfile = async (req, res) => {
     if (firstName !== undefined) updateUserData.firstName = firstName
     if (lastName !== undefined) updateUserData.lastName = lastName
     if (contactNumber !== undefined) updateUserData.contactNumber = contactNumber
+    if (req.body.whatsappNumber !== undefined) {
+      updateUserData.whatsappNumber = req.body.whatsappNumber
+    } else if (contactNumber) {
+      updateUserData.whatsappNumber = contactNumber.replace(/\s+/g, "")
+    }
 
     await User.findByIdAndUpdate(id, updateUserData, { new: true })
 

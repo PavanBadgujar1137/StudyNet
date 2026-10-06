@@ -21,7 +21,7 @@ async function checkAndDispatchReminders() {
 
     // ── 1. Check 1-on-1 Session Bookings ─────────────────────────────────────
     const upcomingBookings = await Booking.find({
-      status: "confirmed",
+      status: { $in: ["confirmed", "scheduled", "paid"] },
       scheduledAt: { $gte: minLookbehind, $lte: maxLookahead },
       $or: [
         { reminder1hSent: { $ne: true } },
@@ -29,7 +29,7 @@ async function checkAndDispatchReminders() {
         { reminder2mSent: { $ne: true } },
       ],
     })
-      .populate("client", "firstName lastName email contactNumber whatsappNumber")
+      .populate("client", "firstName lastName email contactNumber whatsappNumber additionalDetails")
       .populate("practitioner", "firstName lastName")
       .populate("offer", "title durationMinutes")
 
@@ -56,9 +56,9 @@ async function checkAndDispatchReminders() {
       }
     }
 
-    // ── 2. Check Scheduled Live Classes ──────────────────────────────────────
+    // ── 2. Check Scheduled Live Classes (1-on-1 or Live Class Sections) ────────
     const upcomingLiveClasses = await LiveClass.find({
-      status: "scheduled",
+      status: { $in: ["scheduled", "live"] },
       scheduledStart: { $gte: minLookbehind, $lte: maxLookahead },
       $or: [
         { reminder1hSent: { $ne: true } },
@@ -66,42 +66,88 @@ async function checkAndDispatchReminders() {
         { reminder2mSent: { $ne: true } },
       ],
     })
-      .populate("client", "firstName lastName email contactNumber whatsappNumber")
+      .populate("client", "firstName lastName email contactNumber whatsappNumber additionalDetails")
       .populate("instructor", "firstName lastName")
+      .populate({
+        path: "course",
+        select: "title enrolledClients",
+        populate: {
+          path: "enrolledClients",
+          select: "firstName lastName email contactNumber whatsappNumber additionalDetails",
+        },
+      })
 
     for (const liveClass of upcomingLiveClasses) {
-      if (!liveClass.scheduledStart || !liveClass.client) continue
+      if (!liveClass.scheduledStart) continue
       const diffMinutes = (new Date(liveClass.scheduledStart).getTime() - now.getTime()) / 60000
 
-      // Create booking-like duck object for notification service
-      const syntheticBooking = {
-        _id: liveClass._id,
-        client: liveClass.client,
-        practitioner: liveClass.instructor,
-        offer: { title: liveClass.title, durationMinutes: Math.round(((liveClass.scheduledEnd - liveClass.scheduledStart) || 3000000) / 60000) },
-        scheduledAt: liveClass.scheduledStart,
-        meetingLink: `${process.env.FRONTEND_URL || "https://openhand.live"}/live-classroom/${liveClass._id}`,
-        reminder1hSent: liveClass.reminder1hSent,
-        reminder15mSent: liveClass.reminder15mSent,
-        reminder2mSent: liveClass.reminder2mSent,
-        save: async () => {
-          liveClass.reminder1hSent = syntheticBooking.reminder1hSent
-          liveClass.reminder15mSent = syntheticBooking.reminder15mSent
-          liveClass.reminder2mSent = syntheticBooking.reminder2mSent
-          await liveClass.save()
-        },
+      const clientsToNotify = []
+      if (liveClass.client) {
+        clientsToNotify.push(liveClass.client)
+      } else if (liveClass.course?.enrolledClients?.length > 0) {
+        clientsToNotify.push(...liveClass.course.enrolledClients)
       }
 
+      if (clientsToNotify.length === 0) continue
+
+      const durationMins = Math.round(((liveClass.scheduledEnd - liveClass.scheduledStart) || 3000000) / 60000)
+      const meetLink = `${process.env.FRONTEND_URL || "https://openhand.live"}/live-classroom/${liveClass._id}`
+
+      // A. 1-Hour Reminder
       if (diffMinutes <= 65 && diffMinutes > 35 && !liveClass.reminder1hSent) {
-        await sendSessionReminder1Hour(syntheticBooking)
+        for (const targetClient of clientsToNotify) {
+          const syntheticBooking = {
+            _id: liveClass._id,
+            client: targetClient,
+            practitioner: liveClass.instructor,
+            offer: { title: liveClass.title, durationMinutes: durationMins },
+            scheduledAt: liveClass.scheduledStart,
+            meetingLink: meetLink,
+            reminder1hSent: false,
+            save: async () => {},
+          }
+          await sendSessionReminder1Hour(syntheticBooking)
+        }
+        liveClass.reminder1hSent = true
+        await liveClass.save()
       }
 
+      // B. 15-Minute Reminder
       if (diffMinutes <= 17 && diffMinutes > 4 && !liveClass.reminder15mSent) {
-        await sendSessionReminder15Min(syntheticBooking)
+        for (const targetClient of clientsToNotify) {
+          const syntheticBooking = {
+            _id: liveClass._id,
+            client: targetClient,
+            practitioner: liveClass.instructor,
+            offer: { title: liveClass.title, durationMinutes: durationMins },
+            scheduledAt: liveClass.scheduledStart,
+            meetingLink: meetLink,
+            reminder15mSent: false,
+            save: async () => {},
+          }
+          await sendSessionReminder15Min(syntheticBooking)
+        }
+        liveClass.reminder15mSent = true
+        await liveClass.save()
       }
 
+      // C. 2-Minute Reminder
       if (diffMinutes <= 3 && diffMinutes >= -5 && !liveClass.reminder2mSent) {
-        await sendSessionReminder2Min(syntheticBooking)
+        for (const targetClient of clientsToNotify) {
+          const syntheticBooking = {
+            _id: liveClass._id,
+            client: targetClient,
+            practitioner: liveClass.instructor,
+            offer: { title: liveClass.title, durationMinutes: durationMins },
+            scheduledAt: liveClass.scheduledStart,
+            meetingLink: meetLink,
+            reminder2mSent: false,
+            save: async () => {},
+          }
+          await sendSessionReminder2Min(syntheticBooking)
+        }
+        liveClass.reminder2mSent = true
+        await liveClass.save()
       }
     }
   } catch (err) {

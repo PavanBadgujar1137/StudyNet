@@ -157,6 +157,7 @@ export default function EditProfile() {
 
     setPhoneError("")
     data.contactNumber = `${countryCode} ${phoneNumber}`
+    data.whatsappNumber = `${countryCode}${phoneNumber}`
 
     try {
       dispatch(updateProfile(token, data))
