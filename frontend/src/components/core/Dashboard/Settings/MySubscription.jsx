@@ -35,11 +35,12 @@ const PRACTITIONER_PLANS = {
     textColor: "#818CF8",
     features: [
       "Everything in Open — commission drops to 5%",
-      "Save 20% compared to monthly plan",
       "Monthly growth review with an OpenHand mentor",
       "Priority mentee matching & featured placement",
       "Visibility campaigns: spotlights, collaborations, events",
+      "Programs, cohorts & memberships",
       "AI session notes & client progress insights",
+      "Custom domain & white-label booking page",
     ],
   },
   pro: {
@@ -53,7 +54,9 @@ const PRACTITIONER_PLANS = {
       "Monthly growth review with an OpenHand mentor",
       "Priority mentee matching & featured placement",
       "Visibility campaigns: spotlights, collaborations, events",
+      "Programs, cohorts & memberships",
       "AI session notes & client progress insights",
+      "Custom domain & white-label booking page",
     ],
   },
   open: {
@@ -200,7 +203,7 @@ export default function MySubscription() {
               </h2>
 
               <p style={{ color: "#D1FAE5", fontSize: "14px", margin: 0, maxWidth: "600px" }}>
-                Your account is completely free. You have lifetime access to all practitioner free courses, live group circles, and reflection journals.
+                Your account is 100% free with no subscription for enrollment. You only pay directly with PayGlocal when booking specific practitioner courses, 1-on-1 sessions, or circle offerings.
               </p>
             </div>
 

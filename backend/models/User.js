@@ -117,7 +117,21 @@ const userSchema = new mongoose.Schema(
     },
     activePlan: {
       type: String,
-      enum: ["trial", "starter", "growth", "practice", "master", "none"],
+      enum: [
+        "trial",
+        "open",
+        "pro",
+        "pro_monthly",
+        "pro_yearly",
+        "pro_annual",
+        "institution",
+        "starter",
+        "growth",
+        "practice",
+        "master",
+        "none",
+        "free",
+      ],
       default: "trial",
     },
     // Account deletion tracking (30-day grace period for permanent deletion)

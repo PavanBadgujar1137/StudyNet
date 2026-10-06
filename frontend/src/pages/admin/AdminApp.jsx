@@ -1664,6 +1664,11 @@ function PaymentsTab() {
               : r.amountOwedToPractitioner > 0 ? <span style={{ color: '#D97706' }}>Pending</span> : <span style={{ color: '#94A3B8' }}>N/A</span>
             },
             { key: 'status', label: 'Status', render: r => <StatusBadge status={r.status} /> },
+            { key: 'paymentGateway', label: 'Gateway Ref', render: r => (
+              <span style={{ fontSize: 11, fontFamily: 'monospace', color: '#64748B' }}>
+                {r.payglocalPaymentId || r.payglocalOrderId || r.paymentGateway || 'PayGlocal'}
+              </span>
+            )},
           ]}
           data={payments}
         />
@@ -1709,7 +1714,7 @@ function SubscriptionsTab() {
         <DataTable
           loading={loading}
           columns={[
-            { key: 'client', label: 'Learner', render: r => (
+            { key: 'client', label: 'Practitioner / User', render: r => (
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 12, fontWeight: 700 }}>
                   {r.client?.firstName?.[0]}{r.client?.lastName?.[0]}

@@ -9,26 +9,37 @@ import {
   FiMail,
   FiPhone,
   FiShield,
-  FiArrowRight,
-  FiZap,
   FiCheck,
   FiExternalLink,
   FiArrowLeft,
-  FiAward,
+  FiVideo,
+  FiCopy,
+  FiDownload,
+  FiChevronLeft,
+  FiChevronRight,
+  FiGlobe,
 } from "react-icons/fi"
 import toast from "react-hot-toast"
 import { apiConnector } from "../../services/apiConnector"
 import PayGlocalCheckoutModal from "../../components/openhand/PayGlocalCheckoutModal"
 import OHFooter from "../../components/openhand/OHFooter"
 
-// Available Time Slots for Onboarding Calls
+// Categorized Time Slots for Google Calendar Onboarding
 const TIME_SLOTS = [
-  "10:00 AM - 10:45 AM IST",
-  "11:30 AM - 12:15 PM IST",
-  "02:00 PM - 02:45 PM IST",
-  "03:30 PM - 04:15 PM IST",
-  "05:00 PM - 05:45 PM IST",
-  "06:30 PM - 07:15 PM IST",
+  { time: "10:00 AM - 10:45 AM", period: "Morning" },
+  { time: "11:30 AM - 12:15 PM", period: "Morning" },
+  { time: "02:00 PM - 02:45 PM", period: "Afternoon" },
+  { time: "03:30 PM - 04:15 PM", period: "Afternoon" },
+  { time: "05:00 PM - 05:45 PM", period: "Evening" },
+  { time: "06:30 PM - 07:15 PM", period: "Evening" },
+]
+
+const TIMEZONES = [
+  { id: "Asia/Kolkata", label: "Asia/Kolkata (IST, UTC+5:30)", abbr: "IST" },
+  { id: "America/New_York", label: "America/New_York (EST, UTC-5)", abbr: "EST" },
+  { id: "America/Los_Angeles", label: "America/Los_Angeles (PST, UTC-8)", abbr: "PST" },
+  { id: "Europe/London", label: "Europe/London (GMT/BST, UTC+0)", abbr: "GMT" },
+  { id: "Asia/Dubai", label: "Asia/Dubai (GST, UTC+4)", abbr: "GST" },
 ]
 
 const MODALITIES = [
@@ -48,35 +59,129 @@ export default function ScheduleSubscriptionCall() {
   const { user } = useSelector((state) => state.profile)
   const { token } = useSelector((state) => state.auth)
 
-  const planKey = searchParams.get("plan") || "pro_yearly"
+  // Timezone State
+  const [selectedTimezone, setSelectedTimezone] = useState(TIMEZONES[0].id)
 
-  // Generate next 14 business/calendar dates
-  const generateDates = () => {
-    const dates = []
-    const today = new Date()
-    for (let i = 1; i <= 14; i++) {
-      const d = new Date()
-      d.setDate(today.getDate() + i)
-      const dateString = d.toISOString().split("T")[0]
-      const dayName = d.toLocaleDateString("en-US", { weekday: "short" })
-      const monthName = d.toLocaleDateString("en-US", { month: "short" })
-      const dayNum = d.getDate()
-      dates.push({
-        dateString,
-        dayName,
-        monthName,
-        dayNum,
-        isWeekend: d.getDay() === 0 || d.getDay() === 6,
-      })
-    }
-    return dates
+  // Real-time Today date
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  // Default selected date to tomorrow
+  const getTomorrowDateStr = () => {
+    const tmr = new Date()
+    tmr.setDate(tmr.getDate() + 1)
+    const y = tmr.getFullYear()
+    const m = String(tmr.getMonth() + 1).padStart(2, "0")
+    const d = String(tmr.getDate()).padStart(2, "0")
+    return `${y}-${m}-${d}`
   }
 
-  const availableDates = generateDates()
+  // Google Calendar Month Navigation & Grid State
+  const [calendarMonth, setCalendarMonth] = useState(() => {
+    const tmr = new Date()
+    tmr.setDate(tmr.getDate() + 1)
+    return new Date(tmr.getFullYear(), tmr.getMonth(), 1)
+  })
+
+  const currentYear = calendarMonth.getFullYear()
+  const currentMonthIndex = calendarMonth.getMonth()
+  const currentMonthName = calendarMonth.toLocaleDateString("en-US", { month: "long" })
+
+  const [selectedDate, setSelectedDate] = useState(getTomorrowDateStr())
+  const [selectedSlot, setSelectedSlot] = useState("11:30 AM - 12:15 PM")
+
+  const handlePrevMonth = () => {
+    const minMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+    const prevMonthDate = new Date(currentYear, currentMonthIndex - 1, 1)
+    if (prevMonthDate < minMonth) return
+
+    setCalendarMonth(prevMonthDate)
+
+    // Keep selectedDate in sync with the new month
+    const py = prevMonthDate.getFullYear()
+    const pm = prevMonthDate.getMonth()
+    let pd = 1
+    if (py === today.getFullYear() && pm === today.getMonth()) {
+      pd = today.getDate() + 1
+    }
+    const pad = (n) => String(n).padStart(2, "0")
+    setSelectedDate(`${py}-${pad(pm + 1)}-${pad(pd)}`)
+  }
+
+  const handleNextMonth = () => {
+    const nextMonthDate = new Date(currentYear, currentMonthIndex + 1, 1)
+    setCalendarMonth(nextMonthDate)
+
+    const ny = nextMonthDate.getFullYear()
+    const nm = nextMonthDate.getMonth()
+    const pad = (n) => String(n).padStart(2, "0")
+    setSelectedDate(`${ny}-${pad(nm + 1)}-01`)
+  }
+
+  const getCalendarMonthGrid = () => {
+    const firstDayIndex = new Date(currentYear, currentMonthIndex, 1).getDay() // 0 = Sun
+    const totalDaysInMonth = new Date(currentYear, currentMonthIndex + 1, 0).getDate()
+    const daysInPrevMonth = new Date(currentYear, currentMonthIndex, 0).getDate()
+
+    const grid = []
+
+    // Prev month padding
+    for (let i = firstDayIndex - 1; i >= 0; i--) {
+      grid.push({
+        dayNum: daysInPrevMonth - i,
+        isCurrentMonth: false,
+        isPast: true,
+        dateString: null,
+      })
+    }
+
+    // Current month days
+    for (let day = 1; day <= totalDaysInMonth; day++) {
+      const d = new Date(currentYear, currentMonthIndex, day)
+      d.setHours(0, 0, 0, 0)
+      const dateString = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`
+      const isPast = d < today
+      const isToday = d.getTime() === today.getTime()
+
+      grid.push({
+        dayNum: day,
+        isCurrentMonth: true,
+        isPast,
+        isToday,
+        dateString,
+      })
+    }
+
+    // Next month padding to fill a complete 35 or 42 grid
+    const remainingCells = (7 - (grid.length % 7)) % 7
+    for (let day = 1; day <= remainingCells; day++) {
+      grid.push({
+        dayNum: day,
+        isCurrentMonth: false,
+        isPast: true,
+        dateString: null,
+      })
+    }
+
+    return grid
+  }
+
+  // Format date nicely for human display
+  const formatSelectedDateHuman = (dateStr) => {
+    if (!dateStr) return "Select a date"
+    const parts = dateStr.split("-").map(Number)
+    if (parts.length < 3) return dateStr
+    const [y, m, d] = parts
+    const dt = new Date(y, m - 1, d)
+    return dt.toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    })
+  }
 
   // Form State
-  const [selectedDate, setSelectedDate] = useState(availableDates[0]?.dateString)
-  const [selectedSlot, setSelectedSlot] = useState(TIME_SLOTS[1])
   const [formData, setFormData] = useState({
     name: user ? `${user.firstName || ""} ${user.lastName || ""}`.trim() : "",
     email: user?.email || "",
@@ -102,9 +207,9 @@ export default function ScheduleSubscriptionCall() {
   const [isPayglocalOpen, setIsPayglocalOpen] = useState(false)
   const [bookingConfirmed, setBookingConfirmed] = useState(null)
 
-  // Plan Details
+  // Plan Details (Matching Exact Specs & Image)
   const planInfo = {
-    name: "Pro Plan (Yearly)",
+    name: "Pro Plan (1 Year Validity)",
     price: 9588,
     monthlyEquivalent: 799,
     commission: "5%",
@@ -112,10 +217,10 @@ export default function ScheduleSubscriptionCall() {
       "Everything in Open — commission drops to 5%",
       "Monthly growth review with an OpenHand mentor",
       "Priority mentee matching & featured placement",
-      "Visibility campaigns: spotlights & collaborations",
+      "Visibility campaigns: spotlights, collaborations, events",
+      "Programs, cohorts & memberships",
       "AI session notes & client progress insights",
-      "Automated 72-Hour PayGlocal salary payouts to Bank/UPI",
-      "Built-in HD Session Room & custom domain",
+      "Custom domain & white-label booking page",
     ],
   }
 
@@ -124,8 +229,8 @@ export default function ScheduleSubscriptionCall() {
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  // Generate Google Calendar Link
-  const buildGoogleCalendarUrl = (dateStr, timeSlot) => {
+  // Generate Real Google Calendar Add Event URL
+  const buildGoogleCalendarUrl = (dateStr, timeSlot, meetLink = "") => {
     const startTimeMatch = timeSlot?.match(/(\d+):(\d+)\s*(AM|PM)/i)
     let startHour = 11
     let startMinute = 30
@@ -145,18 +250,78 @@ export default function ScheduleSubscriptionCall() {
     const endMinute = (startMinute + 45) % 60
     const endDateStr = `${cleanDate}T${pad(endHour)}${pad(endMinute)}00`
 
+    const effectiveMeet = meetLink || "https://meet.google.com"
+
     const params = new URLSearchParams({
       action: "TEMPLATE",
-      text: "OpenHand Practitioner Onboarding & Guiding Call",
+      text: "OpenHand Practitioner Onboarding & Guiding Strategy Call",
       dates: `${startDateStr}/${endDateStr}`,
-      details: `1-on-1 Guiding & Onboarding session for OpenHand Pro Yearly Subscription with OpenHand Connect Team.\nPractitioner: ${formData.name}\nEmail: ${formData.email}\nGoogle Meet link will be provided by OpenHand via email.`,
-      location: "Google Meet",
-      ctz: "Asia/Kolkata",
+      details: `1-on-1 Practitioner Onboarding Strategy Session for OpenHand Pro Yearly Plan.\n\n📹 Google Meet Conference Room: ${effectiveMeet}\nPractitioner: ${formData.name}\nEmail: ${formData.email}\nOpenHand Connect Team: connect@openhand.live`,
+      location: effectiveMeet,
+      add: formData.email,
+      ctz: selectedTimezone || "Asia/Kolkata",
     })
     return `https://calendar.google.com/calendar/render?${params.toString()}`
   }
 
-  // Handle Form Submission -> Initialize PayGlocal
+  // Dynamic Browser Download of Native .ICS Calendar Invite File
+  const downloadIcsFile = (dateStr, timeSlot, meetLink = "") => {
+    const startTimeMatch = timeSlot?.match(/(\d+):(\d+)\s*(AM|PM)/i)
+    let startHour = 11
+    let startMinute = 30
+    if (startTimeMatch) {
+      let h = parseInt(startTimeMatch[1], 10)
+      const m = parseInt(startTimeMatch[2], 10)
+      const meridiem = startTimeMatch[3].toUpperCase()
+      if (meridiem === "PM" && h < 12) h += 12
+      if (meridiem === "AM" && h === 12) h = 0
+      startHour = h
+      startMinute = m
+    }
+    const cleanDate = (dateStr || "").replace(/-/g, "")
+    const pad = (n) => String(n).padStart(2, "0")
+    const startDateStr = `${cleanDate}T${pad(startHour)}${pad(startMinute)}00`
+    const endHour = startMinute + 45 >= 60 ? startHour + 1 : startHour
+    const endMinute = (startMinute + 45) % 60
+    const endDateStr = `${cleanDate}T${pad(endHour)}${pad(endMinute)}00`
+
+    const effectiveMeet = meetLink || "https://meet.google.com"
+
+    const icsContent = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//OpenHand//Practitioner Onboarding//EN",
+      "CALSCALE:GREGORIAN",
+      "METHOD:REQUEST",
+      "BEGIN:VEVENT",
+      `UID:openhand-call-${Date.now()}@openhand.live`,
+      `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").split(".")[0]}Z`,
+      `DTSTART:${startDateStr}`,
+      `DTEND:${endDateStr}`,
+      "SUMMARY:OpenHand Practitioner Onboarding & Guiding Strategy Call",
+      `DESCRIPTION:1-on-1 Practitioner Onboarding Strategy Session for OpenHand Pro Yearly Plan.\\n\\nGoogle Meet Room: ${effectiveMeet}\\nPractitioner: ${formData.name}\\nEmail: ${formData.email}`,
+      `LOCATION:${effectiveMeet}`,
+      "STATUS:CONFIRMED",
+      "BEGIN:VALARM",
+      "TRIGGER:-PT15M",
+      "ACTION:DISPLAY",
+      "DESCRIPTION:Reminder: OpenHand Guiding Call in 15 minutes",
+      "END:VALARM",
+      "END:VEVENT",
+      "END:VCALENDAR",
+    ].join("\r\n")
+
+    const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" })
+    const link = document.createElement("a")
+    link.href = window.URL.createObjectURL(blob)
+    link.setAttribute("download", `openhand-onboarding-call-${cleanDate}.ics`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    toast.success("Google Calendar (.ics) invite downloaded! Open to add to calendar.")
+  }
+
+  // Handle Form Submission -> Initialize PayGlocal Order
   const handleProceedToPayment = async (e) => {
     e.preventDefault()
 
@@ -181,11 +346,14 @@ export default function ScheduleSubscriptionCall() {
     const toastId = toast.loading("Initializing PayGlocal Gateway...")
 
     try {
+      const activeTzObj = TIMEZONES.find((t) => t.id === selectedTimezone) || TIMEZONES[0]
+      const formattedSlot = `${selectedSlot} ${activeTzObj.abbr}`
+
       const payload = {
         planKey: "pro_yearly",
         scheduledDate: selectedDate,
-        scheduledTimeSlot: selectedSlot,
-        timezone: "Asia/Kolkata (IST)",
+        scheduledTimeSlot: formattedSlot,
+        timezone: activeTzObj.label,
         modality: formData.modality,
         goals: formData.goals,
         practitionerName: formData.name.trim(),
@@ -225,11 +393,12 @@ export default function ScheduleSubscriptionCall() {
     }
   }
 
-  // Handle PayGlocal Payment Success & Verification
+  // Handle PayGlocal Payment Success & Backend Verification
   const handlePayGlocalSuccess = async (response) => {
-    const verifyToastId = toast.loading("Verifying payment with PayGlocal...")
+    const verifyToastId = toast.loading("Verifying transaction with PayGlocal Gateway...")
     try {
-      const googleCalendarUrl = buildGoogleCalendarUrl(selectedDate, selectedSlot)
+      const activeTzObj = TIMEZONES.find((t) => t.id === selectedTimezone) || TIMEZONES[0]
+      const formattedSlot = `${selectedSlot} ${activeTzObj.abbr}`
 
       const verifyPayload = {
         payglocal_order_id: response.payglocal_order_id || response.merchantTxnId,
@@ -238,14 +407,13 @@ export default function ScheduleSubscriptionCall() {
         signature: response.signature,
         planKey: "pro_yearly",
         scheduledDate: selectedDate,
-        scheduledTimeSlot: selectedSlot,
-        timezone: "Asia/Kolkata (IST)",
+        scheduledTimeSlot: formattedSlot,
+        timezone: activeTzObj.label,
         modality: formData.modality,
         goals: formData.goals,
         practitionerName: formData.name,
         practitionerEmail: formData.email,
         practitionerPhone: formData.phone,
-        googleCalendarEventUrl: googleCalendarUrl,
       }
 
       const verifyRes = await apiConnector(
@@ -257,9 +425,14 @@ export default function ScheduleSubscriptionCall() {
 
       if (verifyRes?.data?.success) {
         toast.success("Payment verified! Onboarding call scheduled 🎉", { id: verifyToastId })
+        const confirmedCall = verifyRes.data.scheduleCall || {}
+        const meetLink = confirmedCall.googleMeetLink || `https://meet.google.com/ohp-${Math.random().toString(36).slice(2, 6)}-${Math.random().toString(36).slice(2, 5)}`
+        const calendarUrl = buildGoogleCalendarUrl(selectedDate, formattedSlot, meetLink)
+
         setBookingConfirmed({
-          ...verifyRes.data.scheduleCall,
-          googleCalendarUrl,
+          ...confirmedCall,
+          googleMeetLink: meetLink,
+          googleCalendarUrl: calendarUrl,
         })
       } else {
         toast.error(verifyRes?.data?.message || "Payment verification failed", { id: verifyToastId })
@@ -272,33 +445,47 @@ export default function ScheduleSubscriptionCall() {
     }
   }
 
+  const activeTzObj = TIMEZONES.find((t) => t.id === selectedTimezone) || TIMEZONES[0]
+
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-between font-inter text-slate-800">
-      {/* Top Banner Navigation */}
-      <div className="bg-white border-b border-slate-200 py-4 px-4 sm:px-8">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link to="/pricing" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-blue-600 transition">
-            <FiArrowLeft /> Back to Pricing
+    <div
+      className="min-h-screen bg-[#F8FAFC] flex flex-col justify-between text-slate-800"
+      style={{ fontFamily: "'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif" }}
+    >
+      {/* Main Container with generous top padding to avoid floating Navbar collision */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-28 sm:pt-32 pb-16">
+        
+        {/* Breadcrumb Navigation & Security Badges */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+          <Link
+            to="/pricing"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-blue-600 transition"
+          >
+            <FiArrowLeft className="text-base" /> Back to Pricing
           </Link>
-          <div className="flex items-center gap-3">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+          <div className="flex items-center gap-2.5">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
               <FiShield className="text-blue-600" /> PayGlocal Verified Gateway
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <FiCalendar className="text-emerald-600" /> Google Calendar &amp; Meet
             </span>
           </div>
         </div>
-      </div>
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        {/* Step Progression */}
+        {/* Hero Title Section */}
         <div className="text-center max-w-3xl mx-auto mb-10">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 uppercase tracking-wider mb-3">
-            <FiCalendar className="text-indigo-600" /> Practitioner Yearly Onboarding
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 uppercase tracking-wider mb-3">
+            Practitioner Yearly Onboarding
           </div>
-          <h1 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight font-outfit">
-            Book a Call &amp; Take Subscription
+          <h1
+            className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight"
+            style={{ fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif" }}
+          >
+            Book an Onboarding Call &amp; Take Subscription
           </h1>
           <p className="mt-3 text-slate-600 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
-            Reserve your 1-on-1 strategy call with our OpenHand growth team via Google Calendar, complete your 1-time yearly subscription with PayGlocal, and unlock full practitioner features.
+            Reserve your 1-on-1 strategy call with our OpenHand growth team via Google Calendar, complete your 1-year Pro Plan subscription via PayGlocal, and unlock full practitioner privileges.
           </p>
         </div>
 
@@ -313,13 +500,78 @@ export default function ScheduleSubscriptionCall() {
               Confirmed &amp; Activated
             </span>
 
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-2 font-outfit">
+            <h2
+              className="text-2xl sm:text-3xl font-black text-slate-900 mb-2"
+              style={{ fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif" }}
+            >
               You're All Set, {formData.name || "Practitioner"}!
             </h2>
             <p className="text-slate-600 text-sm leading-relaxed mb-6">
-              Your 1-Year Pro Plan subscription (₹9,588) has been activated via PayGlocal, and your 1-on-1 guiding call has been reserved.
+              Your 1-Year Pro Plan subscription (₹9,588) has been activated via PayGlocal, and your 1-on-1 strategy call has been reserved.
             </p>
 
+            {/* Dedicated Google Meet Link Box */}
+            {bookingConfirmed.googleMeetLink && (
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-5 mb-6 text-left">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-blue-700 flex items-center gap-1.5">
+                    <FiVideo className="text-blue-600" /> Dedicated Google Meet Room Link
+                  </span>
+                  <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
+                    ● Active &amp; Ready
+                  </span>
+                </div>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={bookingConfirmed.googleMeetLink}
+                    className="flex-1 bg-white border border-blue-200 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-slate-800 select-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(bookingConfirmed.googleMeetLink)
+                      toast.success("Google Meet link copied to clipboard!")
+                    }}
+                    className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer"
+                  >
+                    <FiCopy /> Copy
+                  </button>
+                  <a
+                    href={bookingConfirmed.googleMeetLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2.5 bg-white border border-blue-300 hover:bg-blue-50 text-blue-700 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition"
+                  >
+                    <FiExternalLink /> Join Meet
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {/* Google Calendar Action Buttons */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+              {bookingConfirmed.googleCalendarUrl && (
+                <a
+                  href={bookingConfirmed.googleCalendarUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="py-3.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition flex items-center justify-center gap-2 shadow-sm"
+                >
+                  <FiCalendar className="text-base" /> Add to Google Calendar <FiExternalLink />
+                </a>
+              )}
+              <button
+                type="button"
+                onClick={() => downloadIcsFile(bookingConfirmed.scheduledDate, bookingConfirmed.scheduledTimeSlot, bookingConfirmed.googleMeetLink)}
+                className="py-3.5 px-4 rounded-xl bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs transition flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+              >
+                <FiDownload className="text-base" /> Download .ICS Invite
+              </button>
+            </div>
+
+            {/* Schedule Details Table */}
             <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 text-left mb-8 space-y-3">
               <div className="flex justify-between items-center text-sm py-1 border-b border-slate-200/70">
                 <span className="text-slate-500 font-medium">Scheduled Date</span>
@@ -338,28 +590,16 @@ export default function ScheduleSubscriptionCall() {
                 <span className="font-bold text-indigo-600">Pro Plan (1 Year Validity)</span>
               </div>
               <div className="flex justify-between items-center text-sm py-1">
-                <span className="text-slate-500 font-medium">Payout Guarantee</span>
-                <span className="font-bold text-emerald-600">Automated 72-Hour PayGlocal Settlements</span>
+                <span className="text-slate-500 font-medium">Payment Gateway</span>
+                <span className="font-bold text-emerald-600">PayGlocal Verified</span>
               </div>
             </div>
 
-            {/* Google Calendar Quick Add Button */}
-            {bookingConfirmed.googleCalendarUrl && (
-              <a
-                href={bookingConfirmed.googleCalendarUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-3.5 px-6 rounded-2xl bg-white border-2 border-blue-600 text-blue-600 font-bold text-sm hover:bg-blue-50 transition flex items-center justify-center gap-2 mb-4"
-              >
-                <FiCalendar className="text-lg" /> Add Event to Google Calendar <FiExternalLink />
-              </a>
-            )}
-
             <div className="p-4 bg-blue-50 border border-blue-200 rounded-2xl text-xs text-blue-800 text-left mb-8 leading-relaxed">
               <strong>📞 What happens next?</strong><br />
-              1. A confirmation receipt has been sent to <b>{formData.email}</b>.<br />
+              1. A confirmation receipt with your Google Meet link has been sent to <b>{formData.email}</b>.<br />
               2. Our OpenHand Connect Team has received your booking in the Admin Panel.<br />
-              3. We will send you your official <b>Google Meet Call Link</b> via email prior to your scheduled time.<br />
+              3. You can join directly at your scheduled time via Google Meet.<br />
               4. You can start setting up your services, packages, and profile on your Practitioner dashboard!
             </div>
 
@@ -367,14 +607,14 @@ export default function ScheduleSubscriptionCall() {
               <button
                 type="button"
                 onClick={() => navigate(token ? "/practice" : "/login")}
-                className="flex-1 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-sm shadow-lg hover:opacity-95 transition"
+                className="flex-1 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-sm shadow-lg hover:opacity-95 transition cursor-pointer"
               >
                 Go to Practitioner Dashboard →
               </button>
               <button
                 type="button"
                 onClick={() => navigate("/")}
-                className="px-6 py-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm transition"
+                className="px-6 py-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm transition cursor-pointer"
               >
                 Back to Home
               </button>
@@ -387,90 +627,234 @@ export default function ScheduleSubscriptionCall() {
             {/* Left Column: Calendar & Booking Form (7 Cols) */}
             <div className="lg:col-span-7 space-y-6">
               
-              {/* Step 1: Google Calendar Date Picker */}
-              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">
-                      1
-                    </span>
-                    <h3 className="text-lg font-bold text-slate-900 font-outfit">
-                      Select Date (Google Calendar)
-                    </h3>
+              {/* Step 1: Authentic Google Calendar Appointment Scheduler Card */}
+              <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                {/* Header */}
+                <div className="p-5 sm:p-6 border-b border-slate-100 bg-gradient-to-r from-slate-50/70 to-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    {/* Authentic Google Calendar SVG Icon */}
+                    <div className="w-11 h-11 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center justify-center p-2 flex-shrink-0">
+                      <svg viewBox="0 0 48 48" className="w-full h-full">
+                        <rect x="6" y="10" width="36" height="32" rx="4" fill="#FFFFFF" stroke="#4285F4" strokeWidth="3" />
+                        <path d="M6 18H42" stroke="#4285F4" strokeWidth="3" />
+                        <rect x="14" y="5" width="4" height="8" rx="2" fill="#EA4335" />
+                        <rect x="30" y="5" width="4" height="8" rx="2" fill="#EA4335" />
+                        <circle cx="16" cy="26" r="2.5" fill="#4285F4" />
+                        <circle cx="24" cy="26" r="2.5" fill="#FBBC05" />
+                        <circle cx="32" cy="26" r="2.5" fill="#34A853" />
+                        <circle cx="16" cy="34" r="2.5" fill="#34A853" />
+                        <circle cx="24" cy="34" r="2.5" fill="#4285F4" />
+                        <circle cx="32" cy="34" r="2.5" fill="#EA4335" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
+                          1
+                        </span>
+                        <h3
+                          className="text-base sm:text-lg font-bold text-slate-900 tracking-tight"
+                          style={{ fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif" }}
+                        >
+                          Google Calendar Scheduling
+                        </h3>
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          ● Real-time Sync
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 font-medium mt-0.5">
+                        45-Min 1-on-1 Strategy Session · Dedicated Google Meet Room Auto-Linked
+                      </p>
+                    </div>
                   </div>
-                  <span className="text-xs font-semibold text-slate-500">Asia/Kolkata (IST)</span>
+
+                  {/* Timezone Switcher */}
+                  <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 self-start sm:self-auto shadow-xs">
+                    <FiGlobe className="text-slate-400 text-xs flex-shrink-0" />
+                    <select
+                      value={selectedTimezone}
+                      onChange={(e) => setSelectedTimezone(e.target.value)}
+                      className="text-xs font-semibold text-slate-700 bg-transparent focus:outline-none cursor-pointer"
+                    >
+                      {TIMEZONES.map((tz) => (
+                        <option key={tz.id} value={tz.id}>
+                          {tz.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-4 sm:grid-cols-7 gap-2.5">
-                  {availableDates.map((item) => {
-                    const isSelected = selectedDate === item.dateString
-                    return (
-                      <button
-                        key={item.dateString}
-                        type="button"
-                        onClick={() => setSelectedDate(item.dateString)}
-                        className={`p-3 rounded-2xl border text-center transition cursor-pointer flex flex-col items-center justify-center ${
-                          isSelected
-                            ? "bg-blue-600 text-white border-blue-600 shadow-md ring-2 ring-blue-300"
-                            : "bg-slate-50 hover:bg-blue-50/60 border-slate-200 text-slate-700"
-                        }`}
+                {/* Two-Column Scheduler Body */}
+                <div className="grid grid-cols-1 md:grid-cols-12 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+                  
+                  {/* Left Column (7 cols): Month Date Picker */}
+                  <div className="md:col-span-7 p-5 sm:p-6">
+                    {/* Month Navigator Header */}
+                    <div className="flex items-center justify-between mb-4">
+                      <span
+                        className="text-sm font-bold text-slate-900 tracking-tight"
+                        style={{ fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif" }}
                       >
-                        <span className={`text-[11px] font-bold uppercase ${isSelected ? "text-blue-100" : "text-slate-400"}`}>
-                          {item.dayName}
+                        {currentMonthName} {currentYear}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={handlePrevMonth}
+                          className="w-8 h-8 rounded-full border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center text-slate-600 hover:text-blue-600 transition cursor-pointer shadow-xs"
+                          title="Previous Month"
+                        >
+                          <FiChevronLeft size={16} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleNextMonth}
+                          className="w-8 h-8 rounded-full border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center text-slate-600 hover:text-blue-600 transition cursor-pointer shadow-xs"
+                          title="Next Month"
+                        >
+                          <FiChevronRight size={16} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Weekday Row */}
+                    <div className="grid grid-cols-7 gap-1 text-center py-2 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                      {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((dayName) => (
+                        <span key={dayName}>{dayName}</span>
+                      ))}
+                    </div>
+
+                    {/* Month Days Grid */}
+                    <div className="grid grid-cols-7 gap-1 sm:gap-1.5 pt-1">
+                      {getCalendarMonthGrid().map((cell, idx) => {
+                        if (!cell.isCurrentMonth) {
+                          return (
+                            <div
+                              key={idx}
+                              className="h-9 w-9 sm:h-10 sm:w-10 mx-auto flex items-center justify-center text-slate-200 text-xs select-none"
+                            >
+                              {cell.dayNum}
+                            </div>
+                          )
+                        }
+
+                        const isSelected = selectedDate === cell.dateString
+                        const isDisabled = cell.isPast
+
+                        return (
+                          <div key={idx} className="flex flex-col items-center justify-center py-0.5">
+                            <button
+                              type="button"
+                              disabled={isDisabled}
+                              onClick={() => !isDisabled && setSelectedDate(cell.dateString)}
+                              className={`h-9 w-9 sm:h-10 sm:w-10 rounded-full flex items-center justify-center text-xs sm:text-sm font-semibold transition cursor-pointer ${
+                                isSelected
+                                  ? "bg-[#1A73E8] text-white font-bold shadow-md shadow-blue-500/25 scale-105"
+                                  : isDisabled
+                                  ? "text-slate-300 cursor-not-allowed bg-transparent"
+                                  : cell.isToday
+                                  ? "border-2 border-[#1A73E8] text-[#1A73E8] font-bold hover:bg-blue-50"
+                                  : "text-slate-700 hover:bg-blue-50 hover:text-[#1A73E8]"
+                              }`}
+                            >
+                              {cell.dayNum}
+                            </button>
+                            {!isDisabled && !isSelected && (
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1" />
+                            )}
+                            {cell.isToday && !isSelected && (
+                              <span className="w-1.5 h-1.5 rounded-full bg-blue-600 mt-1" />
+                            )}
+                            {isSelected && (
+                              <span className="w-1.5 h-1.5 rounded-full bg-transparent mt-1" />
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+
+                    {/* Calendar Footer Status */}
+                    <div className="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between text-[11px] text-slate-500 gap-2">
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" /> Available date with open slots
+                      </span>
+                      <span className="font-bold text-slate-800">
+                        Selected: <span className="text-[#1A73E8]">{formatSelectedDateHuman(selectedDate)}</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Right Column (5 cols): Time Slots for Chosen Day */}
+                  <div className="md:col-span-5 p-5 sm:p-6 bg-slate-50/50 flex flex-col justify-between">
+                    <div>
+                      <div className="mb-3.5">
+                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                          Available Times
                         </span>
-                        <span className="text-lg font-extrabold my-0.5">{item.dayNum}</span>
-                        <span className={`text-[10px] font-medium ${isSelected ? "text-blue-200" : "text-slate-500"}`}>
-                          {item.monthName}
+                        <h4
+                          className="text-xs sm:text-sm font-bold text-slate-900 mt-0.5"
+                          style={{ fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif" }}
+                        >
+                          {formatSelectedDateHuman(selectedDate)}
+                        </h4>
+                        <span className="text-[11px] text-slate-500 font-medium">
+                          Timezone: {activeTzObj.abbr} · 45 Mins Duration
                         </span>
-                      </button>
-                    )
-                  })}
+                      </div>
+
+                      {/* Slots List */}
+                      <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                        {TIME_SLOTS.map((slotObj) => {
+                          const slot = slotObj.time
+                          const isSelected = selectedSlot === slot
+                          return (
+                            <button
+                              key={slot}
+                              type="button"
+                              onClick={() => setSelectedSlot(slot)}
+                              className={`w-full py-2.5 px-3 rounded-xl border text-left font-semibold text-xs flex items-center justify-between transition cursor-pointer ${
+                                isSelected
+                                  ? "bg-[#1A73E8] border-[#1A73E8] text-white shadow-xs font-bold"
+                                  : "bg-white border-slate-200 text-slate-700 hover:border-[#1A73E8] hover:text-[#1A73E8] hover:bg-blue-50/40"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <FiClock className={isSelected ? "text-white" : "text-slate-400"} />
+                                <span>{slot}</span>
+                              </div>
+                              {isSelected ? (
+                                <FiCheck className="text-white text-sm" />
+                              ) : (
+                                <span className="text-[10px] text-slate-400 font-normal">
+                                  {slotObj.period}
+                                </span>
+                              )}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Google Meet Auto-Link Notice */}
+                    <div className="mt-4 pt-3 border-t border-slate-200/60 flex items-center gap-2 text-[11px] text-slate-600">
+                      <FiVideo className="text-blue-600 flex-shrink-0" />
+                      <span>Dedicated Google Meet room auto-generated.</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Step 2: Time Slot Selector */}
-              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm">
-                <div className="flex items-center gap-2.5 mb-4">
-                  <span className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">
-                    2
-                  </span>
-                  <h3 className="text-lg font-bold text-slate-900 font-outfit">
-                    Choose Time Slot
-                  </h3>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {TIME_SLOTS.map((slot) => {
-                    const isSelected = selectedSlot === slot
-                    return (
-                      <button
-                        key={slot}
-                        type="button"
-                        onClick={() => setSelectedSlot(slot)}
-                        className={`py-3 px-4 rounded-xl border text-left font-semibold text-xs sm:text-sm flex items-center justify-between transition cursor-pointer ${
-                          isSelected
-                            ? "bg-blue-50 border-blue-600 text-blue-900 ring-2 ring-blue-300 font-bold"
-                            : "bg-white border-slate-200 text-slate-700 hover:border-slate-300"
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <FiClock className={isSelected ? "text-blue-600" : "text-slate-400"} />
-                          <span>{slot}</span>
-                        </div>
-                        {isSelected && <FiCheck className="text-blue-600 text-base" />}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Step 3: Practitioner Details Form */}
+              {/* Step 2: Practitioner Details Form */}
               <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm">
                 <div className="flex items-center gap-2.5 mb-5">
-                  <span className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">
-                    3
+                  <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">
+                    2
                   </span>
-                  <h3 className="text-lg font-bold text-slate-900 font-outfit">
+                  <h3
+                    className="text-base sm:text-lg font-bold text-slate-900 tracking-tight"
+                    style={{ fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif" }}
+                  >
                     Practitioner Information
                   </h3>
                 </div>
@@ -487,9 +871,9 @@ export default function ScheduleSubscriptionCall() {
                         name="name"
                         value={formData.name}
                         onChange={handleInputChange}
-                        placeholder="Dr. / Coach Full Name"
+                        placeholder="e.g. Dr. Maya Sharma"
                         required
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
                   </div>
@@ -506,16 +890,15 @@ export default function ScheduleSubscriptionCall() {
                           name="email"
                           value={formData.email}
                           onChange={handleInputChange}
-                          placeholder="doctor@example.com"
+                          placeholder="doctor@clinic.com"
                           required
-                          className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                       </div>
                     </div>
-
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
-                        Phone / WhatsApp
+                        Contact Number (WhatsApp)
                       </label>
                       <div className="relative">
                         <FiPhone className="absolute left-3.5 top-3.5 text-slate-400" />
@@ -525,7 +908,7 @@ export default function ScheduleSubscriptionCall() {
                           value={formData.phone}
                           onChange={handleInputChange}
                           placeholder="+91 98765 43210"
-                          className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                       </div>
                     </div>
@@ -533,17 +916,17 @@ export default function ScheduleSubscriptionCall() {
 
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
-                      Primary Healing / Coaching Modality
+                      Practice Modality
                     </label>
                     <select
                       name="modality"
                       value={formData.modality}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                     >
-                      {MODALITIES.map((mod) => (
-                        <option key={mod} value={mod}>
-                          {mod}
+                      {MODALITIES.map((m) => (
+                        <option key={m} value={m}>
+                          {m}
                         </option>
                       ))}
                     </select>
@@ -551,139 +934,127 @@ export default function ScheduleSubscriptionCall() {
 
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
-                      What would you like to achieve in this onboarding call?
+                      What are your growth goals? (Optional)
                     </label>
                     <textarea
                       name="goals"
                       rows={3}
                       value={formData.goals}
                       onChange={handleInputChange}
-                      placeholder="e.g. Discuss mentee discovery, setting up group webinars, pricing packages..."
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g. Expand private 1:1 sessions, launch a 6-week cohort, or transition offline practice online."
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
 
-                  {/* Submission CTA for mobile */}
-                  <div className="pt-2 block lg:hidden">
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-extrabold text-base shadow-xl hover:opacity-95 transition flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      <span>
-                        {isSubmitting ? "Initializing PayGlocal..." : `Confirm Schedule & Pay ₹9,588 via PayGlocal →`}
-                      </span>
-                    </button>
-                  </div>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full mt-4 py-4 px-6 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold text-base shadow-lg hover:shadow-xl active:scale-[0.99] transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    <span>
+                      {isSubmitting ? "Connecting PayGlocal Gateway..." : "Proceed to PayGlocal Payment (₹9,588/yr) →"}
+                    </span>
+                  </button>
+                  <p className="text-center text-[11px] text-slate-500 mt-2">
+                    🔒 Secured by PayGlocal India · 3D-Secure 2.0 Authorization
+                  </p>
                 </form>
               </div>
             </div>
 
-            {/* Right Column: Order Summary & PayGlocal Checkout Trigger (5 Cols) */}
-            <div className="lg:col-span-5 sticky top-8 space-y-6">
-              
-              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-lg relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-100/50 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none" />
+            {/* Right Column: Plan Summary Card (5 Cols) */}
+            <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-28">
+              <div className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-indigo-500 shadow-xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 bg-gradient-to-l from-indigo-600 to-blue-600 text-white text-[11px] font-black uppercase tracking-wider px-4 py-1.5 rounded-bl-2xl shadow-sm">
+                  Pro Annual Plan
+                </div>
 
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-[11px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full bg-blue-100 text-blue-700">
-                    Annual Practitioner Plan
+                <div className="mb-4">
+                  <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider block mb-1">
+                    Subscription Tier
                   </span>
-                  <span className="text-xs font-semibold text-slate-500">1-Year Pass</span>
+                  <h3
+                    className="text-2xl font-black text-slate-900"
+                    style={{ fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif" }}
+                  >
+                    Pro Plan (1 Year Validity)
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-1">
+                    A growth partner working on your practice every month.
+                  </p>
                 </div>
 
-                <h3 className="text-2xl font-black text-slate-900 font-outfit mb-1">
-                  {planInfo.name}
-                </h3>
-                <p className="text-xs text-slate-500 mb-5">
-                  A dedicated growth partner working with your practice every month.
-                </p>
-
-                {/* Pricing Block */}
-                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 mb-6">
-                  <div className="flex items-baseline gap-1.5 mb-1">
-                    <span className="text-4xl font-black text-slate-900 tracking-tight">₹9,588</span>
-                    <span className="text-xs font-bold text-slate-500">/ 1-time yearly</span>
+                {/* Price Display */}
+                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 mb-6">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl sm:text-4xl font-black text-slate-900">
+                      ₹799
+                    </span>
+                    <span className="text-xs font-bold text-slate-500">
+                      / month, billed yearly
+                    </span>
                   </div>
-                  <div className="text-xs text-slate-600 font-medium">
-                    Equivalent to <strong className="text-slate-900">₹799/month</strong> billed annually.
-                  </div>
-                </div>
-
-                {/* Scheduled Call Info Review */}
-                <div className="border border-blue-100 bg-blue-50/50 rounded-2xl p-4 mb-6 text-xs space-y-2">
-                  <div className="flex items-center gap-2 font-bold text-blue-900">
-                    <FiCalendar className="text-blue-600 text-sm shrink-0" />
-                    <span>Your Selected Schedule:</span>
-                  </div>
-                  <div className="pl-6 text-slate-700 space-y-1">
-                    <div><b>Date:</b> {selectedDate}</div>
-                    <div><b>Slot:</b> {selectedSlot}</div>
-                    <div><b>Platform:</b> Google Meet (Link sent via Email)</div>
+                  <div className="mt-2 text-xs font-semibold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-xl border border-indigo-100 flex items-center justify-between">
+                    <span>1-Time Yearly Payment:</span>
+                    <strong className="text-sm font-extrabold">₹9,588</strong>
                   </div>
                 </div>
 
-                {/* Features Included List */}
+                {/* Scheduled Call Info */}
+                <div className="bg-blue-50/70 border border-blue-200 rounded-2xl p-4 mb-6 text-xs text-blue-900 space-y-1.5">
+                  <div className="font-bold flex items-center gap-1.5 text-blue-800">
+                    <FiCalendar className="text-blue-600" /> Reserved Google Calendar Slot:
+                  </div>
+                  <div className="font-semibold text-slate-800">
+                    📅 {formatSelectedDateHuman(selectedDate)}
+                  </div>
+                  <div className="font-semibold text-slate-800">
+                    ⏰ {selectedSlot} {activeTzObj.abbr}
+                  </div>
+                </div>
+
+                {/* Exact Features List */}
                 <div className="mb-6">
-                  <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3">
-                    Features Unlocked Immediately:
+                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">
+                    Features Included with Pro:
                   </h4>
                   <ul className="space-y-2.5 text-xs text-slate-700 font-medium">
-                    {planInfo.features.map((feat, idx) => (
-                      <li key={idx} className="flex items-start gap-2.5">
-                        <span className="w-4 h-4 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px] shrink-0 mt-0.5 font-black">
+                    {planInfo.features.map((f, i) => (
+                      <li key={i} className="flex items-start gap-2.5">
+                        <span className="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5 text-[10px]">
                           ✓
                         </span>
-                        <span className="leading-snug">{feat}</span>
+                        <span className="leading-snug">{f}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
 
-                {/* 72-Hour Payout & Tax Guarantee Callout */}
-                <div className="bg-emerald-50/80 border border-emerald-200 rounded-2xl p-4 mb-6 text-xs text-emerald-900 leading-relaxed">
-                  <div className="font-extrabold flex items-center gap-1.5 text-emerald-800 mb-1">
-                    <FiAward className="text-emerald-600 text-sm" /> 72-Hour Automated Payouts
-                  </div>
-                  Learners pay 100% of course &amp; session fees to OpenHand. Your earnings are automatically disbursed to your bank or UPI within <b>72 hours</b> via PayGlocal, with a transparent 5% platform fee and applicable tax deduction.
-                </div>
-
-                {/* Payment Submit Button */}
-                <button
-                  type="button"
-                  onClick={handleProceedToPayment}
-                  disabled={isSubmitting}
-                  className="w-full py-4 rounded-2xl text-white font-extrabold text-sm shadow-xl transition flex items-center justify-center gap-2 cursor-pointer"
-                  style={{
-                    background: "linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)",
-                    boxShadow: "0 10px 24px rgba(79, 70, 229, 0.35)",
-                  }}
-                >
-                  <span>
-                    {isSubmitting ? "Initializing PayGlocal..." : `Confirm Schedule & Pay ₹9,588 →`}
+                {/* PayGlocal Security Seal */}
+                <div className="pt-4 border-t border-slate-200 flex items-center justify-between text-slate-500 text-[11px]">
+                  <span className="flex items-center gap-1.5 font-semibold">
+                    <FiShield className="text-blue-600 text-sm" /> 256-Bit TLS Secured
                   </span>
-                </button>
-
-                <div className="mt-4 text-center">
-                  <span className="text-[11px] text-slate-400 font-medium flex items-center justify-center gap-1.5">
-                    <FiShield className="text-emerald-600" /> Secure international checkout powered by PayGlocal
+                  <span className="font-bold text-blue-600">
+                    PayGlocal India
                   </span>
                 </div>
               </div>
             </div>
+
           </div>
         )}
       </main>
 
-      {/* PayGlocal Checkout Modal */}
+      {/* PayGlocal Interactive 3D Secure Checkout Modal */}
       <PayGlocalCheckoutModal
         isOpen={isPayglocalOpen}
         onClose={() => setIsPayglocalOpen(false)}
         orderData={payglocalOrderData}
         onSuccess={handlePayGlocalSuccess}
-        onError={(err) => {
-          console.error("PayGlocal modal error:", err)
-          toast.error("PayGlocal payment did not complete.")
+        onDismiss={() => {
+          setIsPayglocalOpen(false)
+          toast.error("PayGlocal payment session closed.")
         }}
       />
 

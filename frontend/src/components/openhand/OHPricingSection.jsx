@@ -473,7 +473,7 @@ export default function OHPricingSection({
                     </span>
                   </div>
                   <div className="text-xs text-slate-800 mb-7 font-bold">
-                    <strong className="text-slate-900 font-extrabold">5%</strong> per booking · every Offers
+                    <strong className="text-slate-900 font-extrabold">5%</strong> per booking · every channel
                   </div>
 
                   <button
@@ -490,14 +490,13 @@ export default function OHPricingSection({
 
                   <ul className="space-y-3.5 text-xs sm:text-[13px] text-slate-700 font-medium">
                     {[
-                      "1-on-1 Guiding & Onboarding Call via Google Calendar",
-                      "Flat 5% platform fee on all bookings (drops from 10%)",
-                      "Automated 72-hour PayGlocal payouts to Bank / UPI",
+                      "Everything in Open — commission drops to 5%",
                       "Monthly growth review with an OpenHand mentor",
                       "Priority mentee matching & featured placement",
                       "Visibility campaigns: spotlights, collaborations, events",
+                      "Programs, cohorts & memberships",
                       "AI session notes & client progress insights",
-                      "Transparent platform fee & tax deduction (18% GST)",
+                      "Custom domain & white-label booking page",
                     ].map((feature, idx) => (
                       <li key={idx} className="flex items-start gap-3">
                         <span

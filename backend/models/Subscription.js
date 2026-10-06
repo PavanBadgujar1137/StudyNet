@@ -16,6 +16,7 @@ const subscriptionSchema = new mongoose.Schema(
         "pro",
         "pro_monthly",
         "pro_yearly",
+        "pro_annual",
         "institution",
         "starter",
         "growth",

@@ -6,6 +6,7 @@ exports.practitionerCallScheduledEmail = ({
   scheduledTimeSlot,
   timezone = "Asia/Kolkata (IST)",
   googleCalendarUrl = "",
+  googleMeetLink = "",
   orderId = "",
   paymentId = "",
 }) => {
@@ -175,10 +176,22 @@ exports.practitionerCallScheduledEmail = ({
             </div>` : ''}
         </div>
 
+        ${googleMeetLink ? `
+        <div style="background: #EEF2FF; border: 1px solid #C7D2FE; border-radius: 12px; padding: 18px; margin: 20px 0; text-align: center;">
+            <b style="color: #3730A3; font-size: 14px; display: block; margin-bottom: 6px;">📹 Your Google Meet Room Link:</b>
+            <a href="${googleMeetLink}" target="_blank" style="color: #2563EB; font-weight: 800; font-size: 16px; word-break: break-all; text-decoration: underline;">
+                ${googleMeetLink}
+            </a>
+            <p style="margin: 8px 0 0; font-size: 12px; color: #6366F1;">
+                Click above to join your guiding call directly via Google Meet at your scheduled time.
+            </p>
+        </div>
+        ` : `
         <div class="highlight-box">
             <b>📞 Next Step: Google Meet Link</b><br />
             Our OpenHand Growth &amp; Onboarding Team has been notified. You will receive an official Google Meet call link directly via email before your session so we can guide you on setup, client acquisition, and launching your offers.
         </div>
+        `}
 
         ${googleCalendarUrl ? `
         <div style="text-align: center;">

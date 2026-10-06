@@ -87,17 +87,18 @@ exports.getPlans = async (req, res) => {
 
 const { createPayCollectOrder, verifyPayGlocalPayment, getPayGlocalConfig } = require("../config/payglocal")
 const crypto = require("crypto")
+const mongoose = require("mongoose")
 const User = require("../models/User")
 
 const PLAN_DETAILS = {
   open: { price: 0, name: "Open Plan", buttonId: "pl_open" },
-  pro: { price: 999, name: "Pro Plan", buttonId: "pl_pro_monthly" },
+  pro: { price: 9588, name: "Pro Plan (Yearly)", buttonId: "pl_pro_yearly" },
   pro_monthly: { price: 999, name: "Pro Plan (Monthly)", buttonId: "pl_pro_monthly" },
   pro_yearly: { price: 9588, name: "Pro Plan (Yearly)", buttonId: "pl_pro_yearly" },
   pro_annual: { price: 9588, name: "Pro Plan (Yearly)", buttonId: "pl_pro_yearly" },
   // Backward compatibility
-  starter: { price: 999, name: "Pro Plan", buttonId: "pl_pro_monthly" },
-  growth: { price: 999, name: "Pro Plan", buttonId: "pl_pro_monthly" },
+  starter: { price: 999, name: "Pro Plan (Monthly)", buttonId: "pl_pro_monthly" },
+  growth: { price: 9588, name: "Pro Plan (Yearly)", buttonId: "pl_pro_yearly" },
   master: { price: 9588, name: "Pro Plan (Yearly)", buttonId: "pl_pro_yearly" },
 }
 
@@ -187,23 +188,23 @@ exports.verifyPlanPayment = async (req, res) => {
 
     const planPrices = {
       open: 0,
-      pro: 999,
+      pro: 9588,
       pro_monthly: 999,
       pro_yearly: 9588,
       pro_annual: 9588,
       starter: 999,
-      growth: 999,
+      growth: 9588,
       master: 9588,
     }
     const planNames = {
       open: "Open Plan",
-      pro: "Pro Plan",
+      pro: "Pro Plan (Yearly)",
       pro_monthly: "Pro Plan (Monthly)",
       pro_yearly: "Pro Plan (Yearly)",
       pro_annual: "Pro Plan (Yearly)",
       institution: "Institution Plan",
-      starter: "Pro Plan",
-      growth: "Pro Plan",
+      starter: "Pro Plan (Monthly)",
+      growth: "Pro Plan (Yearly)",
       master: "Pro Plan (Yearly)",
     }
     const keyLower = planKey.toLowerCase()
@@ -477,7 +478,10 @@ exports.verifySubscriptionCallOrder = async (req, res) => {
     sub.adminPaymentLog = adminLog._id
     await sub.save()
 
-    // 4. Create PractitionerScheduleCall Record
+    // 4. Create PractitionerScheduleCall Record with dynamic Google Meet Conference Room Link
+    const uniqueMeetCode = `ohp-${crypto.randomBytes(3).toString("hex")}-${crypto.randomBytes(2).toString("hex")}`
+    const dynamicMeetLink = `https://meet.google.com/${uniqueMeetCode}`
+
     const scheduleCall = await PractitionerScheduleCall.create({
       practitioner: effectiveUserId || sub.client,
       practitionerName: effectiveName,
@@ -493,7 +497,9 @@ exports.verifySubscriptionCallOrder = async (req, res) => {
       timezone: timezone || "Asia/Kolkata (IST)",
       goals: goals || "",
       googleCalendarEventUrl: googleCalendarEventUrl || "",
-      status: "scheduled",
+      googleMeetLink: dynamicMeetLink,
+      status: "call_link_sent",
+      callLinkSentAt: new Date(),
       paymentGateway: "payglocal",
       payglocalOrderId: effectiveOrderId,
       payglocalPaymentId: effectivePaymentId,
@@ -502,7 +508,7 @@ exports.verifySubscriptionCallOrder = async (req, res) => {
       adminPaymentLog: adminLog._id,
     })
 
-    // 5. Send Confirmation Email to Practitioner
+    // 5. Send Confirmation Email to Practitioner with Google Meet Link
     try {
       await mailSender(
         effectiveEmail,
@@ -515,6 +521,7 @@ exports.verifySubscriptionCallOrder = async (req, res) => {
           scheduledTimeSlot: scheduleCall.scheduledTimeSlot,
           timezone: scheduleCall.timezone,
           googleCalendarUrl: googleCalendarEventUrl,
+          googleMeetLink: dynamicMeetLink,
           orderId: effectiveOrderId,
           paymentId: effectivePaymentId,
         })

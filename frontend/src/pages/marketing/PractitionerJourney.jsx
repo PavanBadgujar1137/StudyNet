@@ -43,12 +43,12 @@ export function PractitionerJourney() {
     {
       cat: 'Payouts & Fees',
       q: 'How and when do I get paid?',
-      a: 'All payments from learners are processed via PayGlocal and settled directly to your bank account on a rolling 7-day basis. You can view your full payout ledger under Payouts in your Practice Cockpit.',
+      a: '100% of learner payments flow into the central OpenHand account. Platform fees (10% Open, 5% Pro) and standard 18% GST are deducted, and your net earnings are automatically disbursed within 72 hours via PayGlocal direct transfer to your Bank account or UPI. You can view your full ledger under Payouts in your Practice dashboard.',
     },
     {
       cat: 'Commission & Take-Rate',
       q: 'What take-rate or commission does OpenHand charge?',
-      a: 'OpenHand charges 10% per booking on the free Open plan, and 5% per booking on the Pro plan (₹799/month, billed yearly). These include platform hosting, AURA intelligence, and direct bank payouts.',
+      a: 'OpenHand charges 10% per booking on the free Open plan, and 5% per booking on the Pro plan (₹799/month, billed yearly). These include platform hosting, AURA intelligence, and automated 72-hour PayGlocal bank payouts.',
     },
     {
       cat: 'AURA & Privacy',
@@ -150,7 +150,7 @@ export function PractitionerJourney() {
                     ✓ 0% commission on Starter
                   </span>
                   <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/70">
-                    Direct PayGlocal payouts
+                    Automated 72-Hour PayGlocal payouts
                   </span>
                 </div>
 

@@ -638,11 +638,13 @@ exports.processMonthlyPayout = async (req, res) => {
     const payout = await Payout.create({
       practitioner: practitionerId,
       amount: numAmount,
+      grossAmount: numAmount,
       commissionDeducted: 0,
       netAmount: numAmount,
       status: "settled",
+      settlementWindowHours: 72,
       settledAt: new Date(),
-      payoutMethod: profile.bankAccountNumber ? "manual_bank_transfer" : "upi",
+      payoutMethod: "payglocal_direct_transfer",
       bookingsCount: await Booking.countDocuments({
         practitioner: practitionerId,
         status: "completed",

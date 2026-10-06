@@ -458,21 +458,21 @@ exports.getPractitionerDashboardData = async (req, res) => {
       .lean()
 
     // Compute earnings dynamically
-    const bookingEarnings = bookingsList.reduce((sum, b) => sum + (b.netPayout || b.amount * 0.92 || 0), 0)
-    const payoutEarnings = payouts.reduce((sum, p) => sum + (p.amount || 0), 0)
+    const bookingEarnings = bookingsList.reduce((sum, b) => sum + (b.netPayout || b.amount * 0.9 || 0), 0)
+    const payoutEarnings = payouts.reduce((sum, p) => sum + (p.netAmount || p.amount || 0), 0)
     const totalEarnings = Math.max(bookingEarnings, payoutEarnings)
 
     const monthlyBookingsEarnings = bookingsList
       .filter((b) => new Date(b.createdAt).getMonth() === new Date().getMonth())
-      .reduce((sum, b) => sum + (b.netPayout || b.amount * 0.92 || 0), 0)
+      .reduce((sum, b) => sum + (b.netPayout || b.amount * 0.9 || 0), 0)
     const monthlyPayoutEarnings = payouts
       .filter((p) => new Date(p.createdAt).getMonth() === new Date().getMonth())
-      .reduce((sum, p) => sum + (p.amount || 0), 0)
+      .reduce((sum, p) => sum + (p.netAmount || p.amount || 0), 0)
     const monthlyEarnings = Math.max(monthlyBookingsEarnings, monthlyPayoutEarnings)
 
     const clearingThisWeek = payouts
       .filter((p) => p.status === "pending" || p.status === "processing")
-      .reduce((sum, p) => sum + (p.amount || 0), 0)
+      .reduce((sum, p) => sum + (p.netAmount || p.amount || 0), 0)
 
     // Dynamic Enrolled & Connected Clients — include both approved and active
     const connections = await ClientConnection.find({ practitioner: userId, status: { $in: ["approved", "active"] } })

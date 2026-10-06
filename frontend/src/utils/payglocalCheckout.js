@@ -24,7 +24,7 @@ export const initiatePayGlocalCheckout = ({
       const effectiveGid =
         gid || order?.gid || `gl_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
 
-      // If user has a real PayGlocal hosted URL
+      // If user has a real PayGlocal hosted URL, redirect to PayGlocal's checkout
       if (
         redirectUrl &&
         redirectUrl.includes("paycollect.payglocal.in") &&
@@ -34,21 +34,12 @@ export const initiatePayGlocalCheckout = ({
         return resolve({ redirected: true })
       }
 
-      // Return synthetic PayGlocal completion response
-      const result = {
-        payglocal_order_id: effectiveTxnId,
-        payglocal_payment_id: effectiveGid,
-        payglocal_gid: effectiveGid,
-        merchantTxnId: effectiveTxnId,
-        gid: effectiveGid,
-        status: "SENT_FOR_CAPTURE",
-        signature: `sig_pgl_${Date.now()}`,
-      }
-
-      if (onSuccess) {
-        onSuccess(result)
-      }
-      resolve(result)
+      // Do NOT auto-complete fake payments!
+      // Must go through interactive checkout modal with user authorization
+      const checkoutErr = new Error("PayGlocal interactive 3D-Secure checkout required.")
+      checkoutErr.code = "REQUIRES_INTERACTIVE_CHECKOUT"
+      if (onDismiss) onDismiss(checkoutErr)
+      return reject(checkoutErr)
     } catch (err) {
       if (onDismiss) onDismiss(err)
       reject(err)

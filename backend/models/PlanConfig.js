@@ -4,7 +4,7 @@ const planConfigSchema = new mongoose.Schema(
   {
     planKey: {
       type: String,
-      enum: ["starter", "growth", "practice", "master"],
+      enum: ["open", "pro", "institution", "custom", "pro_yearly", "pro_monthly", "starter", "growth", "practice", "master"],
       required: true,
       unique: true,
     },

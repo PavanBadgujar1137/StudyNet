@@ -481,7 +481,7 @@ exports.getPractitionerDashboard = async (req, res) => {
     const payouts = await Payout.find({ practitioner: userId }).sort({ createdAt: -1 })
     const circles = await CircleCohort.find({ practitioner: userId }).sort({ createdAt: -1 })
 
-    const totalEarnings = bookings.reduce((sum, b) => sum + (b.netPayout || b.amount * 0.92), 0)
+    const totalEarnings = bookings.reduce((sum, b) => sum + (b.netPayout || b.amount * 0.9), 0)
     const activeClientsCount = new Set(bookings.map((b) => b.client?._id?.toString())).size
 
     const totalSeats = circles.reduce((s, c) => s + (c.maxCapacity || 0), 0)

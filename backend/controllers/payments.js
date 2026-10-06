@@ -28,23 +28,23 @@ exports.createSubscriptionOrder = async (req, res) => {
 
     const planPrices = {
       open: 0,
-      pro: 999,
+      pro: 9588,
       pro_monthly: 999,
       pro_yearly: 9588,
       pro_annual: 9588,
       starter: 999,
-      growth: 999,
+      growth: 9588,
       master: 9588,
     }
     const planNames = {
       open: "Open Plan",
-      pro: "Pro Plan",
+      pro: "Pro Plan (Yearly)",
       pro_monthly: "Pro Plan (Monthly)",
       pro_yearly: "Pro Plan (Yearly)",
       pro_annual: "Pro Plan (Yearly)",
       institution: "Institution Plan",
-      starter: "Pro Plan",
-      growth: "Pro Plan",
+      starter: "Pro Plan (Monthly)",
+      growth: "Pro Plan (Yearly)",
       master: "Pro Plan (Yearly)",
     }
 
@@ -123,23 +123,23 @@ exports.verifySubscriptionPayment = async (req, res) => {
 
     const planPrices = {
       open: 0,
-      pro: 999,
+      pro: 9588,
       pro_monthly: 999,
       pro_yearly: 9588,
       pro_annual: 9588,
       starter: 999,
-      growth: 999,
+      growth: 9588,
       master: 9588,
     }
     const planNames = {
       open: "Open Plan",
-      pro: "Pro Plan",
+      pro: "Pro Plan (Yearly)",
       pro_monthly: "Pro Plan (Monthly)",
       pro_yearly: "Pro Plan (Yearly)",
       pro_annual: "Pro Plan (Yearly)",
       institution: "Institution Plan",
-      starter: "Pro Plan",
-      growth: "Pro Plan",
+      starter: "Pro Plan (Monthly)",
+      growth: "Pro Plan (Yearly)",
       master: "Pro Plan (Yearly)",
     }
     const amount = planPrices[planKey] || 0
@@ -150,7 +150,7 @@ exports.verifySubscriptionPayment = async (req, res) => {
     // Create new subscription record
     const startDate = new Date()
     const endDate = new Date()
-    if (planKey && (planKey.includes("yearly") || planKey.includes("annual"))) {
+    if (planKey && (planKey === "pro" || planKey.includes("yearly") || planKey.includes("annual") || planKey === "master" || planKey === "growth")) {
       endDate.setFullYear(endDate.getFullYear() + 1)
     } else {
       endDate.setMonth(endDate.getMonth() + 1)
