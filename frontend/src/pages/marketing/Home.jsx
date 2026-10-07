@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { OHFooter, OpenHandFlow, OHBrandStrap } from '../../components/openhand'
 import learnerIllustration from '../../assets/Images/illustration_path.svg'
 import websiteIllustration from '../../assets/Images/website_illustration.svg'
+import auraImage from '../../assets/Images/Gemini_Generated_Image_pqsldtpqsldtpqsl.png'
 import {
   FiArrowRight,
   FiSearch,
@@ -577,7 +578,7 @@ export function Home() {
       <section 
         className="py-20 overflow-hidden relative" 
         id="aura"
-        style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1E1B4B 50%, #2A2665 100%)', color: '#FFFFFF' }}
+        style={{ backgroundColor: '#040825', color: '#FFFFFF' }}
       >
         {/* Glow ambient */}
         <div className="absolute -top-24 right-0 w-96 h-96 bg-blue-500/15 rounded-full blur-3xl pointer-events-none" />
@@ -625,31 +626,35 @@ export function Home() {
                   <FiArrowRight style={{ color: '#0F172A' }} />
                 </Link>
               </div>
+
+              {/* 4 Points in 2x2 Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4">
+                <div className="p-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/15 flex items-center gap-2.5 hover:bg-white/15 transition-all">
+                  <span className="text-base sm:text-lg">✨</span>
+                  <span className="text-xs sm:text-sm font-bold leading-snug" style={{ color: '#FFFFFF' }}>Reflection prompts in your voice</span>
+                </div>
+                <div className="p-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/15 flex items-center gap-2.5 hover:bg-white/15 transition-all">
+                  <span className="text-base sm:text-lg">📝</span>
+                  <span className="text-xs sm:text-sm font-bold leading-snug" style={{ color: '#FFFFFF' }}>Notes → structured summaries</span>
+                </div>
+                <div className="p-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/15 flex items-center gap-2.5 hover:bg-white/15 transition-all">
+                  <span className="text-base sm:text-lg">🔔</span>
+                  <span className="text-xs sm:text-sm font-bold leading-snug" style={{ color: '#FFFFFF' }}>Human-sounding nudges</span>
+                </div>
+                <div className="p-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/15 flex items-center gap-2.5 hover:bg-white/15 transition-all">
+                  <span className="text-base sm:text-lg">🔒</span>
+                  <span className="text-xs sm:text-sm font-bold leading-snug" style={{ color: '#FFFFFF' }}>Encrypted, consent logged</span>
+                </div>
+              </div>
             </div>
 
-            {/* Right 4 Pill Cards */}
-            <div className="lg:col-span-5 space-y-3.5">
-              
-              <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 flex items-center gap-3.5 hover:bg-white/15 transition-all">
-                <span className="text-xl">✨</span>
-                <span className="text-sm font-bold" style={{ color: '#FFFFFF' }}>Reflection prompts in your voice</span>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 flex items-center gap-3.5 hover:bg-white/15 transition-all">
-                <span className="text-xl">📝</span>
-                <span className="text-sm font-bold" style={{ color: '#FFFFFF' }}>Notes → structured summaries</span>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 flex items-center gap-3.5 hover:bg-white/15 transition-all">
-                <span className="text-xl">🔔</span>
-                <span className="text-sm font-bold" style={{ color: '#FFFFFF' }}>Human-sounding nudges</span>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 flex items-center gap-3.5 hover:bg-white/15 transition-all">
-                <span className="text-xl">🔒</span>
-                <span className="text-sm font-bold" style={{ color: '#FFFFFF' }}>Encrypted, consent logged</span>
-              </div>
-
+            {/* Right Column: Image */}
+            <div className="lg:col-span-5 flex justify-center items-center">
+              <img 
+                src={auraImage} 
+                alt="Aura AI Interface" 
+                className="w-full max-w-md h-auto object-contain rounded-2xl shadow-2xl transform transition-transform duration-500 hover:scale-105" 
+              />
             </div>
 
           </div>
@@ -662,44 +667,86 @@ export function Home() {
       <section className="py-20 bg-slate-50">
         <div className="max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           
-          {/* Top Banner: Organizations & EAP */}
-          <div className="bg-white rounded-3xl p-8 sm:p-12 border border-slate-200 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xs">
-            <div className="space-y-2 text-left max-w-2xl">
-              <span
-                style={{
-                  color: "#2563EB",
-                  backgroundColor: "#EFF6FF",
-                  border: "1px solid #BFDBFE",
-                  borderRadius: "9999px",
-                  padding: "5px 16px",
-                  fontSize: "11px",
-                  fontWeight: 800,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                  display: "inline-block",
-                  marginBottom: "8px",
-                }}
-              >
-                FOR ORGANIZATIONS &amp; EAP
-              </span>
-              <h3 
-                className="text-2xl sm:text-4xl font-black tracking-tight"
-                style={{ fontFamily: "'Playfair Display', Georgia, serif", color: '#0F172A' }}
-              >
-                Give your people a guide, not another webinar.
-              </h3>
-              <p className="text-xs sm:text-sm font-medium leading-relaxed" style={{ color: '#475569' }}>
-                Per-seat billing, HR-confidential reporting, and curated practitioner pools.
-              </p>
-            </div>
+          {/* Top Banner: Organizations & EAP (Redesigned) */}
+          <div className="bg-white rounded-[2.5rem] p-8 sm:p-14 border border-slate-200 shadow-xl relative overflow-hidden">
+            {/* Background pattern/gradient */}
+            <div className="absolute top-0 right-0 -mt-20 -mr-20 w-96 h-96 bg-blue-100/50 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 relative z-10 items-center">
+              <div className="space-y-6 text-left">
+                <span
+                  style={{
+                    color: "#2563EB",
+                    backgroundColor: "#EFF6FF",
+                    border: "1px solid #BFDBFE",
+                    borderRadius: "9999px",
+                    padding: "6px 18px",
+                    fontSize: "12px",
+                    fontWeight: 800,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    display: "inline-block",
+                  }}
+                >
+                  FOR ORGANIZATIONS &amp; EAP
+                </span>
+                <h3 
+                  className="text-4xl sm:text-5xl font-black tracking-tight leading-[1.1]"
+                  style={{ fontFamily: "'Playfair Display', Georgia, serif", color: '#0F172A' }}
+                >
+                  Give your people a guide, not another webinar.
+                </h3>
+                <p className="text-base sm:text-lg font-medium leading-relaxed" style={{ color: '#475569' }}>
+                  Upgrade your team's support system. We provide tailored 1:1 sessions and group Circles with top-tier verified guides.
+                </p>
+                <div className="pt-4">
+                  <Link
+                    to="/contact-us"
+                    className="inline-flex items-center gap-2 px-8 py-4 rounded-full font-bold text-sm shadow-lg hover:bg-slate-800 transition-all cursor-pointer"
+                    style={{ backgroundColor: '#0F172A', color: '#FFFFFF' }}
+                  >
+                    <span>Talk to our team</span>
+                    <FiArrowRight />
+                  </Link>
+                </div>
+              </div>
 
-            <Link
-              to="/contact-us"
-              className="w-full md:w-auto px-8 py-3.5 rounded-full font-bold text-sm shadow-md hover:bg-slate-800 transition-all whitespace-nowrap text-center cursor-pointer"
-              style={{ backgroundColor: '#0F172A', color: '#FFFFFF' }}
-            >
-              Talk to our team
-            </Link>
+              {/* Right side: Features Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                {/* Feature 1 */}
+                <div className="bg-[#F8FAFC] p-6 rounded-2xl border border-slate-100 hover:border-blue-200 transition-colors shadow-sm">
+                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mb-4">
+                    <span className="text-xl">👥</span>
+                  </div>
+                  <h4 className="font-bold text-slate-900 mb-2">Curated Pools</h4>
+                  <p className="text-xs sm:text-sm font-medium text-slate-600 leading-relaxed">Verified coaches, counsellors, and mentors matched to your team.</p>
+                </div>
+                {/* Feature 2 */}
+                <div className="bg-[#F8FAFC] p-6 rounded-2xl border border-slate-100 hover:border-blue-200 transition-colors shadow-sm">
+                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mb-4">
+                    <span className="text-xl">📊</span>
+                  </div>
+                  <h4 className="font-bold text-slate-900 mb-2">HR Reporting</h4>
+                  <p className="text-xs sm:text-sm font-medium text-slate-600 leading-relaxed">Track utilization and engagement metrics without compromising privacy.</p>
+                </div>
+                {/* Feature 3 */}
+                <div className="bg-[#F8FAFC] p-6 rounded-2xl border border-slate-100 hover:border-blue-200 transition-colors shadow-sm">
+                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mb-4">
+                    <span className="text-xl">💳</span>
+                  </div>
+                  <h4 className="font-bold text-slate-900 mb-2">Per-Seat Billing</h4>
+                  <p className="text-xs sm:text-sm font-medium text-slate-600 leading-relaxed">Flexible pricing structures that scale effortlessly as you grow.</p>
+                </div>
+                {/* Feature 4 */}
+                <div className="bg-[#F8FAFC] p-6 rounded-2xl border border-slate-100 hover:border-blue-200 transition-colors shadow-sm">
+                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mb-4">
+                    <span className="text-xl">⭕</span>
+                  </div>
+                  <h4 className="font-bold text-slate-900 mb-2">Private Circles</h4>
+                  <p className="text-xs sm:text-sm font-medium text-slate-600 leading-relaxed">Exclusive peer pods and group sessions dedicated to your workforce.</p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Bottom 2 Split Dual CTAs */}
