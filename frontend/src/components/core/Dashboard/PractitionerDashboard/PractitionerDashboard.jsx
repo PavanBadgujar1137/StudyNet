@@ -78,7 +78,7 @@ export function PractitionerDashboard() {
   const [telemetryData, setTelemetryData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [subStatus, setSubStatus] = useState(null)
-  const [payingPlan, setPayingPlan] = useState(null)
+  // const [payingPlan, setPayingPlan] = useState(null)
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false)
   const [payglocalModalOpen, setPayglocalModalOpen] = useState(false)
   const [payglocalOrderData, setPayglocalOrderData] = useState(null)
@@ -114,6 +114,7 @@ export function PractitionerDashboard() {
     loadData()
   }, [loadData])
 
+  /*
   const handlePayNow = async (planKey) => {
     setPayingPlan(planKey)
     const toastId = toast.loading('Initializing PayGlocal Checkout...')
@@ -147,9 +148,10 @@ export function PractitionerDashboard() {
       setPayglocalModalOpen(true)
     } catch (e) {
       toast.error('Payment initialization failed', { id: toastId })
-      setPayingPlan(null)
+      // setPayingPlan(null)
     }
   }
+  */
 
   const handlePayGlocalSuccess = async (response) => {
     if (!payglocalOrderData) return
@@ -173,7 +175,6 @@ export function PractitionerDashboard() {
     } catch (e) {
       toast.error('Payment verification error', { id: vToast })
     } finally {
-      setPayingPlan(null)
       setPayglocalModalOpen(false)
       setPayglocalOrderData(null)
     }
@@ -581,7 +582,6 @@ export function PractitionerDashboard() {
             isOpen={payglocalModalOpen}
             onClose={() => {
               setPayglocalModalOpen(false)
-              setPayingPlan(null)
             }}
             orderData={payglocalOrderData}
             onSuccess={handlePayGlocalSuccess}

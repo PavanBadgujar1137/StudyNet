@@ -9,10 +9,10 @@ import {
   FiHome,
 } from "react-icons/fi"
 import { HiSparkles } from "react-icons/hi"
-import toast from "react-hot-toast"
+// import toast from "react-hot-toast"
 import OHEyebrow from "./OHEyebrow"
-import { apiConnector } from "../../services/apiConnector"
-import PayGlocalCheckoutModal from "./PayGlocalCheckoutModal"
+// import { apiConnector } from "../../services/apiConnector"
+// import PayGlocalCheckoutModal from "./PayGlocalCheckoutModal"
 
 
 
@@ -36,9 +36,9 @@ export default function OHPricingSection({
     }
   }
 
-  const [payingPlan, setPayingPlan] = useState(null)
-  const [payglocalOrderData, setPayglocalOrderData] = useState(null)
-  const [isPayglocalOpen, setIsPayglocalOpen] = useState(false)
+  // const [payingPlan, setPayingPlan] = useState(null)
+  // const [payglocalOrderData, setPayglocalOrderData] = useState(null)
+  // const [isPayglocalOpen, setIsPayglocalOpen] = useState(false)
 
   useEffect(() => {
     if (role === undefined) {
@@ -47,9 +47,10 @@ export default function OHPricingSection({
   }, [defaultRole, role])
 
   const { token } = useSelector((state) => state.auth)
-  const { user } = useSelector((state) => state.profile)
+  // const { user } = useSelector((state) => state.profile)
   const navigate = useNavigate()
 
+  /*
   const handlePayNow = async (planKey) => {
     if (!token) {
       toast.error("Please login or sign up to join as a practitioner.")
@@ -92,7 +93,9 @@ export default function OHPricingSection({
       setPayingPlan(null)
     }
   }
+  */
 
+  /*
   const handlePayGlocalSuccess = async (response) => {
     const verifyToastId = toast.loading("Verifying payment with PayGlocal...")
     try {
@@ -133,10 +136,10 @@ export default function OHPricingSection({
       console.error("Verification error:", err)
       toast.error("Payment verification error. Contact support if debited.", { id: verifyToastId })
     } finally {
-      setPayingPlan(null)
       setIsPayglocalOpen(false)
     }
   }
+  */
 
   return (
     <section className={isModal ? "py-6 bg-transparent" : "bg-white border-b border-slate-200/80"} id="pricing" style={isModal ? {} : { paddingTop: "96px", paddingBottom: "64px" }}>
@@ -583,19 +586,19 @@ export default function OHPricingSection({
         )}
       </div>
 
+      {/*
       <PayGlocalCheckoutModal
         isOpen={isPayglocalOpen}
         onClose={() => {
           setIsPayglocalOpen(false)
-          setPayingPlan(null)
         }}
         orderData={payglocalOrderData}
         onSuccess={handlePayGlocalSuccess}
         onDismiss={() => {
-          setPayingPlan(null)
           toast.error("PayGlocal payment window closed.")
         }}
       />
+      */}
     </section>
   )
 }

@@ -106,7 +106,7 @@ export function PractitionerOnboarding({ embedded = false, telemetryData, onUpda
 
   const [practitionerOffers, setPractitionerOffers] = useState([])
   const [loadingOffers, setLoadingOffers] = useState(false)
-  const [customSpecialty, setCustomSpecialty] = useState('')
+  // const [customSpecialty, setCustomSpecialty] = useState('')
   const [customLanguage, setCustomLanguage] = useState('')
   const [isSaving, setIsSaving] = useState(false)
 
@@ -191,6 +191,7 @@ export function PractitionerOnboarding({ embedded = false, telemetryData, onUpda
     }
   }
 
+  /*
   const handleAddCustomSpecialty = () => {
     if (!customSpecialty.trim()) return
     const tag = customSpecialty.trim()
@@ -208,6 +209,7 @@ export function PractitionerOnboarding({ embedded = false, telemetryData, onUpda
     }
     setCustomSpecialty('')
   }
+  */
 
   const toggleLanguage = (lang) => {
     const current = formData.languages || []

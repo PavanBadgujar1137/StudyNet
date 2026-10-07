@@ -2,19 +2,19 @@ import React, { useState, useEffect } from "react"
 import {
   FiShield,
   FiLock,
-  FiCheckCircle,
+  // FiCheckCircle,
   FiCreditCard,
   FiGlobe,
   FiX,
-  FiArrowRight,
-  FiZap,
-  FiClock,
+  // FiArrowRight,
+  // FiZap,
+  // FiClock,
   FiSmartphone,
-  FiAlertTriangle,
-  FiRefreshCw,
-  FiCheck,
+  // FiAlertTriangle,
+  // FiRefreshCw,
+  // FiCheck,
 } from "react-icons/fi"
-import { HiSparkles } from "react-icons/hi"
+// import { HiSparkles } from "react-icons/hi"
 import toast from "react-hot-toast"
 
 /**
@@ -55,7 +55,7 @@ export default function PayGlocalCheckoutModal({
   // 3D Secure OTP State
   const [otpCode, setOtpCode] = useState("")
   const [otpTimer, setOtpTimer] = useState(180) // 3 minutes
-  const [otpResent, setOtpResent] = useState(false)
+  // const [otpResent, setOtpResent] = useState(false)
 
   const {
     amount = 9588,
@@ -63,12 +63,12 @@ export default function PayGlocalCheckoutModal({
     planName,
     offerTitle,
     courseTitle,
-    practitionerName,
+    // practitionerName,
     order = {},
     gid,
     merchantTxnId,
     redirectUrl,
-    key,
+    // key,
     prefill = {},
   } = orderData || {}
 
@@ -85,7 +85,7 @@ export default function PayGlocalCheckoutModal({
       setIsProcessing(false)
       setOtpCode("")
       setOtpTimer(180)
-      setOtpResent(false)
+      // setOtpResent(false)
     }
   }, [isOpen])
 

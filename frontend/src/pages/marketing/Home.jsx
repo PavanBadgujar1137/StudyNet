@@ -87,8 +87,8 @@ export function Home() {
   const [heroRole, setHeroRole] = useState('learner')
 
   // Real-time courses state
-  const [freeCourses, setFreeCourses] = useState([])
-  const [paidCourses, setPaidCourses] = useState([])
+  const [freeCourses, setFreeCourses] = useState(FREE_COURSES)
+  const [paidCourses, setPaidCourses] = useState(PAID_COURSES)
 
   // Top Practitioners of the Month
   const [topPractitioners, setTopPractitioners] = useState([])
@@ -97,12 +97,13 @@ export function Home() {
     const fetchCourses = async () => {
       try {
         const courses = await getAllCourses()
-        if (courses) {
+        if (courses && courses.length > 0) {
           const free = courses.filter(c => c.price === 0)
           const paid = courses.filter(c => c.price > 0)
-          setFreeCourses(free)
-          setPaidCourses(paid)
+          setFreeCourses(free.length > 0 ? free : FREE_COURSES)
+          setPaidCourses(paid.length > 0 ? paid : PAID_COURSES)
         }
+
       } catch (err) {
         console.error("Failed to fetch courses for marquee:", err)
       }

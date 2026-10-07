@@ -2,10 +2,7 @@ import React, { useState, useEffect, useCallback } from "react"
 import { useSelector } from "react-redux"
 import {
   FiCalendar,
-  FiClock,
   FiVideo,
-  FiMail,
-  FiPhone,
   FiCheckCircle,
   FiSearch,
   FiRefreshCw,
@@ -14,7 +11,6 @@ import {
   FiX,
   FiExternalLink,
   FiCopy,
-  FiUser,
   FiAlertCircle,
 } from "react-icons/fi"
 import toast from "react-hot-toast"

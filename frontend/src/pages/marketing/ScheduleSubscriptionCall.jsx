@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react"
-import { useSearchParams, useNavigate, Link } from "react-router-dom"
+import { useNavigate, Link } from "react-router-dom"
 import { useSelector } from "react-redux"
 import {
   FiCalendar,
@@ -62,7 +62,7 @@ const MONTH_NAMES = [
 ]
 
 export default function ScheduleSubscriptionCall() {
-  const [searchParams] = useSearchParams()
+  // const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const { user } = useSelector((state) => state.profile)
   const { token } = useSelector((state) => state.auth)
@@ -93,7 +93,7 @@ export default function ScheduleSubscriptionCall() {
 
   const currentYear = calendarMonth.getFullYear()
   const currentMonthIndex = calendarMonth.getMonth()
-  const currentMonthName = calendarMonth.toLocaleDateString("en-US", { month: "long" })
+  // const currentMonthName = calendarMonth.toLocaleDateString("en-US", { month: "long" })
 
   const [selectedDate, setSelectedDate] = useState(getTomorrowDateStr())
   const [selectedSlot, setSelectedSlot] = useState("11:30 AM - 12:15 PM")

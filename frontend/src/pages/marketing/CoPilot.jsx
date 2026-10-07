@@ -3,7 +3,7 @@
  * Single-file React page.
  * Fonts: Geist, Geist Mono, Instrument Serif (Google Fonts, loaded at runtime).
  */
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { OHFooter } from "../../components/openhand";
 import logoIcon from "../../assets/Logo/Logo-Icon.png";
@@ -363,7 +363,7 @@ function LiveSession() {
 }
 
 function TypewriterDoc() {
-  const snippets = [
+  const snippets = useMemo(() => [
     {
       title: "Key Takeaway",
       content: "Learner resolved to set firm calendar boundaries this week.",
@@ -380,7 +380,7 @@ function TypewriterDoc() {
       title: "Breakthrough",
       content: "Acknowledged readiness to step into leadership role.",
     },
-  ];
+  ], []);
 
   const [index, setIndex] = useState(0);
   const [displayedText, setDisplayedText] = useState("");
@@ -410,7 +410,7 @@ function TypewriterDoc() {
     }, speed);
 
     return () => clearTimeout(timer);
-  }, [displayedText, isDeleting, index]);
+  }, [displayedText, isDeleting, index, snippets]);
 
   const current = snippets[index];
 
