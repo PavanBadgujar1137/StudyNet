@@ -539,8 +539,8 @@ export function MyLearners({ setActiveSection, telemetryData, onUpdate }) {
                 <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700, color: '#64748B', fontSize: '12.5px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Learner ID</th>
                 <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700, color: '#64748B', fontSize: '12.5px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Email / Phone</th>
                 <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700, color: '#64748B', fontSize: '12.5px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Enrolled Date</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700, color: '#64748B', fontSize: '12.5px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700, color: '#64748B', fontSize: '12.5px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Actions</th>
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700, color: '#64748B', fontSize: '12.5px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Enroll For</th>
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700, color: '#64748B', fontSize: '12.5px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Amount Paid</th>
               </tr>
             </thead>
             <tbody>
@@ -614,32 +614,41 @@ export function MyLearners({ setActiveSection, telemetryData, onUpdate }) {
                       <td style={{ padding: '14px 16px', color: '#64748B', fontSize: '13px' }}>
                         {client.createdAt ? new Date(client.createdAt).toLocaleDateString() : 'Active Member'}
                       </td>
-                      <td style={{ padding: '14px 16px' }}><span className="pill ok">Approved &amp; Connected</span></td>
                       <td style={{ padding: '14px 16px' }}>
-                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        <span style={{ fontWeight: 600, color: '#475569' }}>
+                          {client.enrolledFor || '1:1 Session'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '14px 16px' }}>
+                        <div style={{ marginBottom: '8px' }}>
+                          <span style={{ fontWeight: 700, color: '#166534', background: '#DCFCE7', padding: '4px 8px', borderRadius: '6px' }}>
+                            ₹{client.amountPaid || '2,500'}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                           <button
                             className="mini"
-                            style={{ background: '#FAF5FF', color: '#7C3AED', border: '1px solid #E9D5FF', borderRadius: '8px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '6px 10px', fontWeight: 600 }}
+                            style={{ background: '#FAF5FF', color: '#7C3AED', border: '1px solid #E9D5FF', borderRadius: '8px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 8px', fontSize: '11px', fontWeight: 600 }}
                             onClick={() => setReflectionModalLearner(client)}
                             title="Assign and view reflection prompts"
                           >
-                            <FiFeather size={13} /> Reflections
+                            <FiFeather size={11} /> Reflections
                           </button>
                           <button
                             className="mini"
-                            style={{ background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE', borderRadius: '8px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '6px 10px', fontWeight: 600 }}
+                            style={{ background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE', borderRadius: '8px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 8px', fontSize: '11px', fontWeight: 600 }}
                             onClick={() => setActiveSection('community')}
                             title="Open direct chat in Community Hub"
                           >
-                            <FiMessageSquare size={13} /> Message
+                            <FiMessageSquare size={11} /> Message
                           </button>
                           <button
                             className="mini"
-                            style={{ background: '#2563EB', color: '#FFF', border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '6px 10px', fontWeight: 600 }}
+                            style={{ background: '#2563EB', color: '#FFF', border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 8px', fontSize: '11px', fontWeight: 600 }}
                             onClick={() => setActiveSection('room')}
                             title="Schedule live session"
                           >
-                            <FiVideo size={13} /> Live
+                            <FiVideo size={11} /> Live
                           </button>
                         </div>
                       </td>
