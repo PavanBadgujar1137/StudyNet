@@ -104,7 +104,7 @@ export function Community() {
     <div className="font-sans bg-[#F8FAFC] min-h-screen text-[#334155] flex flex-col relative">
 
       {/* Modern Hero Section with Subtle Pattern */}
-      <header className="relative bg-white border-b border-slate-200/80 py-6 sm:py-8 overflow-hidden">
+      <header className="relative bg-white border-b border-slate-200/80 pt-24 pb-6 sm:pt-28 sm:pb-8 overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:20px_20px] opacity-40 pointer-events-none" />
 
         <div className="relative max-w-[1440px] mx-auto px-4 md:px-8">
