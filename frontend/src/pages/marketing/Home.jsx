@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { OHFooter, OpenHandFlow, OHBrandStrap } from '../../components/openhand'
 import learnerIllustration from '../../assets/Images/illustration_path.svg'
@@ -8,12 +8,102 @@ import {
   FiArrowRight,
   FiSearch,
 } from 'react-icons/fi'
+import { getAllCourses } from '../../services/operations/courseAPI'
+
+// Fallback Dummy data for course marquees
+const FREE_COURSES = [
+  { id: 'f1', title: "Mindfulness Basics", instructor: "Dr. Emily Chen", category: "Wellness", tag: "FREE", color: "from-blue-500 to-cyan-400" },
+  { id: 'f2', title: "Overcoming Burnout 101", instructor: "Michael Ross", category: "Career", tag: "FREE", color: "from-emerald-500 to-teal-400" },
+  { id: 'f3', title: "Effective Leadership Essentials", instructor: "Amanda Waller", category: "Leadership", tag: "FREE", color: "from-indigo-500 to-blue-500" },
+  { id: 'f4', title: "Starting Your Practice Journey", instructor: "OpenHand Team", category: "Practice", tag: "FREE", color: "from-purple-500 to-pink-500" },
+  { id: 'f5', title: "Sleep Hygiene 101", instructor: "Sarah Jenkins", category: "Health", tag: "FREE", color: "from-amber-500 to-orange-400" },
+];
+
+const PAID_COURSES = [
+  { id: 'p1', title: "Advanced CBT Techniques", instructor: "Dr. Gregory House", price: "₹2,499", category: "Therapy", color: "from-rose-500 to-red-500" },
+  { id: 'p2', title: "Mastering 1:1 Sessions", instructor: "Laura Roslin", price: "₹1,999", category: "Coaching", color: "from-fuchsia-600 to-purple-600" },
+  { id: 'p3', title: "Corporate EAP Mastery", instructor: "Tom Wambsgans", price: "₹4,999", category: "Corporate", color: "from-blue-600 to-indigo-600" },
+  { id: 'p4', title: "Million-Dollar Practice", instructor: "Kendall Roy", price: "₹9,999", category: "Business", color: "from-emerald-600 to-green-600" },
+  { id: 'p5', title: "Trauma Recovery Deep Dive", instructor: "Dr. Wendy Rhoades", price: "₹3,499", category: "Specialized", color: "from-violet-600 to-purple-600" },
+];
+
+const COLORS = [
+  "from-blue-500 to-cyan-400",
+  "from-emerald-500 to-teal-400",
+  "from-indigo-500 to-blue-500",
+  "from-purple-500 to-pink-500",
+  "from-amber-500 to-orange-400",
+  "from-rose-500 to-red-500",
+  "from-fuchsia-600 to-purple-600",
+  "from-emerald-600 to-green-600"
+];
+
+const getGradient = (id) => {
+  if (!id) return COLORS[0];
+  const num = String(id).charCodeAt(String(id).length - 1) || 0;
+  return COLORS[num % COLORS.length];
+};
+
+const CourseCard = ({ course }) => {
+  const gradient = getGradient(course._id || course.id)
+  const categoryName = typeof course.category === 'object' ? course.category?.name : course.category
+  const instructorName = typeof course.instructor === 'object' 
+    ? `${course.instructor?.firstName || ''} ${course.instructor?.lastName || ''}`.trim()
+    : course.instructor
+
+  return (
+    <div 
+      className="w-[280px] sm:w-[320px] shrink-0 bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-lg transition-all cursor-pointer group"
+      onClick={() => window.location.href = `/courses/${course._id || course.id}`}
+    >
+      <div 
+        className={`h-28 sm:h-32 w-full flex items-center justify-center relative p-4 group-hover:opacity-90 transition-opacity bg-gradient-to-br ${gradient}`}
+        style={course.thumbnail ? { backgroundImage: `url(${course.thumbnail})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
+      >
+        {!course.thumbnail && (
+          <span className="text-white font-black text-xl text-center opacity-95 line-clamp-2">{categoryName || 'Course'}</span>
+        )}
+        {course.thumbnail && (
+          <div className="absolute inset-0 bg-black/40 transition-colors group-hover:bg-black/30" />
+        )}
+        <div className="absolute top-3 right-3 bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full text-[10px] font-extrabold text-white border border-white/30 tracking-wider">
+          {course.price === 0 || course.tag === 'FREE' ? 'FREE' : `₹${course.price}`}
+        </div>
+      </div>
+      <div className="p-4 sm:p-5">
+        <h4 className="font-bold text-slate-900 text-base sm:text-lg mb-1.5 truncate group-hover:text-blue-600 transition-colors">{course.courseName || course.title}</h4>
+        <p className="text-xs sm:text-sm font-medium text-slate-500 truncate">By {instructorName || 'Expert'}</p>
+      </div>
+    </div>
+  )
+};
 
 export function Home() {
   const navigate = useNavigate()
   
   // Hero Dual-Role Toggle: 'learner' | 'practitioner'
   const [heroRole, setHeroRole] = useState('learner')
+
+  // Real-time courses state
+  const [freeCourses, setFreeCourses] = useState(FREE_COURSES)
+  const [paidCourses, setPaidCourses] = useState(PAID_COURSES)
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const courses = await getAllCourses()
+        if (courses && courses.length > 0) {
+          const free = courses.filter(c => c.price === 0)
+          const paid = courses.filter(c => c.price > 0)
+          setFreeCourses(free.length > 0 ? free : FREE_COURSES)
+          setPaidCourses(paid.length > 0 ? paid : PAID_COURSES)
+        }
+      } catch (err) {
+        console.error("Failed to fetch courses for marquee:", err)
+      }
+    }
+    fetchCourses()
+  }, [])
 
   // Learner Hero interactive state
   const [learnerQuery, setLearnerQuery] = useState('')
@@ -659,6 +749,90 @@ export function Home() {
 
           </div>
         </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 5.5 ROLLING COURSES MARQUEE                                              */}
+      {/* ========================================================================= */}
+      <section className="py-20 bg-white overflow-hidden border-b border-slate-200/80">
+        <div className="max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 text-center">
+          <span
+            style={{
+              color: "#2563EB",
+              backgroundColor: "#EFF6FF",
+              border: "1px solid #BFDBFE",
+              borderRadius: "9999px",
+              padding: "5px 16px",
+              fontSize: "11px",
+              fontWeight: 800,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              display: "inline-block",
+              marginBottom: "12px",
+            }}
+          >
+            LEARN FROM THE BEST
+          </span>
+          <h2 
+            className="text-3xl sm:text-5xl font-black tracking-tight"
+            style={{ fontFamily: "'Playfair Display', Georgia, serif", color: '#0F172A' }}
+          >
+            Explore Free &amp; Premium Courses
+          </h2>
+        </div>
+
+        {/* Marquee Container */}
+        <div className="relative w-full overflow-hidden flex flex-col gap-6 sm:gap-8 pb-4">
+          
+          {/* Edge Gradients for smooth fade in/out */}
+          <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-16 sm:w-32 z-10 bg-gradient-to-r from-white to-transparent" />
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-16 sm:w-32 z-10 bg-gradient-to-l from-white to-transparent" />
+
+          {/* Row 1: Free Courses (Scrolls Left) */}
+          {freeCourses.length > 0 && (
+            <div className="flex w-max animate-course-marquee hover:[animation-play-state:paused]">
+              {[0, 1, 2, 3].map((set) => (
+                <div key={`free-set-${set}`} className="flex gap-5 sm:gap-6 pr-5 sm:pr-6 shrink-0">
+                  {freeCourses.map((course) => (
+                    <CourseCard key={`free-${set}-${course._id || course.id}`} course={course} />
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Row 2: Paid Courses (Scrolls Right) */}
+          {paidCourses.length > 0 && (
+            <div className="flex w-max animate-course-marquee-reverse hover:[animation-play-state:paused] ml-[-800px]">
+              {[0, 1, 2, 3].map((set) => (
+                <div key={`paid-set-${set}`} className="flex gap-5 sm:gap-6 pr-5 sm:pr-6 shrink-0">
+                  {paidCourses.map((course) => (
+                    <CourseCard key={`paid-${set}-${course._id || course.id}`} course={course} />
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+
+        </div>
+
+        {/* Embedded CSS for this section */}
+        <style>{`
+          @keyframes course-marquee-scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-25%); }
+          }
+          @keyframes course-marquee-scroll-reverse {
+            0% { transform: translateX(-25%); }
+            100% { transform: translateX(0); }
+          }
+          .animate-course-marquee {
+            animation: course-marquee-scroll 45s linear infinite;
+          }
+          .animate-course-marquee-reverse {
+            animation: course-marquee-scroll-reverse 50s linear infinite;
+          }
+        `}</style>
       </section>
 
       {/* ========================================================================= */}
