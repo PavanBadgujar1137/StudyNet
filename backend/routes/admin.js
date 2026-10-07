@@ -8,6 +8,7 @@ const {
   getAllPayments,
   getAllSubscriptions,
   getAllBookings,
+  setPractitionerOfTheMonthRank,
   getOrgConversations,
   updateOrgConversation,
   processMonthlyPayout,
@@ -45,6 +46,7 @@ router.patch("/courses/:id", auth, isAdmin, updateCourseAdmin)
 // Practitioner management
 router.get("/practitioners", auth, isAdmin, getAllPractitioners)
 router.get("/practitioners/:practitionerId/payment-history", auth, isAdmin, getPractitionerPaymentHistory)
+router.patch("/practitioners/:id/rank", auth, isAdmin, setPractitionerOfTheMonthRank)
 
 // Payment ledger
 router.get("/payments", auth, isAdmin, getAllPayments)

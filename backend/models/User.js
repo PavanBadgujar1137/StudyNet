@@ -139,6 +139,10 @@ const userSchema = new mongoose.Schema(
       ],
       default: "open",
     },
+    practitionerOfTheMonthRank: {
+      type: Number, // 1, 2, or 3
+      enum: [1, 2, 3],
+    },
     // Account deletion tracking (30-day grace period for permanent deletion)
     isDeleted: {
       type: Boolean,

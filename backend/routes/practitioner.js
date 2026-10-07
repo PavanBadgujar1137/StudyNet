@@ -18,11 +18,13 @@ const {
   getIntakeAnswers,
   requestClientReview,
   trackPractitionerView,
+  getPractitionersOfTheMonth,
 } = require("../controllers/practitioner")
 const { auth, isPractitioner } = require("../middleware/auth")
 
 // Public routes
 router.get("/", getPractitioners)
+router.get("/top-of-month", getPractitionersOfTheMonth)
 router.get("/handle/:handle", getPractitionerByHandle)
 router.post("/:id/view", trackPractitionerView)
 router.post("/track-view/:id", trackPractitionerView)

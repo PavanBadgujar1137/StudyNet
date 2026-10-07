@@ -276,7 +276,7 @@ exports.getAllPractitioners = async (req, res) => {
 
     const [practitioners, total] = await Promise.all([
       User.find(query)
-        .select("firstName lastName email image createdAt accountType active practitionerProfile trialStartedAt trialExpiresAt activePlan isDeleted deletionScheduledAt deletionEffectiveDate")
+        .select("firstName lastName email image createdAt accountType active practitionerProfile trialStartedAt trialExpiresAt activePlan isDeleted deletionScheduledAt deletionEffectiveDate practitionerOfTheMonthRank")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(Number(limit))
@@ -1375,5 +1375,46 @@ exports.updateCallStatusAdmin = async (req, res) => {
   }
 }
 
+// ─── Set Practitioner of the Month Rank ───────────────────────────────────────
+exports.setPractitionerOfTheMonthRank = async (req, res) => {
+  try {
+    const { id } = req.params
+    const { rank } = req.body // Expecting 1, 2, 3, or null to unset
 
+    if (!id) {
+      return res.status(400).json({ success: false, message: "Practitioner ID is required" })
+    }
 
+    if (rank !== null && ![1, 2, 3].includes(Number(rank))) {
+      return res.status(400).json({ success: false, message: "Rank must be 1, 2, 3, or null" })
+    }
+
+    // If setting a rank, we need to make sure no one else has this rank
+    if (rank !== null) {
+      await User.updateMany(
+        { practitionerOfTheMonthRank: Number(rank) },
+        { $unset: { practitionerOfTheMonthRank: 1 } }
+      )
+    }
+
+    // Now set the rank for the specific practitioner
+    const update = rank === null 
+      ? { $unset: { practitionerOfTheMonthRank: 1 } } 
+      : { practitionerOfTheMonthRank: Number(rank) }
+
+    const updatedUser = await User.findByIdAndUpdate(id, update, { new: true })
+
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: "Practitioner not found" })
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: rank === null ? "Rank removed successfully" : `Assigned rank ${rank} to practitioner`,
+      practitioner: updatedUser,
+    })
+  } catch (error) {
+    console.error("setPractitionerOfTheMonthRank error:", error)
+    return res.status(500).json({ success: false, message: error.message || "Failed to assign rank" })
+  }
+}

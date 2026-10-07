@@ -1351,5 +1351,33 @@ exports.trackPractitionerView = async (req, res) => {
   }
 }
 
+// ─── Get Practitioners of the Month (Home Page) ───────────────────────────────
+exports.getPractitionersOfTheMonth = async (req, res) => {
+  try {
+    const topPractitioners = await User.find({
+      practitionerOfTheMonthRank: { $in: [1, 2, 3] },
+      isDeleted: { $ne: true }
+    })
+    .select("firstName lastName email image practitionerOfTheMonthRank")
+    .sort({ practitionerOfTheMonthRank: 1 })
+    .lean()
 
+    // Enrich with profile data if needed
+    const enriched = await Promise.all(topPractitioners.map(async (pract) => {
+      const profile = await PractitionerProfile.findOne({ user: pract._id }).lean()
+      return {
+        ...pract,
+        specialties: profile?.specialties || ["Integrative Health"],
+        handle: profile?.handle,
+      }
+    }))
 
+    return res.status(200).json({
+      success: true,
+      practitioners: enriched,
+    })
+  } catch (error) {
+    console.error("getPractitionersOfTheMonth error:", error)
+    return res.status(500).json({ success: false, message: error.message || "Failed to fetch top practitioners" })
+  }
+}

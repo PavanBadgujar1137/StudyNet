@@ -1172,6 +1172,12 @@ function PractitionersTab() {
   const [historyLoading, setHistoryLoading] = useState(false)
   const [historyTab, setHistoryTab] = useState('payouts') // 'payouts' | 'logs'
 
+  // Practitioner of the Month & Sorting
+  const [rankModal, setRankModal] = useState(null)
+  const [selectedRank, setSelectedRank] = useState('')
+  const [updatingRank, setUpdatingRank] = useState(false)
+  const [sortConfig, setSortConfig] = useState({ key: '', direction: 'desc' })
+
   const load = useCallback(async () => {
     setLoading(true)
     try {
@@ -1210,6 +1216,44 @@ function PractitionersTab() {
     } catch (e) { toast.error('Failed to update plan') }
     setUpdatingPlan(false)
   }
+
+  const handleUpdateRank = async () => {
+    setUpdatingRank(true)
+    try {
+      const rankVal = selectedRank === 'none' ? null : Number(selectedRank)
+      const res = await apiConnector('PATCH', `/api/v1/admin/practitioners/${rankModal._id}/rank`, { rank: rankVal }, { Authorization: `Bearer ${token}` })
+      if (res?.data?.success) {
+        toast.success(res.data.message)
+        setRankModal(null)
+        load()
+      }
+    } catch (e) { toast.error(e?.response?.data?.message || 'Failed to update rank') }
+    setUpdatingRank(false)
+  }
+
+  const handleSort = (key) => {
+    let direction = 'desc'
+    if (sortConfig.key === key && sortConfig.direction === 'desc') direction = 'asc'
+    setSortConfig({ key, direction })
+  }
+
+  const sortedPractitioners = React.useMemo(() => {
+    let sortableItems = [...practitioners]
+    if (sortConfig.key !== '') {
+      sortableItems.sort((a, b) => {
+        let aVal = a[sortConfig.key] || 0
+        let bVal = b[sortConfig.key] || 0
+        if (sortConfig.key === 'sessions') { aVal = a.sessionsDelivered || 0; bVal = b.sessionsDelivered || 0 }
+        if (sortConfig.key === 'courses') { aVal = a.coursesCount || 0; bVal = b.coursesCount || 0 }
+        if (sortConfig.key === 'grossGenerated') { aVal = a.grossGenerated || 0; bVal = b.grossGenerated || 0 }
+        
+        if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1
+        if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1
+        return 0
+      })
+    }
+    return sortableItems
+  }, [practitioners, sortConfig])
 
   const handlePayout = async () => {
     const hasBankDetails = !!(
@@ -1277,6 +1321,39 @@ function PractitionersTab() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* Rank Assignment Modal */}
+      {rankModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 20, padding: 32, width: 400, maxWidth: '90vw', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
+            <h3 style={{ margin: '0 0 16px', color: '#0F172A', fontSize: 18, fontWeight: 800 }}>Practitioner of the Month</h3>
+            <p style={{ margin: '0 0 20px', color: '#64748B', fontSize: 13 }}>
+              Select the ranking for Dr. <strong>{rankModal.firstName} {rankModal.lastName}</strong>. Only 3 practitioners can be ranked at a time.
+            </p>
+
+            <div style={{ marginBottom: 20 }}>
+              <select value={selectedRank} onChange={e => setSelectedRank(e.target.value)}
+                style={{ width: '100%', background: '#FFFFFF', border: '1.5px solid #CBD5E1', borderRadius: 10, padding: '10px 14px', color: '#0F172A', fontSize: 14, outline: 'none' }}>
+                <option value="none">Not Ranked (Remove from Top 3)</option>
+                <option value="1">1st Place</option>
+                <option value="2">2nd Place</option>
+                <option value="3">3rd Place</option>
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setRankModal(null)}
+                style={{ flex: 1, padding: '10px', background: '#F1F5F9', border: 'none', borderRadius: 10, color: '#64748B', cursor: 'pointer', fontWeight: 600 }}>
+                Cancel
+              </button>
+              <button onClick={handleUpdateRank} disabled={updatingRank}
+                style={{ flex: 1, padding: '10px', background: 'linear-gradient(135deg, #F59E0B, #D97706)', border: 'none', borderRadius: 10, color: '#fff', cursor: 'pointer', fontWeight: 700, opacity: updatingRank ? 0.7 : 1 }}>
+                {updatingRank ? 'Saving...' : 'Save Rank'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Plan Override Modal for Practitioner */}
       {planModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1610,9 +1687,33 @@ function PractitionersTab() {
                 </span>
               )
             }},
-            { key: 'sessions', label: 'Sessions', render: r => r.sessionsDelivered || 0 },
-            { key: 'courses', label: 'Courses', render: r => r.coursesCount || 0 },
-            { key: 'grossGenerated', label: 'Gross Generated', render: r => <span style={{ color: '#10B981', fontWeight: 700 }}>{fmt(r.grossGenerated || 0)}</span> },
+            { 
+              key: 'sessions', 
+              label: (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }} onClick={() => handleSort('sessions')}>
+                  Sessions <span style={{ fontSize: 10, color: sortConfig.key === 'sessions' ? '#0F172A' : '#CBD5E1' }}>{sortConfig.key === 'sessions' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '↕'}</span>
+                </div>
+              ), 
+              render: r => r.sessionsDelivered || 0 
+            },
+            { 
+              key: 'courses', 
+              label: (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }} onClick={() => handleSort('courses')}>
+                  Courses <span style={{ fontSize: 10, color: sortConfig.key === 'courses' ? '#0F172A' : '#CBD5E1' }}>{sortConfig.key === 'courses' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '↕'}</span>
+                </div>
+              ), 
+              render: r => r.coursesCount || 0 
+            },
+            { 
+              key: 'grossGenerated', 
+              label: (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }} onClick={() => handleSort('grossGenerated')}>
+                  Gross Generated <span style={{ fontSize: 10, color: sortConfig.key === 'grossGenerated' ? '#0F172A' : '#CBD5E1' }}>{sortConfig.key === 'grossGenerated' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '↕'}</span>
+                </div>
+              ), 
+              render: r => <span style={{ color: '#10B981', fontWeight: 700 }}>{fmt(r.grossGenerated || 0)}</span> 
+            },
             { key: 'salaryOwed', label: 'Salary Owed', render: r => <span style={{ color: r.salaryOwed > 0 ? '#D97706' : '#64748B', fontWeight: 700 }}>{fmt(r.salaryOwed)}</span> },
             { key: 'action', label: 'Actions', render: r => (
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
@@ -1624,6 +1725,10 @@ function PractitionersTab() {
                   style={{ padding: '6px 10px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, color: '#1D4ED8', cursor: 'pointer', fontWeight: 700, fontSize: 11 }}>
                   📜 History
                 </button>
+                <button onClick={() => { setRankModal(r); setSelectedRank(r.practitionerOfTheMonthRank ? String(r.practitionerOfTheMonthRank) : 'none') }}
+                  style={{ padding: '6px 10px', background: r.practitionerOfTheMonthRank ? '#FEF3C7' : '#F1F5F9', border: `1px solid ${r.practitionerOfTheMonthRank ? '#FDE68A' : '#E2E8F0'}`, borderRadius: 8, color: r.practitionerOfTheMonthRank ? '#D97706' : '#64748B', cursor: 'pointer', fontWeight: 700, fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <FiStar size={12} fill={r.practitionerOfTheMonthRank ? '#F59E0B' : 'transparent'} /> {r.practitionerOfTheMonthRank ? `Rank ${r.practitionerOfTheMonthRank}` : 'Set Rank'}
+                </button>
                 <button onClick={() => setDeleteModal(r)}
                   title="Permanently hard delete practitioner from database"
                   style={{ padding: '6px 10px', background: '#FEF2F2', border: '1px solid #FECDD3', borderRadius: 8, color: '#DC2626', cursor: 'pointer', fontWeight: 700, fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -1632,7 +1737,7 @@ function PractitionersTab() {
               </div>
             )},
           ]}
-          data={practitioners}
+          data={sortedPractitioners}
         />
       </div>
     </div>

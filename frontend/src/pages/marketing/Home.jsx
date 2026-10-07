@@ -7,8 +7,10 @@ import auraImage from '../../assets/Images/Gemini_Generated_Image_pqsldtpqsldtpq
 import {
   FiArrowRight,
   FiSearch,
+  FiStar,
 } from 'react-icons/fi'
 import { getAllCourses } from '../../services/operations/courseAPI'
+import { apiConnector } from '../../services/apiConnector'
 
 // Fallback Dummy data for course marquees
 const FREE_COURSES = [
@@ -85,24 +87,38 @@ export function Home() {
   const [heroRole, setHeroRole] = useState('learner')
 
   // Real-time courses state
-  const [freeCourses, setFreeCourses] = useState(FREE_COURSES)
-  const [paidCourses, setPaidCourses] = useState(PAID_COURSES)
+  const [freeCourses, setFreeCourses] = useState([])
+  const [paidCourses, setPaidCourses] = useState([])
+
+  // Top Practitioners of the Month
+  const [topPractitioners, setTopPractitioners] = useState([])
 
   useEffect(() => {
     const fetchCourses = async () => {
       try {
         const courses = await getAllCourses()
-        if (courses && courses.length > 0) {
+        if (courses) {
           const free = courses.filter(c => c.price === 0)
           const paid = courses.filter(c => c.price > 0)
-          setFreeCourses(free.length > 0 ? free : FREE_COURSES)
-          setPaidCourses(paid.length > 0 ? paid : PAID_COURSES)
+          setFreeCourses(free)
+          setPaidCourses(paid)
         }
       } catch (err) {
         console.error("Failed to fetch courses for marquee:", err)
       }
     }
+    const fetchTopPractitioners = async () => {
+      try {
+        const res = await apiConnector('GET', '/api/v1/practitioners/top-of-month')
+        if (res?.data?.success) {
+          setTopPractitioners(res.data.practitioners)
+        }
+      } catch (err) {
+        console.error("Failed to fetch top practitioners:", err)
+      }
+    }
     fetchCourses()
+    fetchTopPractitioners()
   }, [])
 
   // Learner Hero interactive state
@@ -659,7 +675,58 @@ export function Home() {
 
         </div>
       </section>
+      {/* ========================================================================= */}
+      {/* 4.5 PRACTITIONER OF THE MONTH                                             */}
+      {/* ========================================================================= */}
+      {topPractitioners.length > 0 && (
+        <section className="py-20 bg-slate-50 border-b border-slate-200/80 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-50 via-slate-50 to-slate-50 pointer-events-none" />
+          <div className="max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div className="text-center mb-12">
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider mb-4" style={{ color: '#D97706', backgroundColor: '#FEF3C7', border: '1px solid #FDE68A' }}>
+                <FiStar className="fill-amber-500" /> Practitioner of the Month
+              </span>
+              <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight mb-4">
+                Honoring our top guides
+              </h2>
+              <p className="text-slate-500 text-lg max-w-2xl mx-auto font-medium">
+                Meet the practitioners who have made the most profound impact in our community this month.
+              </p>
+            </div>
 
+            <div className="flex flex-wrap justify-center gap-8">
+              {topPractitioners.map((practitioner, idx) => (
+                <div key={practitioner._id} className="w-full sm:w-[320px] bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:shadow-xl transition-all flex flex-col items-center text-center group cursor-pointer" onClick={() => navigate(practitioner.handle ? `/handle/${practitioner.handle}` : `/find-a-practitioner`)}>
+                  <div className="relative mb-6">
+                    <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-amber-50 shadow-inner group-hover:scale-105 transition-transform duration-300">
+                      {practitioner.image ? (
+                        <img src={practitioner.image} alt={practitioner.firstName} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-2xl font-black">
+                          {practitioner.firstName?.[0]}{practitioner.lastName?.[0]}
+                        </div>
+                      )}
+                    </div>
+                    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-md border border-white">
+                      Rank {practitioner.practitionerOfTheMonthRank}
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-1 group-hover:text-amber-600 transition-colors">
+                    Dr. {practitioner.firstName} {practitioner.lastName}
+                  </h3>
+                  <p className="text-sm text-slate-500 font-medium mb-4">
+                    {practitioner.specialties?.[0] || 'Integrative Health'}
+                  </p>
+                  <div className="w-full h-px bg-slate-100 mb-4" />
+                  <span className="text-amber-600 font-bold text-sm flex items-center gap-2">
+                    View Profile <FiArrowRight className="transition-transform group-hover:translate-x-1" />
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
 
       {/* ========================================================================= */}
