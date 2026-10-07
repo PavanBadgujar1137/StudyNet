@@ -271,40 +271,28 @@ exports.getMySubscription = async (req, res) => {
       })
     }
 
-    // Practitioner trial / subscription check
+    // Practitioner subscription check
     const hasActiveSubscription = !!subscription && new Date(subscription.endDate) > now
-    const trialDays = 14
-    const trialStartedAt = user?.createdAt || user?.trialStartedAt || now
-    const trialExpiresAt = user?.trialExpiresAt || new Date(new Date(trialStartedAt).getTime() + trialDays * 24 * 60 * 60 * 1000)
 
-    const msRemaining = new Date(trialExpiresAt).getTime() - now.getTime()
-    const isTrialActive = !hasActiveSubscription && msRemaining > 0
-    const trialDaysRemaining = isTrialActive
-      ? Math.min(trialDays, Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24))))
-      : 0
-
-    let effectivePlan = "none"
-    let status = "trial_expired"
+    let effectivePlan = "open"
+    let status = "active_free"
 
     if (hasActiveSubscription) {
       effectivePlan = subscription.planKey
       status = "subscribed"
-    } else if (isTrialActive) {
-      effectivePlan = "trial"
-      status = "trial_active"
-    } else {
-      effectivePlan = "none"
-      status = "trial_expired"
+    } else if (user?.activePlan === "open" || user?.activePlan === "free") {
+      effectivePlan = "open"
+      status = "active_free"
     }
 
     return res.status(200).json({
       success: true,
       subscription,
       hasActiveSubscription,
-      isTrialActive,
-      trialDaysRemaining,
-      trialStartedAt,
-      trialExpiresAt,
+      isTrialActive: false,
+      trialDaysRemaining: 0,
+      trialStartedAt: user?.createdAt,
+      trialExpiresAt: null,
       effectivePlan,
       status,
       isFreeLearner: false,

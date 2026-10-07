@@ -180,26 +180,26 @@ export function PractitionerDashboard() {
   }
 
 
-  const isPractitionerSubscribed = subStatus?.hasActiveSubscription || ['starter', 'growth', 'practice', 'master'].includes(user?.activePlan)
-  const isTrialActive = subStatus?.isTrialActive === true  // only when server confirms a real trial
-  const trialDaysRemaining = subStatus?.trialDaysRemaining ?? 0
+  const activePlan = subStatus?.effectivePlan || user?.activePlan || 'open'
+  const isFreePlan = activePlan === 'open' || activePlan === 'free' || activePlan === 'none'
+  const isPractitionerSubscribed = subStatus?.hasActiveSubscription || !isFreePlan
 
-  const isPractitionerExpired = Boolean(
-    subStatus &&
-    !subStatus.hasActiveSubscription &&
-    !subStatus.isTrialActive
-  )
+  // No trial concept; users default to the "Open" free plan.
+  // We don't lock them out.
+  const isPractitionerExpired = false
+
+  const isCustomPlan = activePlan === 'custom' || activePlan === 'master' || subStatus?.planKey === 'custom'
 
   const rawPracticeItems = [
     { id: 'dash',      label: 'My Dashboard', icon: <FiGrid /> },
     { id: 'aura',      label: 'AURA Assistant',   icon: <FiZap />, badge: 'Assistant' },
-    { id: 'social',    label: 'Social Posts',     icon: <FiShare2 /> },
+    { id: 'social',    label: 'Social Posts',     icon: <FiShare2 />, req: 'pro' },
     { id: 'community', label: 'Community Hub',    icon: <FiMessageSquare /> },
     { id: 'offers',    label: 'Offers',           icon: <FiTag /> },
-    { id: 'courses',   label: 'My Courses',       icon: <FiBookOpen /> },
-    { id: 'coupons',   label: 'Coupons & Grants', icon: <FiPercent /> },
+    { id: 'courses',   label: 'My Courses',       icon: <FiBookOpen />, req: 'custom' },
+    { id: 'coupons',   label: 'Coupons & Grants', icon: <FiPercent />, req: 'pro' },
     { id: 'clients',   label: 'Learners',         icon: <FiUsers /> },
-    { id: 'circles',   label: 'Circles',          icon: <FiCircle /> },
+    { id: 'circles',   label: 'Circles',          icon: <FiCircle />, req: 'pro' },
   ]
 
   const rawLiveItems = [
@@ -208,13 +208,26 @@ export function PractitionerDashboard() {
 
   const rawBusinessItems = [
     { id: 'setup',   label: 'Practice Setup Wizard', icon: <FiCheckSquare /> },
-    { id: 'growth',  label: 'Growth tools',          icon: <FiTrendingUp /> },
+    { id: 'growth',  label: 'Growth tools',          icon: <FiTrendingUp />, req: 'pro' },
     { id: 'payouts', label: 'Payouts',               icon: <FiDollarSign /> },
   ]
 
-  const practiceItems = rawPracticeItems.map(i => isPractitionerExpired ? { ...i, badge: '🔒 Locked' } : i)
-  const liveItems     = rawLiveItems.map(i     => isPractitionerExpired ? { ...i, badge: '🔒 Locked' } : i)
-  const businessItems = rawBusinessItems.map(i => isPractitionerExpired ? { ...i, badge: '🔒 Locked' } : i)
+  const practiceItems = rawPracticeItems.map(i => i.req === 'pro' && !isPractitionerSubscribed ? { ...i, badge: '🔒 Pro' } : i.req === 'custom' && !isCustomPlan ? { ...i, badge: '🔒 Custom' } : i)
+  const liveItems     = rawLiveItems.map(i => i.req === 'pro' && !isPractitionerSubscribed ? { ...i, badge: '🔒 Pro' } : i.req === 'custom' && !isCustomPlan ? { ...i, badge: '🔒 Custom' } : i)
+  const businessItems = rawBusinessItems.map(i => i.req === 'pro' && !isPractitionerSubscribed ? { ...i, badge: '🔒 Pro' } : i.req === 'custom' && !isCustomPlan ? { ...i, badge: '🔒 Custom' } : i)
+
+  const handleTabClick = (item) => {
+    if (item.req === 'pro' && !isPractitionerSubscribed) {
+      setIsPlanModalOpen(true)
+      return
+    }
+    if (item.req === 'custom' && !isCustomPlan) {
+      setIsPlanModalOpen(true)
+      return
+    }
+    setActiveSection(item.id)
+    setIsMobileSidebarOpen(false)
+  }
 
   const accountItems = [
     { id: 'profile', label: 'Profile & Settings', icon: <FiUser /> },
@@ -274,10 +287,7 @@ export function PractitionerDashboard() {
                 return (
                   <button
                     key={item.id}
-                    onClick={() => {
-                      setActiveSection(item.id)
-                      setIsMobileSidebarOpen(false)
-                    }}
+                    onClick={() => handleTabClick(item)}
                     className={`oh-sidebar-btn ${isActive ? 'active' : ''}`}
                   >
                     <div className="oh-sidebar-btn-left">
@@ -297,10 +307,7 @@ export function PractitionerDashboard() {
                 return (
                   <button
                     key={item.id}
-                    onClick={() => {
-                      setActiveSection(item.id)
-                      setIsMobileSidebarOpen(false)
-                    }}
+                    onClick={() => handleTabClick(item)}
                     className={`oh-sidebar-btn ${isActive ? 'active' : ''}`}
                   >
                     <div className="oh-sidebar-btn-left">
@@ -325,10 +332,7 @@ export function PractitionerDashboard() {
                 return (
                   <button
                     key={item.id}
-                    onClick={() => {
-                      setActiveSection(item.id)
-                      setIsMobileSidebarOpen(false)
-                    }}
+                    onClick={() => handleTabClick(item)}
                     className={`oh-sidebar-btn ${isActive ? 'active' : ''}`}
                   >
                     <div className="oh-sidebar-btn-left">
@@ -348,10 +352,7 @@ export function PractitionerDashboard() {
                 return (
                   <button
                     key={item.id}
-                    onClick={() => {
-                      setActiveSection(item.id)
-                      setIsMobileSidebarOpen(false)
-                    }}
+                    onClick={() => handleTabClick(item)}
                     className={`oh-sidebar-btn ${isActive ? 'active' : ''}`}
                   >
                     <div className="oh-sidebar-btn-left">
@@ -422,37 +423,34 @@ export function PractitionerDashboard() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {/* 4.2 FREE TIER: Only show upgrade prompt when user is genuinely on a trial.
-                Free-tier practitioners (isFreeTier) get the Practice Cockpit without a countdown. */}
-            {isTrialActive && !isPractitionerSubscribed && (
+            {/* FREE TIER: Show "Open Plan" indicator and Upgrade button */}
+            {isFreePlan && (
               <>
-                <button
-                  onClick={() => setIsPlanModalOpen(true)}
+                <div
                   style={{
-                    border: '1px solid #E9D5FF',
-                    cursor: 'pointer',
+                    border: '1px solid #BFDBFE',
                     padding: '6px 14px',
                     borderRadius: '20px',
                     fontSize: '12.5px',
                     fontWeight: 700,
-                    background: '#F3E8FF',
-                    color: '#7E22CE',
+                    background: '#EFF6FF',
+                    color: '#1D4ED8',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
                     whiteSpace: 'nowrap'
                   }}
-                  title="Click to view subscription options"
+                  title="You are currently on the Open free plan"
                 >
-                  <span>⚡ Trial active — {trialDaysRemaining}d remaining →</span>
-                </button>
+                  <FiCheckSquare /> Open Plan (Free)
+                </div>
 
                 <button
                   onClick={() => setIsPlanModalOpen(true)}
                   className="oh-action-btn"
                   style={{ background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)', color: '#ffffff' }}
                 >
-                  <FiZap /> Upgrade Plan
+                  <FiZap /> Upgrade to Pro
                 </button>
               </>
             )}

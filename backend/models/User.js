@@ -137,7 +137,7 @@ const userSchema = new mongoose.Schema(
         "none",
         "free",
       ],
-      default: "trial",
+      default: "open",
     },
     // Account deletion tracking (30-day grace period for permanent deletion)
     isDeleted: {
