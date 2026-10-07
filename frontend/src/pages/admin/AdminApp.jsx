@@ -1953,7 +1953,6 @@ function OrgConversationsTab() {
             { key: 'organizationName', label: 'Organization', render: r => <span style={{ color: '#0F172A', fontWeight: 600 }}>{r.organizationName}</span> },
             { key: 'contactName', label: 'Contact Person' },
             { key: 'contactEmail', label: 'Email', render: r => <span style={{ color: '#1F5FE0' }}>{r.contactEmail}</span> },
-            { key: 'companySize', label: 'Size', render: r => r.companySize || '—' },
             { key: 'message', label: 'Message Preview', wrap: true, render: r => (
               <span style={{ color: '#64748B', maxWidth: 200, display: 'inline-block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {r.message}
