@@ -183,24 +183,21 @@ export function PractitionerDashboard() {
 
   const activePlan = subStatus?.effectivePlan || user?.activePlan || 'open'
   const isFreePlan = activePlan === 'open' || activePlan === 'free' || activePlan === 'none'
-  const isPractitionerSubscribed = subStatus?.hasActiveSubscription || !isFreePlan
 
   // No trial concept; users default to the "Open" free plan.
   // We don't lock them out.
   const isPractitionerExpired = false
 
-  const isCustomPlan = activePlan === 'custom' || activePlan === 'master' || subStatus?.planKey === 'custom'
-
   const rawPracticeItems = [
     { id: 'dash',      label: 'My Dashboard', icon: <FiGrid /> },
     { id: 'aura',      label: 'AURA Assistant',   icon: <FiZap />, badge: 'Assistant' },
-    { id: 'social',    label: 'Social Posts',     icon: <FiShare2 />, req: 'pro' },
+    { id: 'social',    label: 'Social Posts',     icon: <FiShare2 /> },
     { id: 'community', label: 'Community Hub',    icon: <FiMessageSquare /> },
     { id: 'offers',    label: 'Offers',           icon: <FiTag /> },
-    { id: 'courses',   label: 'My Courses',       icon: <FiBookOpen />, req: 'custom' },
-    { id: 'coupons',   label: 'Coupons & Grants', icon: <FiPercent />, req: 'pro' },
+    { id: 'courses',   label: 'My Courses',       icon: <FiBookOpen /> },
+    { id: 'coupons',   label: 'Coupons & Grants', icon: <FiPercent /> },
     { id: 'clients',   label: 'Learners',         icon: <FiUsers /> },
-    { id: 'circles',   label: 'Circles',          icon: <FiCircle />, req: 'pro' },
+    { id: 'circles',   label: 'Circles',          icon: <FiCircle /> },
   ]
 
   const rawLiveItems = [
@@ -209,23 +206,15 @@ export function PractitionerDashboard() {
 
   const rawBusinessItems = [
     { id: 'setup',   label: 'Practice Setup Wizard', icon: <FiCheckSquare /> },
-    { id: 'growth',  label: 'Growth tools',          icon: <FiTrendingUp />, req: 'pro' },
+    { id: 'growth',  label: 'Growth tools',          icon: <FiTrendingUp /> },
     { id: 'payouts', label: 'Payouts',               icon: <FiDollarSign /> },
   ]
 
-  const practiceItems = rawPracticeItems.map(i => i.req === 'pro' && !isPractitionerSubscribed ? { ...i, badge: '🔒 Pro' } : i.req === 'custom' && !isCustomPlan ? { ...i, badge: '🔒 Custom' } : i)
-  const liveItems     = rawLiveItems.map(i => i.req === 'pro' && !isPractitionerSubscribed ? { ...i, badge: '🔒 Pro' } : i.req === 'custom' && !isCustomPlan ? { ...i, badge: '🔒 Custom' } : i)
-  const businessItems = rawBusinessItems.map(i => i.req === 'pro' && !isPractitionerSubscribed ? { ...i, badge: '🔒 Pro' } : i.req === 'custom' && !isCustomPlan ? { ...i, badge: '🔒 Custom' } : i)
+  const practiceItems = rawPracticeItems
+  const liveItems     = rawLiveItems
+  const businessItems = rawBusinessItems
 
   const handleTabClick = (item) => {
-    if (item.req === 'pro' && !isPractitionerSubscribed) {
-      setIsPlanModalOpen(true)
-      return
-    }
-    if (item.req === 'custom' && !isCustomPlan) {
-      setIsPlanModalOpen(true)
-      return
-    }
     setActiveSection(item.id)
     setIsMobileSidebarOpen(false)
   }

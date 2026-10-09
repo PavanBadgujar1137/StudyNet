@@ -316,7 +316,9 @@ export default function MySubscription() {
   }
 
   // ─── PRACTITIONER VIEW ───
-  const rawPlanKey = (user?.activePlan || "trial").toLowerCase()
+  let rawPlanKey = (user?.activePlan || "open").toLowerCase()
+  if (rawPlanKey === "trial" || rawPlanKey === "none") rawPlanKey = "open"
+
   const planInfo = PRACTITIONER_PLANS[rawPlanKey] || {
     name: `${user?.activePlan?.toUpperCase() || "ACTIVE"} PLAN`,
     price: "Active Plan",
@@ -333,7 +335,9 @@ export default function MySubscription() {
   let daysRemaining = 0
   let isExpired = false
 
-  if (isLifetime) {
+  if (rawPlanKey === "open") {
+    daysRemaining = "Active"
+  } else if (isLifetime) {
     daysRemaining = "Unlimited Lifetime Access"
   } else if (trialExpiresAt) {
     const diffMs = trialExpiresAt.getTime() - now.getTime()
@@ -347,7 +351,9 @@ export default function MySubscription() {
     daysRemaining = "Active"
   }
 
-  const formattedDate = isLifetime
+  const formattedDate = rawPlanKey === "open"
+    ? "No Renewal Required"
+    : isLifetime
     ? "Lifetime Membership (No Renewal Required)"
     : trialExpiresAt
     ? trialExpiresAt.toLocaleDateString("en-US", {
