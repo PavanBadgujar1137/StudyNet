@@ -179,10 +179,15 @@ app.get("/", (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`App is listening at ${PORT}`)
-  if (!process.env.PAYGLOCAL_MERCHANT_ID || !process.env.PAYGLOCAL_API_KEY) {
-    console.log(
-      "INFO: PayGlocal credentials running with development / sandbox fallback"
-    )
+  try {
+    const { getPayGlocalConfig } = require("./config/payglocal")
+    if (!getPayGlocalConfig().isConfigured) {
+      console.log(
+        "INFO: PayGlocal credentials running with development / sandbox fallback"
+      )
+    }
+  } catch (pglErr) {
+    console.log("INFO: PayGlocal config not loaded:", pglErr.message)
   }
 
   // Start Multi-Channel Automated Session Reminders (WhatsApp + Email: 1h, 15m, 2m)

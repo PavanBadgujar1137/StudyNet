@@ -147,6 +147,7 @@ function SocialAuthButtons({ accountType = "Client", mode = "login" }) {
   const handleLinkedInSignIn = () => {
     window.__activeAuthRole = accountType
     sessionStorage.setItem("socialAuthAccountType", accountType)
+    localStorage.setItem("socialAuthAccountType", accountType)
     const redirectUri = process.env.REACT_APP_LINKEDIN_REDIRECT_URI || `${window.location.origin}/social-callback`
     const stateParam = encodeURIComponent(JSON.stringify({ provider: "linkedin", accountType, mode }))
     const linkedinAuthUrl =
@@ -157,20 +158,9 @@ function SocialAuthButtons({ accountType = "Client", mode = "login" }) {
       `&scope=${encodeURIComponent("openid profile email")}` +
       `&state=${stateParam}`
 
-    const width = 520
-    const height = 650
-    const left = window.screenX + (window.outerWidth - width) / 2
-    const top = window.screenY + (window.outerHeight - height) / 2
-
-    const popup = window.open(
-      linkedinAuthUrl,
-      "LinkedInSignInWindow",
-      `width=${width},height=${height},left=${left},top=${top},status=no,toolbar=no,menubar=no`
-    )
-
-    if (!popup || popup.closed || typeof popup.closed === "undefined") {
-      window.location.href = linkedinAuthUrl
-    }
+    // Same-tab redirect so LinkedIn can reuse the existing browser session
+    // (a popup often asks for email/password even if LinkedIn is already open).
+    window.location.href = linkedinAuthUrl
   }
 
   return (

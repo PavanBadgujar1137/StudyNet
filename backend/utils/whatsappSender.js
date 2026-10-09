@@ -62,13 +62,17 @@ async function sendWhatsAppMessage(to, message) {
     // ── 1. Meta WhatsApp Cloud API (Graph API) ─────────────────────────────────
     const metaToken = process.env.WHATSAPP_API_TOKEN || process.env.META_WHATSAPP_TOKEN
     const metaPhoneId = process.env.WHATSAPP_PHONE_NUMBER_ID
+    const isPlaceholder = (value) => {
+      const v = String(value || "").trim().toLowerCase()
+      return !v || v.includes("add_your_") || v.startsWith("your_") || v.includes("_here")
+    }
 
     if (
       provider === "meta" &&
       metaToken &&
       metaPhoneId &&
-      !metaToken.includes("your_") &&
-      !metaPhoneId.includes("your_")
+      !isPlaceholder(metaToken) &&
+      !isPlaceholder(metaPhoneId)
     ) {
       const cleanTo = formattedPhone.replace("+", "") // Meta expects digits without '+'
       const metaUrl = `https://graph.facebook.com/v19.0/${metaPhoneId}/messages`
@@ -117,8 +121,8 @@ async function sendWhatsAppMessage(to, message) {
       provider === "twilio" &&
       twilioSid &&
       twilioAuth &&
-      !twilioSid.includes("your_") &&
-      !twilioAuth.includes("your_")
+      !isPlaceholder(twilioSid) &&
+      !isPlaceholder(twilioAuth)
     ) {
       const fromFormatted = twilioFrom.startsWith("whatsapp:") ? twilioFrom : `whatsapp:${twilioFrom}`
       const toFormatted = `whatsapp:${formattedPhone}`

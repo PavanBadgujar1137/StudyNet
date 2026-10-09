@@ -174,7 +174,12 @@ exports.chatWithAura = async (req, res) => {
 
     // 1. Check if Anthropic Claude API key is configured (Preferred)
     const claudeApiKey = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY
-    if (claudeApiKey && !claudeApiKey.includes("your_claude_api_key_here") && claudeApiKey.trim().length > 10) {
+    const claudeUnset =
+      !claudeApiKey ||
+      claudeApiKey.trim().length <= 10 ||
+      claudeApiKey.toLowerCase().includes("add_your_") ||
+      claudeApiKey.toLowerCase().includes("your_claude")
+    if (!claudeUnset) {
       try {
         const formattedMessages = []
         if (Array.isArray(history) && history.length > 0) {
