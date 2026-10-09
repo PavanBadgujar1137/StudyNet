@@ -54,6 +54,7 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
   const [editDescription, setEditDescription] = useState('')
   const [editScheduledStart, setEditScheduledStart] = useState('')
   const [editDurationMinutes, setEditDurationMinutes] = useState(60)
+  // eslint-disable-next-line no-unused-vars
   const [editSessionType, setEditSessionType] = useState('1-on-1')
 
   const upcomingClasses = telemetryData?.upcomingClasses || []
