@@ -1,0 +1,62 @@
+Based on your active PayGlocal dashboard, follow these exact steps to find your credentials:
+
+---
+
+### Step 1: Click on **"Integration"** in your Sidebar
+In the left menu shown in your screenshot:
+1. Click on **`Integration`** (the 3rd item with the plug icon 🔌).
+*(If you ever don't see it there, click on **`Configure` ▾** → **API / Developer Settings**).*
+
+---
+
+### Step 2: Copy your 3 Keys
+On the **Integration** page, you will see your API credentials:
+
+1. **Merchant ID**:
+   - Copy the value shown under **Merchant ID / MID**.
+   - Paste it into:
+     ```properties
+     PAYGLOCAL_MERCHANT_ID=<paste_here>
+     REACT_APP_PAYGLOCAL_MERCHANT_ID=<paste_here>
+     ```
+
+2. **Key ID**:
+   - Copy the value under **Key ID / kid**.
+   - Paste it into:
+     ```properties
+     PAYGLOCAL_KEY_ID=<paste_here>
+     REACT_APP_PAYGLOCAL_KEY_ID=<paste_here>
+     ```
+
+3. **API Secret Key**:
+   - Click **"Show"** or **"Generate Key"** next to your API key.
+   - Copy the secret token and paste it into:
+     ```properties
+     PAYGLOCAL_API_KEY=<paste_here>
+     ```
+
+---
+
+### Step 3: Check your Environment (UAT vs Production)
+Look at the URL in your browser:
+
+- **If the URL says `*.uat.payglocal.in`** (Test / Sandbox mode):
+  ```properties
+  PAYGLOCAL_ENV=uat
+  PAYGLOCAL_BASE_URL=https://api.uat.payglocal.in
+  ```
+
+- **If the URL says `dashboard.payglocal.in`** (Live Production mode):
+  ```properties
+  PAYGLOCAL_ENV=production
+  PAYGLOCAL_BASE_URL=https://api.prod.payglocal.in
+  ```
+
+---
+
+### Step 4: Paste them into your `.env` files
+Open your `.env` files in the project and replace the placeholders:
+- [backend/.env](file:///d:/Yash/Music/Zwiebel%20AI%20Projects/OpenHand/StudyNet/backend/.env#L38-L44)
+- [frontend/.env](file:///d:/Yash/Music/Zwiebel%20AI%20Projects/OpenHand/StudyNet/frontend/.env#L18-L21)
+
+*(Or if you prefer, you can paste the 3 values directly here and I will insert them into all required backend and frontend files for you!)*

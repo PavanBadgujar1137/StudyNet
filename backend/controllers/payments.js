@@ -1,0 +1,1225 @@
+const { createPayCollectOrder, verifyPayGlocalPayment, getPayGlocalConfig } = require("../config/payglocal")
+const crypto = require("crypto")
+const User = require("../models/User")
+const Offer = require("../models/Offer")
+const Booking = require("../models/Booking")
+const Payout = require("../models/Payout")
+const Invoice = require("../models/Invoice")
+const Subscription = require("../models/Subscription")
+const AdminPaymentLog = require("../models/AdminPaymentLog")
+const PractitionerProfile = require("../models/PractitionerProfile")
+const mailSender = require("../utils/mailSender")
+const mongoose = require("mongoose")
+const { paymentSuccessEmail } = require("../mail/templates/paymentSuccessEmail")
+
+// ─── CORRECT PAYMENT FLOW ─────────────────────────────────────────────────────
+// ALL payments from clients go to the PLATFORM ADMIN.
+// Admin then pays practitioners their monthly salary manually.
+// This file handles:
+// 1. Subscription plan payments (from Pricing page)
+// 2. Practitioner offer bookings (ALL offer types: session, circle, program)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ─── 1. CREATE SUBSCRIPTION PAYMENT ORDER ─────────────────────────────────────
+exports.createSubscriptionOrder = async (req, res) => {
+  try {
+    const { planKey } = req.body
+    const userId = req.user.id
+
+    const planPrices = {
+      open: 0,
+      pro: 9588,
+      pro_monthly: 999,
+      pro_yearly: 9588,
+      pro_annual: 9588,
+      starter: 999,
+      growth: 9588,
+      master: 9588,
+    }
+    const planNames = {
+      open: "Open Plan",
+      pro: "Pro Plan (Yearly)",
+      pro_monthly: "Pro Plan (Monthly)",
+      pro_yearly: "Pro Plan (Yearly)",
+      pro_annual: "Pro Plan (Yearly)",
+      institution: "Institution Plan",
+      starter: "Pro Plan (Monthly)",
+      growth: "Pro Plan (Yearly)",
+      master: "Pro Plan (Yearly)",
+    }
+
+    if (!planKey || planPrices[planKey] === undefined) {
+      return res.status(400).json({ success: false, message: "Invalid practitioner plan key" })
+    }
+
+    const amount = planPrices[planKey]
+    const clientUser = await User.findById(userId).select("firstName lastName email contactNumber")
+
+    const order = await createPayCollectOrder({
+      merchantTxnId: `sub_${planKey}_${Date.now()}`,
+      amount,
+      currency: "INR",
+      customer: {
+        email: clientUser?.email,
+        firstName: clientUser?.firstName,
+        lastName: clientUser?.lastName,
+        contactNumber: clientUser?.contactNumber,
+      },
+      notes: {
+        userId: userId.toString(),
+        planKey,
+        planName: planNames[planKey],
+      },
+    })
+
+    return res.status(200).json({
+      success: true,
+      order,
+      gid: order.gid,
+      merchantTxnId: order.merchantTxnId,
+      redirectUrl: order.redirectUrl,
+      key: order.keyId,
+      amount,
+      planKey,
+      planName: planNames[planKey],
+      gateway: "payglocal",
+    })
+  } catch (error) {
+    console.error("createSubscriptionOrder error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// ─── 2. VERIFY SUBSCRIPTION PAYMENT ──────────────────────────────────────────
+exports.verifySubscriptionPayment = async (req, res) => {
+  try {
+    const {
+      payglocal_order_id,
+      payglocal_payment_id,
+      payglocal_gid,
+      merchantTxnId,
+      gid,
+      signature,
+      token,
+      planKey,
+    } = req.body
+    const userId = req.user.id
+
+    const effectiveOrderId = payglocal_order_id || merchantTxnId
+    const effectivePaymentId = payglocal_payment_id || gid || payglocal_gid
+
+    const verifyRes = await verifyPayGlocalPayment({
+      gid: effectivePaymentId,
+      merchantTxnId: effectiveOrderId,
+      orderId: effectiveOrderId,
+      paymentId: effectivePaymentId,
+      token,
+      signature,
+    })
+
+    if (!verifyRes?.success) {
+      return res.status(400).json({ success: false, message: "PayGlocal payment verification failed" })
+    }
+
+    const planPrices = {
+      open: 0,
+      pro: 9588,
+      pro_monthly: 999,
+      pro_yearly: 9588,
+      pro_annual: 9588,
+      starter: 999,
+      growth: 9588,
+      master: 9588,
+    }
+    const planNames = {
+      open: "Open Plan",
+      pro: "Pro Plan (Yearly)",
+      pro_monthly: "Pro Plan (Monthly)",
+      pro_yearly: "Pro Plan (Yearly)",
+      pro_annual: "Pro Plan (Yearly)",
+      institution: "Institution Plan",
+      starter: "Pro Plan (Monthly)",
+      growth: "Pro Plan (Yearly)",
+      master: "Pro Plan (Yearly)",
+    }
+    const amount = planPrices[planKey] || 0
+
+    // Deactivate any existing active subscription for this user
+    await Subscription.updateMany({ client: userId, status: "active" }, { status: "expired" })
+
+    // Create new subscription record
+    const startDate = new Date()
+    const endDate = new Date()
+    if (planKey && (planKey === "pro" || planKey.includes("yearly") || planKey.includes("annual") || planKey === "master" || planKey === "growth")) {
+      endDate.setFullYear(endDate.getFullYear() + 1)
+    } else {
+      endDate.setMonth(endDate.getMonth() + 1)
+    }
+
+    const subscription = await Subscription.create({
+      client: userId,
+      planKey,
+      planName: planNames[planKey] || planKey,
+      amount,
+      status: "active",
+      startDate,
+      endDate,
+      paymentGateway: "payglocal",
+      payglocalOrderId: effectiveOrderId,
+      payglocalPaymentId: effectivePaymentId,
+      payglocalGid: verifyRes.gid || effectivePaymentId,
+    })
+
+    // Log to admin payment ledger
+    const clientUser = await User.findById(userId).select("firstName lastName email")
+    const adminLog = await AdminPaymentLog.create({
+      paymentType: "subscription",
+      client: userId,
+      clientName: `${clientUser.firstName} ${clientUser.lastName}`,
+      description: `${planNames[planKey] || planKey} Subscription`,
+      planKey,
+      amount,
+      currency: "INR",
+      amountOwedToPractitioner: 0, // Subscription fees are pure platform revenue
+      paymentGateway: "payglocal",
+      payglocalOrderId: effectiveOrderId,
+      payglocalPaymentId: effectivePaymentId,
+      payglocalGid: verifyRes.gid || effectivePaymentId,
+      subscriptionId: subscription._id,
+      status: "received",
+    })
+
+    // Update subscription with admin log ref
+    subscription.adminPaymentLog = adminLog._id
+    await subscription.save()
+
+    // Send payment success email & WhatsApp
+    try {
+      await mailSender(
+        clientUser.email,
+        `Welcome to OpenHand ${planNames[planKey] || planKey}!`,
+        paymentSuccessEmail(
+          `${clientUser.firstName} ${clientUser.lastName}`,
+          amount,
+          effectiveOrderId,
+          effectivePaymentId
+        )
+      )
+
+      const phone = clientUser.whatsappNumber || clientUser.contactNumber || clientUser.additionalDetails?.contactNumber
+      if (phone) {
+        const { sendWhatsAppMessage } = require("../utils/whatsappSender")
+        const waText = `🌿 *OpenHand — Subscription Activated!*
+
+Dear *${clientUser.firstName} ${clientUser.lastName}*,
+Welcome to OpenHand *${planNames[planKey] || planKey}*!
+Your plan is now active.
+
+💳 *Amount:* ₹${amount}
+🧾 *Order Ref:* ${effectiveOrderId}
+
+Enjoy your premium benefits on your dashboard:
+🔗 ${process.env.FRONTEND_URL || "https://openhand.live"}/dashboard`
+        sendWhatsAppMessage(phone, waText).catch(e => console.warn("Sub WA send warning:", e.message))
+      }
+    } catch (emailErr) {
+      console.warn("Subscription notification failed:", emailErr.message)
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `${planNames[planKey] || planKey} activated successfully!`,
+      subscription,
+    })
+  } catch (error) {
+    console.error("verifySubscriptionPayment error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// ─── 3. GET CLIENT SUBSCRIPTION & TRIAL STATUS ────────────────────────────────
+exports.getMySubscription = async (req, res) => {
+  try {
+    const userId = req.user.id
+
+    const [subscription, user] = await Promise.all([
+      Subscription.findOne({
+        client: userId,
+        status: "active",
+      })
+        .sort({ createdAt: -1 })
+        .lean(),
+      User.findById(userId).select("trialStartedAt trialExpiresAt activePlan createdAt accountType").lean(),
+    ])
+
+    const now = new Date()
+    const isLearner = user?.accountType === "Learner" || user?.accountType === "Client" || !["Practitioner", "Instructor", "Admin"].includes(user?.accountType)
+
+    // Learners are 100% free with unlimited access forever
+    if (isLearner) {
+      return res.status(200).json({
+        success: true,
+        subscription: null,
+        hasActiveSubscription: true,
+        isTrialActive: false,
+        trialDaysRemaining: 0,
+        trialStartedAt: user?.createdAt || now,
+        trialExpiresAt: null,
+        effectivePlan: "free",
+        status: "free_learner",
+        isFreeLearner: true,
+      })
+    }
+
+    // Practitioner subscription check
+    const hasActiveSubscription = !!subscription && new Date(subscription.endDate) > now
+
+    let effectivePlan = "open"
+    let status = "active_free"
+
+    if (hasActiveSubscription) {
+      effectivePlan = subscription.planKey
+      status = "subscribed"
+    } else if (user?.activePlan === "open" || user?.activePlan === "free") {
+      effectivePlan = "open"
+      status = "active_free"
+    }
+
+    return res.status(200).json({
+      success: true,
+      subscription,
+      hasActiveSubscription,
+      isTrialActive: false,
+      trialDaysRemaining: 0,
+      trialStartedAt: user?.createdAt,
+      trialExpiresAt: null,
+      effectivePlan,
+      status,
+      isFreeLearner: false,
+    })
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// ─── 4. BOOK PRACTITIONER OFFER (ALL types: session / circle / program) ────────
+// This replaces the old bookOffer. ALL payment goes to admin.
+exports.bookOffer = async (req, res) => {
+  try {
+    const { offerId, scheduledAt, gateway = "payglocal", clientPhone, clientEmail } = req.body
+    const userId = req.user.id
+
+    const [offer, clientUser] = await Promise.all([
+      Offer.findById(offerId).populate("practitioner", "firstName lastName email"),
+      User.findById(userId).select("firstName lastName email contactNumber whatsappNumber additionalDetails"),
+    ])
+
+    if (!offer) {
+      return res.status(404).json({ success: false, message: "Offer not found" })
+    }
+    if (offer.status !== "published") {
+      return res.status(400).json({ success: false, message: "This offer is not currently available" })
+    }
+
+    const practitionerId = offer.practitioner._id
+    const practitionerUser = offer.practitioner
+    const resolvedPhone = clientPhone || req.body?.phone || req.body?.whatsappNumber || clientUser?.whatsappNumber || clientUser?.contactNumber || clientUser?.additionalDetails?.contactNumber || ""
+    const resolvedEmail = clientEmail || clientUser?.email || ""
+
+    // ── Calculate dynamic amount based on Client Subscription Plan Perks ──
+    const activeSub = await Subscription.findOne({ client: userId, status: "active" }).sort({ createdAt: -1 })
+    const now = new Date()
+
+    let grossAmount = offer.price
+    let discountPercentage = 0
+    let isFreeSession = false
+
+    if (activeSub && new Date(activeSub.endDate) > now && (offer.type === "session" || !offer.type)) {
+      if (activeSub.planKey === "growth" || activeSub.planKey === "advance") {
+        discountPercentage = 15
+        grossAmount = Math.round(offer.price * 0.85)
+      } else if (activeSub.planKey === "master" || activeSub.planKey === "champion") {
+        const startOfMonth = new Date()
+        startOfMonth.setDate(1)
+        startOfMonth.setHours(0, 0, 0, 0)
+
+        const freeSessionsUsed = await Booking.countDocuments({
+          client: userId,
+          offerType: "session",
+          status: { $in: ["confirmed", "completed"] },
+          createdAt: { $gte: startOfMonth },
+          amount: 0,
+        })
+
+        if (freeSessionsUsed === 0) {
+          grossAmount = 0
+          isFreeSession = true
+        } else {
+          discountPercentage = 25
+          grossAmount = Math.round(offer.price * 0.75)
+        }
+      }
+    }
+
+    const practitionerPortion = Math.round(grossAmount * 0.8)
+
+    // Master VIP Plan 1 Free Session Instant Booking Flow
+    if (grossAmount === 0 && isFreeSession) {
+      const booking = await Booking.create({
+        client: userId,
+        practitioner: practitionerId,
+        offer: offer._id,
+        offerType: offer.type,
+        amount: 0,
+        commission: 0,
+        netPayout: 0,
+        clientPhone: resolvedPhone,
+        clientEmail: resolvedEmail,
+        paymentGateway: "manual",
+        status: "confirmed",
+        settlementStatus: "settled",
+        scheduledAt: scheduledAt ? new Date(scheduledAt) : new Date(Date.now() + 86400000),
+      })
+
+      await _createInvoiceAndAdminLog({
+        booking,
+        clientId: userId,
+        practitionerId,
+        practitionerUser,
+        offer,
+        grossAmount: 0,
+        practitionerPortion: 0,
+        gateway: "manual",
+        paymentId: `free_master_${Date.now()}`,
+        orderId: null,
+      })
+
+      // Multi-Channel Purchase Notification (WhatsApp + Email)
+      try {
+        const { sendSessionPurchaseNotification } = require("../services/notificationService")
+        sendSessionPurchaseNotification(booking._id).catch(err => console.warn("Purchase notif err:", err.message))
+      } catch (notifErr) {
+        console.warn("Purchase notif init err:", notifErr.message)
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "🎉 1 Free 1:1 Private Session booked! (Included with your Master VIP Plan)",
+        booking,
+        isFreeSession: true,
+      })
+    }
+
+    if (gateway === "stripe") {
+      const mockStripeIntentId = `pi_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+      const booking = await Booking.create({
+        client: userId,
+        practitioner: practitionerId,
+        offer: offer._id,
+        offerType: offer.type,
+        amount: grossAmount,
+        commission: 0,
+        netPayout: practitionerPortion,
+        clientPhone: resolvedPhone,
+        clientEmail: resolvedEmail,
+        paymentGateway: "stripe",
+        stripePaymentIntentId: mockStripeIntentId,
+        status: "confirmed",
+        settlementStatus: "pending_t2",
+        scheduledAt: scheduledAt ? new Date(scheduledAt) : new Date(Date.now() + 86400000),
+      })
+
+      await _createInvoiceAndAdminLog({
+        booking,
+        clientId: userId,
+        practitionerId,
+        practitionerUser,
+        offer,
+        grossAmount,
+        practitionerPortion,
+        gateway: "stripe",
+        paymentId: mockStripeIntentId,
+        orderId: null,
+      })
+
+      // Multi-Channel Purchase Notification (WhatsApp + Email)
+      try {
+        const { sendSessionPurchaseNotification } = require("../services/notificationService")
+        sendSessionPurchaseNotification(booking._id).catch(err => console.warn("Purchase notif err:", err.message))
+      } catch (notifErr) {
+        console.warn("Purchase notif init err:", notifErr.message)
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Offer booked successfully",
+        booking,
+        stripeClientSecret: `${mockStripeIntentId}_secret_openhand`,
+      })
+    }
+
+    // PayGlocal flow — create order with discounted amount
+    const pglOrder = await createPayCollectOrder({
+      merchantTxnId: `oh_offer_${Date.now()}`,
+      amount: grossAmount,
+      currency: "INR",
+      customer: {
+        email: resolvedEmail,
+        firstName: clientUser?.firstName,
+        lastName: clientUser?.lastName,
+        contactNumber: resolvedPhone,
+      },
+      notes: {
+        offerId: offerId.toString(),
+        clientId: userId.toString(),
+        practitionerId: practitionerId.toString(),
+        offerType: offer.type,
+        discountPercentage: discountPercentage.toString(),
+      },
+    })
+
+    const booking = await Booking.create({
+      client: userId,
+      practitioner: practitionerId,
+      offer: offer._id,
+      offerType: offer.type,
+      amount: grossAmount,
+      commission: 0,
+      netPayout: practitionerPortion,
+      clientPhone: resolvedPhone,
+      clientEmail: resolvedEmail,
+      paymentGateway: "payglocal",
+      payglocalOrderId: pglOrder.merchantTxnId,
+      payglocalGid: pglOrder.gid,
+      status: "pending",
+      settlementStatus: "unsettled",
+      scheduledAt: scheduledAt ? new Date(scheduledAt) : new Date(Date.now() + 86400000),
+    })
+
+    return res.status(200).json({
+      success: true,
+      bookingId: booking._id,
+      payglocalOrder: pglOrder,
+      order: pglOrder,
+      gid: pglOrder.gid,
+      merchantTxnId: pglOrder.merchantTxnId,
+      redirectUrl: pglOrder.redirectUrl,
+      key: pglOrder.keyId,
+      offerTitle: offer.title,
+      offerType: offer.type,
+      amount: grossAmount,
+      practitionerName: `${practitionerUser.firstName} ${practitionerUser.lastName}`,
+      gateway: "payglocal",
+    })
+  } catch (error) {
+    console.error("bookOffer error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// ─── 5. VERIFY OFFER BOOKING PAYMENT ─────────────────────────────────────────
+exports.verifyOfferBooking = async (req, res) => {
+  try {
+    const {
+      bookingId,
+      payglocal_payment_id,
+      payglocal_order_id,
+      payglocal_gid,
+      merchantTxnId,
+      gid,
+      signature,
+      token,
+    } = req.body
+
+    const booking = await Booking.findById(bookingId)
+      .populate("offer", "title type price")
+    if (!booking) {
+      return res.status(404).json({ success: false, message: "Booking not found" })
+    }
+
+    const effectivePaymentId = payglocal_payment_id || gid || payglocal_gid
+    const effectiveOrderId = payglocal_order_id || merchantTxnId
+
+    const verifyRes = await verifyPayGlocalPayment({
+      gid: effectivePaymentId,
+      merchantTxnId: effectiveOrderId,
+      orderId: effectiveOrderId,
+      paymentId: effectivePaymentId,
+      token,
+      signature,
+    })
+
+    if (!verifyRes?.success) {
+      return res.status(400).json({ success: false, message: "PayGlocal payment verification failed" })
+    }
+
+    booking.payglocalPaymentId = effectivePaymentId
+    booking.payglocalOrderId = effectiveOrderId
+    booking.payglocalGid = verifyRes.gid || effectivePaymentId
+    booking.paymentGateway = "payglocal"
+    booking.status = "confirmed"
+    booking.settlementStatus = "pending_t2"
+    if (req.body?.clientPhone && !booking.clientPhone) {
+      booking.clientPhone = req.body.clientPhone
+    }
+    await booking.save()
+
+    const [clientUser, practitionerUser] = await Promise.all([
+      User.findById(booking.client).select("firstName lastName email"),
+      User.findById(booking.practitioner).select("firstName lastName email"),
+    ])
+
+    await _createInvoiceAndAdminLog({
+      booking,
+      clientId: booking.client,
+      practitionerId: booking.practitioner,
+      practitionerUser,
+      offer: booking.offer,
+      grossAmount: booking.amount,
+      practitionerPortion: booking.netPayout,
+      gateway: "payglocal",
+      paymentId: effectivePaymentId,
+      orderId: effectiveOrderId,
+    })
+
+    // Multi-Channel Purchase Notification (WhatsApp + Email)
+    try {
+      const { sendSessionPurchaseNotification } = require("../services/notificationService")
+      sendSessionPurchaseNotification(booking).catch(err => console.warn("Purchase notif err:", err.message))
+    } catch (notifErr) {
+      console.warn("Booking notification trigger warning:", notifErr.message)
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Booking confirmed! Your session is scheduled via PayGlocal.",
+      booking,
+    })
+  } catch (error) {
+    console.error("verifyOfferBooking error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// ─── 6. GET CLIENT BOOKINGS ───────────────────────────────────────────────────
+exports.getMyBookings = async (req, res) => {
+  try {
+    const userId = req.user.id
+    const bookings = await Booking.find({
+      client: userId,
+      status: { $in: ["pending", "confirmed", "completed"] },
+    })
+      .populate("practitioner", "firstName lastName image email")
+      .populate("offer", "title type price durationMinutes")
+      .sort({ scheduledAt: 1 })
+      .lean()
+
+    return res.status(200).json({ success: true, bookings })
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// ─── 7. GET PRACTITIONER'S UPCOMING BOOKINGS (who is connecting with me) ───────
+exports.getPractitionerBookings = async (req, res) => {
+  try {
+    const practitionerId = req.user.id
+    const bookings = await Booking.find({
+      practitioner: practitionerId,
+      status: { $in: ["confirmed", "completed"] },
+    })
+      .populate("client", "firstName lastName image email")
+      .populate("offer", "title type price durationMinutes")
+      .sort({ scheduledAt: 1 })
+      .lean()
+
+    return res.status(200).json({ success: true, bookings })
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// ─── 8. SEND PAYMENT SUCCESS EMAIL ───────────────────────────────────────────
+exports.sendPaymentSuccessEmail = async (req, res) => {
+  const { orderId, paymentId, amount } = req.body
+  const userId = req.user.id
+
+  if (!orderId || !paymentId || !amount || !userId) {
+    return res.status(400).json({ success: false, message: "Please provide all details" })
+  }
+
+  try {
+    const user = await User.findById(userId)
+    await mailSender(
+      user.email,
+      "Payment Received — OpenHand",
+      paymentSuccessEmail(`${user.firstName} ${user.lastName}`, amount / 100, orderId, paymentId)
+    )
+    return res.status(200).json({ success: true, message: "Payment email sent" })
+  } catch (error) {
+    return res.status(400).json({ success: false, message: "Could not send email" })
+  }
+}
+
+// ─── 9. BUY PAID COURSE (Learner purchases paid course created by practitioner) ─
+exports.createCourseOrder = async (req, res) => {
+  try {
+    const { courseId, couponCodes = [] } = req.body
+    const userId = req.user.id
+
+    const Course = require("../models/Course")
+    const { evaluateDiscounts } = require("./coupon")
+
+    const course = await Course.findById(courseId).populate("practitioner", "firstName lastName email")
+    if (!course) {
+      return res.status(404).json({ success: false, message: "Course not found" })
+    }
+
+    const isAlreadyEnrolled = (course.enrolledClients || []).map(String).includes(String(userId))
+    if (isAlreadyEnrolled) {
+      return res.status(400).json({ success: false, message: "You have already purchased this course." })
+    }
+
+    // Evaluate discounts
+    const discountRes = await evaluateDiscounts({
+      userId,
+      productType: "course",
+      productId: courseId,
+      couponCodes,
+    })
+
+    const finalPayable = discountRes.finalPrice
+
+    if (finalPayable === 0 || discountRes.isFree) {
+      return res.status(200).json({
+        success: true,
+        isFree: true,
+        amount: 0,
+        originalPrice: discountRes.originalPrice,
+        finalPrice: 0,
+        appliedCoupons: discountRes.appliedCoupons,
+        message: "Course is 100% discounted / Free. Direct unlock available.",
+      })
+    }
+
+    const clientUser = await User.findById(userId).select("firstName lastName email contactNumber")
+    const order = await createPayCollectOrder({
+      merchantTxnId: `crs_${courseId.toString().slice(-6)}_${Date.now()}`,
+      amount: finalPayable,
+      currency: "INR",
+      customer: {
+        email: clientUser?.email,
+        firstName: clientUser?.firstName,
+        lastName: clientUser?.lastName,
+        contactNumber: clientUser?.contactNumber,
+      },
+      notes: {
+        courseId: courseId.toString(),
+        clientId: userId.toString(),
+        practitionerId: course.practitioner?._id?.toString() || "",
+        appliedCoupons: JSON.stringify(discountRes.appliedCoupons.map((c) => ({ code: c.code, type: c.type, id: c.id }))),
+      },
+    })
+
+    return res.status(200).json({
+      success: true,
+      order,
+      gid: order.gid,
+      merchantTxnId: order.merchantTxnId,
+      redirectUrl: order.redirectUrl,
+      key: order.keyId,
+      amount: finalPayable,
+      originalPrice: discountRes.originalPrice,
+      totalDiscountAmount: discountRes.totalDiscountAmount,
+      appliedCoupons: discountRes.appliedCoupons,
+      courseTitle: course.title,
+      practitionerName: course.practitioner ? `${course.practitioner.firstName} ${course.practitioner.lastName}` : "Practitioner",
+      gateway: "payglocal",
+    })
+  } catch (error) {
+    console.error("createCourseOrder error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+exports.verifyCourseOrder = async (req, res) => {
+  try {
+    const {
+      courseId,
+      payglocal_order_id,
+      payglocal_payment_id,
+      payglocal_gid,
+      merchantTxnId,
+      gid,
+      signature,
+      token,
+      couponCodes = [],
+    } = req.body
+    const userId = req.user.id
+
+    const Course = require("../models/Course")
+    const { evaluateDiscounts, recordDiscountUsage } = require("./coupon")
+
+    const course = await Course.findById(courseId).populate("practitioner", "firstName lastName email")
+    if (!course) {
+      return res.status(404).json({ success: false, message: "Course not found" })
+    }
+
+    const effectivePaymentId = payglocal_payment_id || gid || payglocal_gid
+    const effectiveOrderId = payglocal_order_id || merchantTxnId
+
+    const verifyRes = await verifyPayGlocalPayment({
+      gid: effectivePaymentId,
+      merchantTxnId: effectiveOrderId,
+      orderId: effectiveOrderId,
+      paymentId: effectivePaymentId,
+      token,
+      signature,
+    })
+
+    if (!verifyRes?.success) {
+      return res.status(400).json({ success: false, message: "PayGlocal signature verification failed" })
+    }
+
+    // Enroll user into course
+    if (!course.enrolledClients.map(String).includes(String(userId))) {
+      course.enrolledClients.push(userId)
+      await course.save()
+    }
+
+    // Evaluate discounts for audit log
+    const discountRes = await evaluateDiscounts({
+      userId,
+      productType: "course",
+      productId: courseId,
+      couponCodes,
+    })
+
+    const finalAmount = discountRes.finalPrice
+    const practitionerId = course.practitioner?._id || course.practitioner
+    const practitionerPortion = Math.round(finalAmount * 0.8) // 80% to practitioner
+
+    const clientUser = await User.findById(userId).select("firstName lastName email")
+
+    // Record Coupon Usage
+    if (discountRes.appliedCoupons?.length > 0) {
+      await recordDiscountUsage({
+        userId,
+        practitionerId,
+        productType: "course",
+        courseId: course._id,
+        originalPrice: discountRes.originalPrice,
+        discountAmount: discountRes.totalDiscountAmount,
+        finalPrice: finalAmount,
+        appliedCoupons: discountRes.appliedCoupons,
+        orderId: effectiveOrderId,
+        paymentId: effectivePaymentId,
+      })
+    }
+
+    // Determine plan fee & tax for practitioner payout
+    const coursePractUser = await User.findById(practitionerId).select("activePlan")
+    const coursePractPlan = String(coursePractUser?.activePlan || "").toLowerCase()
+    const feeRate = (coursePractPlan.includes("pro") ? 5 : coursePractPlan.includes("institution") ? 0 : 10)
+    const platformFee = Math.round((finalAmount * feeRate) / 100)
+    const taxDeducted = Math.round(platformFee * 0.18) // 18% GST on platform service
+    const netSalary = Math.max(0, finalAmount - platformFee - taxDeducted)
+
+    // Log in Admin Payment Ledger
+    await AdminPaymentLog.create({
+      paymentType: "paid_course",
+      client: userId,
+      clientName: clientUser ? `${clientUser.firstName} ${clientUser.lastName}` : "Learner",
+      practitioner: practitionerId,
+      practitionerName: course.practitioner ? `${course.practitioner.firstName} ${course.practitioner.lastName}` : "Practitioner",
+      description: `Paid Course Purchase: ${course.title} (Amount: ₹${finalAmount})`,
+      offerTitle: course.title,
+      offerType: "course",
+      amount: finalAmount,
+      amountOwedToPractitioner: netSalary,
+      paymentGateway: "payglocal",
+      payglocalOrderId: effectiveOrderId,
+      payglocalPaymentId: effectivePaymentId,
+      payglocalGid: verifyRes.gid || effectivePaymentId,
+      courseId: course._id,
+      status: "received",
+    })
+
+    // Schedule 72-hour automated payout to practitioner
+    if (netSalary > 0) {
+      await Payout.create({
+        practitioner: practitionerId,
+        amount: finalAmount,
+        grossAmount: finalAmount,
+        platformFeeDeducted: platformFee,
+        taxDeducted: taxDeducted,
+        commissionDeducted: platformFee + taxDeducted,
+        netAmount: netSalary,
+        status: "processing",
+        settlementWindowHours: 72,
+        settledAt: new Date(Date.now() + 72 * 60 * 60 * 1000),
+        payoutMethod: "payglocal_direct_transfer",
+        sourceType: "course",
+        sourceId: course._id.toString(),
+        bookingsCount: 1,
+      })
+    }
+
+    // Multi-Channel Course Purchase Notification (WhatsApp + Email)
+    try {
+      const { sendCoursePurchaseNotification } = require("../services/notificationService")
+      sendCoursePurchaseNotification({
+        courseId: course._id,
+        userId,
+        clientPhone: req.body?.clientPhone,
+        clientEmail: req.body?.clientEmail,
+      }).catch(err => console.warn("Course purchase notif warning:", err.message))
+    } catch (notifErr) {
+      console.warn("Course notif init warning:", notifErr.message)
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `Successfully purchased ${course.title}! Course is now unlocked via PayGlocal.`,
+      course,
+    })
+  } catch (error) {
+    console.error("verifyCourseOrder error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// ─── 10. ENROLL IN 100% DISCOUNTED / FREE COURSE (Zero-Rupee Bypass) ───────────
+exports.enrollFreeDiscountCourse = async (req, res) => {
+  try {
+    const { courseId, couponCodes = [] } = req.body
+    const userId = req.user.id
+
+    const Course = require("../models/Course")
+    const { evaluateDiscounts, recordDiscountUsage } = require("./coupon")
+
+    const course = await Course.findById(courseId).populate("practitioner", "firstName lastName email")
+    if (!course) {
+      return res.status(404).json({ success: false, message: "Course not found" })
+    }
+
+    // Verify discount eligibility
+    const discountRes = await evaluateDiscounts({
+      userId,
+      productType: "course",
+      productId: courseId,
+      couponCodes,
+    })
+
+    if (discountRes.finalPrice > 0 && !discountRes.isFree) {
+      return res.status(400).json({
+        success: false,
+        message: `This course requires a payment of ₹${discountRes.finalPrice}. Please complete payment checkout.`,
+      })
+    }
+
+    // Enroll user into course
+    if (!course.enrolledClients.map(String).includes(String(userId))) {
+      course.enrolledClients.push(userId)
+      await course.save()
+    }
+
+    const practitionerId = course.practitioner?._id || course.practitioner
+    const clientUser = await User.findById(userId).select("firstName lastName email")
+    const fakePaymentId = `free_disc_${Date.now()}`
+
+    // Record Coupon Usage
+    if (discountRes.appliedCoupons?.length > 0) {
+      await recordDiscountUsage({
+        userId,
+        practitionerId,
+        productType: "course",
+        courseId: course._id,
+        originalPrice: discountRes.originalPrice,
+        discountAmount: discountRes.totalDiscountAmount,
+        finalPrice: 0,
+        appliedCoupons: discountRes.appliedCoupons,
+        orderId: `free_ord_${Date.now()}`,
+        paymentId: fakePaymentId,
+      })
+    }
+
+    // Log in Admin Payment Ledger
+    await AdminPaymentLog.create({
+      paymentType: "paid_course",
+      client: userId,
+      clientName: clientUser ? `${clientUser.firstName} ${clientUser.lastName}` : "Learner",
+      practitioner: practitionerId,
+      practitionerName: course.practitioner ? `${course.practitioner.firstName} ${course.practitioner.lastName}` : "Practitioner",
+      description: `Course Unlocked (100% Discount/Personal Grant): ${course.title}`,
+      offerTitle: course.title,
+      offerType: "course",
+      amount: 0,
+      amountOwedToPractitioner: 0,
+      paymentGateway: "discount_grant",
+      payglocalOrderId: null,
+      payglocalPaymentId: fakePaymentId,
+      courseId: course._id,
+      status: "received",
+    })
+
+    // Multi-Channel Course Purchase Notification (WhatsApp + Email)
+    try {
+      const { sendCoursePurchaseNotification } = require("../services/notificationService")
+      sendCoursePurchaseNotification({
+        courseId: course._id,
+        userId,
+        clientPhone: req.body?.clientPhone,
+        clientEmail: req.body?.clientEmail,
+      }).catch(err => console.warn("Course free enroll notif warning:", err.message))
+    } catch (notifErr) {
+      console.warn("Course notif init warning:", notifErr.message)
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `🎉 Course unlocked for free! You now have full access to ${course.title}.`,
+      course,
+    })
+  } catch (error) {
+    console.error("enrollFreeDiscountCourse error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// ─── 11. CONFIRM FREE DISCOUNT SESSION BOOKING (Zero-Rupee Bypass) ─────────────
+exports.confirmFreeDiscountBooking = async (req, res) => {
+  try {
+    const { offerId, scheduledAt, couponCodes = [] } = req.body
+    const userId = req.user.id
+
+    const { evaluateDiscounts, recordDiscountUsage } = require("./coupon")
+
+    const offer = await Offer.findById(offerId).populate("practitioner", "firstName lastName email")
+    if (!offer) {
+      return res.status(404).json({ success: false, message: "Offer not found" })
+    }
+
+    const discountRes = await evaluateDiscounts({
+      userId,
+      productType: "session",
+      productId: offerId,
+      couponCodes,
+    })
+
+    if (discountRes.finalPrice > 0 && !discountRes.isFree) {
+      return res.status(400).json({
+        success: false,
+        message: `This session requires a payment of ₹${discountRes.finalPrice}. Please complete payment checkout.`,
+      })
+    }
+
+    const practitionerId = offer.practitioner?._id || offer.practitioner
+    const fakePaymentId = `free_sess_${Date.now()}`
+
+    const [clientUser, practitionerUser] = await Promise.all([
+      User.findById(userId).select("firstName lastName email contactNumber whatsappNumber additionalDetails"),
+      User.findById(practitionerId).select("firstName lastName email"),
+    ])
+
+    const resolvedPhone = req.body?.clientPhone || req.body?.phone || req.body?.whatsappNumber || clientUser?.whatsappNumber || clientUser?.contactNumber || clientUser?.additionalDetails?.contactNumber || ""
+    const resolvedEmail = req.body?.clientEmail || clientUser?.email || ""
+
+    const booking = await Booking.create({
+      client: userId,
+      practitioner: practitionerId,
+      offer: offer._id,
+      offerType: offer.type,
+      amount: 0,
+      commission: 0,
+      netPayout: 0,
+      clientPhone: resolvedPhone,
+      clientEmail: resolvedEmail,
+      paymentGateway: "discount_grant",
+      payglocalPaymentId: fakePaymentId,
+      status: "confirmed",
+      settlementStatus: "settled",
+      scheduledAt: scheduledAt ? new Date(scheduledAt) : new Date(Date.now() + 86400000),
+    })
+
+    if (discountRes.appliedCoupons?.length > 0) {
+      await recordDiscountUsage({
+        userId,
+        practitionerId,
+        productType: "session",
+        offerId: offer._id,
+        originalPrice: discountRes.originalPrice,
+        discountAmount: discountRes.totalDiscountAmount,
+        finalPrice: 0,
+        appliedCoupons: discountRes.appliedCoupons,
+        orderId: `free_sess_ord_${Date.now()}`,
+        paymentId: fakePaymentId,
+      })
+    }
+
+    await _createInvoiceAndAdminLog({
+      booking,
+      clientId: userId,
+      practitionerId,
+      practitionerUser,
+      offer,
+      grossAmount: 0,
+      practitionerPortion: 0,
+      gateway: "discount_grant",
+      paymentId: fakePaymentId,
+      orderId: null,
+    })
+
+    // Multi-Channel Purchase Notification (WhatsApp + Email)
+    try {
+      const { sendSessionPurchaseNotification } = require("../services/notificationService")
+      sendSessionPurchaseNotification(booking._id).catch(err => console.warn("Purchase notif err:", err.message))
+    } catch (notifErr) {
+      console.warn("Purchase notif init err:", notifErr.message)
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `🎉 Free Session confirmed! Your ${offer.title} is booked.`,
+      booking,
+    })
+  } catch (error) {
+    console.error("confirmFreeDiscountBooking error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// ─── HELPER: Create Invoice + Admin Payment Log ───────────────────────────────
+async function _createInvoiceAndAdminLog({
+  booking,
+  clientId,
+  practitionerId,
+  practitionerUser,
+  offer,
+  grossAmount,
+  practitionerPortion,
+  gateway,
+  paymentId,
+  orderId,
+}) {
+  try {
+    const clientUser = await User.findById(clientId).select("firstName lastName")
+    const invoiceNum = `OH-${Date.now().toString().slice(-8)}`
+
+    // Create Invoice
+    await Invoice.create({
+      booking: booking._id,
+      client: clientId,
+      practitioner: practitionerId,
+      invoiceNumber: invoiceNum,
+      subtotal: grossAmount,
+      gstRatePercentage: 18,
+      gstAmount: Math.round(grossAmount * 0.18),
+      totalAmount: grossAmount,
+      status: "paid",
+    })
+
+    // Log to admin payment ledger (THE core record)
+    await AdminPaymentLog.create({
+      paymentType: "offer_booking",
+      client: clientId,
+      clientName: clientUser ? `${clientUser.firstName} ${clientUser.lastName}` : "Unknown",
+      practitioner: practitionerId,
+      practitionerName: practitionerUser ? `${practitionerUser.firstName} ${practitionerUser.lastName}` : "Unknown",
+      description: offer?.title
+        ? `${offer.title} (${offer.type})`
+        : `Practitioner Offer Booking`,
+      offerTitle: offer?.title || "",
+      offerType: offer?.type || "",
+      amount: grossAmount,
+      amountOwedToPractitioner: practitionerPortion,
+      paymentGateway: gateway || "payglocal",
+      payglocalOrderId: orderId,
+      payglocalPaymentId: paymentId,
+      payglocalGid: paymentId,
+      bookingId: booking._id,
+      status: "received",
+    })
+
+    // Create Payout Record (Automated 72-Hour PayGlocal Direct Transfer)
+    // Central OpenHand account collects 100%, and deducts platform fee + taxes before disbursing
+    const practPlan = String(practitionerUser?.activePlan || "").toLowerCase()
+    const feeRate = (practPlan.includes("pro") ? 5 : practPlan.includes("institution") ? 0 : 10)
+    const platformFee = Math.round((grossAmount * feeRate) / 100)
+    const taxDeducted = Math.round(platformFee * 0.18) // 18% GST on platform service fee
+    const calculatedNet = Math.max(0, grossAmount - platformFee - taxDeducted)
+    const finalNet = practitionerPortion > 0 ? Math.min(practitionerPortion, calculatedNet) : calculatedNet
+
+    if (finalNet > 0) {
+      await Payout.create({
+        practitioner: practitionerId,
+        amount: grossAmount,
+        grossAmount: grossAmount,
+        platformFeeDeducted: platformFee,
+        taxDeducted: taxDeducted,
+        commissionDeducted: platformFee + taxDeducted,
+        netAmount: finalNet,
+        status: "processing",
+        settlementWindowHours: 72,
+        settledAt: new Date(Date.now() + 72 * 60 * 60 * 1000), // Scheduled in 72 hours
+        payoutMethod: "payglocal_direct_transfer",
+        sourceType: "offer_booking",
+        sourceId: booking._id.toString(),
+        bookingsCount: 1,
+      })
+    }
+  } catch (err) {
+    console.error("_createInvoiceAndAdminLog error:", err)
+  }
+}
+
+// ─── 5. CREATE PRACTITIONER PAYMENT ORDER ──────────────────────────────────────
+exports.createPractitionerOrder = async (req, res) => {
+  try {
+    const { practitionerId, amount, clientPhone, clientEmail } = req.body
+    const userId = req.user.id
+
+    if (!practitionerId) {
+      return res.status(400).json({ success: false, message: "Practitioner ID is required" })
+    }
+
+    const numericAmount = Number(amount) || 500
+    const clientUser = await User.findById(userId).select("firstName lastName email contactNumber whatsappNumber")
+
+    const effectivePhone = clientPhone || clientUser?.whatsappNumber || clientUser?.contactNumber || ""
+    const effectiveEmail = clientEmail || clientUser?.email || ""
+
+    const order = await createPayCollectOrder({
+      merchantTxnId: `pract_${Date.now().toString().slice(-8)}`,
+      amount: numericAmount,
+      currency: "INR",
+      customer: {
+        email: effectiveEmail,
+        firstName: clientUser?.firstName,
+        lastName: clientUser?.lastName,
+        contactNumber: effectivePhone,
+      },
+      notes: {
+        userId: String(userId),
+        practitionerId: String(practitionerId),
+      },
+    })
+
+    return res.status(200).json({
+      success: true,
+      order,
+      gid: order.gid,
+      merchantTxnId: order.merchantTxnId,
+      redirectUrl: order.redirectUrl,
+      key: order.keyId,
+      amount: numericAmount,
+      gateway: "payglocal",
+    })
+  } catch (error) {
+    console.error("createPractitionerOrder error:", error)
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to create practitioner payment order",
+    })
+  }
+}
