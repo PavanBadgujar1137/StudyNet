@@ -11,6 +11,56 @@ const PractitionerProfile = require("../models/PractitionerProfile")
 const mailSender = require("../utils/mailSender")
 const mongoose = require("mongoose")
 const { paymentSuccessEmail } = require("../mail/templates/paymentSuccessEmail")
+const PractitionerAvailability = require("../models/PractitionerAvailability")
+const { google } = require("googleapis")
+
+// Initialize Google OAuth2 client for Calendar API
+const oauth2Client = new google.auth.OAuth2(
+  process.env.GOOGLE_CLIENT_ID || "mock-client-id",
+  process.env.GOOGLE_CLIENT_SECRET || "mock-client-secret",
+  process.env.GOOGLE_REDIRECT_URI || "http://localhost:5000/api/v1/calendar/auth/callback"
+)
+
+const addGoogleCalendarEvent = async (booking, clientUser, practitionerUser) => {
+  try {
+    const availability = await PractitionerAvailability.findOne({ practitioner: booking.practitioner })
+    if (!availability || !availability.googleCalendarConnected || !availability.googleAccessToken) {
+      return
+    }
+
+    oauth2Client.setCredentials({
+      access_token: availability.googleAccessToken,
+      refresh_token: availability.googleRefreshToken,
+      expiry_date: availability.googleTokenExpiry,
+    })
+
+    const calendar = google.calendar({ version: "v3", auth: oauth2Client })
+    
+    const startTime = new Date(booking.scheduledAt)
+    const duration = booking.offer?.durationMinutes || 50
+    const endTime = new Date(startTime.getTime() + duration * 60000)
+
+    const event = {
+      summary: `Session: ${clientUser.firstName} ${clientUser.lastName}`,
+      description: `OpenHand Booking: ${booking.offer?.title}`,
+      start: { dateTime: startTime.toISOString() },
+      end: { dateTime: endTime.toISOString() },
+      attendees: [{ email: clientUser.email }, { email: practitionerUser.email }],
+      reminders: { useDefault: true },
+    }
+
+    const res = await calendar.events.insert({
+      calendarId: "primary",
+      resource: event,
+      sendUpdates: "all",
+    })
+
+    booking.meetingLink = res.data.htmlLink // Save event link as meetingLink
+    await booking.save()
+  } catch (error) {
+    console.error("Failed to add to Google Calendar:", error)
+  }
+}
 
 // ─── CORRECT PAYMENT FLOW ─────────────────────────────────────────────────────
 // ALL payments from clients go to the PLATFORM ADMIN.
@@ -306,7 +356,7 @@ exports.getMySubscription = async (req, res) => {
 // This replaces the old bookOffer. ALL payment goes to admin.
 exports.bookOffer = async (req, res) => {
   try {
-    const { offerId, scheduledAt, gateway = "payglocal", clientPhone, clientEmail } = req.body
+    const { offerId, scheduledAt, intakeAnswers = [], gateway = "payglocal", clientPhone, clientEmail } = req.body
     const userId = req.user.id
 
     const [offer, clientUser] = await Promise.all([
@@ -379,6 +429,7 @@ exports.bookOffer = async (req, res) => {
         status: "confirmed",
         settlementStatus: "settled",
         scheduledAt: scheduledAt ? new Date(scheduledAt) : new Date(Date.now() + 86400000),
+        intakeAnswers,
       })
 
       await _createInvoiceAndAdminLog({
@@ -393,6 +444,8 @@ exports.bookOffer = async (req, res) => {
         paymentId: `free_master_${Date.now()}`,
         orderId: null,
       })
+      
+      await addGoogleCalendarEvent(booking, clientUser, practitionerUser)
 
       // Multi-Channel Purchase Notification (WhatsApp + Email)
       try {
@@ -427,6 +480,7 @@ exports.bookOffer = async (req, res) => {
         status: "confirmed",
         settlementStatus: "pending_t2",
         scheduledAt: scheduledAt ? new Date(scheduledAt) : new Date(Date.now() + 86400000),
+        intakeAnswers,
       })
 
       await _createInvoiceAndAdminLog({
@@ -441,6 +495,8 @@ exports.bookOffer = async (req, res) => {
         paymentId: mockStripeIntentId,
         orderId: null,
       })
+      
+      await addGoogleCalendarEvent(booking, clientUser, practitionerUser)
 
       // Multi-Channel Purchase Notification (WhatsApp + Email)
       try {
@@ -494,6 +550,7 @@ exports.bookOffer = async (req, res) => {
       status: "pending",
       settlementStatus: "unsettled",
       scheduledAt: scheduledAt ? new Date(scheduledAt) : new Date(Date.now() + 86400000),
+      intakeAnswers,
     })
 
     return res.status(200).json({
@@ -581,6 +638,8 @@ exports.verifyOfferBooking = async (req, res) => {
       paymentId: effectivePaymentId,
       orderId: effectiveOrderId,
     })
+
+    await addGoogleCalendarEvent(booking, clientUser, practitionerUser)
 
     // Multi-Channel Purchase Notification (WhatsApp + Email)
     try {
@@ -1069,6 +1128,8 @@ exports.confirmFreeDiscountBooking = async (req, res) => {
       paymentId: fakePaymentId,
       orderId: null,
     })
+
+    await addGoogleCalendarEvent(booking, clientUser, practitionerUser)
 
     // Multi-Channel Purchase Notification (WhatsApp + Email)
     try {

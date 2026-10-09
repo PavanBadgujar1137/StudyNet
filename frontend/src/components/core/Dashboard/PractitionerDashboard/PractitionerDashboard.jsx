@@ -18,11 +18,14 @@ import {
   FiShare2,
   FiCheckSquare,
   FiLock,
-  FiPercent
+  FiPercent,
+  FiCalendar
 } from 'react-icons/fi'
 import Overview from './Overview'
 import MyOffers from './MyOffers'
+import MyScheduleBookings from './MyScheduleBookings'
 import MyLearners from './MyLearners'
+
 import Circles from './Circles'
 import SessionRoom from './SessionRoom'
 import PayoutsInvoices from './PayoutsInvoices'
@@ -58,6 +61,7 @@ export function PractitionerDashboard() {
     if (path.includes('coupon')) return 'coupons'
     if (path.includes('community') || path.includes('chat')) return 'community'
     if (path.includes('offer')) return 'offers'
+    if (path.includes('schedule') || path.includes('bookings')) return 'schedule'
     if (path.includes('course')) return 'courses'
     if (path.includes('client') || path.includes('learner')) return 'clients'
     if (path.includes('circle')) return 'circles'
@@ -194,6 +198,7 @@ export function PractitionerDashboard() {
     { id: 'social',    label: 'Social Posts',     icon: <FiShare2 /> },
     { id: 'community', label: 'Community Hub',    icon: <FiMessageSquare /> },
     { id: 'offers',    label: 'Offers',           icon: <FiTag /> },
+    { id: 'schedule',  label: 'My Schedule & Bookings', icon: <FiCalendar /> },
     { id: 'courses',   label: 'My Courses',       icon: <FiBookOpen /> },
     { id: 'coupons',   label: 'Coupons & Grants', icon: <FiPercent /> },
     { id: 'clients',   label: 'Learners',         icon: <FiUsers /> },
@@ -399,6 +404,7 @@ export function PractitionerDashboard() {
                 {activeSection === 'coupons' && 'Coupons & Learner Discounts'}
                 {activeSection === 'community' && 'Community & Chat Hub'}
                 {activeSection === 'offers' && 'My Practice Offers'}
+                {activeSection === 'schedule' && 'My Schedule & Bookings'}
                 {activeSection === 'courses' && 'My Courses'}
                 {activeSection === 'clients' && 'Learner Management Hub'}
                 {activeSection === 'circles' && 'Active Circles'}
@@ -522,6 +528,9 @@ export function PractitionerDashboard() {
               )}
               {activeSection === 'offers' && (
                 <MyOffers telemetryData={telemetryData} onUpdate={loadData} />
+              )}
+              {activeSection === 'schedule' && (
+                <MyScheduleBookings />
               )}
               {activeSection === 'courses' && (
                 <MyCourses />

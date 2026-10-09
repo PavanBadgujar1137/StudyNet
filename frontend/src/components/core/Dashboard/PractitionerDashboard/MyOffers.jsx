@@ -17,6 +17,8 @@ import {
 } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import { apiConnector } from '../../../../services/apiConnector'
+import { PractitionerScheduleModal } from './PractitionerScheduleModal'
+
 
 const PRESETS = [
   {
@@ -69,6 +71,7 @@ export function MyOffers({ telemetryData, onUpdate }) {
   const { token } = useSelector((state) => state.auth)
 
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [editingOffer, setEditingOffer] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [togglingId, setTogglingId] = useState(null)
@@ -111,7 +114,18 @@ export function MyOffers({ telemetryData, onUpdate }) {
 
   useEffect(() => {
     loadOffers()
-  }, [loadOffers])
+    
+    // Check for calendar_connected callback
+    if (searchParams.get('calendar_connected') === 'true') {
+      toast.success("Google Calendar connected successfully!")
+      setShowScheduleModal(true)
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev)
+        next.delete('calendar_connected')
+        return next
+      })
+    }
+  }, [loadOffers, searchParams, setSearchParams])
 
   // Auto-open create modal when navigated from popup with ?create=true
   useEffect(() => {
@@ -339,6 +353,26 @@ export function MyOffers({ telemetryData, onUpdate }) {
           onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
         >
           <FiPlus size={18} /> + Create New Offer / Program
+        </button>
+
+        <button
+          onClick={() => setShowScheduleModal(true)}
+          style={{
+            background: '#FFFFFF',
+            color: '#0F172A',
+            border: '1px solid #CBD5E1',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '12px 20px',
+            borderRadius: '12px',
+            fontWeight: 700,
+            fontSize: '14.5px',
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+          }}
+        >
+          <FiCalendar size={18} color="#2563EB" /> Calendar &amp; Schedule Settings
         </button>
       </div>
 
@@ -642,6 +676,11 @@ export function MyOffers({ telemetryData, onUpdate }) {
           )}
         </div>
       </div>
+
+      <PractitionerScheduleModal 
+        isOpen={showScheduleModal} 
+        onClose={() => setShowScheduleModal(false)} 
+      />
 
       {/* CREATE / EDIT OFFER MODAL */}
       {showCreateModal && (

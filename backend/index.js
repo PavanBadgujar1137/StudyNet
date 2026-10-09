@@ -146,6 +146,7 @@ const socialPostRoutes = require("./routes/socialPost")
 const milestoneRoutes = require("./routes/milestone")
 const testimonialRoutes = require("./routes/testimonial")
 const couponRoutes = require("./routes/coupon")
+const calendarRoutes = require("./routes/calendar")
 
 const chatRoutes = require("./routes/chat")
 const careerRoutes = require("./routes/career")
@@ -180,6 +181,7 @@ app.use("/api/v1/courses", courseRoutes)
 app.use("/api/v1/social-posts", socialPostRoutes)
 app.use("/api/v1/milestones", milestoneRoutes)
 app.use("/api/v1/testimonials", testimonialRoutes)
+app.use("/api/v1/calendar", calendarRoutes)
 
 // Testing the server
 app.get("/", (req, res) => {

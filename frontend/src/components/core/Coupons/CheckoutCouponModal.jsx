@@ -27,7 +27,9 @@ export default function CheckoutCouponModal({
   productType = 'course', // 'course' | 'session'
   product, // Course or Offer object
   scheduledAt, // For session bookings
+  intakeAnswers, // Array of {question, answer}
   onSuccess, // Callback on purchase/booking complete
+
 }) {
   const { token } = useSelector((s) => s.auth)
   const { user } = useSelector((s) => s.profile)
@@ -171,7 +173,9 @@ export default function CheckoutCouponModal({
             {
               offerId: productId,
               scheduledAt,
+              intakeAnswers,
               couponCodes: appliedCodes,
+
               clientPhone: fullWhatsAppNumber,
               clientEmail: user?.email,
             },
@@ -205,7 +209,7 @@ export default function CheckoutCouponModal({
         const pId = product.practitioner?._id || product.practitioner
         orderRes = await apiConnector(
           'POST',
-          '/api/v1/payment/create-practitioner-order',
+          '/api/v1/payments/book-offer',
           {
             practitionerId: pId,
             amount: finalAmount,
@@ -213,6 +217,8 @@ export default function CheckoutCouponModal({
             couponCodes: appliedCodes,
             clientPhone: fullWhatsAppNumber,
             clientEmail: user?.email,
+            scheduledAt,
+            intakeAnswers,
           },
           { Authorization: `Bearer ${token}` }
         )

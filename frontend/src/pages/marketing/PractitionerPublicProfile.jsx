@@ -20,9 +20,11 @@ import { toast } from 'react-hot-toast'
 import { apiConnector } from '../../services/apiConnector'
 import OHFooter from '../../components/openhand/OHFooter'
 import { IntakeModal } from '../../components/openhand'
+import { LearnerScheduleSelectionModal } from '../../components/openhand/LearnerScheduleSelectionModal'
 import { formatPractitionerName } from '../../utils/formatName'
 import { getOptimizedImageUrl } from '../../utils/imageOptimizer'
 import CheckoutCouponModal from '../../components/core/Coupons/CheckoutCouponModal'
+
 
 export function PractitionerPublicProfile() {
   const { handle } = useParams()
@@ -31,10 +33,12 @@ export function PractitionerPublicProfile() {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  // Stage 02 — Intake Modal State
   const [showIntakeModal, setShowIntakeModal] = useState(false)
+  const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [showCouponModal, setShowCouponModal] = useState(false)
   const [selectedOffer, setSelectedOffer] = useState(null)
+  const [selectedSchedule, setSelectedSchedule] = useState(null)
+  const [intakeAnswers, setIntakeAnswers] = useState([])
   const [checkoutProductType, setCheckoutProductType] = useState('session') // 'session' | 'course'
 
   // Course Details / Syllabus Modal State
@@ -149,7 +153,8 @@ export function PractitionerPublicProfile() {
   }
 
   // Triggered after 6-question intake is submitted
-  const handleIntakeSubmitted = async () => {
+  const handleIntakeSubmitted = async (formattedAnswers) => {
+    setIntakeAnswers(formattedAnswers)
     setShowIntakeModal(false)
     if (selectedOffer) {
       if (selectedOffer.isDummy || selectedOffer.price == null || selectedOffer.price === 0) {
@@ -158,10 +163,17 @@ export function PractitionerPublicProfile() {
         )
         setSelectedOffer(null)
       } else {
-        setShowCouponModal(true)
+        setShowScheduleModal(true) // Open schedule selection next
       }
     }
   }
+
+  const handleScheduleSelected = (scheduleDateStr) => {
+    setSelectedSchedule(scheduleDateStr)
+    setShowScheduleModal(false)
+    setShowCouponModal(true)
+  }
+
 
   // Handle Course enrollment / start
   const handleStartCourse = (course) => {
@@ -1885,6 +1897,17 @@ export function PractitionerPublicProfile() {
         onSubmit={handleIntakeSubmitted}
       />
 
+      <LearnerScheduleSelectionModal
+        isOpen={showScheduleModal}
+        onClose={() => {
+          setShowScheduleModal(false)
+          setSelectedOffer(null)
+        }}
+        practitionerId={profile?.user?._id || profile?.user?.id || profile?.user}
+        offer={selectedOffer}
+        onSlotSelected={handleScheduleSelected}
+      />
+
       {/* ─── Session / Course Checkout & Coupon Modal ─── */}
       <CheckoutCouponModal
         isOpen={showCouponModal}
@@ -1894,6 +1917,8 @@ export function PractitionerPublicProfile() {
         }}
         productType={checkoutProductType}
         product={selectedOffer}
+        scheduledAt={selectedSchedule}
+        intakeAnswers={intakeAnswers}
         onSuccess={() => {
           toast.success(
             checkoutProductType === 'course'
