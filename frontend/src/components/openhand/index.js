@@ -23,8 +23,6 @@ export { OHSparkline }    from './OHSparkline'
 export { OHBarChart }     from './OHBarChart'
 export { OHBreakevenChart } from './OHBreakevenChart'
 export { OHRangeCalculator } from './OHRangeCalculator'
-export { OHTakeHomeSimulator } from './OHTakeHomeSimulator'
-export { OHCompareTable } from './OHCompareTable'
 
 // Complex patterns
 export { OHTimeline }     from './OHTimeline'

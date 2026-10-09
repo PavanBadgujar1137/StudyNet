@@ -4,8 +4,6 @@ import {
   OHFooter,
   OHEyebrow,
   OHPricingSection,
-  OHTakeHomeSimulator,
-  OHCompareTable,
 } from '../../components/openhand'
 import {
   FiZap,
@@ -159,12 +157,6 @@ export function PricingPage() {
                 </div>
               </div>
             </section>
-
-            {/* TAKE-HOME SIMULATOR (CALCULATOR WITH COMPETITOR COMPARISONS) */}
-            <OHTakeHomeSimulator />
-
-            {/* SIDE BY SIDE COMPARISON TABLE */}
-            <OHCompareTable />
           </>
         )}
 
