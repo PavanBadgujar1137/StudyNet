@@ -113,6 +113,13 @@ exports.resetPassword = async (req, res) => {
       })
     }
 
+    if (!password || password.length < 8) {
+      return res.json({
+        success: false,
+        message: "Password must be at least 8 characters long.",
+      })
+    }
+
     const userDetails = await User.findOne({ token: cleanToken })
     if (!userDetails) {
       return res.json({

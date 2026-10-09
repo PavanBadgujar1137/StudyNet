@@ -51,6 +51,14 @@ exports.signup = async (req, res) => {
       })
     }
 
+    // Check password strength policy
+    if (!password || password.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 8 characters long.",
+      })
+    }
+
     // Check if password and confirm password match
     if (password !== confirmPassword) {
       return res.status(400).json({
@@ -71,17 +79,14 @@ exports.signup = async (req, res) => {
       })
     }
 
-    // Find the most recent OTP for the email
-    const response = await OTP.find({ email: cleanEmail }).sort({ createdAt: -1 }).limit(1)
-    console.log(response)
-    if (response.length === 0) {
-      // OTP not found for the email
-      return res.status(400).json({
-        success: false,
-        message: "The OTP is not valid",
-      })
-    } else if (otp !== response[0].otp) {
-      // Invalid OTP
+    // Atomically find and consume the OTP (valid only if created within the last 5 minutes)
+    const validOtp = await OTP.findOneAndDelete({ 
+      email: cleanEmail, 
+      otp: otp, 
+      createdAt: { $gt: new Date(Date.now() - 5 * 60 * 1000) }
+    }).sort({ createdAt: -1 })
+    
+    if (!validOtp) {
       return res.status(400).json({
         success: false,
         message: "The OTP is not valid",
@@ -664,9 +669,7 @@ exports.sendotp = async (req, res) => {
       specialChars: false,
     })
     let result = await OTP.findOne({ otp: otp })
-    console.log("Result is Generate OTP Func")
-    console.log("OTP", otp)
-    console.log("Result", result)
+    console.log("OTP generated successfully")
     while (result) {
       otp = otpGenerator.generate(6, {
         upperCaseAlphabets: false,
@@ -677,11 +680,10 @@ exports.sendotp = async (req, res) => {
     }
     const otpPayload = { email: cleanEmail, otp }
     const otpBody = await OTP.create(otpPayload)
-    console.log("OTP Body", otpBody)
+    console.log("OTP stored successfully")
     return res.status(200).json({
       success: true,
       message: `OTP Sent Successfully`,
-      otp,
     })
   } catch (error) {
     console.error("sendotp error:", error.message)
@@ -707,6 +709,14 @@ exports.changePassword = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "New password cannot be the same as your current password.",
+      })
+    }
+
+    // Check password strength policy
+    if (!newPassword || newPassword.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 8 characters long.",
       })
     }
 

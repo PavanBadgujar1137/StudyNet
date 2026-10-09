@@ -1,3 +1,4 @@
+const sharp = require("sharp")
 const Profile = require("../models/Profile")
 const User = require("../models/User")
 const Booking = require("../models/Booking")
@@ -195,6 +196,52 @@ exports.updateDisplayPicture = async (req, res) => {
 
     const displayPicture = req.files.displayPicture
     const userId = req.user.id
+
+    // Size limit 10MB
+    if (displayPicture.size > 10 * 1024 * 1024) {
+      return res.status(400).json({
+        success: false,
+        message: "File size exceeds 10MB limit",
+      })
+    }
+
+    // Validate raster image via magic bytes
+    const buffer = displayPicture.data;
+    const isValidRasterImage = (buffer) => {
+      if (!buffer || buffer.length < 12) return false;
+      if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return true; // JPEG
+      if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) return true; // PNG
+      if (buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46 &&
+          buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50) return true; // WEBP
+      return false;
+    }
+
+    if (!isValidRasterImage(buffer)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid file format. Only JPEG, PNG, and WEBP images are allowed.",
+      })
+    }
+
+    // Re-encode image to strip polyglots, prevent decompression attacks, and ensure valid webp
+    let safeBuffer;
+    try {
+      safeBuffer = await sharp(buffer, { limitInputPixels: 10000000 }) // Limit to ~10 megapixels max input
+        .resize({ width: 2000, height: 2000, fit: 'inside', withoutEnlargement: true })
+        .webp({ quality: 80 })
+        .toBuffer();
+    } catch (err) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid image content. File could not be processed.",
+      })
+    }
+    
+    // Replace original buffer and file details for S3 upload
+    displayPicture.data = safeBuffer;
+    displayPicture.mimetype = 'image/webp';
+    displayPicture.name = displayPicture.name.split('.')[0] + '.webp';
+
     const image = await uploadFileToS3(
       displayPicture,
       "profile_pictures"

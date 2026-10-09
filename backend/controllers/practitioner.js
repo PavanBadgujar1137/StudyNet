@@ -7,6 +7,18 @@ const Payout = require("../models/Payout")
 const Invoice = require("../models/Invoice")
 const Offer = require("../models/Offer")
 
+const sanitizePractitionerProfile = (profile) => {
+  const {
+    monthlyEarnings, planCommission, payoutCountry, payoutMethod, 
+    bankAccountName, bankAccountNumber, bankIfscCode, bankName,
+    bankIban, bankSwiftBic, bankCity, upiId, stripeAccountId, paypalEmail,
+    ...safeProfile
+  } = profile;
+  if (safeProfile.user && typeof safeProfile.user === 'object') {
+    delete safeProfile.user.email;
+  }
+  return safeProfile;
+};
 
 exports.getPractitioners = async (req, res) => {
   try {
@@ -163,7 +175,7 @@ exports.getPractitioners = async (req, res) => {
         if (!fullText.includes(qLower)) continue
       }
 
-      results.push(profile)
+      results.push(sanitizePractitionerProfile(profile))
     }
 
     // Rank by views (view rate / popularity) by default, or when explicitly requested
@@ -445,7 +457,7 @@ exports.getPractitionerByHandle = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      data: profileObj,
+      data: sanitizePractitionerProfile(profileObj),
     })
   } catch (error) {
     console.error("Get Practitioner By Handle Error:", error)
@@ -1365,8 +1377,10 @@ exports.getPractitionersOfTheMonth = async (req, res) => {
     // Enrich with profile data if needed
     const enriched = await Promise.all(topPractitioners.map(async (pract) => {
       const profile = await PractitionerProfile.findOne({ user: pract._id }).lean()
+      const { email, ...safePract } = pract;
       return {
-        ...pract,
+        ...safePract,
+        ...sanitizePractitionerProfile(profile || {}),
         specialties: profile?.specialties || ["Integrative Health"],
         handle: profile?.handle,
       }

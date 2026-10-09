@@ -85,8 +85,8 @@ const corsOptions = {
       return callback(null, true)
     }
 
-    // Dynamic fallback to reflect origin for any valid domain
-    return callback(null, true)
+    // Reject unknown origins gracefully
+    return callback(null, false)
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
@@ -103,6 +103,18 @@ const corsOptions = {
   ],
   optionsSuccessStatus: 200,
 }
+
+app.disable("x-powered-by")
+
+app.use((req, res, next) => {
+  res.setHeader("X-Frame-Options", "SAMEORIGIN")
+  res.setHeader("Content-Security-Policy", "frame-ancestors 'self';")
+  res.setHeader("X-Content-Type-Options", "nosniff")
+  if (isProd) {
+    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+  }
+  next()
+})
 
 app.use(cors(corsOptions))
 app.options("*", cors(corsOptions))
