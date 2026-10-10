@@ -235,7 +235,7 @@ export default function PayGlocalCheckoutModal({
         inset: 0,
         backgroundColor: "rgba(10, 15, 29, 0.82)",
         backdropFilter: "blur(10px)",
-        zIndex: 99999,
+        zIndex: 100010,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",

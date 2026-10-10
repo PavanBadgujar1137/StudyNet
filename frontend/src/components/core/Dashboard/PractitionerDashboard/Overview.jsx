@@ -104,10 +104,10 @@ export function Overview({ practitionerName = 'Practitioner', setActiveSection, 
           <div className="val" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: String(stats.monthlyEarnings.toLocaleString('en-IN')).length > 10 ? '18px' : '24px' }} title={`₹${stats.monthlyEarnings.toLocaleString('en-IN')}`}>
             ₹{stats.monthlyEarnings.toLocaleString('en-IN')}
           </div>
-          <div className="dl up">▲ Admin salary ledger</div>
+          <div className="dl up">▲ Admin payout ledger</div>
         </div>
         <div className="card stat">
-          <div className="lbl">Pending Admin Salary</div>
+          <div className="lbl">Pending Admin Payout</div>
           <div className="val" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: String(stats.clearingThisWeek.toLocaleString('en-IN')).length > 10 ? '18px' : '24px' }} title={`₹${stats.clearingThisWeek.toLocaleString('en-IN')}`}>
             ₹{stats.clearingThisWeek.toLocaleString('en-IN')}
           </div>

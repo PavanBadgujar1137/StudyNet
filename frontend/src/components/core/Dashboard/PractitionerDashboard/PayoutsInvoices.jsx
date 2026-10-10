@@ -31,10 +31,10 @@ export function PayoutsInvoices({ telemetryData }) {
     <section className="view on" id="payouts">
       <div className="htop" style={{ marginBottom: '24px' }}>
         <div>
-          <div className="crumb">Business / Salary &amp; Payouts</div>
-          <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#0F172A' }}>Monthly Salary &amp; Payout Ledger</h1>
+          <div className="crumb">Business / Payouts</div>
+          <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#0F172A' }}>Payout Ledger</h1>
           <p style={{ color: '#64748B', marginTop: '4px' }}>
-            Practitioners set offer prices. All learner payments are collected centrally by Admin, and Admin disburses your monthly salary &amp; session earnings.
+            Practitioners set offer prices. All learner payments are collected centrally by Admin, and Admin disburses your payout &amp; session earnings.
           </p>
         </div>
       </div>
@@ -144,7 +144,7 @@ export function PayoutsInvoices({ telemetryData }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', marginBottom: '24px' }}>
         <div style={{ background: '#FFFFFF', padding: '24px', borderRadius: '16px', border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
           <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <FiShield style={{ color: '#2563EB' }} /> Payment &amp; Salary Workflow (72-Hour PayGlocal Settlement)
+            <FiShield style={{ color: '#2563EB' }} /> Payment &amp; Payout Workflow (72-Hour PayGlocal Settlement)
           </h3>
           <div className="tl" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div style={{ borderLeft: '3px solid #10B981', paddingLeft: '12px' }}>
@@ -161,7 +161,7 @@ export function PayoutsInvoices({ telemetryData }) {
             </div>
             <div style={{ borderLeft: '3px solid #8B5CF6', paddingLeft: '12px' }}>
               <b style={{ fontSize: '13px', color: '#0F172A', display: 'block' }}>4. Automated 72-Hour PayGlocal Payout</b>
-              <span style={{ fontSize: '12px', color: '#64748B' }}>Net salary is automatically credited to your bank or UPI within 72 hours via PayGlocal direct transfer.</span>
+              <span style={{ fontSize: '12px', color: '#64748B' }}>Net payout is automatically credited to your bank or UPI within 72 hours via PayGlocal direct transfer.</span>
             </div>
           </div>
         </div>

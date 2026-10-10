@@ -1271,7 +1271,7 @@ function PractitionersTab() {
       return toast.error('Please enter a valid positive payout amount.')
     }
     if (amountNum > (payoutModal?.salaryOwed || 0)) {
-      return toast.error(`Payout amount (${fmt(amountNum)}) cannot exceed pending salary owed (${fmt(payoutModal.salaryOwed)}).`)
+      return toast.error(`Payout amount (${fmt(amountNum)}) cannot exceed pending payout owed (${fmt(payoutModal.salaryOwed)}).`)
     }
 
     setPayingOut(true)
@@ -1403,8 +1403,8 @@ function PractitionersTab() {
       {payoutModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 20, padding: 32, width: 460, maxWidth: '90vw', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
-            <h3 style={{ margin: '0 0 4px', color: '#0F172A', fontSize: 18, fontWeight: 800 }}>Pay Salary — Dr. {payoutModal.firstName} {payoutModal.lastName}</h3>
-            <p style={{ margin: '0 0 16px', color: '#64748B', fontSize: 13 }}>Pending salary owed: <strong style={{ color: payoutModal.salaryOwed > 0 ? '#D97706' : '#64748B' }}>{fmt(payoutModal.salaryOwed)}</strong></p>
+            <h3 style={{ margin: '0 0 4px', color: '#0F172A', fontSize: 18, fontWeight: 800 }}>Disburse Payout — Dr. {payoutModal.firstName} {payoutModal.lastName}</h3>
+            <p style={{ margin: '0 0 16px', color: '#64748B', fontSize: 13 }}>Pending payout owed: <strong style={{ color: payoutModal.salaryOwed > 0 ? '#D97706' : '#64748B' }}>{fmt(payoutModal.salaryOwed)}</strong></p>
 
             {/* Missing Bank Details Banner */}
             {!hasBankDetails && (
@@ -1413,10 +1413,10 @@ function PractitionersTab() {
               </div>
             )}
 
-            {/* Zero Salary Owed Banner */}
+            {/* Zero Payout Owed Banner */}
             {hasBankDetails && payoutModal.salaryOwed <= 0 && (
               <div style={{ background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: 12, padding: '12px 16px', margin: '0 0 16px', color: '#475569', fontSize: 13, fontWeight: 600 }}>
-                ℹ️ No Pending Balance: Dr. {payoutModal.firstName} {payoutModal.lastName} currently has no pending salary balance owed.
+                ℹ️ No Pending Balance: Dr. {payoutModal.firstName} {payoutModal.lastName} currently has no pending payout balance owed.
               </div>
             )}
 
@@ -1477,7 +1477,7 @@ function PractitionersTab() {
                 style={{ width: '100%', background: '#FFFFFF', border: `1.5px solid ${payoutAmount && amountNum > (payoutModal.salaryOwed || 0) ? '#EF4444' : '#CBD5E1'}`, borderRadius: 10, padding: '10px 14px', color: '#0F172A', fontSize: 15, outline: 'none', boxSizing: 'border-box' }} />
               {payoutAmount && amountNum > (payoutModal.salaryOwed || 0) && (
                 <div style={{ color: '#DC2626', fontSize: 12, marginTop: 4, fontWeight: 600 }}>
-                  ⚠️ Amount cannot exceed pending salary owed ({fmt(payoutModal.salaryOwed)})
+                  ⚠️ Amount cannot exceed pending payout owed ({fmt(payoutModal.salaryOwed)})
                 </div>
               )}
             </div>
@@ -1526,7 +1526,7 @@ function PractitionersTab() {
                 <div style={{ fontSize: 18, fontWeight: 800, color: '#10B981', marginTop: 4 }}>{fmt(historyData?.totalEarned || historyModal.grossGenerated || 0)}</div>
               </div>
               <div style={{ background: '#FFFBEB', padding: 14, borderRadius: 12, border: '1px solid #FDE68A' }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: '#B45309' }}>PENDING SALARY OWED</div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#B45309' }}>PENDING PAYOUT OWED</div>
                 <div style={{ fontSize: 18, fontWeight: 800, color: '#D97706', marginTop: 4 }}>{fmt(historyData?.pendingSalaryOwed || historyModal.salaryOwed || 0)}</div>
               </div>
               <div style={{ background: '#F3E8FF', padding: 14, borderRadius: 12, border: '1px solid #E9D5FF' }}>
@@ -1539,7 +1539,7 @@ function PractitionersTab() {
             <div style={{ display: 'flex', gap: 10, borderBottom: '1px solid #E2E8F0', paddingBottom: 10, marginBottom: 16 }}>
               <button onClick={() => setHistoryTab('payouts')}
                 style={{ padding: '8px 16px', borderRadius: 10, border: 'none', background: historyTab === 'payouts' ? '#2563EB' : '#F1F5F9', color: historyTab === 'payouts' ? '#FFF' : '#475569', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
-                Disbursed Salary Payouts ({historyData?.payouts?.length || 0})
+                Disbursed Payouts ({historyData?.payouts?.length || 0})
               </button>
               <button onClick={() => setHistoryTab('logs')}
                 style={{ padding: '8px 16px', borderRadius: 10, border: 'none', background: historyTab === 'logs' ? '#2563EB' : '#F1F5F9', color: historyTab === 'logs' ? '#FFF' : '#475569', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
@@ -1714,12 +1714,12 @@ function PractitionersTab() {
               ), 
               render: r => <span style={{ color: '#10B981', fontWeight: 700 }}>{fmt(r.grossGenerated || 0)}</span> 
             },
-            { key: 'salaryOwed', label: 'Salary Owed', render: r => <span style={{ color: r.salaryOwed > 0 ? '#D97706' : '#64748B', fontWeight: 700 }}>{fmt(r.salaryOwed)}</span> },
+            { key: 'salaryOwed', label: 'Payout Owed', render: r => <span style={{ color: r.salaryOwed > 0 ? '#D97706' : '#64748B', fontWeight: 700 }}>{fmt(r.salaryOwed)}</span> },
             { key: 'action', label: 'Actions', render: r => (
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                 <button onClick={() => { setPayoutModal(r); setPayoutAmount(String(r.salaryOwed || '')) }}
                   style={{ padding: '6px 10px', background: r.salaryOwed > 0 ? 'linear-gradient(135deg, #10B981, #059669)' : '#F1F5F9', border: 'none', borderRadius: 8, color: r.salaryOwed > 0 ? '#fff' : '#94A3B8', cursor: r.salaryOwed > 0 ? 'pointer' : 'not-allowed', fontWeight: 600, fontSize: 11 }}>
-                  Pay Salary
+                  Disburse Payout
                 </button>
                 <button onClick={() => setHistoryModal(r)}
                   style={{ padding: '6px 10px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, color: '#1D4ED8', cursor: 'pointer', fontWeight: 700, fontSize: 11 }}>
@@ -1807,7 +1807,7 @@ function PaymentsTab() {
             { key: 'practitionerName', label: 'Practitioner', render: r => r.practitionerName || r.practitioner ? `${r.practitioner?.firstName || ''} ${r.practitioner?.lastName || ''}`.trim() || '—' : '—' },
             { key: 'amount', label: 'Amount Received', render: r => <span style={{ color: '#10B981', fontWeight: 700 }}>{fmt(r.amount)}</span> },
             { key: 'amountOwedToPractitioner', label: 'Owed to Practitioner', render: r => r.amountOwedToPractitioner > 0 ? <span style={{ color: '#D97706', fontWeight: 600 }}>{fmt(r.amountOwedToPractitioner)}</span> : <span style={{ color: '#94A3B8' }}>—</span> },
-            { key: 'practitionerSalaryPaid', label: 'Salary Paid', render: r => r.practitionerSalaryPaid
+            { key: 'practitionerSalaryPaid', label: 'Payout Paid', render: r => r.practitionerSalaryPaid
               ? <span style={{ color: '#10B981', display: 'flex', alignItems: 'center', gap: 4 }}><FiCheck /> Paid</span>
               : r.amountOwedToPractitioner > 0 ? <span style={{ color: '#D97706' }}>Pending</span> : <span style={{ color: '#94A3B8' }}>N/A</span>
             },

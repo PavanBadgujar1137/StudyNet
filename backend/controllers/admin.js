@@ -636,14 +636,14 @@ exports.processMonthlyPayout = async (req, res) => {
     if (pendingSalaryOwed <= 0) {
       return res.status(400).json({
         success: false,
-        message: `Dr. ${practitioner.firstName} ${practitioner.lastName} has no pending salary balance owed.`,
+        message: `Dr. ${practitioner.firstName} ${practitioner.lastName} has no pending payout balance owed.`,
       })
     }
 
     if (numAmount > pendingSalaryOwed) {
       return res.status(400).json({
         success: false,
-        message: `Requested payout amount (₹${numAmount.toLocaleString('en-IN')}) exceeds practitioner's pending salary balance (₹${pendingSalaryOwed.toLocaleString('en-IN')}).`,
+        message: `Requested payout amount (₹${numAmount.toLocaleString('en-IN')}) exceeds practitioner's pending payout balance (₹${pendingSalaryOwed.toLocaleString('en-IN')}).`,
       })
     }
 
@@ -680,7 +680,7 @@ exports.processMonthlyPayout = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: `Salary of ₹${numAmount.toLocaleString('en-IN')} successfully marked as paid to Dr. ${practitioner.firstName} ${practitioner.lastName}`,
+      message: `Payout of ₹${numAmount.toLocaleString('en-IN')} successfully marked as paid to Dr. ${practitioner.firstName} ${practitioner.lastName}`,
       payout,
     })
   } catch (error) {
@@ -1306,7 +1306,7 @@ exports.sendCallLinkAdmin = async (req, res) => {
       if (recipientEmail) {
         await mailSender(
           recipientEmail,
-          `📹 Your OpenHand Onboarding Google Meet Link is Ready: ${call.scheduledDate}`,
+          `📹 Your StudyNet Discovery Call Google Meet Link is Ready: ${call.scheduledDate}`,
           practitionerCallLinkEmail({
             name: call.practitionerName || `${call.practitioner?.firstName || 'Practitioner'}`,
             planName: call.planName || "Pro Plan (Yearly)",
@@ -1322,9 +1322,31 @@ exports.sendCallLinkAdmin = async (req, res) => {
       console.warn("Error sending Google Meet link email to practitioner:", emailErr.message)
     }
 
+    // Send Google Meet Link via WhatsApp to Practitioner
+    const recipientPhone = call.whatsappNumber || call.practitionerPhone
+    if (recipientPhone) {
+      try {
+        const { sendWhatsAppMessage } = require("../utils/whatsappSender")
+        const waText = `📹 *StudyNet — Your Google Meet Link is Ready!*
+
+Dear *${call.practitionerName}*,
+Your Google Meet room link for your Discovery Call scheduled on *${call.scheduledDate}* at *${call.scheduledTimeSlot}* (${call.timezone}) is live:
+
+🔗 *Join Google Meet:* ${cleanMeetLink}
+${call.adminNotes ? `\n📝 *Notes:* ${call.adminNotes}\n` : ""}
+We look forward to meeting you!
+
+Warmly,
+*StudyNet Team*`
+        await sendWhatsAppMessage(recipientPhone, waText)
+      } catch (waErr) {
+        console.warn("Error sending Google Meet link WhatsApp to practitioner:", waErr.message)
+      }
+    }
+
     return res.status(200).json({
       success: true,
-      message: `Google Meet link sent to ${call.practitionerEmail} successfully!`,
+      message: `Google Meet link sent to ${call.practitionerEmail} and WhatsApp successfully!`,
       call,
     })
   } catch (error) {
@@ -1371,6 +1393,30 @@ exports.updateCallStatusAdmin = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: error.message || "Failed to update call status",
+    })
+  }
+}
+
+// 4. Trigger Call Reminder (1hour, 5min, instant_meet) from Admin Panel
+exports.triggerCallReminderAdmin = async (req, res) => {
+  try {
+    const { id } = req.params
+    const { type = "1hour" } = req.body
+    const { dispatchManualReminder } = require("../services/meetingReminderService")
+
+    const result = await dispatchManualReminder(id, type)
+    const updatedCall = await PractitionerScheduleCall.findById(id)
+
+    return res.status(200).json({
+      success: true,
+      message: result.message,
+      call: updatedCall,
+    })
+  } catch (error) {
+    console.error("triggerCallReminderAdmin error:", error)
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to trigger reminder",
     })
   }
 }

@@ -13,6 +13,7 @@ import { HiSparkles } from "react-icons/hi"
 import OHEyebrow from "./OHEyebrow"
 // import { apiConnector } from "../../services/apiConnector"
 // import PayGlocalCheckoutModal from "./PayGlocalCheckoutModal"
+import CalendlyDiscoveryModal from "./CalendlyDiscoveryModal"
 
 
 
@@ -35,6 +36,8 @@ export default function OHPricingSection({
       onRoleChange(newTab)
     }
   }
+
+  const [isDiscoveryModalOpen, setIsDiscoveryModalOpen] = useState(false)
 
   // const [payingPlan, setPayingPlan] = useState(null)
   // const [payglocalOrderData, setPayglocalOrderData] = useState(null)
@@ -481,7 +484,7 @@ export default function OHPricingSection({
 
                   <button
                     type="button"
-                    onClick={() => navigate("/schedule-call?plan=pro_yearly")}
+                    onClick={() => setIsDiscoveryModalOpen(true)}
                     className="w-full py-3.5 px-6 rounded-2xl font-extrabold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer mb-8 text-white shadow-lg hover:opacity-95 active:scale-[0.98]"
                     style={{
                       background: "linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)",
@@ -598,7 +601,14 @@ export default function OHPricingSection({
           toast.error("PayGlocal payment window closed.")
         }}
       />
-      */}
+      {/* Calendly Discovery Call Modal */}
+      <CalendlyDiscoveryModal
+        isOpen={isDiscoveryModalOpen}
+        onClose={() => setIsDiscoveryModalOpen(false)}
+        planKey="pro_yearly"
+        planPrice={9588}
+        planName="Pro Plan (Yearly)"
+      />
     </section>
   )
 }

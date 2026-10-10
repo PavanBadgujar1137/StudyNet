@@ -328,7 +328,7 @@ export function MyOffers({ telemetryData, onUpdate }) {
             Offers &amp; Practice Settings
           </h1>
           <p style={{ color: '#64748B', fontSize: '14px', margin: '4px 0 0 0' }}>
-            Set custom prices for your 1:1 sessions, Circles, and programs. Learner payments are processed centrally by Admin and settled via your monthly practitioner salary.
+            Set custom prices for your 1:1 sessions, Circles, and programs. Learner payments are processed centrally by Admin and settled via your practitioner payouts.
           </p>
         </div>
 

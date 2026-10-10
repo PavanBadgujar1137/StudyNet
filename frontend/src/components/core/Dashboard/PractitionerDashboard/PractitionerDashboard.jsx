@@ -409,7 +409,7 @@ export function PractitionerDashboard() {
                 {activeSection === 'clients' && 'Learner Management Hub'}
                 {activeSection === 'circles' && 'Active Circles'}
                 {activeSection === 'room' && 'Live Session Room'}
-                {activeSection === 'payouts' && 'Salary & Payout Ledger'}
+                {activeSection === 'payouts' && 'Payout Ledger'}
                 {activeSection === 'growth' && 'Growth & Practice Tools'}
                 {(activeSection === 'setup' || activeSection === 'onboarding') && 'Practice Setup & Profile Link Builder'}
                 {activeSection === 'social' && 'Social Post & Media Studio'}

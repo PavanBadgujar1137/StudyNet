@@ -295,6 +295,15 @@ exports.createSubscriptionCallOrder = async (req, res) => {
       practitionerName = "",
       practitionerEmail = "",
       practitionerPhone = "",
+      whatsappNumber = "",
+      socialProfileLink = "",
+      referralSource = "",
+      courseSellingStatus = "",
+      otherPlatforms = "",
+      paidCommunityStrength = "",
+      timelineToMove = "",
+      callExpectations = "",
+      guests = [],
     } = req.body
 
     const keyLower = planKey.toLowerCase()
@@ -307,7 +316,7 @@ exports.createSubscriptionCallOrder = async (req, res) => {
 
     const effectiveName = practitionerName || (user ? `${user.firstName || ""} ${user.lastName || ""}`.trim() : "Practitioner")
     const effectiveEmail = practitionerEmail || user?.email || "practitioner@openhand.live"
-    const effectivePhone = practitionerPhone || user?.contactNumber || ""
+    const effectivePhone = whatsappNumber || practitionerPhone || user?.contactNumber || ""
 
     const order = await createPayCollectOrder({
       merchantTxnId: `call_sub_${keyLower}_${Date.now()}`,
@@ -326,9 +335,13 @@ exports.createSubscriptionCallOrder = async (req, res) => {
         scheduledTimeSlot: scheduledTimeSlot || "",
         timezone: timezone || "Asia/Kolkata (IST)",
         modality: modality || "",
-        goals: goals || "",
+        goals: goals || callExpectations || "",
         practitionerName: effectiveName,
         practitionerEmail: effectiveEmail,
+        whatsappNumber: effectivePhone,
+        socialProfileLink: socialProfileLink || "",
+        referralSource: referralSource || "",
+        paidCommunityStrength: paidCommunityStrength || "",
       },
     })
 
@@ -374,6 +387,15 @@ exports.verifySubscriptionCallOrder = async (req, res) => {
       practitionerName = "",
       practitionerEmail = "",
       practitionerPhone = "",
+      whatsappNumber = "",
+      socialProfileLink = "",
+      referralSource = "",
+      courseSellingStatus = "",
+      otherPlatforms = "",
+      paidCommunityStrength = "",
+      timelineToMove = "",
+      callExpectations = "",
+      guests = [],
       googleCalendarEventUrl = "",
     } = req.body
 
@@ -415,15 +437,50 @@ exports.verifySubscriptionCallOrder = async (req, res) => {
       user = await User.findOne({ email: practitionerEmail.toLowerCase().trim() })
     }
 
-    const effectiveUserId = user?._id || req.user?.id
     const effectiveName = practitionerName || (user ? `${user.firstName || ""} ${user.lastName || ""}`.trim() : "Practitioner")
     const effectiveEmail = practitionerEmail || user?.email || "practitioner@openhand.live"
-    const effectivePhone = practitionerPhone || user?.contactNumber || ""
+    const effectivePhone = whatsappNumber || practitionerPhone || user?.contactNumber || ""
+
+    // If user does not exist yet, create a practitioner account
+    if (!user && practitionerEmail) {
+      try {
+        const Profile = require("../models/Profile")
+        const nameParts = effectiveName.split(" ")
+        const fName = nameParts[0] || "Practitioner"
+        const lName = nameParts.slice(1).join(" ") || "Member"
+        const profileDetails = await Profile.create({
+          gender: null,
+          dateOfBirth: null,
+          about: `Practitioner subscribed to ${planInfo.name}. Discovery session scheduled for ${scheduledDate}`,
+          contactNumber: effectivePhone,
+        })
+        user = await User.create({
+          firstName: fName,
+          lastName: lName,
+          email: practitionerEmail.toLowerCase().trim(),
+          contactNumber: effectivePhone,
+          accountType: "Practitioner",
+          activePlan: keyLower,
+          additionalDetails: profileDetails._id,
+          image: `https://api.dicebear.com/5.x/initials/svg?seed=${encodeURIComponent(effectiveName)}`,
+        })
+      } catch (userCreateErr) {
+        console.warn("Could not auto-create user for guest practitioner:", userCreateErr.message)
+      }
+    }
+
+    const effectiveUserId = user?._id || req.user?.id
+
+    const startDate = new Date()
+    const endDate = new Date()
+    endDate.setFullYear(endDate.getFullYear() + 1) // 1-year yearly subscription
 
     // 1. Upgrade user if account exists
     if (user) {
       user.activePlan = keyLower
       user.accountType = "Practitioner"
+      user.trialExpiresAt = endDate // Set full 1-year expiration on user model
+      if (!user.contactNumber && effectivePhone) user.contactNumber = effectivePhone
       await user.save()
     }
 
@@ -434,14 +491,11 @@ exports.verifySubscriptionCallOrder = async (req, res) => {
     const mailSender = require("../utils/mailSender")
     const { practitionerCallScheduledEmail } = require("../mail/templates/practitionerCallScheduledEmail")
     const { adminCallAlertEmail } = require("../mail/templates/adminCallAlertEmail")
+    const { parseSlotToDate } = require("../services/meetingReminderService")
 
     if (effectiveUserId) {
       await Subscription.updateMany({ client: effectiveUserId, status: "active" }, { status: "expired" })
     }
-
-    const startDate = new Date()
-    const endDate = new Date()
-    endDate.setFullYear(endDate.getFullYear() + 1) // 1-year yearly subscription
 
     const sub = await Subscription.create({
       client: effectiveUserId || new mongoose.Types.ObjectId(),
@@ -478,41 +532,62 @@ exports.verifySubscriptionCallOrder = async (req, res) => {
     sub.adminPaymentLog = adminLog._id
     await sub.save()
 
-    // 4. Create PractitionerScheduleCall Record with dynamic Google Meet Conference Room Link
-    const uniqueMeetCode = `ohp-${crypto.randomBytes(3).toString("hex")}-${crypto.randomBytes(2).toString("hex")}`
-    const dynamicMeetLink = `https://meet.google.com/${uniqueMeetCode}`
+    // 4. Create PractitionerScheduleCall Record
+    // Use configured persistent room if provided in environment, otherwise leave for admin assignment
+    const configuredMeetLink = process.env.OPENHAND_DISCOVERY_MEET_LINK ? process.env.OPENHAND_DISCOVERY_MEET_LINK.trim() : null
+    const effectiveMeetLink = configuredMeetLink || null
+    const initialCallStatus = effectiveMeetLink ? "call_link_sent" : "scheduled"
+
+    const parsedScheduledDateTime = parseSlotToDate(scheduledDate, scheduledTimeSlot)
+    const guestList = Array.isArray(guests)
+      ? guests.filter(Boolean)
+      : typeof guests === "string" && guests.trim()
+      ? guests.split(",").map((g) => g.trim()).filter(Boolean)
+      : []
 
     const scheduleCall = await PractitionerScheduleCall.create({
       practitioner: effectiveUserId || sub.client,
       practitionerName: effectiveName,
       practitionerEmail: effectiveEmail,
       practitionerPhone: effectivePhone,
+      whatsappNumber: effectivePhone,
       modality: modality || "General Practice",
       planKey: keyLower,
       planName: planInfo.name,
       amountPaid: amount,
       currency: "INR",
       scheduledDate: scheduledDate || new Date().toISOString().split("T")[0],
-      scheduledTimeSlot: scheduledTimeSlot || "11:00 AM - 11:45 AM IST",
-      timezone: timezone || "Asia/Kolkata (IST)",
-      goals: goals || "",
+      scheduledTimeSlot: scheduledTimeSlot || "11:00 AM - 11:30 AM IST",
+      timezone: timezone || "India Standard Time",
+      scheduledDateTime: parsedScheduledDateTime,
+      goals: callExpectations || goals || "",
+      socialProfileLink: socialProfileLink || "",
+      referralSource: referralSource || "",
+      courseSellingStatus: courseSellingStatus || "",
+      otherPlatforms: otherPlatforms || "",
+      paidCommunityStrength: paidCommunityStrength || "",
+      timelineToMove: timelineToMove || "",
+      callExpectations: callExpectations || goals || "",
+      guests: guestList,
       googleCalendarEventUrl: googleCalendarEventUrl || "",
-      googleMeetLink: dynamicMeetLink,
-      status: "call_link_sent",
-      callLinkSentAt: new Date(),
+      googleMeetLink: effectiveMeetLink,
+      status: initialCallStatus,
+      callLinkSentAt: effectiveMeetLink ? new Date() : null,
       paymentGateway: "payglocal",
       payglocalOrderId: effectiveOrderId,
       payglocalPaymentId: effectivePaymentId,
       payglocalGid: verifyRes.gid || effectivePaymentId,
       subscriptionId: sub._id,
       adminPaymentLog: adminLog._id,
+      reminder1HourSent: false,
+      reminder5MinSent: false,
     })
 
     // 5. Send Confirmation Email & WhatsApp to Practitioner with Google Meet Link
     try {
       await mailSender(
         effectiveEmail,
-        `🎉 Confirmed: OpenHand ${planInfo.name} & Guiding Call Booked!`,
+        `🎉 Confirmed: StudyNet ${planInfo.name} & 30-Minute Discovery Call Booked!`,
         practitionerCallScheduledEmail({
           name: effectiveName,
           planName: planInfo.name,
@@ -521,7 +596,7 @@ exports.verifySubscriptionCallOrder = async (req, res) => {
           scheduledTimeSlot: scheduleCall.scheduledTimeSlot,
           timezone: scheduleCall.timezone,
           googleCalendarUrl: googleCalendarEventUrl,
-          googleMeetLink: dynamicMeetLink,
+          googleMeetLink: effectiveMeetLink || "",
           orderId: effectiveOrderId,
           paymentId: effectivePaymentId,
         })
@@ -529,19 +604,24 @@ exports.verifySubscriptionCallOrder = async (req, res) => {
 
       if (effectivePhone) {
         const { sendWhatsAppMessage } = require("../utils/whatsappSender")
-        const waText = `🌿 *OpenHand — Practitioner Onboarding Call Confirmed!*
+        const meetWaLine = effectiveMeetLink
+          ? `📹 *Google Meet Link:* ${effectiveMeetLink}`
+          : `📹 *Google Meet Link:* Will be generated by host and shared prior to the session.`
+
+        const waText = `🌿 *StudyNet — Discovery Call & Subscription Confirmed!*
 
 Dear *${effectiveName}*,
-Your onboarding call for the *${planInfo.name}* has been successfully reserved!
+Your *30 Minute Discovery Call* and *${planInfo.name}* subscription have been successfully booked!
 
 📅 *Scheduled Date:* ${scheduleCall.scheduledDate}
 ⏰ *Time:* ${scheduleCall.scheduledTimeSlot} (${scheduleCall.timezone})
-🔗 *Google Meet Room:* ${dynamicMeetLink}
+${meetWaLine}
 
-We look forward to meeting you and accelerating your practice on OpenHand.
+We will remind you 1 hour and 5 minutes prior to the meeting.
+We look forward to speaking with you!
 
 Warmly,
-*OpenHand Onboarding Team*`
+*StudyNet Onboarding Team*`
         sendWhatsAppMessage(effectivePhone, waText).catch(e => console.warn("Practitioner WA send warning:", e.message))
       }
     } catch (emailErr) {
@@ -553,17 +633,27 @@ Warmly,
       const adminAlertEmailAddress = process.env.ADMIN_ALERT_EMAIL || "connect@openhand.live"
       await mailSender(
         adminAlertEmailAddress,
-        `📞 Alert: New Practitioner Call Booked + Paid (₹${amount}) - ${effectiveName}`,
+        `📞 Alert: New Discovery Call Booked + Paid (₹${amount}) - ${effectiveName}`,
         adminCallAlertEmail({
           practitionerName: effectiveName,
           practitionerEmail: effectiveEmail,
           practitionerPhone: effectivePhone,
+          whatsappNumber: effectivePhone,
           modality,
           planName: planInfo.name,
           amountPaid: amount,
           scheduledDate: scheduleCall.scheduledDate,
           scheduledTimeSlot: scheduleCall.scheduledTimeSlot,
-          goals,
+          goals: callExpectations || goals,
+          socialProfileLink,
+          referralSource,
+          courseSellingStatus,
+          otherPlatforms,
+          paidCommunityStrength,
+          timelineToMove,
+          callExpectations,
+          guests: guestList,
+          googleMeetLink: effectiveMeetLink || "",
           paymentId: effectivePaymentId,
         })
       )
@@ -573,10 +663,11 @@ Warmly,
 
     return res.status(200).json({
       success: true,
-      message: `🎉 Payment verified & Onboarding Call confirmed for ${scheduleCall.scheduledDate}! Welcome to ${planInfo.name}.`,
+      message: `🎉 Payment verified & Discovery Call confirmed for ${scheduleCall.scheduledDate}! Welcome to ${planInfo.name}.`,
       scheduleCall,
       subscription: sub,
       planKey: keyLower,
+      user,
     })
   } catch (error) {
     console.error("verifySubscriptionCallOrder error:", error)

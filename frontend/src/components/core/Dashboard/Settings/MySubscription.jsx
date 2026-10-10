@@ -1,6 +1,8 @@
-import React from "react"
-import { useSelector } from "react-redux"
+import React, { useState, useEffect } from "react"
+import { useSelector, useDispatch } from "react-redux"
 import { useNavigate } from "react-router-dom"
+import { apiConnector } from "../../../../services/apiConnector"
+import { setUser } from "../../../../slices/profileSlice"
 import {
   FiCheckCircle,
   FiZap,
@@ -144,7 +146,44 @@ const PRACTITIONER_PLANS = {
 
 export default function MySubscription() {
   const navigate = useNavigate()
+  const dispatch = useDispatch()
   const { user } = useSelector((state) => state.profile)
+  const { token } = useSelector((state) => state.auth)
+  const [subData, setSubData] = useState(null)
+
+  useEffect(() => {
+    let isMounted = true
+    const fetchSub = async () => {
+      try {
+        if (!token) return
+        const res = await apiConnector("GET", "/api/v1/payments/subscription/mine", null, {
+          Authorization: `Bearer ${token}`,
+        })
+        if (res?.data?.success && isMounted) {
+          setSubData(res.data)
+          if (res.data.trialExpiresAt && user) {
+            const serverExpiry = new Date(res.data.trialExpiresAt).getTime()
+            const localExpiry = user.trialExpiresAt ? new Date(user.trialExpiresAt).getTime() : 0
+            if (serverExpiry !== localExpiry || (res.data.effectivePlan && res.data.effectivePlan !== user.activePlan)) {
+              dispatch(
+                setUser({
+                  ...user,
+                  trialExpiresAt: res.data.trialExpiresAt,
+                  activePlan: res.data.effectivePlan || user.activePlan,
+                })
+              )
+            }
+          }
+        }
+      } catch (err) {
+        // Silently use local state
+      }
+    }
+    fetchSub()
+    return () => {
+      isMounted = false
+    }
+  }, [token, dispatch, user])
 
   const isPractitioner =
     user?.accountType === "Practitioner" || user?.accountType === "Instructor"
@@ -316,7 +355,7 @@ export default function MySubscription() {
   }
 
   // ─── PRACTITIONER VIEW ───
-  let rawPlanKey = (user?.activePlan || "open").toLowerCase()
+  let rawPlanKey = (subData?.effectivePlan || user?.activePlan || "open").toLowerCase()
   if (rawPlanKey === "trial" || rawPlanKey === "none") rawPlanKey = "open"
 
   const planInfo = PRACTITIONER_PLANS[rawPlanKey] || {
@@ -328,21 +367,51 @@ export default function MySubscription() {
     features: ["Access to practice cockpit and booking management"]
   }
 
-  const trialExpiresAt = user?.trialExpiresAt ? new Date(user.trialExpiresAt) : null
-  const isLifetime = trialExpiresAt && trialExpiresAt.getFullYear() > 2050
-  
+  const isYearlyPlan =
+    rawPlanKey === "pro_yearly" ||
+    rawPlanKey === "master" ||
+    rawPlanKey === "pro_annual" ||
+    subData?.subscription?.planKey === "pro_yearly"
+
+  // 1. Determine active expiration date
+  let expiryDate = null
+  if (subData?.subscription?.endDate) {
+    expiryDate = new Date(subData.subscription.endDate)
+  } else if (subData?.subscriptionEndDate) {
+    expiryDate = new Date(subData.subscriptionEndDate)
+  } else if (user?.trialExpiresAt) {
+    expiryDate = new Date(user.trialExpiresAt)
+  }
+
   const now = new Date()
-  let daysRemaining = 0
+
+  // 2. Safeguard for yearly subscription:
+  // If user is on a yearly plan, but expiryDate is within 45 days from creation (e.g. old 14-day trial default),
+  // heal it to 1 full year from start/creation date
+  if (isYearlyPlan && expiryDate) {
+    const creationTime = user?.createdAt ? new Date(user.createdAt).getTime() : now.getTime()
+    const diffFromCreation = (expiryDate.getTime() - creationTime) / (1000 * 60 * 60 * 24)
+    if (diffFromCreation < 45) {
+      const healedDate = new Date(creationTime)
+      healedDate.setFullYear(healedDate.getFullYear() + 1)
+      expiryDate = healedDate
+    }
+  }
+
+  const isLifetime = expiryDate && expiryDate.getFullYear() > 2050
+  
+  let daysRemaining = "Active"
   let isExpired = false
 
   if (rawPlanKey === "open") {
     daysRemaining = "Active"
   } else if (isLifetime) {
     daysRemaining = "Unlimited Lifetime Access"
-  } else if (trialExpiresAt) {
-    const diffMs = trialExpiresAt.getTime() - now.getTime()
+  } else if (expiryDate) {
+    const diffMs = expiryDate.getTime() - now.getTime()
     if (diffMs > 0) {
-      daysRemaining = `${Math.ceil(diffMs / (1000 * 60 * 60 * 24))} Days Remaining`
+      const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+      daysRemaining = `${days} Days Remaining`
     } else {
       isExpired = true
       daysRemaining = "Expired"
@@ -355,8 +424,8 @@ export default function MySubscription() {
     ? "No Renewal Required"
     : isLifetime
     ? "Lifetime Membership (No Renewal Required)"
-    : trialExpiresAt
-    ? trialExpiresAt.toLocaleDateString("en-US", {
+    : expiryDate
+    ? expiryDate.toLocaleDateString("en-US", {
         month: "long",
         day: "numeric",
         year: "numeric"

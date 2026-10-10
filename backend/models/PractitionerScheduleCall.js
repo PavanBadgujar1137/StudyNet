@@ -62,6 +62,64 @@ const practitionerScheduleCallSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    // Discovery Call Questionnaire Fields
+    whatsappNumber: {
+      type: String,
+      trim: true,
+    },
+    socialProfileLink: {
+      type: String,
+      trim: true,
+    },
+    referralSource: {
+      type: String,
+      trim: true,
+    },
+    courseSellingStatus: {
+      type: String,
+      trim: true,
+    },
+    otherPlatforms: {
+      type: String,
+      trim: true,
+    },
+    paidCommunityStrength: {
+      type: String,
+      trim: true,
+    },
+    timelineToMove: {
+      type: String,
+      trim: true,
+    },
+    callExpectations: {
+      type: String,
+      trim: true,
+    },
+    guests: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+    scheduledDateTime: {
+      type: Date,
+      index: true,
+    },
+    // Multi-Stage Automated Reminder Tracking
+    reminder1HourSent: {
+      type: Boolean,
+      default: false,
+    },
+    reminder1HourSentAt: {
+      type: Date,
+    },
+    reminder5MinSent: {
+      type: Boolean,
+      default: false,
+    },
+    reminder5MinSentAt: {
+      type: Date,
+    },
     googleCalendarEventUrl: {
       type: String,
       trim: true,

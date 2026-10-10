@@ -24,6 +24,7 @@ const {
   getScheduledCallsAdmin,
   sendCallLinkAdmin,
   updateCallStatusAdmin,
+  triggerCallReminderAdmin,
 } = require("../controllers/admin")
 
 // ─── Admin Account Setup (one-time, no auth required) ────────────────────────
@@ -73,6 +74,7 @@ router.delete("/ratings/:id", auth, isAdmin, deleteAdminRating)
 router.get("/scheduled-calls", auth, isAdmin, getScheduledCallsAdmin)
 router.post("/send-call-link", auth, isAdmin, sendCallLinkAdmin)
 router.patch("/scheduled-calls/:id/status", auth, isAdmin, updateCallStatusAdmin)
+router.post("/scheduled-calls/:id/send-reminder", auth, isAdmin, triggerCallReminderAdmin)
 
 module.exports = router
 

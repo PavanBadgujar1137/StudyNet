@@ -326,23 +326,39 @@ exports.getMySubscription = async (req, res) => {
 
     let effectivePlan = "open"
     let status = "active_free"
+    let effectiveExpiresAt = user?.trialExpiresAt || null
 
     if (hasActiveSubscription) {
       effectivePlan = subscription.planKey
       status = "subscribed"
+      effectiveExpiresAt = subscription.endDate
+
+      // Ensure user document in DB is synchronized with the subscription's full duration
+      if (!user?.trialExpiresAt || new Date(user.trialExpiresAt).getTime() !== new Date(subscription.endDate).getTime()) {
+        await User.findByIdAndUpdate(userId, {
+          trialExpiresAt: subscription.endDate,
+          activePlan: subscription.planKey,
+        })
+      }
     } else if (user?.activePlan === "open" || user?.activePlan === "free") {
       effectivePlan = "open"
       status = "active_free"
     }
 
+    const calculatedDaysRemaining = effectiveExpiresAt
+      ? Math.max(0, Math.ceil((new Date(effectiveExpiresAt).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
+      : 0
+
     return res.status(200).json({
       success: true,
       subscription,
       hasActiveSubscription,
-      isTrialActive: false,
-      trialDaysRemaining: 0,
+      isTrialActive: !hasActiveSubscription && calculatedDaysRemaining > 0,
+      trialDaysRemaining: calculatedDaysRemaining,
+      daysRemaining: calculatedDaysRemaining,
       trialStartedAt: user?.createdAt,
-      trialExpiresAt: null,
+      trialExpiresAt: effectiveExpiresAt,
+      subscriptionEndDate: effectiveExpiresAt,
       effectivePlan,
       status,
       isFreeLearner: false,

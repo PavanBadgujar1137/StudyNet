@@ -211,6 +211,14 @@ server.listen(PORT, () => {
   } catch (schedErr) {
     console.error("Failed to start session reminder scheduler:", schedErr.message)
   }
+
+  // Start Practitioner 30-Min Discovery Call Reminders (WhatsApp + Email: 1h & 5m before meeting)
+  try {
+    const { startMeetingReminderScheduler } = require("./services/meetingReminderService")
+    startMeetingReminderScheduler()
+  } catch (meetSchedErr) {
+    console.error("Failed to start meeting reminder scheduler:", meetSchedErr.message)
+  }
 })
 
 // Configure HTTP timeouts for large video uploads (up to 20GB)
