@@ -330,6 +330,7 @@ export function PractitionerPublicProfile() {
         minHeight: '100vh',
         color: '#0F172A',
         fontFamily: 'Plus Jakarta Sans, Inter, sans-serif',
+        paddingTop: '88px',
       }}
     >
       {/* Top Banner Navigation Header */}
@@ -337,11 +338,9 @@ export function PractitionerPublicProfile() {
         style={{
           background: '#FFFFFF',
           borderBottom: '1px solid #E2E8F0',
-          padding: '16px 32px',
-          position: 'sticky',
-          top: 0,
-          zIndex: 40,
-          boxShadow: '0 2px 10px rgba(15, 23, 42, 0.03)',
+          padding: '14px 32px',
+          position: 'relative',
+          boxShadow: '0 2px 8px rgba(15, 23, 42, 0.03)',
         }}
       >
         <div
