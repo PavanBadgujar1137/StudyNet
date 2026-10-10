@@ -11,10 +11,12 @@ import {
   FiCheckCircle,
   FiMaximize2,
   FiMail,
-  FiExternalLink
+  FiExternalLink,
+  FiAward
 } from 'react-icons/fi'
 import { apiConnector } from '../../../../services/apiConnector'
 import { toast } from 'react-hot-toast'
+import { PractitionerBadgeStrip, BadgesModal } from '../../../Common/PractitionerBadges'
 
 export function GrowthTools({ telemetryData, setActiveSection }) {
   const { user } = useSelector((state) => state.profile)
@@ -23,6 +25,7 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
   const [copiedLink, setCopiedLink] = useState(false)
   const [showQrModal, setShowQrModal] = useState(false)
   const [showReviewModal, setShowReviewModal] = useState(false)
+  const [showBadgesModal, setShowBadgesModal] = useState(false)
   const [clientEmail, setClientEmail] = useState('')
   const [sendingReview, setSendingReview] = useState(false)
   const [featuredReviews, setFeaturedReviews] = useState({})
@@ -488,6 +491,34 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
             </div>
           </div>
 
+          {/* Practitioner Badges & Honors Card */}
+          <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)', color: '#FFFFFF', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+              <div>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(245, 158, 11, 0.18)', border: '1px solid rgba(245, 158, 11, 0.35)', color: '#FCD34D', padding: '3px 8px', borderRadius: '12px', fontSize: '10.5px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
+                  <FiAward size={12} /> Platform Recognition
+                </div>
+                <h3 style={{ fontSize: '17px', fontWeight: 800, color: '#FFFFFF', margin: 0 }}>Practitioner Honors &amp; Badges</h3>
+                <p style={{ fontSize: '12px', color: '#94A3B8', margin: '2px 0 0 0' }}>Badges awarded to your practice and shown on your public booking profile</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowBadgesModal(true)}
+                style={{ background: 'rgba(255, 255, 255, 0.12)', color: '#FFFFFF', border: '1px solid rgba(255, 255, 255, 0.2)', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+              >
+                View Details &amp; Criteria →
+              </button>
+            </div>
+
+            <div style={{ paddingTop: '4px' }}>
+              <PractitionerBadgeStrip
+                badges={practitioner?.badges}
+                maxDisplay={5}
+                onOpenModal={() => setShowBadgesModal(true)}
+              />
+            </div>
+          </div>
+
           {/* ITEM 27 FIX: Inline Specialties & Languages Editor Card */}
           <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -726,6 +757,14 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
           </div>
         </div>
       )}
+
+      {/* Badges Modal */}
+      <BadgesModal
+        isOpen={showBadgesModal}
+        onClose={() => setShowBadgesModal(false)}
+        badges={practitioner?.badges}
+        practitionerName={practitioner?.firstName || 'Practitioner'}
+      />
 
     </div>
   )

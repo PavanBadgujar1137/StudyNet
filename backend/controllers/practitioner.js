@@ -175,6 +175,16 @@ exports.getPractitioners = async (req, res) => {
         if (!fullText.includes(qLower)) continue
       }
 
+      if (!profile.badges || profile.badges.length === 0) {
+        profile.badges = [
+          "openhand-verified",
+          "master-practitioner",
+          "peoples-choice",
+          "trusted-guide",
+          "community-maker",
+        ]
+      }
+
       results.push(sanitizePractitionerProfile(profile))
     }
 
@@ -431,6 +441,15 @@ exports.getPractitionerByHandle = async (req, res) => {
     profileObj.rating = finalRating
     profileObj.reviewCount = practitionerReviews.length
     profileObj.courses = practitionerCourses || []
+    if (!profileObj.badges || profileObj.badges.length === 0) {
+      profileObj.badges = [
+        "openhand-verified",
+        "master-practitioner",
+        "peoples-choice",
+        "trusted-guide",
+        "community-maker",
+      ]
+    }
 
     if (userOffers.length > 0) {
       profileObj.offers = userOffers
@@ -572,6 +591,15 @@ exports.getPractitionerDashboard = async (req, res) => {
     const profileObj = profile ? profile.toObject() : {}
     profileObj.rating = finalRating
     profileObj.reviews = practitionerReviews
+    if (!profileObj.badges || profileObj.badges.length === 0) {
+      profileObj.badges = [
+        "openhand-verified",
+        "master-practitioner",
+        "peoples-choice",
+        "trusted-guide",
+        "community-maker",
+      ]
+    }
 
     return res.status(200).json({
       success: true,
@@ -1055,6 +1083,7 @@ exports.updatePractitionerProfile = async (req, res) => {
       upiId,
       stripeAccountId,
       paypalEmail,
+      badges,
     } = req.body
 
     let profile = await PractitionerProfile.findOne({ user: userId })
@@ -1103,6 +1132,7 @@ exports.updatePractitionerProfile = async (req, res) => {
     if (upiId !== undefined) profile.upiId = upiId
     if (stripeAccountId !== undefined) profile.stripeAccountId = stripeAccountId
     if (paypalEmail !== undefined) profile.paypalEmail = paypalEmail
+    if (Array.isArray(badges)) profile.badges = badges
 
     await profile.save()
 

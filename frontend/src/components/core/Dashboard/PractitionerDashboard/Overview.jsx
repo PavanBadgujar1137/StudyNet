@@ -1,12 +1,14 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
-import { FiVideo } from 'react-icons/fi'
+import { FiVideo, FiAward } from 'react-icons/fi'
 import { formatClassTitle } from '../../../../utils/formatTitle'
+import { PractitionerBadgeStrip, BadgesModal } from '../../../Common/PractitionerBadges'
 
 export function Overview({ practitionerName = 'Practitioner', setActiveSection, telemetryData, loading }) {
   const navigate = useNavigate()
   const { user } = useSelector((state) => state.profile)
+  const [showBadgesModal, setShowBadgesModal] = useState(false)
 
   const storageKeyStep = user?._id ? `oh_onboarding_step_${user._id}` : 'oh_onboarding_step'
   const savedStep = typeof window !== 'undefined' ? localStorage.getItem(storageKeyStep) : null
@@ -97,6 +99,44 @@ export function Overview({ practitionerName = 'Practitioner', setActiveSection, 
           </button>
         </div>
       )}
+
+      {/* Practitioner Honors & Badges Showcase Banner */}
+      <div
+        style={{
+          background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+          borderRadius: '18px',
+          padding: '20px 24px',
+          marginBottom: '24px',
+          color: '#FFFFFF',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '18px',
+          boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.25)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+        }}
+      >
+        <div style={{ maxWidth: '460px' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(245, 158, 11, 0.18)', border: '1px solid rgba(245, 158, 11, 0.35)', color: '#FCD34D', padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+            <FiAward size={13} /> Active Platform Rewards
+          </div>
+          <h2 style={{ fontSize: '18px', fontWeight: 800, margin: '0 0 4px', color: '#FFFFFF' }}>
+            Practitioner Honors &amp; Badges
+          </h2>
+          <p style={{ margin: 0, fontSize: '13px', color: '#94A3B8', lineHeight: 1.45 }}>
+            These official achievement badges reflect on your public booking profile, building instant learner trust and highlighting your clinical mastery.
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+          <PractitionerBadgeStrip
+            badges={telemetryData?.practitioner?.badges}
+            maxDisplay={5}
+            onOpenModal={() => setShowBadgesModal(true)}
+          />
+        </div>
+      </div>
 
       <div className="g4">
         <div className="card stat">
@@ -337,6 +377,14 @@ export function Overview({ practitionerName = 'Practitioner', setActiveSection, 
           </div>
         </div>
       </div>
+
+      {/* Badges Modal */}
+      <BadgesModal
+        isOpen={showBadgesModal}
+        onClose={() => setShowBadgesModal(false)}
+        badges={telemetryData?.practitioner?.badges}
+        practitionerName={practitionerName}
+      />
     </section>
   )
 }

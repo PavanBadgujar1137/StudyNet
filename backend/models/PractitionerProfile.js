@@ -33,6 +33,16 @@ const practitionerProfileSchema = new mongoose.Schema(
     verifiedRatingCount: { type: Number, default: 0 },
     rating: { type: Number, default: null },
     viewCount: { type: Number, default: 0 }, // Used for ranking based on profile views
+    badges: {
+      type: [String],
+      default: [
+        "openhand-verified",
+        "master-practitioner",
+        "peoples-choice",
+        "trusted-guide",
+        "community-maker",
+      ],
+    },
 
     // Payout & Bank Details for Admin Salary Transfer (Domestic & Worldwide International)
     payoutCountry: { type: String, default: "India", trim: true },

@@ -24,6 +24,7 @@ import { LearnerScheduleSelectionModal } from '../../components/openhand/Learner
 import { formatPractitionerName } from '../../utils/formatName'
 import { getOptimizedImageUrl } from '../../utils/imageOptimizer'
 import CheckoutCouponModal from '../../components/core/Coupons/CheckoutCouponModal'
+import { PractitionerBadgeStrip, BadgesModal } from '../../components/Common/PractitionerBadges'
 
 
 export function PractitionerPublicProfile() {
@@ -36,6 +37,7 @@ export function PractitionerPublicProfile() {
   const [showIntakeModal, setShowIntakeModal] = useState(false)
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [showCouponModal, setShowCouponModal] = useState(false)
+  const [showBadgesModal, setShowBadgesModal] = useState(false)
   const [selectedOffer, setSelectedOffer] = useState(null)
   const [selectedSchedule, setSelectedSchedule] = useState(null)
   const [intakeAnswers, setIntakeAnswers] = useState([])
@@ -570,20 +572,33 @@ export function PractitionerPublicProfile() {
                 color: '#2563EB',
                 fontSize: '16px',
                 fontWeight: 700,
-                margin: '0 0 12px 0',
+                margin: '0 0 14px 0',
                 letterSpacing: '0.1px',
               }}
             >
               {profile.credentials || 'Verified Clinical Practitioner'}
             </p>
 
+            {/* Official Honors & Badges Row (Topmate-inspired horizontal strip) */}
+            <div
+              style={{
+                marginBottom: '16px',
+              }}
+            >
+              <PractitionerBadgeStrip
+                badges={profile.badges}
+                maxDisplay={3}
+                onOpenModal={() => setShowBadgesModal(true)}
+              />
+            </div>
+
             <p
               style={{
                 color: '#475569',
                 fontSize: '15px',
                 lineHeight: '1.65',
-                margin: '0 0 22px 0',
-                maxWidth: '740px',
+                margin: '0 0 18px 0',
+                maxWidth: '780px',
               }}
             >
               {profile.bio ||
@@ -1931,6 +1946,14 @@ export function PractitionerPublicProfile() {
               : '/dashboard/my-profile'
           )
         }}
+      />
+
+      {/* ─── Practitioner Honors & Badges Modal (Topmate style) ─── */}
+      <BadgesModal
+        isOpen={showBadgesModal}
+        onClose={() => setShowBadgesModal(false)}
+        badges={profile?.badges}
+        practitionerName={practitionerName}
       />
 
       <OHFooter />

@@ -21,6 +21,7 @@ import { apiConnector } from '../services/apiConnector'
 import { setUser } from '../slices/profileSlice'
 import OHFooter from '../components/openhand/OHFooter'
 import toast from 'react-hot-toast'
+import { PractitionerBadgeStrip } from '../components/Common/PractitionerBadges'
 
 // The 10 official OpenHand practitioner categories.
 // Practitioners can select a MAXIMUM of 2.
@@ -934,6 +935,12 @@ export function PractitionerOnboarding({ embedded = false, telemetryData, onUpda
                     <p style={{ margin: 0, fontSize: 12.5, color: '#475569', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                       "{formData.bio}"
                     </p>
+                    <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid #E2E8F0' }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <FiAward color="#F59E0B" /> Profile Badges
+                      </div>
+                      <PractitionerBadgeStrip badges={formData.badges} maxDisplay={4} size="compact" />
+                    </div>
                   </div>
                 </div>
 
