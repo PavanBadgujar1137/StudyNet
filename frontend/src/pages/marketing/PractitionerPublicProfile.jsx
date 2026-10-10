@@ -15,6 +15,7 @@ import {
   FiGlobe,
   FiShare2,
   FiVideo,
+  FiAward,
 } from 'react-icons/fi'
 import { toast } from 'react-hot-toast'
 import { apiConnector } from '../../services/apiConnector'
@@ -468,8 +469,8 @@ export function PractitionerPublicProfile() {
             )}
           </div>
 
-          {/* Practitioner Info & Credentials */}
-          <div style={{ flex: 1, minWidth: '280px' }}>
+          {/* Middle Column: Practitioner Info & Credentials */}
+          <div style={{ flex: '1 1 380px', minWidth: '280px' }}>
             <div
               style={{
                 display: 'flex',
@@ -572,25 +573,12 @@ export function PractitionerPublicProfile() {
                 color: '#2563EB',
                 fontSize: '16px',
                 fontWeight: 700,
-                margin: '0 0 14px 0',
+                margin: '0 0 10px 0',
                 letterSpacing: '0.1px',
               }}
             >
               {profile.credentials || 'Verified Clinical Practitioner'}
             </p>
-
-            {/* Official Honors & Badges Row (Topmate-inspired horizontal strip) */}
-            <div
-              style={{
-                marginBottom: '16px',
-              }}
-            >
-              <PractitionerBadgeStrip
-                badges={profile.badges}
-                maxDisplay={3}
-                onOpenModal={() => setShowBadgesModal(true)}
-              />
-            </div>
 
             <p
               style={{
@@ -598,7 +586,7 @@ export function PractitionerPublicProfile() {
                 fontSize: '15px',
                 lineHeight: '1.65',
                 margin: '0 0 18px 0',
-                maxWidth: '780px',
+                maxWidth: '680px',
               }}
             >
               {profile.bio ||
@@ -691,6 +679,73 @@ export function PractitionerPublicProfile() {
                   ))}
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Right Column: 2*2 Honors & Badges in Front Empty Space */}
+          <div
+            style={{
+              flex: '0 0 auto',
+              alignSelf: 'flex-start',
+              marginLeft: 'auto',
+            }}
+          >
+            <div
+              style={{
+                background: 'linear-gradient(180deg, #F8FAFC 0%, #FFFFFF 100%)',
+                border: '1.5px solid #E2E8F0',
+                borderRadius: '20px',
+                padding: '16px 18px',
+                boxShadow: '0 4px 18px rgba(15, 23, 42, 0.05)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: '12px',
+                  gap: '12px',
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    color: '#64748B',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                  }}
+                >
+                  <FiAward color="#F59E0B" /> Honors &amp; Badges
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowBadgesModal(true)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    fontSize: '11.5px',
+                    fontWeight: 700,
+                    color: '#2563EB',
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                  }}
+                >
+                  View all →
+                </button>
+              </div>
+
+              <PractitionerBadgeStrip
+                badges={profile.badges}
+                maxDisplay={3}
+                gridColumns={2}
+                onOpenModal={() => setShowBadgesModal(true)}
+              />
             </div>
           </div>
         </div>
