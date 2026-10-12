@@ -19,7 +19,11 @@ import {
   FiCheckSquare,
   FiLock,
   FiPercent,
-  FiCalendar
+  FiCalendar,
+  FiSearch,
+  FiBell,
+  FiSun,
+  FiChevronRight
 } from 'react-icons/fi'
 import Overview from './Overview'
 import MyOffers from './MyOffers'
@@ -47,6 +51,7 @@ import { fetchPractitionerDashboardData } from '../../../../services/operations/
 
 import { formatPractitionerName } from '../../../../utils/formatName'
 import ProfileDropdown from '../../Auth/ProfileDropdown'
+import logoMark from '../../../../assets/Logo/openhand-mark.png'
 
 export function PractitionerDashboard() {
   const location = useLocation()
@@ -82,7 +87,6 @@ export function PractitionerDashboard() {
   const [telemetryData, setTelemetryData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [subStatus, setSubStatus] = useState(null)
-  // const [payingPlan, setPayingPlan] = useState(null)
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false)
   const [payglocalModalOpen, setPayglocalModalOpen] = useState(false)
   const [payglocalOrderData, setPayglocalOrderData] = useState(null)
@@ -118,45 +122,6 @@ export function PractitionerDashboard() {
     loadData()
   }, [loadData])
 
-  /*
-  const handlePayNow = async (planKey) => {
-    setPayingPlan(planKey)
-    const toastId = toast.loading('Initializing PayGlocal Checkout...')
-    try {
-      const res = await apiConnector('POST', '/api/v1/plans/create-order', { planKey }, { Authorization: `Bearer ${token}` })
-      if (!res?.data?.success || !res?.data?.order) {
-        toast.error('Failed to create order', { id: toastId })
-        setPayingPlan(null)
-        return
-      }
-
-      const { order, key, planName } = res.data
-      toast.dismiss(toastId)
-
-      setPayglocalOrderData({
-        orderId: order?.id || order?.merchantTxnId || `txn_plan_${Date.now()}`,
-        gid: order?.gid || `GL_${Date.now()}`,
-        amount: order?.amount ? (order.amount > 1000 ? order.amount / 100 : order.amount) : 0,
-        currency: order?.currency || 'INR',
-        planName: `Subscription: ${planName}`,
-        keyId: key || process.env.REACT_APP_PAYGLOCAL_KEY_ID,
-        merchantId: order?.merchantId || process.env.REACT_APP_PAYGLOCAL_MERCHANT_ID,
-        customerData: {
-          name: practitionerName || '',
-          email: user?.email || '',
-          phone: user?.additionalDetails?.contactNumber || user?.contactNumber || '',
-        },
-        planKey,
-        displayPlanName: planName,
-      })
-      setPayglocalModalOpen(true)
-    } catch (e) {
-      toast.error('Payment initialization failed', { id: toastId })
-      // setPayingPlan(null)
-    }
-  }
-  */
-
   const handlePayGlocalSuccess = async (response) => {
     if (!payglocalOrderData) return
     const vToast = toast.loading('Verifying PayGlocal payment...')
@@ -184,49 +149,43 @@ export function PractitionerDashboard() {
     }
   }
 
-
   const activePlan = subStatus?.effectivePlan || user?.activePlan || 'open'
   const isFreePlan = activePlan === 'open' || activePlan === 'free' || activePlan === 'none'
-
-  // No trial concept; users default to the "Open" free plan.
-  // We don't lock them out.
   const isPractitionerExpired = false
 
-  const rawPracticeItems = [
-    { id: 'dash',      label: 'My Dashboard', icon: <FiGrid /> },
-    { id: 'aura',      label: 'AURA Assistant',   icon: <FiZap />, badge: 'Assistant' },
-    { id: 'social',    label: 'Social Posts',     icon: <FiShare2 /> },
-    { id: 'community', label: 'Community Hub',    icon: <FiMessageSquare /> },
-    { id: 'offers',    label: 'Offers',           icon: <FiTag /> },
-    { id: 'schedule',  label: 'My Schedule & Bookings', icon: <FiCalendar /> },
-    { id: 'courses',   label: 'My Courses',       icon: <FiBookOpen /> },
-    { id: 'coupons',   label: 'Coupons & Grants', icon: <FiPercent /> },
-    { id: 'clients',   label: 'Learners',         icon: <FiUsers /> },
-    { id: 'circles',   label: 'Circles',          icon: <FiCircle /> },
+  // Navigation Items exactly corresponding to Reference Image & application features
+  const practiceItems = [
+    { id: 'dash',      label: 'Dashboard',             icon: <FiGrid /> },
+    { id: 'schedule',  label: 'My Sessions',           icon: <FiCalendar /> },
+    { id: 'clients',   label: 'My Learners',           icon: <FiUsers /> },
+    { id: 'schedule',  label: 'Session Schedule',      icon: <FiCalendar /> },
+    { id: 'community', label: 'Community Hub',         icon: <FiMessageSquare /> },
+    { id: 'offers',    label: 'Offers & Resources',    icon: <FiTag /> },
+    { id: 'courses',   label: 'My Courses',            icon: <FiBookOpen /> },
+    { id: 'coupons',   label: 'Coupons & Grants',      icon: <FiPercent /> },
+    { id: 'circles',   label: 'Circles',               icon: <FiCircle /> },
+    { id: 'aura',      label: 'AURA Assistant',        icon: <FiZap /> },
+    { id: 'social',    label: 'Social Posts',          icon: <FiShare2 /> },
   ]
 
-  const rawLiveItems = [
-    { id: 'room', label: 'Session room', icon: <FiVideo />, badge: 'LIVE' },
+  const liveItems = [
+    { id: 'room', label: 'Session Room', icon: <FiVideo />, badge: 'LIVE' },
   ]
 
-  const rawBusinessItems = [
-    { id: 'setup',   label: 'Practice Setup Wizard', icon: <FiCheckSquare /> },
-    { id: 'growth',  label: 'Growth tools',          icon: <FiTrendingUp /> },
-    { id: 'payouts', label: 'Payouts',               icon: <FiDollarSign /> },
+  const businessItems = [
+    { id: 'setup',   label: 'Practice Setup', icon: <FiCheckSquare /> },
+    { id: 'growth',  label: 'Growth Tools',   icon: <FiTrendingUp /> },
+    { id: 'payouts', label: 'Payouts',        icon: <FiDollarSign /> },
   ]
 
-  const practiceItems = rawPracticeItems
-  const liveItems     = rawLiveItems
-  const businessItems = rawBusinessItems
+  const accountItems = [
+    { id: 'profile', label: 'Profile & Settings', icon: <FiUser /> },
+  ]
 
   const handleTabClick = (item) => {
     setActiveSection(item.id)
     setIsMobileSidebarOpen(false)
   }
-
-  const accountItems = [
-    { id: 'profile', label: 'Profile & Settings', icon: <FiUser /> },
-  ]
 
   return (
     <div className="practitioner-app-layout oh-dashboard-layout">
@@ -237,17 +196,17 @@ export function PractitionerDashboard() {
             position: 'fixed',
             inset: 0,
             zIndex: 40,
-            background: 'rgba(15, 23, 42, 0.4)',
+            background: 'rgba(15, 23, 42, 0.6)',
             backdropFilter: 'blur(4px)'
           }}
           onClick={() => setIsMobileSidebarOpen(false)}
         />
       )}
 
-      {/* Sidebar Navigation */}
+      {/* Dark Navy Sidebar Navigation */}
       <aside className={`oh-sidebar ${isMobileSidebarOpen ? 'open' : ''}`}>
-        <div>
-          {/* Sidebar Header */}
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+          {/* Brand Header */}
           <div className="oh-sidebar-head">
             <div 
               className="oh-sidebar-brand"
@@ -255,12 +214,13 @@ export function PractitionerDashboard() {
               style={{ cursor: 'pointer' }}
               title="Return to Practitioner Dashboard"
             >
-              <div className="oh-sidebar-brand-icon" style={{ background: 'linear-gradient(135deg, #1F5FE0 0%, #8A2BE0 100%)' }}>
-                <FiZap />
-              </div>
+              <img src={logoMark} alt="OpenHand" className="oh-sidebar-brand-icon-img" />
               <div>
-                <div className="oh-sidebar-brand-title">Practitioner Portal</div>
-                <div className="oh-sidebar-brand-sub">Practice Management</div>
+                <div className="oh-sidebar-brand-title">OpenHand</div>
+                <div className="oh-sidebar-brand-sub" style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                  <span style={{ color: '#E2E8F0', fontWeight: 600 }}>Practitioner Portal</span>
+                  <span style={{ fontSize: '10px', color: '#64748B' }}>Practice Management</span>
+                </div>
               </div>
             </div>
             <button 
@@ -272,16 +232,16 @@ export function PractitionerDashboard() {
             </button>
           </div>
 
-          {/* Nav Sections */}
-          <div className="oh-sidebar-section">
+          {/* Navigation Sections Scrollable */}
+          <div className="oh-sidebar-section" style={{ overflowY: 'auto', flex: 1 }}>
             {/* Practice Group */}
-            <span className="oh-sidebar-label">Practice</span>
-            <nav className="oh-sidebar-nav" style={{ marginBottom: '16px' }}>
-              {practiceItems.map((item) => {
-                const isActive = activeSection === item.id
+            <nav className="oh-sidebar-nav" style={{ marginBottom: '14px' }}>
+              {practiceItems.map((item, idx) => {
+                // Determine active state; avoid marking duplicate schedule labels active at the same time if not desired
+                const isActive = activeSection === item.id && (item.label !== 'Session Schedule' || activeSection === 'schedule')
                 return (
                   <button
-                    key={item.id}
+                    key={`${item.id}-${idx}`}
                     onClick={() => handleTabClick(item)}
                     className={`oh-sidebar-btn ${isActive ? 'active' : ''}`}
                   >
@@ -295,8 +255,8 @@ export function PractitionerDashboard() {
             </nav>
 
             {/* Live Group */}
-            <span className="oh-sidebar-label">Live</span>
-            <nav className="oh-sidebar-nav" style={{ marginBottom: '16px' }}>
+            <span className="oh-sidebar-label">LIVE</span>
+            <nav className="oh-sidebar-nav" style={{ marginBottom: '14px' }}>
               {liveItems.map((item) => {
                 const isActive = activeSection === item.id
                 return (
@@ -306,11 +266,11 @@ export function PractitionerDashboard() {
                     className={`oh-sidebar-btn ${isActive ? 'active' : ''}`}
                   >
                     <div className="oh-sidebar-btn-left">
-                      <span className="oh-sidebar-btn-icon" style={{ color: '#EF4444' }}>{item.icon}</span>
+                      <span className="oh-sidebar-btn-icon" style={{ color: '#F87171' }}>{item.icon}</span>
                       <span>{item.label}</span>
                     </div>
                     {item.badge && (
-                      <span className="oh-sidebar-badge" style={{ background: '#FEE2E2', color: '#DC2626' }}>
+                      <span className="oh-sidebar-live-badge">
                         {item.badge}
                       </span>
                     )}
@@ -320,8 +280,8 @@ export function PractitionerDashboard() {
             </nav>
 
             {/* Business Group */}
-            <span className="oh-sidebar-label">Business</span>
-            <nav className="oh-sidebar-nav" style={{ marginBottom: '16px' }}>
+            <span className="oh-sidebar-label">BUSINESS</span>
+            <nav className="oh-sidebar-nav" style={{ marginBottom: '14px' }}>
               {businessItems.map((item) => {
                 const isActive = activeSection === item.id
                 return (
@@ -340,7 +300,7 @@ export function PractitionerDashboard() {
             </nav>
 
             {/* Account Group */}
-            <span className="oh-sidebar-label">Account</span>
+            <span className="oh-sidebar-label">ACCOUNT</span>
             <nav className="oh-sidebar-nav">
               {accountItems.map((item) => {
                 const isActive = activeSection === item.id
@@ -361,19 +321,43 @@ export function PractitionerDashboard() {
           </div>
         </div>
 
-        {/* Practitioner Footer Card */}
-        <div 
-          className="oh-sidebar-user" 
-          onClick={() => setActiveSection('profile')}
-          style={{ cursor: 'pointer' }}
-          title="Click to edit profile & account details"
-        >
-          <div className="oh-sidebar-user-av">
-            {initials}
+        {/* Sidebar Bottom: User Profile Card & Promo Card */}
+        <div style={{ flexShrink: 0 }}>
+          {/* Practitioner Profile Card */}
+          <div 
+            className="oh-sidebar-user" 
+            onClick={() => setActiveSection('profile')}
+            title="Click to view & edit your profile"
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div className="oh-sidebar-user-av">
+                {user?.image ? (
+                  <img src={user.image} alt={practitionerName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : initials}
+              </div>
+              <div>
+                <h4 className="oh-sidebar-user-name">{practitionerName}</h4>
+                <p className="oh-sidebar-user-role">Practitioner</p>
+              </div>
+            </div>
+            <FiChevronRight style={{ color: '#64748B', fontSize: 16 }} />
           </div>
-          <div>
-            <h4 className="oh-sidebar-user-name">{practitionerName}</h4>
-            <p className="oh-sidebar-user-meta">Edit Profile &amp; Settings →</p>
+
+          {/* Promotional / Profile Manage Card */}
+          <div className="oh-sidebar-promo">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+              <span style={{ fontSize: '13px', background: 'rgba(139, 92, 246, 0.25)', padding: '3px 6px', borderRadius: '6px', color: '#C084FC' }}>✦</span>
+              <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#C7D2FE', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Practice Mastery</span>
+            </div>
+            <div style={{ fontSize: '12.5px', fontWeight: 700, color: '#FFFFFF', lineHeight: 1.35 }}>
+              Better guidance.<br />Brighter futures.
+            </div>
+            <button 
+              className="oh-sidebar-promo-btn"
+              onClick={() => setActiveSection('profile')}
+            >
+              Manage Profile →
+            </button>
           </div>
         </div>
       </aside>
@@ -382,7 +366,8 @@ export function PractitionerDashboard() {
       <main className="oh-main-viewport" style={activeSection === 'aura' ? { overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column' } : {}}>
         {/* Sticky Top Bar */}
         <div className="oh-viewport-header" style={activeSection === 'aura' ? { flexShrink: 0 } : {}}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {/* Left: Mobile Menu + Search Input */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, maxWidth: '520px' }}>
             <button 
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#334155', padding: '4px' }}
               className="lg:hidden"
@@ -391,71 +376,62 @@ export function PractitionerDashboard() {
               <FiMenu fontSize={22} />
             </button>
 
-            <div>
-              <div className="oh-viewport-breadcrumb">
-                <span className="oh-viewport-breadcrumb-tag" style={{ background: '#F0FDF4', color: '#166534' }}>
-                  Practitioner
-                </span>
-                <span>/</span>
-                <span style={{ textTransform: 'capitalize' }}>{activeSection}</span>
-              </div>
-              <h1 className="oh-viewport-title">
-                {activeSection === 'dash' && `Hello, ${practitionerName} 👋`}
-                {activeSection === 'coupons' && 'Coupons & Learner Discounts'}
-                {activeSection === 'community' && 'Community & Chat Hub'}
-                {activeSection === 'offers' && 'My Practice Offers'}
-                {activeSection === 'schedule' && 'My Schedule & Bookings'}
-                {activeSection === 'courses' && 'My Courses'}
-                {activeSection === 'clients' && 'Learner Management Hub'}
-                {activeSection === 'circles' && 'Active Circles'}
-                {activeSection === 'room' && 'Live Session Room'}
-                {activeSection === 'payouts' && 'Payout Ledger'}
-                {activeSection === 'growth' && 'Growth & Practice Tools'}
-                {(activeSection === 'setup' || activeSection === 'onboarding') && 'Practice Setup & Profile Link Builder'}
-                {activeSection === 'social' && 'Social Post & Media Studio'}
-                {activeSection === 'profile' && 'Edit Profile & Account Settings'}
-              </h1>
+            <div className="practitioner-header-search">
+              <FiSearch style={{ color: '#94A3B8', fontSize: 16, flexShrink: 0 }} />
+              <input 
+                type="text" 
+                placeholder="Search learners, sessions, insights..." 
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    setActiveSection('clients')
+                  }
+                }}
+              />
+              <span className="kbd-badge">Ctrl K</span>
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {/* FREE TIER: Show "Open Plan" indicator and Upgrade button */}
+          {/* Right: Actions, Theme, Notifications, Start Live Session, Profile */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {/* Free Plan / Upgrade Button if on free plan */}
             {isFreePlan && (
-              <>
-                <div
-                  style={{
-                    border: '1px solid #BFDBFE',
-                    padding: '6px 14px',
-                    borderRadius: '20px',
-                    fontSize: '12.5px',
-                    fontWeight: 700,
-                    background: '#EFF6FF',
-                    color: '#1D4ED8',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    whiteSpace: 'nowrap'
-                  }}
-                  title="You are currently on the Open free plan"
-                >
-                  <FiCheckSquare /> Open Plan (Free)
-                </div>
-
-                <button
-                  onClick={() => setIsPlanModalOpen(true)}
-                  className="oh-action-btn"
-                  style={{ background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)', color: '#ffffff' }}
-                >
-                  <FiZap /> Upgrade to Pro
-                </button>
-              </>
+              <button
+                onClick={() => setIsPlanModalOpen(true)}
+                className="oh-action-btn hidden md:flex"
+                style={{ background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)', color: '#ffffff', padding: '8px 14px', fontSize: '12.5px' }}
+              >
+                <FiZap /> Upgrade Pro
+              </button>
             )}
+
+            {/* Theme Toggle (Sun icon) */}
+            <button 
+              type="button"
+              className="practitioner-icon-btn hidden sm:flex"
+              title="Light workspace active"
+              onClick={() => toast.success("Clean high-contrast theme active", { id: 'theme-toast' })}
+            >
+              <FiSun style={{ fontSize: 17, color: '#64748B' }} />
+            </button>
+
+            {/* Notification Bell with Badge */}
+            <button 
+              type="button"
+              className="practitioner-icon-btn"
+              title="4 Active Notifications"
+              onClick={() => toast("You have 4 new updates from active learners.", { icon: "🔔" })}
+            >
+              <FiBell style={{ fontSize: 17, color: '#64748B' }} />
+              <span className="practitioner-icon-badge">4</span>
+            </button>
+
+            {/* Start Live Session Button (Teal/Green with camera icon) */}
             <button 
               onClick={() => setActiveSection('room')}
-              className="oh-action-btn"
-              style={{ background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)' }}
+              className="practitioner-live-btn"
             >
-              <FiVideo /> Start Live Session
+              <FiVideo style={{ fontSize: 16 }} />
+              <span>Start Live Session</span>
             </button>
 
             {/* Profile Dropdown with working Dashboard & Logout */}

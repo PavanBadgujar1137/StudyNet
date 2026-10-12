@@ -2206,5 +2206,747 @@ html:has(.oh-dashboard-layout) {
   margin: 0 auto;
 }
 
+/* ==========================================================================
+   PRACTITIONER DASHBOARD REDESIGN — DARK NAVY & OPENHAND THEME
+   ========================================================================== */
+
+.practitioner-app-layout {
+  background: #F3F6FD;
+}
+
+/* Dark Navy Sidebar */
+.practitioner-app-layout .oh-sidebar {
+  width: 270px;
+  background: #080D1A;
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
+  color: #F8FAFC;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+.practitioner-app-layout .oh-sidebar::-webkit-scrollbar {
+  width: 5px;
+}
+.practitioner-app-layout .oh-sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+
+.practitioner-app-layout .oh-sidebar-head {
+  padding: 20px 22px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  background: #080D1A;
+}
+
+.practitioner-app-layout .oh-sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.practitioner-app-layout .oh-sidebar-brand-icon-img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.5));
+}
+
+.practitioner-app-layout .oh-sidebar-brand-title {
+  color: #FFFFFF;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.practitioner-app-layout .oh-sidebar-brand-sub {
+  color: #94A3B8;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.practitioner-app-layout .oh-sidebar-section {
+  padding: 16px 14px 10px;
+}
+
+.practitioner-app-layout .oh-sidebar-label {
+  color: #64748B;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  padding: 0 10px;
+}
+
+.practitioner-app-layout .oh-sidebar-btn {
+  color: #94A3B8;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid transparent;
+  background: transparent;
+}
+
+.practitioner-app-layout .oh-sidebar-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #FFFFFF;
+}
+
+.practitioner-app-layout .oh-sidebar-btn.active {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.35) 0%, rgba(139, 92, 246, 0.35) 100%);
+  color: #FFFFFF;
+  border-color: rgba(99, 102, 241, 0.6);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  font-weight: 700;
+}
+
+.practitioner-app-layout .oh-sidebar-btn-icon {
+  color: #64748B;
+  font-size: 16px;
+  transition: color 0.2s ease;
+}
+
+.practitioner-app-layout .oh-sidebar-btn:hover .oh-sidebar-btn-icon {
+  color: #CBD5E1;
+}
+
+.practitioner-app-layout .oh-sidebar-btn.active .oh-sidebar-btn-icon {
+  color: #818CF8;
+}
+
+.practitioner-app-layout .oh-sidebar-live-badge {
+  background: #EF4444;
+  color: #FFFFFF;
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+  animation: ohLivePulse 2s infinite ease-in-out;
+}
+
+@keyframes ohLivePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.75; transform: scale(0.96); }
+}
+
+/* Sidebar Profile Card */
+.practitioner-app-layout .oh-sidebar-user {
+  background: rgba(15, 23, 42, 0.8);
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 12px 14px;
+  margin: 0 12px 8px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.practitioner-app-layout .oh-sidebar-user:hover {
+  background: rgba(30, 41, 59, 0.9);
+}
+
+.practitioner-app-layout .oh-sidebar-user-av {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #FFFFFF;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.practitioner-app-layout .oh-sidebar-user-name {
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.practitioner-app-layout .oh-sidebar-user-role {
+  color: #94A3B8;
+  font-size: 11px;
+  margin: 2px 0 0;
+}
+
+/* Sidebar Promo Card */
+.practitioner-app-layout .oh-sidebar-promo {
+  margin: 8px 12px 14px;
+  padding: 14px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(30, 27, 75, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.5);
+}
+
+.practitioner-app-layout .oh-sidebar-promo::before {
+  content: "";
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.35) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.practitioner-app-layout .oh-sidebar-promo-btn {
+  margin-top: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #FFFFFF;
+  background: linear-gradient(135deg, #6366F1 0%, #A855F7 100%);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+}
+
+.practitioner-app-layout .oh-sidebar-promo-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.45);
+}
+
+/* Practitioner Top Header */
+.practitioner-app-layout .oh-viewport-header {
+  background: #FFFFFF;
+  border-bottom: 1px solid #E2E8F0;
+  padding: 14px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 25;
+}
+
+.practitioner-header-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 8px 14px;
+  width: 100%;
+  max-width: 420px;
+  transition: all 0.2s ease;
+}
+
+.practitioner-header-search:focus-within {
+  background: #FFFFFF;
+  border-color: #6366F1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.practitioner-header-search input {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 13.5px;
+  color: #0F172A;
+  width: 100%;
+}
+
+.practitioner-header-search input::placeholder {
+  color: #94A3B8;
+}
+
+.practitioner-header-search .kbd-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #64748B;
+  background: #E2E8F0;
+  padding: 2px 6px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.practitioner-live-btn {
+  background: linear-gradient(135deg, #059669 0%, #0D9488 100%);
+  color: #FFFFFF;
+  border: none;
+  padding: 9px 18px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
+  transition: all 0.2s ease;
+}
+
+.practitioner-live-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(13, 148, 136, 0.45);
+}
+
+.practitioner-icon-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #475569;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s ease;
+}
+
+.practitioner-icon-btn:hover {
+  background: #F1F5F9;
+  color: #0F172A;
+  border-color: #CBD5E1;
+}
+
+.practitioner-icon-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #EF4444;
+  color: #FFFFFF;
+  font-size: 9px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #FFFFFF;
+}
+
+/* ==========================================================================
+   PRACTITIONER OVERVIEW PAGE STYLES
+   ========================================================================== */
+
+.oh-prac-overview {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* Atmospheric Hero Section */
+.oh-prac-hero {
+  border-radius: 24px;
+  background: linear-gradient(135deg, #1E1B4B 0%, #312E81 40%, #4338CA 100%);
+  color: #FFFFFF;
+  padding: 30px 36px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  box-shadow: 0 20px 40px -10px rgba(30, 27, 75, 0.25);
+}
+
+.oh-prac-hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 520px;
+}
+
+.oh-prac-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.oh-prac-hero-badge .pill {
+  background: #10B981;
+  color: #FFFFFF;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 10.5px;
+}
+
+.oh-prac-hero-badge .sub {
+  color: #C7D2FE;
+}
+
+.oh-prac-hero-title {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #FFFFFF;
+  margin: 0 0 10px;
+  line-height: 1.15;
+}
+
+.oh-prac-hero-desc {
+  font-size: 14.5px;
+  color: #E0E7FF;
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* Atmospheric Mountain Artwork inside Hero */
+.oh-prac-hero-artwork {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 58%;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+}
+
+.oh-prac-hero-artwork svg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Hero Quote Floating Card */
+.oh-prac-quote-card {
+  position: relative;
+  z-index: 2;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 18px;
+  padding: 18px 22px;
+  max-width: 250px;
+  color: #FFFFFF;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  flex-shrink: 0;
+}
+
+.oh-prac-quote-card .quote-icon {
+  font-size: 26px;
+  line-height: 1;
+  color: #818CF8;
+  margin-bottom: 6px;
+  opacity: 0.8;
+}
+
+.oh-prac-quote-card p {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: #F1F5F9;
+  margin: 0 0 12px;
+}
+
+.oh-prac-quote-bar {
+  width: 38px;
+  height: 3px;
+  background: linear-gradient(90deg, #6366F1 0%, #A855F7 100%);
+  border-radius: 999px;
+}
+
+/* Summary Stat Cards Grid (5 Cards) */
+.oh-prac-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+}
+
+.oh-prac-stat-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 20px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.04);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.oh-prac-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -4px rgba(15, 23, 42, 0.08);
+}
+
+.oh-prac-stat-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.oh-prac-stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.oh-prac-stat-val {
+  font-family: 'Outfit', sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  color: #0F172A;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.oh-prac-stat-lbl {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748B;
+  margin-top: 4px;
+}
+
+.oh-prac-stat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #10B981;
+  margin-top: 8px;
+}
+
+/* Your Impact Stat Card (Card 5 Gradient) */
+.oh-prac-impact-card {
+  background: linear-gradient(135deg, #2563EB 0%, #6366F1 50%, #8B5CF6 100%);
+  border: none;
+  color: #FFFFFF;
+  border-radius: 20px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+
+.oh-prac-impact-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px -4px rgba(99, 102, 241, 0.5);
+}
+
+/* Middle Analytics & Actions Grid */
+.oh-prac-main-grid {
+  display: grid;
+  grid-template-columns: 2.1fr 1fr 1.1fr;
+  gap: 18px;
+}
+
+/* Dark Navy Analytics Card */
+.oh-prac-dark-card {
+  background: #080E20;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 24px;
+  color: #FFFFFF;
+  box-shadow: 0 16px 36px -8px rgba(8, 14, 32, 0.35);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.oh-prac-dark-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.oh-prac-dark-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: #FFFFFF;
+  margin: 0;
+}
+
+.oh-prac-dark-sub {
+  font-size: 12.5px;
+  color: #94A3B8;
+  margin: 4px 0 0;
+}
+
+/* Quick Actions Card */
+.oh-prac-actions-card {
+  background: #0D1429;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 24px;
+  color: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 16px 36px -8px rgba(8, 14, 32, 0.35);
+}
+
+.oh-prac-action-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 10px;
+}
+
+.oh-prac-action-row:last-child {
+  margin-bottom: 0;
+}
+
+.oh-prac-action-row:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(99, 102, 241, 0.4);
+  transform: translateX(3px);
+}
+
+/* Upcoming Session Card */
+.oh-prac-upcoming-card {
+  background: #090F24;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 24px;
+  color: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 16px 36px -8px rgba(8, 14, 32, 0.35);
+}
+
+/* Lower Row Grid */
+.oh-prac-bottom-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1.3fr 1fr 1.3fr;
+  gap: 18px;
+}
+
+/* Recent Learners Panel */
+.oh-prac-learners-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.04);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.oh-prac-learner-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 12px;
+  transition: background 0.15s ease;
+  cursor: pointer;
+}
+
+.oh-prac-learner-item:hover {
+  background: #F8FAFC;
+}
+
+/* Motivational Card */
+.oh-prac-motivational-card {
+  border-radius: 24px;
+  background: linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #4C1D95 100%);
+  color: #FFFFFF;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 12px 30px -6px rgba(30, 27, 75, 0.3);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1280px) {
+  .oh-prac-stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .oh-prac-main-grid {
+    grid-template-columns: 1fr;
+  }
+  .oh-prac-bottom-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .oh-prac-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .oh-prac-bottom-grid {
+    grid-template-columns: 1fr;
+  }
+  .oh-prac-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 24px;
+  }
+  .oh-prac-hero-artwork {
+    display: none;
+  }
+  .oh-prac-quote-card {
+    max-width: 100%;
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .oh-prac-stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .practitioner-header-search {
+    max-width: 100%;
+  }
+}
+
+
 
 
