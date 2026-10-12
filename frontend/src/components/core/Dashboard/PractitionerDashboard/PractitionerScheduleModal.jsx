@@ -65,75 +65,108 @@ export function PractitionerScheduleModal({ isOpen, onClose }) {
     }
   }
 
+  const addMinutesToTime = (timeStr, minutes) => {
+    const [h, m] = (timeStr || "09:00").split(':').map(Number)
+    const totalMins = (h * 60 + m + minutes) % (24 * 60)
+    const newH = Math.floor(totalMins / 60)
+    const newM = totalMins % 60
+    return `${String(newH).padStart(2, '0')}:${String(newM).padStart(2, '0')}`
+  }
+
+  const handleDurationChange = (newDur) => {
+    const durNum = Number(newDur) || 30
+    setSessionDurationMinutes(durNum)
+    // Automatically recalculate end times of all existing slots to match the new duration!
+    setWeeklySchedule(prev => {
+      return prev.map(dayObj => ({
+        ...dayObj,
+        slots: (dayObj.slots || []).map(s => ({
+          ...s,
+          endTime: addMinutesToTime(s.startTime, durNum),
+        })),
+      }))
+    })
+  }
+
   const toggleDay = (dayId) => {
     setWeeklySchedule(prev => {
-      const schedule = [...prev]
-      const dayIndex = schedule.findIndex(d => d.day === dayId)
-      if (dayIndex >= 0 && schedule[dayIndex].slots && schedule[dayIndex].slots.length > 0) {
-        // Toggle OFF -> remove whole day
-        schedule.splice(dayIndex, 1)
+      const dayExists = prev.some(d => d.day === dayId && d.slots && d.slots.length > 0)
+      if (dayExists) {
+        // Toggle OFF -> completely remove day (100% immutable)
+        return prev.filter(d => d.day !== dayId)
       } else {
-        // Toggle ON -> add default slot (11:00 to 12:00)
-        const initialSlot = { startTime: "11:00", endTime: "12:00" }
-        if (dayIndex >= 0) {
-          schedule[dayIndex].slots = [initialSlot]
-        } else {
-          schedule.push({ day: dayId, slots: [initialSlot] })
+        // Toggle ON -> add default initial slot using current sessionDurationMinutes!
+        const dur = Number(sessionDurationMinutes) || 30
+        const initialSlot = {
+          startTime: "11:00",
+          endTime: addMinutesToTime("11:00", dur),
         }
+        return [...prev.filter(d => d.day !== dayId), { day: dayId, slots: [initialSlot] }]
       }
-      return schedule
     })
   }
 
   const addTimeSlot = (dayId) => {
+    const dur = Number(sessionDurationMinutes) || 30
     setWeeklySchedule(prev => {
-      const schedule = [...prev]
-      const dayIndex = schedule.findIndex(d => d.day === dayId)
-
-      let nextStart = "14:00"
-      let nextEnd = "15:00"
-      if (dayIndex >= 0 && schedule[dayIndex].slots.length > 0) {
-        const lastSlot = schedule[dayIndex].slots[schedule[dayIndex].slots.length - 1]
-        const [lastEndH, lastEndM] = lastSlot.endTime.split(':').map(Number)
-        const newStartH = lastEndH
-        const newEndH = (newStartH + 1) % 24
-        nextStart = `${String(newStartH).padStart(2, '0')}:${String(lastEndM || 0).padStart(2, '0')}`
-        nextEnd = `${String(newEndH).padStart(2, '0')}:${String(lastEndM || 0).padStart(2, '0')}`
+      const dayIndex = prev.findIndex(d => d.day === dayId)
+      if (dayIndex < 0) {
+        const initialSlot = {
+          startTime: "11:00",
+          endTime: addMinutesToTime("11:00", dur),
+        }
+        return [...prev, { day: dayId, slots: [initialSlot] }]
       }
 
+      const currentDay = prev[dayIndex]
+      const currentSlots = currentDay.slots || []
+      let nextStart = "11:00"
+      if (currentSlots.length > 0) {
+        const lastSlot = currentSlots[currentSlots.length - 1]
+        nextStart = lastSlot.endTime || "12:00"
+      }
+      const nextEnd = addMinutesToTime(nextStart, dur)
       const newSlot = { startTime: nextStart, endTime: nextEnd }
 
-      if (dayIndex >= 0) {
-        schedule[dayIndex].slots.push(newSlot)
-      } else {
-        schedule.push({ day: dayId, slots: [newSlot] })
-      }
-      return schedule
-    })
-  }
-
-  const updateTimeSlot = (dayId, slotIndex, field, value) => {
-    setWeeklySchedule(prev => {
-      const schedule = [...prev]
-      const dayIndex = schedule.findIndex(d => d.day === dayId)
-      if (dayIndex >= 0) {
-        schedule[dayIndex].slots[slotIndex][field] = value
-      }
-      return schedule
+      // 100% immutable copy
+      return prev.map((d, idx) => {
+        if (idx !== dayIndex) return d
+        return {
+          ...d,
+          slots: [...currentSlots, newSlot],
+        }
+      })
     })
   }
 
   const removeTimeSlot = (dayId, slotIndex) => {
     setWeeklySchedule(prev => {
-      const schedule = [...prev]
-      const dayIndex = schedule.findIndex(d => d.day === dayId)
-      if (dayIndex >= 0) {
-        schedule[dayIndex].slots.splice(slotIndex, 1)
-        if (schedule[dayIndex].slots.length === 0) {
-          schedule.splice(dayIndex, 1)
+      return prev
+        .map(d => {
+          if (d.day !== dayId) return d
+          const updatedSlots = (d.slots || []).filter((_, idx) => idx !== slotIndex)
+          return {
+            ...d,
+            slots: updatedSlots,
+          }
+        })
+        .filter(d => d.slots && d.slots.length > 0)
+    })
+  }
+
+  const updateTimeSlot = (dayId, slotIndex, field, value) => {
+    setWeeklySchedule(prev => {
+      return prev.map(d => {
+        if (d.day !== dayId) return d
+        const updatedSlots = (d.slots || []).map((s, idx) => {
+          if (idx !== slotIndex) return s
+          return { ...s, [field]: value }
+        })
+        return {
+          ...d,
+          slots: updatedSlots,
         }
-      }
-      return schedule
+      })
     })
   }
 
@@ -268,7 +301,7 @@ export function PractitionerScheduleModal({ isOpen, onClose }) {
                   </p>
                   <select
                     value={sessionDurationMinutes}
-                    onChange={(e) => setSessionDurationMinutes(Number(e.target.value))}
+                    onChange={(e) => handleDurationChange(Number(e.target.value))}
                     style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #CBD5E1', fontSize: '14px', fontWeight: 700, color: '#0F172A', outline: 'none' }}
                   >
                     <option value={30}>30 Minutes</option>
@@ -329,8 +362,14 @@ export function PractitionerScheduleModal({ isOpen, onClose }) {
                                   style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '14px', fontWeight: 600 }}
                                 />
                                 <button 
-                                  onClick={() => removeTimeSlot(day.id, idx)}
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    removeTimeSlot(day.id, idx)
+                                  }}
                                   style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', padding: '6px' }}
+                                  title="Delete this slot"
                                 >
                                   <FiTrash2 size={16} />
                                 </button>
@@ -340,7 +379,12 @@ export function PractitionerScheduleModal({ isOpen, onClose }) {
 
                           {hasSlots && (
                             <button 
-                              onClick={() => addTimeSlot(day.id)}
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                addTimeSlot(day.id)
+                              }}
                               style={{ alignSelf: 'flex-start', background: 'none', border: 'none', color: '#2563EB', fontSize: '13px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 0' }}
                             >
                               <FiPlus /> Add Time Slot

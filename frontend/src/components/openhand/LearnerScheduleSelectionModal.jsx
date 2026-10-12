@@ -76,10 +76,10 @@ export function LearnerScheduleSelectionModal({
     setLoading(true)
     setSelectedSlot(null)
     try {
-      const duration = offer?.durationMinutes || 50
+      const durationParam = offer?.durationMinutes ? `&duration=${offer.durationMinutes}` : ''
       const res = await apiConnector(
         'GET',
-        `/api/v1/calendar/slots/${practitionerId}?date=${dateStr}&duration=${duration}`
+        `/api/v1/calendar/slots/${practitionerId}?date=${dateStr}${durationParam}`
       )
       if (res?.data?.success) {
         setSlotsData({

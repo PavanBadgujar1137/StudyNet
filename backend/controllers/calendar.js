@@ -148,7 +148,7 @@ exports.getAvailableSlots = async (req, res) => {
     }
 
     const maxSessionsPerDay = availability.maxSessionsPerDay || 5
-    const slotDuration = Number(duration) || availability.sessionDurationMinutes || 60
+    const slotDuration = availability.sessionDurationMinutes || Number(duration) || 30
 
     const daySchedule = availability.weeklySchedule.find(d => d.day === dayOfWeek)
     if (!daySchedule || !daySchedule.slots || daySchedule.slots.length === 0) {
@@ -203,9 +203,8 @@ exports.getAvailableSlots = async (req, res) => {
 
       if (totalRangeMinutes <= 0) continue
 
-      // If the practitioner added an exact 1-hour/session slot (e.g. 11:00 to 12:00),
-      // preserve that exact slot without fractional sub-divisions
-      const step = totalRangeMinutes <= 65 ? totalRangeMinutes : Math.max(30, slotDuration)
+      // Step by slotDuration (e.g. 30 mins, 45 mins, 50 mins, 60 mins)
+      const step = Math.min(totalRangeMinutes, Math.max(15, slotDuration))
 
       while (currentMin + step <= endMin) {
         const slotStartH = Math.floor(currentMin / 60)
