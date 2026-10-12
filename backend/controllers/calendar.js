@@ -80,10 +80,14 @@ exports.getAvailability = async (req, res) => {
   }
 }
 
+const Booking = require("../models/Booking")
+const LiveClass = require("../models/LiveClass")
+const PractitionerProfile = require("../models/PractitionerProfile")
+
 exports.updateAvailability = async (req, res) => {
   try {
     const userId = req.user.id
-    const { timezone, weeklySchedule } = req.body
+    const { timezone, weeklySchedule, maxSessionsPerDay, sessionDurationMinutes } = req.body
 
     let availability = await PractitionerAvailability.findOne({ practitioner: userId })
     if (!availability) {
@@ -92,6 +96,8 @@ exports.updateAvailability = async (req, res) => {
 
     if (timezone) availability.timezone = timezone
     if (weeklySchedule) availability.weeklySchedule = weeklySchedule
+    if (maxSessionsPerDay != null) availability.maxSessionsPerDay = Math.max(1, Number(maxSessionsPerDay))
+    if (sessionDurationMinutes != null) availability.sessionDurationMinutes = Math.max(15, Number(sessionDurationMinutes))
 
     await availability.save()
 
@@ -105,46 +111,159 @@ exports.updateAvailability = async (req, res) => {
 exports.getAvailableSlots = async (req, res) => {
   try {
     const { practitionerId } = req.params
-    const { date } = req.query // "YYYY-MM-DD"
+    const { date, duration } = req.query // "YYYY-MM-DD", optional duration in minutes
+
+    // 1. Resolve practitioner User ID (supports User ID or PractitionerProfile ID)
+    let practUser = await User.findById(practitionerId)
+    if (!practUser) {
+      const prof = await PractitionerProfile.findById(practitionerId)
+      if (prof) practUser = await User.findById(prof.user)
+    }
+    const practUserId = practUser ? practUser._id : practitionerId
+
+    // 2. Fetch PractitionerAvailability
+    let availability = await PractitionerAvailability.findOne({ practitioner: practUserId })
     
-    const availability = await PractitionerAvailability.findOne({ practitioner: practitionerId })
+    // Default fallback schedule if practitioner has not customized yet
     if (!availability || !availability.weeklySchedule || availability.weeklySchedule.length === 0) {
-      return res.status(200).json({ success: true, slots: [] })
-    }
-
-    const targetDate = new Date(date)
-    const dayOfWeek = targetDate.getDay()
-
-    const daySchedule = availability.weeklySchedule.find(d => d.day === dayOfWeek)
-    if (!daySchedule || !daySchedule.slots || daySchedule.slots.length === 0) {
-      return res.status(200).json({ success: true, slots: [] })
-    }
-
-    // Mock filtering with Google Calendar if connected (for demo we just return slots)
-    // A real implementation would call calendar.events.freeBusy here
-    
-    // Generate 30-min slots based on ranges
-    let availableSlots = []
-    
-    for (const range of daySchedule.slots) {
-      const [startH, startM] = range.startTime.split(":").map(Number)
-      const [endH, endM] = range.endTime.split(":").map(Number)
-      
-      let current = new Date(targetDate)
-      current.setHours(startH, startM, 0, 0)
-      
-      const end = new Date(targetDate)
-      end.setHours(endH, endM, 0, 0)
-
-      while (current < end) {
-        const slotTime = current.toTimeString().substring(0, 5)
-        availableSlots.push(slotTime)
-        current.setMinutes(current.getMinutes() + 30) // 30 min intervals
+      availability = {
+        timezone: availability?.timezone || "Asia/Kolkata",
+        maxSessionsPerDay: availability?.maxSessionsPerDay || 5,
+        sessionDurationMinutes: availability?.sessionDurationMinutes || 50,
+        weeklySchedule: [
+          { day: 1, slots: [{ startTime: "09:00", endTime: "18:00" }] },
+          { day: 2, slots: [{ startTime: "09:00", endTime: "18:00" }] },
+          { day: 3, slots: [{ startTime: "09:00", endTime: "18:00" }] },
+          { day: 4, slots: [{ startTime: "09:00", endTime: "18:00" }] },
+          { day: 5, slots: [{ startTime: "09:00", endTime: "18:00" }] },
+          { day: 6, slots: [{ startTime: "10:00", endTime: "16:00" }] },
+        ],
       }
     }
 
-    return res.status(200).json({ success: true, slots: availableSlots })
+    const maxSessionsPerDay = availability.maxSessionsPerDay || 5
+    const slotDuration = Number(duration) || availability.sessionDurationMinutes || 50
 
+    const targetDate = new Date(date)
+    if (isNaN(targetDate.getTime())) {
+      return res.status(400).json({ success: false, message: "Invalid date format. Use YYYY-MM-DD." })
+    }
+    const dayOfWeek = targetDate.getDay() // 0 (Sun) to 6 (Sat)
+    const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+    const dayLabel = dayNames[dayOfWeek]
+
+    const daySchedule = availability.weeklySchedule.find(d => d.day === dayOfWeek)
+    if (!daySchedule || !daySchedule.slots || daySchedule.slots.length === 0) {
+      return res.status(200).json({
+        success: true,
+        date,
+        dayLabel,
+        maxSessionsPerDay,
+        bookedCount: 0,
+        remainingCount: 0,
+        slots: [],
+        message: `Practitioner is unavailable on ${dayLabel}s.`,
+      })
+    }
+
+    // 3. Find existing bookings and live classes for this practitioner on this date
+    const dayStart = new Date(targetDate)
+    dayStart.setHours(0, 0, 0, 0)
+    const dayEnd = new Date(targetDate)
+    dayEnd.setHours(23, 59, 59, 999)
+
+    const existingBookings = await Booking.find({
+      practitioner: practUserId,
+      status: { $in: ["confirmed", "pending", "completed"] },
+      scheduledAt: { $gte: dayStart, $lte: dayEnd },
+    }).select("scheduledAt status offer").lean()
+
+    const existingLiveClasses = await LiveClass.find({
+      instructor: practUserId,
+      status: { $in: ["scheduled", "live"] },
+      scheduledStart: { $gte: dayStart, $lte: dayEnd },
+    }).select("scheduledStart scheduledEnd status").lean()
+
+    const bookedCount = existingBookings.length
+    const dayIsFull = bookedCount >= maxSessionsPerDay
+    const remainingCount = Math.max(0, maxSessionsPerDay - bookedCount)
+
+    const now = new Date()
+    const isToday = now.toISOString().split("T")[0] === date
+
+    // 4. Generate discrete time slots based on practitioner's schedule ranges
+    const generatedSlots = []
+
+    for (const range of daySchedule.slots) {
+      const [startH, startM] = range.startTime.split(":").map(Number)
+      const [endH, endM] = range.endTime.split(":").map(Number)
+
+      let currentMin = startH * 60 + startM
+      const endMin = endH * 60 + endM
+
+      // Step by 60 mins (or slotDuration)
+      const step = Math.max(30, slotDuration)
+
+      while (currentMin + step <= endMin) {
+        const slotStartH = Math.floor(currentMin / 60)
+        const slotStartM = currentMin % 60
+        const slotEndH = Math.floor((currentMin + step) / 60)
+        const slotEndM = (currentMin + step) % 60
+
+        const pad = (n) => String(n).padStart(2, "0")
+        const startTimeStr = `${pad(slotStartH)}:${pad(slotStartM)}`
+        const endTimeStr = `${pad(slotEndH)}:${pad(slotEndM)}`
+
+        // Format to 12-hour AM/PM: e.g. "11:00 AM - 12:00 PM"
+        const format12h = (h, m) => {
+          const ampm = h >= 12 ? "PM" : "AM"
+          const h12 = h % 12 || 12
+          return `${pad(h12)}:${pad(m)} ${ampm}`
+        }
+        const label12h = `${format12h(slotStartH, slotStartM)} - ${format12h(slotEndH, slotEndM)}`
+
+        // Exact timestamp for this slot on targetDate
+        const slotStartDate = new Date(targetDate)
+        slotStartDate.setHours(slotStartH, slotStartM, 0, 0)
+
+        // Check if this slot conflicts with an existing booking
+        const isBooked = existingBookings.some((b) => {
+          const bTime = new Date(b.scheduledAt).getTime()
+          return Math.abs(bTime - slotStartDate.getTime()) < 25 * 60 * 1000
+        }) || existingLiveClasses.some((lc) => {
+          const lcStart = new Date(lc.scheduledStart).getTime()
+          return Math.abs(lcStart - slotStartDate.getTime()) < 25 * 60 * 1000
+        })
+
+        // Check if past
+        const isPast = isToday && slotStartDate.getTime() <= (now.getTime() + 15 * 60 * 1000)
+
+        const isAvailable = !isBooked && !isPast && !dayIsFull
+
+        generatedSlots.push({
+          time: startTimeStr,
+          endTime: endTimeStr,
+          label: label12h,
+          fullDateTime: slotStartDate.toISOString(),
+          isBooked,
+          isPast,
+          isAvailable,
+        })
+
+        currentMin += step
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      date,
+      dayLabel,
+      maxSessionsPerDay,
+      bookedCount,
+      remainingCount,
+      dayIsFull,
+      slots: generatedSlots,
+    })
   } catch (error) {
     console.error("Error getting slots:", error)
     return res.status(500).json({ success: false, message: "Server error" })

@@ -31,6 +31,7 @@ const bookingSchema = new mongoose.Schema(
       default: "pending",
     },
     scheduledAt: { type: Date },
+    slotTime: { type: String, trim: true, default: "" },
     paymentGateway: {
       type: String,
       enum: ["payglocal", "stripe", "manual", "discount_grant"],

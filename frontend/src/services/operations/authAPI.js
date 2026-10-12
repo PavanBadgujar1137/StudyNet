@@ -138,9 +138,9 @@ export function signUp(
 
       if (token && user) {
         dispatch(setToken(token))
-        const userImage = user.image
+        const userImage = (user.image && !user.image.includes('dicebear'))
           ? user.image
-          : `https://api.dicebear.com/5.x/initials/svg?seed=${user.firstName} ${user.lastName}`
+          : ''
         dispatch(setUser({ ...user, image: userImage }))
 
         localStorage.setItem("token", JSON.stringify(token))

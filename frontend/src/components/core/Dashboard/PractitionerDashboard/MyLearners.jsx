@@ -335,15 +335,30 @@ export function MyLearners({ setActiveSection, telemetryData, onUpdate }) {
                   border: '2px solid #E0E7FF',
                 }}
               >
-                {lookedUpLearner.image ? (
+                {lookedUpLearner.image && !lookedUpLearner.image.includes('dicebear') ? (
                   <img
                     src={lookedUpLearner.image}
                     alt={lookedUpLearner.name}
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none'
+                      const fallback = e.currentTarget.nextElementSibling
+                      if (fallback) fallback.style.display = 'flex'
+                    }}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
-                ) : (
-                  `${lookedUpLearner.firstName?.[0] || 'L'}${lookedUpLearner.lastName?.[0] || ''}`.toUpperCase()
-                )}
+                ) : null}
+                <span
+                  style={{
+                    display: lookedUpLearner.image && !lookedUpLearner.image.includes('dicebear') ? 'none' : 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '100%',
+                    height: '100%',
+                    lineHeight: 1,
+                  }}
+                >
+                  {(lookedUpLearner.firstName?.trim()?.slice(0, 1) || 'L').toUpperCase()}
+                </span>
               </div>
 
               <div>
@@ -564,11 +579,30 @@ export function MyLearners({ setActiveSection, telemetryData, onUpdate }) {
                               fontSize: '13px',
                             }}
                           >
-                            {client.image ? (
-                              <img src={client.image} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
-                            ) : (
-                              `${client.firstName?.[0] || 'L'}${client.lastName?.[0] || ''}`
-                            )}
+                            {client.image && !client.image.includes('dicebear') ? (
+                              <img
+                                src={client.image}
+                                alt=""
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none'
+                                  const fallback = e.currentTarget.nextElementSibling
+                                  if (fallback) fallback.style.display = 'flex'
+                                }}
+                                style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                              />
+                            ) : null}
+                            <span
+                              style={{
+                                display: client.image && !client.image.includes('dicebear') ? 'none' : 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: '100%',
+                                height: '100%',
+                                lineHeight: 1,
+                              }}
+                            >
+                              {(client.firstName?.trim()?.slice(0, 1) || 'L').toUpperCase()}
+                            </span>
                           </div>
                           <div>
                             <b style={{ color: '#0F172A' }}>{client.firstName} {client.lastName}</b>

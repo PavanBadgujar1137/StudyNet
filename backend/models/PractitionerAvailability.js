@@ -17,6 +17,8 @@ const practitionerAvailabilitySchema = new mongoose.Schema(
     googleTokenExpiry: { type: Number },
     googleEmail: { type: String },
     timezone: { type: String, default: "Asia/Kolkata" },
+    maxSessionsPerDay: { type: Number, default: 5 },
+    sessionDurationMinutes: { type: Number, default: 50 },
     weeklySchedule: [
       {
         day: { type: Number, required: true }, // 0 (Sunday) to 6 (Saturday)

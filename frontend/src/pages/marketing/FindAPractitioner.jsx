@@ -452,7 +452,15 @@ export function FindAPractitioner() {
                   .map((p, idx) => {
                   const name = formatPractitionerName(p.user || p, 'Practitioner')
                   const isVerified = p.verificationStatus === 'verified' || true
-                  const userImg = p.user?.image || p.image || p.avatar || null
+                  const rawImg = p.user?.image || p.image || p.avatar || null
+                  const hasCustomImage = Boolean(
+                    rawImg &&
+                    typeof rawImg === 'string' &&
+                    rawImg.trim() !== '' &&
+                    !rawImg.includes('dicebear')
+                  )
+                  const firstName = p.user?.firstName || p.firstName || ''
+                  const firstLetter = (firstName?.trim()?.charAt(0) || name?.trim()?.charAt(0) || 'P').toUpperCase()
                   const rawOffers = p.offers || p.userOffers || []
                   const realOffers = rawOffers.filter((o) => !o.isDummy && (o.status === 'published' || (!o.status && o.status !== 'draft')))
                   const isDummyOnly = p.hasDummyOffer || realOffers.length === 0
@@ -465,9 +473,9 @@ export function FindAPractitioner() {
                     <article key={p._id} className="practitioner-card">
                       {/* Large Square Avatar */}
                       <div className="p-avatar-large-wrap">
-                        {userImg ? (
+                        {hasCustomImage ? (
                           <img
-                            src={getOptimizedImageUrl(userImg, 800)}
+                            src={getOptimizedImageUrl(rawImg, 800)}
                             alt={name}
                             loading="lazy"
                             decoding="async"
@@ -481,9 +489,9 @@ export function FindAPractitioner() {
                         ) : null}
                         <div
                           className="p-avatar-large-fallback"
-                          style={{ display: userImg ? 'none' : 'flex' }}
+                          style={{ display: hasCustomImage ? 'none' : 'flex' }}
                         >
-                          {p.avatarInitials || name.slice(0, 1).toUpperCase()}
+                          {firstLetter}
                         </div>
                       </div>
 

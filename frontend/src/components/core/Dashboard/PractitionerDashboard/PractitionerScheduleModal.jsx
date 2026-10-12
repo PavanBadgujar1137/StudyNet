@@ -21,6 +21,8 @@ export function PractitionerScheduleModal({ isOpen, onClose }) {
   
   const [timezone, setTimezone] = useState('Asia/Kolkata')
   const [weeklySchedule, setWeeklySchedule] = useState([])
+  const [maxSessionsPerDay, setMaxSessionsPerDay] = useState(5)
+  const [sessionDurationMinutes, setSessionDurationMinutes] = useState(50)
 
   useEffect(() => {
     if (isOpen) {
@@ -39,6 +41,8 @@ export function PractitionerScheduleModal({ isOpen, onClose }) {
         setAvailability(res.data.availability)
         setTimezone(res.data.availability.timezone || 'Asia/Kolkata')
         setWeeklySchedule(res.data.availability.weeklySchedule || [])
+        setMaxSessionsPerDay(res.data.availability.maxSessionsPerDay || 5)
+        setSessionDurationMinutes(res.data.availability.sessionDurationMinutes || 50)
       }
     } catch (err) {
       console.error(err)
@@ -103,11 +107,16 @@ export function PractitionerScheduleModal({ isOpen, onClose }) {
 
   const saveAvailability = async () => {
     try {
-      const res = await apiConnector('PUT', '/api/v1/calendar/availability', { timezone, weeklySchedule }, {
+      const res = await apiConnector('PUT', '/api/v1/calendar/availability', {
+        timezone,
+        weeklySchedule,
+        maxSessionsPerDay: Number(maxSessionsPerDay),
+        sessionDurationMinutes: Number(sessionDurationMinutes),
+      }, {
         Authorization: `Bearer ${token}`
       })
       if (res?.data?.success) {
-        toast.success("Schedule saved successfully!")
+        toast.success("Schedule & daily session limit saved!")
         onClose()
       }
     } catch (err) {
@@ -194,6 +203,49 @@ export function PractitionerScheduleModal({ isOpen, onClose }) {
                   <option value="Europe/London">Europe/London (GMT)</option>
                   <option value="Australia/Sydney">Australia/Sydney (AEST)</option>
                 </select>
+              </div>
+
+              {/* Daily Session Limit & Slot Duration */}
+              <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '18px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '13.5px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>
+                    ⚡ Daily Max Sessions Capacity
+                  </label>
+                  <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: '#64748B' }}>
+                    Maximum sessions you can accept per day. Once reached, remaining slots become locked/full.
+                  </p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <input
+                      type="number"
+                      min="1"
+                      max="24"
+                      value={maxSessionsPerDay}
+                      onChange={(e) => setMaxSessionsPerDay(Math.max(1, parseInt(e.target.value) || 1))}
+                      style={{ width: '90px', padding: '10px 14px', borderRadius: '10px', border: '1px solid #CBD5E1', fontSize: '16px', fontWeight: 800, color: '#1F5FE0', textAlign: 'center', outline: 'none' }}
+                    />
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#475569' }}>sessions / day max</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '13.5px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>
+                    ⏱️ Default Slot Duration
+                  </label>
+                  <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: '#64748B' }}>
+                    Length of each bookable session slot generated on your learner booking calendar.
+                  </p>
+                  <select
+                    value={sessionDurationMinutes}
+                    onChange={(e) => setSessionDurationMinutes(Number(e.target.value))}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #CBD5E1', fontSize: '14px', fontWeight: 700, color: '#0F172A', outline: 'none' }}
+                  >
+                    <option value={30}>30 Minutes</option>
+                    <option value={45}>45 Minutes</option>
+                    <option value={50}>50 Minutes (Standard)</option>
+                    <option value={60}>60 Minutes (1 Hour)</option>
+                    <option value={90}>90 Minutes</option>
+                  </select>
+                </div>
               </div>
 
               {/* Weekly Schedule */}

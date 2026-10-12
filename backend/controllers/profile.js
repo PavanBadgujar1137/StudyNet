@@ -276,11 +276,9 @@ exports.deleteDisplayPicture = async (req, res) => {
       })
     }
 
-    const defaultImage = `https://api.dicebear.com/5.x/initials/svg?seed=${encodeURIComponent(user.firstName + " " + (user.lastName || ""))}`
-
     const updatedProfile = await User.findByIdAndUpdate(
       userId,
-      { image: defaultImage },
+      { image: "" },
       { new: true }
     )
 

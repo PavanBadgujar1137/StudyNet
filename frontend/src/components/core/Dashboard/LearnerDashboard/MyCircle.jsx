@@ -199,11 +199,31 @@ export function MyCircle({ setActiveTab, clientName = 'Student', practitionerNam
                       fontSize: '12px',
                     }}
                   >
-                    {practitioner?.image ? (
-                      <img src={practitioner.image} alt={pName} style={{ width: '100%', height: '100%', borderRadius: '10px', objectFit: 'cover' }} />
-                    ) : (
-                      pName.slice(0, 2).toUpperCase()
-                    )}
+                    {practitioner?.image && !practitioner.image.includes('dicebear') ? (
+                      <img
+                        src={practitioner.image}
+                        alt={pName}
+                        style={{ width: '100%', height: '100%', borderRadius: '10px', objectFit: 'cover' }}
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none'
+                          const fallback = e.currentTarget.nextElementSibling
+                          if (fallback) fallback.style.display = 'flex'
+                        }}
+                      />
+                    ) : null}
+                    <div
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        display: practitioner?.image && !practitioner.image.includes('dicebear') ? 'none' : 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        textTransform: 'uppercase',
+                        fontWeight: 800,
+                      }}
+                    >
+                      {(practitioner?.firstName?.trim()?.charAt(0) || pName?.trim()?.charAt(0) || 'P').toUpperCase()}
+                    </div>
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>

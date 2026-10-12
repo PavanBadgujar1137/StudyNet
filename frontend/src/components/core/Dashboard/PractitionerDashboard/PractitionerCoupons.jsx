@@ -1315,15 +1315,30 @@ export default function PractitionerCoupons() {
                         boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
                       }}
                     >
-                      {lookupLearnerData.image ? (
+                      {lookupLearnerData.image && !lookupLearnerData.image.includes('dicebear') ? (
                         <img
                           src={lookupLearnerData.image}
                           alt={lookupLearnerData.name}
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none'
+                            const fallback = e.currentTarget.nextElementSibling
+                            if (fallback) fallback.style.display = 'flex'
+                          }}
                           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         />
-                      ) : (
-                        `${lookupLearnerData.firstName?.[0] || 'L'}${lookupLearnerData.lastName?.[0] || ''}`.toUpperCase()
-                      )}
+                      ) : null}
+                      <span
+                        style={{
+                          display: lookupLearnerData.image && !lookupLearnerData.image.includes('dicebear') ? 'none' : 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: '100%',
+                          height: '100%',
+                          lineHeight: 1,
+                        }}
+                      >
+                        {(lookupLearnerData.firstName?.trim()?.slice(0, 1) || 'L').toUpperCase()}
+                      </span>
                     </div>
 
                     <div style={{ flex: 1, minWidth: 0 }}>
