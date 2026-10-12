@@ -65,12 +65,44 @@ export function PractitionerScheduleModal({ isOpen, onClose }) {
     }
   }
 
+  const toggleDay = (dayId) => {
+    setWeeklySchedule(prev => {
+      const schedule = [...prev]
+      const dayIndex = schedule.findIndex(d => d.day === dayId)
+      if (dayIndex >= 0 && schedule[dayIndex].slots && schedule[dayIndex].slots.length > 0) {
+        // Toggle OFF -> remove whole day
+        schedule.splice(dayIndex, 1)
+      } else {
+        // Toggle ON -> add default slot (11:00 to 12:00)
+        const initialSlot = { startTime: "11:00", endTime: "12:00" }
+        if (dayIndex >= 0) {
+          schedule[dayIndex].slots = [initialSlot]
+        } else {
+          schedule.push({ day: dayId, slots: [initialSlot] })
+        }
+      }
+      return schedule
+    })
+  }
+
   const addTimeSlot = (dayId) => {
     setWeeklySchedule(prev => {
       const schedule = [...prev]
       const dayIndex = schedule.findIndex(d => d.day === dayId)
-      const newSlot = { startTime: "09:00", endTime: "17:00" }
-      
+
+      let nextStart = "14:00"
+      let nextEnd = "15:00"
+      if (dayIndex >= 0 && schedule[dayIndex].slots.length > 0) {
+        const lastSlot = schedule[dayIndex].slots[schedule[dayIndex].slots.length - 1]
+        const [lastEndH, lastEndM] = lastSlot.endTime.split(':').map(Number)
+        const newStartH = lastEndH
+        const newEndH = (newStartH + 1) % 24
+        nextStart = `${String(newStartH).padStart(2, '0')}:${String(lastEndM || 0).padStart(2, '0')}`
+        nextEnd = `${String(newEndH).padStart(2, '0')}:${String(lastEndM || 0).padStart(2, '0')}`
+      }
+
+      const newSlot = { startTime: nextStart, endTime: nextEnd }
+
       if (dayIndex >= 0) {
         schedule[dayIndex].slots.push(newSlot)
       } else {
@@ -250,7 +282,14 @@ export function PractitionerScheduleModal({ isOpen, onClose }) {
 
               {/* Weekly Schedule */}
               <div>
-                <h4 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 700, color: '#0F172A' }}>Weekly Availability</h4>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#0F172A' }}>Weekly Availability</h4>
+                </div>
+                
+                <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '12px', padding: '12px 16px', marginBottom: '16px', fontSize: '13px', color: '#1E40AF', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '16px' }}>🗓️</span>
+                  <span><b>Only active slots are bookable:</b> Learners can only see and book the exact days and time slots you check and add here. If a day is unchecked ("Unavailable"), no slots will ever be shown for that day.</span>
+                </div>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {DAYS.map((day) => {
@@ -264,8 +303,8 @@ export function PractitionerScheduleModal({ isOpen, onClose }) {
                           <input 
                             type="checkbox" 
                             checked={hasSlots}
-                            onChange={() => hasSlots ? removeTimeSlot(day.id, 0) : addTimeSlot(day.id)}
-                            style={{ width: '18px', height: '18px' }}
+                            onChange={() => toggleDay(day.id)}
+                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                           />
                           <span style={{ fontSize: '14px', fontWeight: 700, color: hasSlots ? '#0F172A' : '#94A3B8' }}>{day.label}</span>
                         </div>

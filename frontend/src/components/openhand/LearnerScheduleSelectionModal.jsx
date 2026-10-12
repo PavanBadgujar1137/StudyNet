@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import {
   FiX,
   FiClock,
-  FiCalendar,
   FiCheck,
   FiLock,
   FiAlertCircle,
@@ -406,7 +405,24 @@ export function LearnerScheduleSelectionModal({
 
             {/* Daily Sessions Capacity Pill */}
             <div>
-              {slotsData.dayIsFull ? (
+              {slotsData.slots.length === 0 ? (
+                <span
+                  style={{
+                    background: '#F1F5F9',
+                    color: '#64748B',
+                    border: '1px solid #CBD5E1',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    padding: '5px 12px',
+                    borderRadius: '20px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                  }}
+                >
+                  Unavailable on this day
+                </span>
+              ) : slotsData.dayIsFull ? (
                 <span
                   style={{
                     background: '#FEE2E2',
@@ -543,7 +559,6 @@ export function LearnerScheduleSelectionModal({
                   const isSelected = selectedSlot?.time === slot.time
                   const isBooked = slot.isBooked
                   const isPast = slot.isPast
-                  const isAvailable = slot.isAvailable && !isBooked && !isPast
 
                   if (isBooked) {
                     return (

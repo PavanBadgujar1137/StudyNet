@@ -6,7 +6,6 @@ import {
   FiSearch,
   FiFilter,
   FiMessageSquare,
-  FiCreditCard,
   FiShield,
   FiCheckSquare,
   FiSquare,

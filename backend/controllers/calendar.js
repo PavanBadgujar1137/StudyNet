@@ -123,26 +123,6 @@ exports.getAvailableSlots = async (req, res) => {
 
     // 2. Fetch PractitionerAvailability
     let availability = await PractitionerAvailability.findOne({ practitioner: practUserId })
-    
-    // Default fallback schedule if practitioner has not customized yet
-    if (!availability || !availability.weeklySchedule || availability.weeklySchedule.length === 0) {
-      availability = {
-        timezone: availability?.timezone || "Asia/Kolkata",
-        maxSessionsPerDay: availability?.maxSessionsPerDay || 5,
-        sessionDurationMinutes: availability?.sessionDurationMinutes || 50,
-        weeklySchedule: [
-          { day: 1, slots: [{ startTime: "09:00", endTime: "18:00" }] },
-          { day: 2, slots: [{ startTime: "09:00", endTime: "18:00" }] },
-          { day: 3, slots: [{ startTime: "09:00", endTime: "18:00" }] },
-          { day: 4, slots: [{ startTime: "09:00", endTime: "18:00" }] },
-          { day: 5, slots: [{ startTime: "09:00", endTime: "18:00" }] },
-          { day: 6, slots: [{ startTime: "10:00", endTime: "16:00" }] },
-        ],
-      }
-    }
-
-    const maxSessionsPerDay = availability.maxSessionsPerDay || 5
-    const slotDuration = Number(duration) || availability.sessionDurationMinutes || 50
 
     const targetDate = new Date(date)
     if (isNaN(targetDate.getTime())) {
@@ -151,6 +131,24 @@ exports.getAvailableSlots = async (req, res) => {
     const dayOfWeek = targetDate.getDay() // 0 (Sun) to 6 (Sat)
     const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
     const dayLabel = dayNames[dayOfWeek]
+
+    // If practitioner has never set up availability OR has 0 weekly schedule days configured:
+    // DO NOT show any fake/dummy slots. Only show what practitioner explicitly created.
+    if (!availability || !availability.weeklySchedule || availability.weeklySchedule.length === 0) {
+      return res.status(200).json({
+        success: true,
+        date,
+        dayLabel,
+        maxSessionsPerDay: availability?.maxSessionsPerDay || 5,
+        bookedCount: 0,
+        remainingCount: 0,
+        slots: [],
+        message: `Practitioner has not created any schedule for ${dayLabel}s.`,
+      })
+    }
+
+    const maxSessionsPerDay = availability.maxSessionsPerDay || 5
+    const slotDuration = Number(duration) || availability.sessionDurationMinutes || 60
 
     const daySchedule = availability.weeklySchedule.find(d => d.day === dayOfWeek)
     if (!daySchedule || !daySchedule.slots || daySchedule.slots.length === 0) {
@@ -191,18 +189,23 @@ exports.getAvailableSlots = async (req, res) => {
     const now = new Date()
     const isToday = now.toISOString().split("T")[0] === date
 
-    // 4. Generate discrete time slots based on practitioner's schedule ranges
+    // 4. Generate discrete time slots strictly from practitioner's configured slots
     const generatedSlots = []
 
     for (const range of daySchedule.slots) {
+      if (!range.startTime || !range.endTime) continue
       const [startH, startM] = range.startTime.split(":").map(Number)
       const [endH, endM] = range.endTime.split(":").map(Number)
 
       let currentMin = startH * 60 + startM
       const endMin = endH * 60 + endM
+      const totalRangeMinutes = endMin - currentMin
 
-      // Step by 60 mins (or slotDuration)
-      const step = Math.max(30, slotDuration)
+      if (totalRangeMinutes <= 0) continue
+
+      // If the practitioner added an exact 1-hour/session slot (e.g. 11:00 to 12:00),
+      // preserve that exact slot without fractional sub-divisions
+      const step = totalRangeMinutes <= 65 ? totalRangeMinutes : Math.max(30, slotDuration)
 
       while (currentMin + step <= endMin) {
         const slotStartH = Math.floor(currentMin / 60)
