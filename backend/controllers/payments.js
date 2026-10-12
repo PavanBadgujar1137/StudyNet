@@ -635,6 +635,31 @@ exports.verifyOfferBooking = async (req, res) => {
     if (req.body?.clientPhone && !booking.clientPhone) {
       booking.clientPhone = req.body.clientPhone
     }
+    if (!booking.meetingLink) {
+      try {
+        const LiveClass = require("../models/LiveClass")
+        const slotEnd = new Date(new Date(booking.scheduledAt).getTime() + (booking.offer?.durationMinutes || 50) * 60 * 1000)
+        const sessionUniqueId = require("crypto").randomBytes(4).toString("hex")
+        const liveClass = await LiveClass.create({
+          title: booking.offer?.title || "1:1 Counseling & Healing Session",
+          description: "Booked session with verified practitioner",
+          instructor: booking.practitioner,
+          sessionType: "1-on-1",
+          client: booking.client,
+          scheduledStart: booking.scheduledAt,
+          scheduledEnd: slotEnd,
+          chatEnabled: true,
+          maxAttendees: 1,
+          streamProvider: "livekit",
+          livekitRoomName: `room-${sessionUniqueId}`,
+          livekitServerUrl: process.env.LIVEKIT_API_URL || "wss://openhand-dev.livekit.cloud",
+          status: "scheduled",
+        })
+        booking.meetingLink = `${process.env.FRONTEND_URL || "http://localhost:3000"}/live-classroom/${liveClass._id}?role=learner`
+      } catch (lcErr) {
+        console.warn("LiveClass auto-creation in payments warning:", lcErr.message)
+      }
+    }
     await booking.save()
 
     const [clientUser, practitionerUser] = await Promise.all([
