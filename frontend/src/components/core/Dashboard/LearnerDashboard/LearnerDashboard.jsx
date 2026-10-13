@@ -8,15 +8,11 @@ import {
   FiBookOpen,
   FiFeather,
   FiMenu,
-  FiX,
   FiMessageSquare,
   FiZap,
   FiUserCheck,
   FiUser,
-  FiVideo,
-  FiCopy,
-  FiCheck,
-  FiTag,
+  FiBell,
 } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import MyJourney from './MyJourney'
@@ -29,8 +25,66 @@ import Courses from './Courses'
 import Settings from '../Settings'
 import CommunityChatHub from '../CommunityChatHub'
 import AuraChat from '../AuraChat'
+import NotificationDropdown from './NotificationDropdown'
 import { fetchClientDashboardData } from '../../../../services/operations/dashboardAPI'
-import ProfileDropdown from '../../Auth/ProfileDropdown'
+
+const DEFAULT_LEARNER_NOTIFICATIONS = [
+  {
+    id: 'notif_session_1',
+    type: 'session',
+    title: 'Upcoming 1-on-1 Practice Session',
+    message: 'Your personal practice session is scheduled. Check your agenda and Zoom details.',
+    time: '25m ago',
+    unread: true,
+    tab: 'sessions',
+    iconColor: '#3B82F6',
+    bgColor: 'rgba(59, 130, 246, 0.15)',
+  },
+  {
+    id: 'notif_reflection_1',
+    type: 'reflection',
+    title: 'Daily Reflection Prompt Awaiting',
+    message: 'Where did you find stillness today? Take 2 minutes to write your thoughts.',
+    time: '2h ago',
+    unread: true,
+    tab: 'reflections',
+    iconColor: '#8B5CF6',
+    bgColor: 'rgba(139, 92, 246, 0.15)',
+  },
+  {
+    id: 'notif_checkin_1',
+    type: 'checkin',
+    title: 'Daily Mindful Pulse Check-in',
+    message: 'Log your mood, body tension, and somatic state to keep your streak alive.',
+    time: '5h ago',
+    unread: true,
+    tab: 'checkin',
+    iconColor: '#10B981',
+    bgColor: 'rgba(16, 185, 129, 0.15)',
+  },
+  {
+    id: 'notif_circle_1',
+    type: 'circle',
+    title: 'New Activity in Your Cohort Circle',
+    message: 'Members in your circle shared new progress notes and mutual encouragement.',
+    time: 'Yesterday',
+    unread: false,
+    tab: 'circle',
+    iconColor: '#F59E0B',
+    bgColor: 'rgba(245, 158, 11, 0.15)',
+  },
+  {
+    id: 'notif_course_1',
+    type: 'course',
+    title: 'New Video Lecture Available',
+    message: 'A new practice session and guided meditation have been published to your course.',
+    time: '2 days ago',
+    unread: false,
+    tab: 'courses',
+    iconColor: '#EC4899',
+    bgColor: 'rgba(236, 72, 153, 0.15)',
+  },
+]
 
 export function LearnerDashboard() {
   const location = useLocation()
@@ -69,22 +123,98 @@ export function LearnerDashboard() {
   const practitionerObj = dashboardData?.practitioner
   const practitionerFirstName = practitionerObj?.firstName || 'Instructor'
 
-  const [copiedId, setCopiedId] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
-  const handleCopyLearnerId = () => {
-    if (!user?.learnerId) return
-    navigator.clipboard.writeText(user.learnerId)
-    setCopiedId(true)
-    toast.success("Learner ID copied to clipboard!")
-    setTimeout(() => setCopiedId(false), 2500)
+  // Theme Management (Light / Dark)
+  const [theme, setTheme] = useState(() => {
+    try {
+      return localStorage.getItem('op_dashboard_theme') || 'light'
+    } catch (e) {
+      return 'light'
+    }
+  })
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('op_dashboard_theme', theme)
+    } catch (e) {}
+  }, [theme])
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'light' ? 'dark' : 'light'
+    setTheme(nextTheme)
+    toast.success(`Switched to ${nextTheme === 'dark' ? 'Dark' : 'Light'} Mode`, {
+      icon: nextTheme === 'dark' ? '🌙' : '☀️',
+      duration: 2000,
+    })
+  }
+
+  // Notifications Management
+  const [notifications, setNotifications] = useState(() => {
+    try {
+      const saved = localStorage.getItem('op_learner_notifications_v2')
+      if (saved) return JSON.parse(saved)
+    } catch (e) {}
+    return DEFAULT_LEARNER_NOTIFICATIONS
+  })
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
+
+  const unreadNotifCount = notifications.filter((n) => n.unread).length
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('op_learner_notifications_v2', JSON.stringify(notifications))
+    } catch (e) {}
+  }, [notifications])
+
+  const handleMarkAllRead = () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })))
+    toast.success('All notifications marked as read', { icon: '✅' })
+  }
+
+  const handleMarkSingleRead = (id) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, unread: false } : n))
+    )
+  }
+
+  const handleDeleteNotification = (id) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id))
+    toast('Notification removed', { icon: '🗑️' })
+  }
+
+  const handleClearAllNotifications = () => {
+    setNotifications([])
+    toast('All notifications cleared', { icon: '🧹' })
+  }
+
+  const handleRestoreNotifications = () => {
+    setNotifications(DEFAULT_LEARNER_NOTIFICATIONS)
+    toast.success('Sample notifications restored', { icon: '🔔' })
+  }
+
+  const handleSelectNotification = (notif) => {
+    handleMarkSingleRead(notif.id)
+    setIsNotificationsOpen(false)
+    if (notif.tab) {
+      setActiveTab(notif.tab)
+    }
   }
 
   const loadData = useCallback(async () => {
-    if (!token) return
+    if (!token) {
+      setLoading(false)
+      return
+    }
     setLoading(true)
-    const data = await fetchClientDashboardData(token)
-    if (data) setDashboardData(data)
-    setLoading(false)
+    try {
+      const data = await fetchClientDashboardData(token)
+      if (data) setDashboardData(data)
+    } catch (e) {
+      console.warn("Could not fetch dashboard telemetry:", e)
+    } finally {
+      setLoading(false)
+    }
   }, [token])
 
   useEffect(() => {
@@ -107,39 +237,40 @@ export function LearnerDashboard() {
       label: 'AURA Counselor',
       icon: <FiZap />,
       badge: null,
-      hasDot: false,
     },
     {
       id: 'checkin',
       label: 'Check in',
       icon: <FiCheckSquare />,
-      badge: 'Today',
+      badge: 'TODAY',
       hasDot: true,
+      dotColor: '#60A5FA',
     },
     {
       id: 'practitioners',
       label: 'Practitioners',
       icon: <FiUserCheck />,
-      badge: 'All Guides',
+      badge: 'ALL GUIDES',
     },
     {
       id: 'courses',
       label: 'Courses',
-      icon: <FiVideo />,
+      icon: <FiBookOpen />,
       badge: null,
     },
     {
       id: 'circle',
       label: 'My circle',
       icon: <FiUsers />,
-      badge: 'Circles',
+      badge: 'CIRCLES',
     },
     {
       id: 'community',
       label: 'Community & Chat',
       icon: <FiMessageSquare />,
-      badge: 'Live',
+      badge: 'LIVE',
       hasDot: true,
+      dotColor: '#C084FC',
     },
     {
       id: 'sessions',
@@ -153,6 +284,7 @@ export function LearnerDashboard() {
       icon: <FiFeather />,
       badge: null,
       hasDot: true,
+      dotColor: '#A855F7',
     },
     {
       id: 'profile',
@@ -163,7 +295,7 @@ export function LearnerDashboard() {
   ]
 
   return (
-    <div className="client-app-shell oh-dashboard-layout">
+    <div className={`exact-learner-shell ${theme === 'dark' ? 'exact-theme-dark' : ''}`}>
       {/* Mobile Drawer Overlay */}
       {isMobileSidebarOpen && (
         <div
@@ -171,45 +303,48 @@ export function LearnerDashboard() {
             position: 'fixed',
             inset: 0,
             zIndex: 40,
-            background: 'rgba(15, 23, 42, 0.4)',
-            backdropFilter: 'blur(4px)'
+            background: 'rgba(10, 14, 39, 0.7)',
+            backdropFilter: 'blur(6px)'
           }}
           onClick={() => setIsMobileSidebarOpen(false)}
         />
       )}
 
-      {/* Sidebar Navigation */}
-      <aside className={`oh-sidebar ${isMobileSidebarOpen ? 'open' : ''}`} style={{ overflowY: 'hidden', justifyContent: 'flex-start' }}>
-        {/* Sidebar Header */}
-        <div className="oh-sidebar-head">
-          <div 
-            className="oh-sidebar-brand"
+      {/* Dark Midnight Sidebar */}
+      <aside className={`exact-sidebar ${isMobileSidebarOpen ? 'open' : ''}`}>
+        <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          {/* Logo & Brand Header */}
+          <div
+            className="exact-sidebar-brand"
             onClick={() => setActiveTab('journey')}
-            style={{ cursor: 'pointer' }}
-            title="Return to Learner Dashboard"
           >
-            <div className="oh-sidebar-brand-icon">
-              <FiZap />
+            {/* Glowing Infinity SVG Icon */}
+            <div className="exact-sidebar-logo-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18.178 8c5.096 0 5.096 8 0 8-5.095 0-7.133-8-12.228-8-5.096 0-5.096 8 0 8 5.095 0 7.133-8 12.228-8z" />
+              </svg>
             </div>
             <div>
-              <div className="oh-sidebar-brand-title">Learner Portal</div>
-              <div className="oh-sidebar-brand-sub">100% Free Access</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '18px', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
+                  OpenHand
+                </span>
+              </div>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: '#E2E8F0', marginTop: '1px' }}>
+                Learner Portal
+              </div>
+              <div style={{ fontSize: '10.5px', color: '#6A789E' }}>
+                100% Free Access
+              </div>
             </div>
           </div>
-          <button
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B' }}
-            className="lg:hidden"
-            onClick={() => setIsMobileSidebarOpen(false)}
-          >
-            <FiX fontSize={20} />
-          </button>
-        </div>
 
-        {/* Nav Section */}
-        <div className="oh-sidebar-section" style={{ flex: 'none', paddingBottom: '8px' }}>
-          <span className="oh-sidebar-label">Navigation</span>
+          {/* Navigation Section */}
+          <div className="exact-nav-section-title">
+            NAVIGATION
+          </div>
 
-          <nav className="oh-sidebar-nav">
+          <nav style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
             {navItems.map((item) => {
               const isActive = activeTab === item.id
               return (
@@ -219,16 +354,30 @@ export function LearnerDashboard() {
                     setActiveTab(item.id)
                     setIsMobileSidebarOpen(false)
                   }}
-                  className={`oh-sidebar-btn ${isActive ? 'active' : ''}`}
+                  className={`exact-nav-btn ${isActive ? 'active' : ''}`}
                 >
-                  <div className="oh-sidebar-btn-left">
-                    <span className="oh-sidebar-btn-icon">{item.icon}</span>
+                  <div className="exact-nav-btn-left">
+                    <span style={{ fontSize: '16px', display: 'flex', alignItems: 'center' }}>
+                      {item.icon}
+                    </span>
                     <span>{item.label}</span>
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    {item.hasDot && <span className="oh-sidebar-dot" />}
-                    {item.badge && <span className="oh-sidebar-badge">{item.badge}</span>}
+                    {item.hasDot && !item.badge && (
+                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: item.dotColor || '#A855F7' }} />
+                    )}
+                    {item.badge && (
+                      <span
+                        className="exact-nav-badge"
+                        style={isActive ? { background: 'rgba(255, 255, 255, 0.2)', color: '#FFFFFF', borderColor: 'transparent' } : {}}
+                      >
+                        {item.hasDot && (
+                          <span style={{ display: 'inline-block', width: '5px', height: '5px', borderRadius: '50%', background: item.dotColor || '#60A5FA', marginRight: '4px' }} />
+                        )}
+                        {item.badge}
+                      </span>
+                    )}
                   </div>
                 </button>
               )
@@ -236,106 +385,184 @@ export function LearnerDashboard() {
           </nav>
         </div>
 
-        {/* User Profile Card directly under navigation */}
-        <div
-          className="oh-sidebar-user"
-          onClick={() => setActiveTab('profile')}
-          style={{ cursor: 'pointer', borderTop: '1px solid #E2E8F0', marginTop: '4px' }}
-          title="Click to edit profile & account details"
-        >
-          <div className="oh-sidebar-user-av">
-            {clientName.slice(0, 1)}{user?.lastName?.slice(0, 1) || ''}
-          </div>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <h4 className="oh-sidebar-user-name">{clientName}</h4>
-              {user?.learnerId && (
-                <span style={{ fontSize: '10px', background: '#EEF2FF', color: '#4338CA', padding: '1px 6px', borderRadius: '4px', fontFamily: 'monospace', fontWeight: 700 }}>
-                  {user.learnerId}
-                </span>
-              )}
+        {/* Sidebar Footer with Profile & Upgrade Promo */}
+        <div style={{ marginTop: 'auto', paddingTop: '10px' }}>
+          {/* User Profile Card */}
+          <div
+            onClick={() => setActiveTab('profile')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '10px 8px',
+              borderRadius: '12px',
+              cursor: 'pointer',
+              transition: 'background 0.15s ease',
+            }}
+          >
+            <div
+              style={{
+                width: '34px',
+                height: '34px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%)',
+                color: '#FFFFFF',
+                fontWeight: 800,
+                fontSize: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 8px rgba(99, 102, 241, 0.3)',
+              }}
+            >
+              {clientName.slice(0, 1)}
             </div>
-            <p className="oh-sidebar-user-meta">Edit Profile &amp; Settings →</p>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: '13px', fontWeight: 700, color: '#FFFFFF' }}>
+                {clientName}
+              </div>
+              <div style={{ fontSize: '11px', color: '#7E8BAE' }}>
+                Edit Profile &amp; Settings →
+              </div>
+            </div>
+          </div>
+
+          {/* Upgrade Card */}
+          <div className="exact-sidebar-upgrade">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <span style={{ fontSize: '9px', fontWeight: 800, color: '#A5B4FC', letterSpacing: '0.1em' }}>
+                SEEK
+              </span>
+              <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(99, 102, 241, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#818CF8' }}>
+                👑
+              </div>
+            </div>
+            <div style={{ fontSize: '13px', fontWeight: 700, color: '#FFFFFF', marginBottom: '4px' }}>
+              Upgrade Your Journey
+            </div>
+            <div style={{ fontSize: '11px', color: '#8A97C2', lineHeight: 1.4, marginBottom: '12px' }}>
+              Unlock advanced AI insights, personalised reports and more.
+            </div>
+            <button
+              onClick={() => toast.success("Opening Premium Explorer...")}
+              style={{
+                width: '100%',
+                padding: '7px 12px',
+                borderRadius: '10px',
+                background: 'linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)',
+                color: '#FFFFFF',
+                border: 'none',
+                fontSize: '11.5px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                boxShadow: '0 4px 12px rgba(124, 58, 237, 0.35)',
+              }}
+            >
+              Explore Premium →
+            </button>
           </div>
         </div>
       </aside>
 
       {/* Main Viewport */}
-      <main className="oh-main-viewport" style={activeTab === 'aura' ? { overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column' } : {}}>
-        {/* Sticky Top Bar */}
-        <div className="oh-viewport-header" style={activeTab === 'aura' ? { flexShrink: 0 } : {}}>
+      <main className="exact-main-viewport">
+        {/* Sticky Top Header Bar */}
+        <header className="exact-topbar">
+          {/* Mobile hamburger */}
+          <button
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#334155', padding: '4px' }}
+            className="lg:hidden"
+            onClick={() => setIsMobileSidebarOpen(true)}
+          >
+            <FiMenu fontSize={22} />
+          </button>
+
+          {/* Search Bar with Ctrl | K */}
+          <div className="exact-search-bar">
+            <span style={{ color: '#94A3B8', fontSize: '15px' }}>🔍</span>
+            <input
+              type="text"
+              placeholder="Search courses, practitioners, sessions..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <span className="exact-search-badge">Ctrl | K</span>
+          </div>
+
+          {/* Right Header Actions */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {/* Theme Toggle Button */}
             <button
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#334155', padding: '4px' }}
-              className="lg:hidden"
-              onClick={() => setIsMobileSidebarOpen(true)}
+              onClick={toggleTheme}
+              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              aria-label="Toggle Theme"
+              className="exact-theme-toggle-btn"
             >
-              <FiMenu fontSize={22} />
+              {theme === 'dark' ? '☀️' : '🌙'}
             </button>
 
-            <div>
-              <div className="oh-viewport-breadcrumb">
-                <span className="oh-viewport-breadcrumb-tag">Dashboard</span>
-                <span>/</span>
-                <span style={{ textTransform: 'capitalize' }}>{activeTab}</span>
+            {/* Notification Bell Button & Dropdown */}
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setIsNotificationsOpen((prev) => !prev)}
+                title="Notifications"
+                aria-label="Notifications"
+                className={`exact-notification-btn ${isNotificationsOpen ? 'active' : ''}`}
+              >
+                <FiBell size={17} />
+                {unreadNotifCount > 0 && (
+                  <span className="exact-notification-badge">
+                    {unreadNotifCount}
+                  </span>
+                )}
+              </button>
+
+              <NotificationDropdown
+                isOpen={isNotificationsOpen}
+                onClose={() => setIsNotificationsOpen(false)}
+                notifications={notifications}
+                unreadCount={unreadNotifCount}
+                onMarkAllRead={handleMarkAllRead}
+                onMarkSingleRead={handleMarkSingleRead}
+                onDeleteNotification={handleDeleteNotification}
+                onClearAll={handleClearAllNotifications}
+                onRestoreDefaultNotifications={handleRestoreNotifications}
+                onSelectNotification={handleSelectNotification}
+                theme={theme}
+              />
+            </div>
+
+            {/* Profile Dropdown */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={() => setActiveTab('profile')}>
+              <div
+                style={{
+                  width: '34px',
+                  height: '34px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%)',
+                  color: '#FFFFFF',
+                  fontWeight: 800,
+                  fontSize: '14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {clientName.slice(0, 1)}
               </div>
-              <h1 className="oh-viewport-title">
-                {activeTab === 'journey' && `Hello, ${clientName} 👋`}
-                {activeTab === 'checkin' && 'Daily Check-in Rhythm'}
-                {activeTab === 'practitioners' && 'All Registered Practitioners'}
-                {activeTab === 'courses' && 'Courses Library'}
-                {activeTab === 'circle' && 'Peer Support & Growth Circles'}
-                {activeTab === 'community' && 'Community & Chat Hub'}
-                {activeTab === 'sessions' && 'Sessions & Learning Resources'}
-                {activeTab === 'reflections' && 'Self Reflection Journal'}
-                {activeTab === 'profile' && 'Edit Profile & Account Settings'}
-              </h1>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>
+                {clientName} ▾
+              </span>
             </div>
           </div>
+        </header>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-            <button
-              onClick={handleCopyLearnerId}
-              title="Your Unique Learner ID (Click to copy)"
-              style={{
-                padding: '5px 14px',
-                borderRadius: 20,
-                fontSize: 12,
-                fontWeight: 700,
-                fontFamily: 'monospace',
-                background: 'rgba(238, 242, 255, 0.95)',
-                color: '#4338CA',
-                border: '1px solid #C7D2FE',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-              }}
-            >
-              <FiTag style={{ fontSize: 13 }} />
-              ID: {user?.learnerId || 'Syncing ID...'}
-              {copiedId ? <FiCheck style={{ color: '#16A34A', fontSize: 13 }} /> : <FiCopy style={{ opacity: 0.7, fontSize: 13 }} />}
-            </button>
-            <span style={{ padding: '5px 14px', borderRadius: 20, fontSize: 12, fontWeight: 700, background: '#DCFCE7', color: '#166534', border: '1px solid #BBF7D0', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span>✨</span> Free Learner Account (100% Free)
-            </span>
-            <button
-              onClick={() => setActiveTab('checkin')}
-              className="oh-action-btn"
-            >
-              <FiZap /> Quick Check-in
-            </button>
-
-            {/* Profile Dropdown with working Dashboard & Logout */}
-            <div style={{ marginLeft: '4px', display: 'flex', alignItems: 'center' }}>
-              <ProfileDropdown onSelectSection={setActiveTab} />
-            </div>
-          </div>
-        </div>
-
-        {/* View Content */}
-        <div className="oh-view-body" style={activeTab === 'aura' ? { padding: 0, maxWidth: '100%', width: '100%', flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' } : {}}>
+        {/* View Body */}
+        <div style={{ padding: '24px 32px 36px', maxWidth: '1480px', width: '100%', margin: '0 auto', boxSpacing: 'border-box' }}>
           {activeTab === 'journey' && (
             <MyJourney
               clientName={clientName}
@@ -402,3 +629,4 @@ export function LearnerDashboard() {
 }
 
 export default LearnerDashboard
+

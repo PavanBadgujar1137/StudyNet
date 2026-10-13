@@ -57,9 +57,16 @@ OTPSchema.pre("save", async function () {
 		return
 	}
 
-	console.log("Sending OTP email to:", this.email)
-	await sendVerificationEmail(this.email, this.otp)
-	console.log("OTP email queued/sent for:", this.email)
+	console.log(`\n=========================================`)
+	console.log(`🔑 Verification OTP for ${this.email}: [ ${this.otp} ]`)
+	console.log(`=========================================\n`)
+
+	try {
+		await sendVerificationEmail(this.email, this.otp)
+		console.log("OTP email dispatched successfully for:", this.email)
+	} catch (mailErr) {
+		console.warn(`[OTP Warning] Email delivery failed (${mailErr.message}), but OTP was saved. You can use the code printed above.`)
+	}
 });
 
 const OTP = mongoose.model("OTP", OTPSchema);

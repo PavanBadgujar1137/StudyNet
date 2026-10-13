@@ -2,6 +2,11 @@ const nodemailer = require("nodemailer")
 
 const mailSender = async (email, title, body) => {
   try {
+    if (!process.env.MAIL_USER || !process.env.MAIL_PASS) {
+      console.warn(`[mailSender] Warning: MAIL_USER or MAIL_PASS not configured in .env. Skipping email dispatch to "${email}".`)
+      return { response: "Skipped: Missing MAIL_USER / MAIL_PASS credentials" }
+    }
+
     const transporter = nodemailer.createTransport({
       host: process.env.MAIL_HOST || "smtp.gmail.com",
       port: Number(process.env.MAIL_PORT) || 587,

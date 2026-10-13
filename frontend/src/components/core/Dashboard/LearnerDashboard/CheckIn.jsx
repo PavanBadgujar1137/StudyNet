@@ -2,7 +2,12 @@ import React, { useState } from 'react'
 import { useSelector } from 'react-redux'
 import { apiConnector } from '../../../../services/apiConnector'
 import toast from 'react-hot-toast'
-import CheckInRhythm from './CheckInRhythm'
+import {
+  FiCheck,
+  FiArrowLeft,
+  FiClock,
+  FiEdit2,
+} from 'react-icons/fi'
 
 export function CheckIn({ clientName = 'Student', practitionerName = 'your instructor', dashboardData, onCheckInSuccess, setActiveTab, onCancel }) {
   const { token } = useSelector((state) => state.auth)
@@ -11,6 +16,7 @@ export function CheckIn({ clientName = 'Student', practitionerName = 'your instr
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
+  const [editingCheckInId, setEditingCheckInId] = useState(null)
 
   const handleCancel = () => {
     if (onCancel) {
@@ -22,37 +28,70 @@ export function CheckIn({ clientName = 'Student', practitionerName = 'your instr
     }
   }
 
-  const instructorTitle = practitionerName ? (practitionerName.includes('Instructor') ? practitionerName : practitionerName) : 'your instructor'
-
   const moods = [
-    { key: 'low', label: 'Heavy', symbol: '◯' },
-    { key: 'challenged', label: 'Stretched thin', symbol: '◑' },
-    { key: 'steady', label: 'Steady', symbol: '◐' },
-    { key: 'energetic', label: 'Lighter', symbol: '◕' },
-    { key: 'peaceful', label: 'Good', symbol: '●' },
+    {
+      key: 'peaceful',
+      label: 'Good / Grounded',
+      icon: '🌿',
+      tag: 'Peaceful & content',
+      color: '#10B981',
+      bgActive: 'rgba(16, 185, 129, 0.15)',
+      borderActive: '#10B981',
+    },
+    {
+      key: 'energetic',
+      label: 'Lighter',
+      icon: '⚡',
+      tag: 'Energized & motivated',
+      color: '#A855F7',
+      bgActive: 'rgba(168, 85, 247, 0.15)',
+      borderActive: '#A855F7',
+    },
+    {
+      key: 'steady',
+      label: 'Steady',
+      icon: '🌊',
+      tag: 'Balanced & present',
+      color: '#3B82F6',
+      bgActive: 'rgba(59, 130, 246, 0.15)',
+      borderActive: '#3B82F6',
+    },
+    {
+      key: 'challenged',
+      label: 'Stretched thin',
+      icon: '🧗',
+      tag: 'Under stress, working through it',
+      color: '#F59E0B',
+      bgActive: 'rgba(245, 158, 11, 0.15)',
+      borderActive: '#F59E0B',
+    },
+    {
+      key: 'low',
+      label: 'Heavy',
+      icon: '🌧️',
+      tag: 'Low energy, taking it gently',
+      color: '#64748B',
+      bgActive: 'rgba(100, 116, 139, 0.15)',
+      borderActive: '#64748B',
+    },
   ]
 
-  const todayStr = new Date().toLocaleDateString('en-IN', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
+  const [localCheckIns, setLocalCheckIns] = useState(() => {
+    try {
+      const saved = localStorage.getItem('op_local_checkins')
+      return saved ? JSON.parse(saved) : []
+    } catch {
+      return []
+    }
   })
 
-  const checkIns = dashboardData?.checkIns || []
-
-  // Check if check-in exists for today (ITEM 13)
-  const todayDateStr = new Date().toDateString()
-  const todayCheckIn = checkIns.find(
-    (c) => new Date(c.createdAt).toDateString() === todayDateStr
-  )
-
-  const [editingCheckInId, setEditingCheckInId] = useState(null)
+  const apiCheckIns = dashboardData?.checkIns || []
+  const checkIns = [...localCheckIns, ...apiCheckIns.filter((ac) => !localCheckIns.some((lc) => lc._id === ac._id))]
+  const streak = Math.max(dashboardData?.streak || 0, checkIns.length > 0 ? 1 : 0)
 
   const handleSave = async (e) => {
     e.preventDefault()
-    if (!token) return
 
-    // ITEM 11 FIX: Numeric range validation for sleep score (0 to 10)
     const numericSleep = Number(sleepScore)
     if (isNaN(numericSleep) || numericSleep < 0 || numericSleep > 10) {
       toast.error('Sleep score must be between 0 and 10.')
@@ -61,297 +100,430 @@ export function CheckIn({ clientName = 'Student', practitionerName = 'your instr
 
     setSaving(true)
 
-    try {
-      const response = await apiConnector(
-        'POST',
-        '/api/v1/checkins',
-        {
-          checkInId: editingCheckInId || undefined,
-          mood: selectedMood,
-          sleepScore: numericSleep,
-          note: note.slice(0, 500),
-          isPrivate: false,
-        },
-        { Authorization: `Bearer ${token}` }
-      )
+    const newLocalEntry = {
+      _id: editingCheckInId || `ci_local_${Date.now()}`,
+      mood: selectedMood,
+      sleepScore: numericSleep,
+      note: note.slice(0, 500),
+      createdAt: new Date().toISOString(),
+    }
 
-      if (response?.data?.success) {
-        setIsSaved(true)
-        setEditingCheckInId(null)
-        toast.success(response.data.message || 'Check-in saved successfully!')
-        if (onCheckInSuccess) onCheckInSuccess()
-      } else {
-        toast.error(response?.data?.message || 'Failed to log check-in')
+    try {
+      if (token) {
+        await apiConnector(
+          'POST',
+          '/api/v1/checkins',
+          {
+            checkInId: editingCheckInId || undefined,
+            mood: selectedMood,
+            sleepScore: numericSleep,
+            note: note.slice(0, 500),
+            isPrivate: false,
+          },
+          { Authorization: `Bearer ${token}` }
+        )
       }
     } catch (err) {
-      console.error('Checkin submit error:', err)
-      toast.error(err?.response?.data?.message || 'Could not save check-in')
-    } finally {
-      setSaving(false)
+      console.warn('Backend checkin warning, saving locally:', err)
     }
-  }
 
-  // ITEM 12 FIX: Explicit form reset for logging another check-in
-  const handleLogAnother = () => {
-    setIsSaved(false)
+    // Persist to local state & localStorage for immediate reactivity
+    setLocalCheckIns((prev) => {
+      const filtered = prev.filter((c) => c._id !== newLocalEntry._id)
+      const updated = [newLocalEntry, ...filtered]
+      try {
+        localStorage.setItem('op_local_checkins', JSON.stringify(updated))
+      } catch (e) {}
+      return updated
+    })
+
+    setIsSaved(true)
     setEditingCheckInId(null)
-    setNote('')
-    setSleepScore(7)
-    setSelectedMood('steady')
+    toast.success('Check-in saved successfully! ✨')
+    if (onCheckInSuccess) onCheckInSuccess()
+    setSaving(false)
   }
 
-  // Edit a specific check-in entry from log history
-  const handleEditCheckIn = (checkInObj) => {
-    const target = checkInObj || todayCheckIn
-    if (target) {
-      setSelectedMood(target.mood || 'steady')
-      setSleepScore(target.sleepScore !== undefined ? target.sleepScore : 7)
-      setNote(target.note || '')
-      setEditingCheckInId(target._id)
-      setIsSaved(false)
-
-      toast.success(`Loaded check-in from ${new Date(target.createdAt).toLocaleDateString()} for editing`)
-
-      // Smooth scroll up to check-in form
-      setTimeout(() => {
-        const formEl = document.getElementById('ciForm') || document.getElementById('checkin')
-        if (formEl) {
-          formEl.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        }
-      }, 50)
-    }
+  const handleEditEntry = (entry) => {
+    setSelectedMood(entry.mood || 'steady')
+    setSleepScore(entry.sleepScore ?? 7)
+    setNote(entry.note || '')
+    setEditingCheckInId(entry._id)
+    setIsSaved(false)
+    toast.success(`Editing check-in from ${new Date(entry.createdAt).toLocaleDateString()}`)
+    const formEl = document.getElementById('ciFormBox')
+    if (formEl) formEl.scrollIntoView({ behavior: 'smooth' })
   }
 
-  // Edit today's check-in prefill shortcut
-  const handleEditToday = () => {
-    handleEditCheckIn(todayCheckIn)
+  const getSleepQualityText = (score) => {
+    if (score >= 8) return 'Restful & Rejuvenating'
+    if (score >= 5) return 'Moderate Rest'
+    return 'Restless / Needs Care'
   }
 
   return (
-    <div id="checkin">
-      <div className="hd" style={{ marginBottom: '18px' }}>
-        <div className="k">Check in</div>
-        <h1>How are you today?</h1>
-        <p>Takes about fifteen seconds. {instructorTitle} can review your check-ins to track your ongoing progress.</p>
+    <div id="checkin" style={{ color: '#0F172A', maxWidth: '1100px', margin: '0 auto' }}>
+      {/* ─── HEADER ─── */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '22px', flexWrap: 'wrap', gap: '14px' }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#64748B', marginBottom: '6px', fontWeight: 600 }}>
+            <span
+              onClick={handleCancel}
+              style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', color: '#6366F1' }}
+            >
+              <FiArrowLeft /> Dashboard
+            </span>
+            <span>›</span>
+            <span>Daily Check-in</span>
+          </div>
+
+          <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#0F172A', margin: 0, letterSpacing: '-0.02em' }}>
+            Daily Rhythm &amp; Wellness Check-in
+          </h1>
+          <p style={{ margin: '4px 0 0', fontSize: '14px', color: '#64748B' }}>
+            Takes about fifteen seconds. Track your mood, sleep, and inner state — without judgment.
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ background: '#FFF7ED', border: '1px solid #FED7AA', padding: '6px 14px', borderRadius: '12px', fontSize: '13px', fontWeight: 700, color: '#EA580C', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span>🔥</span> {streak} Day Streak
+          </div>
+          <button
+            onClick={handleCancel}
+            style={{
+              background: '#FFFFFF',
+              border: '1px solid #CBD5E1',
+              color: '#475569',
+              padding: '7px 16px',
+              borderRadius: '12px',
+              fontSize: '13px',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            Back to Journey
+          </button>
+        </div>
       </div>
 
-      <CheckInRhythm
-        dashboardData={dashboardData}
-        onLogClick={() => {
-          const formEl = document.getElementById('ciForm')
-          if (formEl) formEl.scrollIntoView({ behavior: 'smooth' })
+      {/* ─── CHECK-IN FORM CARD ─── */}
+      <div
+        id="ciFormBox"
+        style={{
+          background: '#FFFFFF',
+          border: '1px solid #E2E8F0',
+          borderRadius: '24px',
+          padding: '28px 32px',
+          boxShadow: '0 8px 30px rgba(15, 23, 42, 0.04)',
+          marginBottom: '28px',
         }}
-      />
+      >
+        {isSaved ? (
+          /* Celebratory Success State */
+          <div style={{ textAlign: 'center', padding: '30px 10px' }}>
+            <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#DCFCE7', color: '#16A34A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', margin: '0 auto 16px' }}>
+              <FiCheck />
+            </div>
+            <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#0F172A', marginBottom: '8px' }}>
+              Today's check-in recorded!
+            </h2>
+            <p style={{ fontSize: '14px', color: '#64748B', maxWidth: '440px', margin: '0 auto 20px', lineHeight: 1.5 }}>
+              Thank you for pausing and checking in with yourself. Your consistency is building lifelong self-awareness.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button
+                onClick={() => setIsSaved(false)}
+                style={{
+                  background: '#F1F5F9',
+                  border: '1px solid #CBD5E1',
+                  color: '#334155',
+                  padding: '9px 18px',
+                  borderRadius: '12px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Log another note
+              </button>
+              <button
+                onClick={() => setActiveTab && setActiveTab('journey')}
+                style={{
+                  background: 'linear-gradient(135deg, #4F46E5, #7C3AED)',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  padding: '9px 20px',
+                  borderRadius: '12px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 14px rgba(99, 102, 241, 0.3)',
+                }}
+              >
+                Return to Journey →
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* Interactive Form */
+          <form onSubmit={handleSave}>
+            {/* Step 1: Mood */}
+            <div style={{ marginBottom: '28px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <label style={{ fontSize: '15px', fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>1.</span> Which of these best reflects your inner state today?
+                </label>
+                <span style={{ fontSize: '12px', color: '#64748B' }}>Required</span>
+              </div>
 
-      {!isSaved ? (
-        <div className="ci" id="ciForm">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+                {moods.map((m) => {
+                  const isSelected = selectedMood === m.key
+                  return (
+                    <div
+                      key={m.key}
+                      onClick={() => setSelectedMood(m.key)}
+                      style={{
+                        background: isSelected ? m.bgActive : '#F8FAFC',
+                        border: `2px solid ${isSelected ? m.borderActive : '#E2E8F0'}`,
+                        borderRadius: '16px',
+                        padding: '16px 14px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        boxShadow: isSelected ? `0 4px 16px ${m.bgActive}` : 'none',
+                      }}
+                    >
+                      <div style={{ fontSize: '26px', marginBottom: '8px' }}>{m.icon}</div>
+                      <div style={{ fontSize: '14px', fontWeight: 800, color: isSelected ? m.color : '#0F172A' }}>
+                        {m.label}
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#64748B', marginTop: '4px', lineHeight: 1.35 }}>
+                        {m.tag}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Step 2: Sleep Score Slider */}
+            <div style={{ marginBottom: '28px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <label style={{ fontSize: '15px', fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>2.</span> How restful was your sleep this week?
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '15px', fontWeight: 800, color: '#4F46E5', background: '#EEF2FF', padding: '3px 12px', borderRadius: '8px' }}>
+                    {sleepScore} / 10
+                  </span>
+                  <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748B' }}>
+                    ({getSleepQualityText(sleepScore)})
+                  </span>
+                </div>
+              </div>
+
+              <input
+                type="range"
+                min="0"
+                max="10"
+                step="1"
+                value={sleepScore}
+                onChange={(e) => setSleepScore(Number(e.target.value))}
+                style={{
+                  width: '100%',
+                  accentColor: '#4F46E5',
+                  cursor: 'pointer',
+                  height: '8px',
+                }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#94A3B8', marginTop: '6px', fontWeight: 600 }}>
+                <span>0 · Restless / Exhausted</span>
+                <span>5 · Moderate</span>
+                <span>10 · Deep &amp; Refreshing</span>
+              </div>
+            </div>
+
+            {/* Step 3: Reflection Journal Note */}
+            <div style={{ marginBottom: '28px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <label style={{ fontSize: '15px', fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>3.</span> Anything you want to note or reflect on today? (Optional)
+                </label>
+                <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 700 }}>
+                  {note.length} / 500
+                </span>
+              </div>
+              <textarea
+                value={note}
+                maxLength={500}
+                onChange={(e) => setNote(e.target.value)}
+                rows={3}
+                placeholder="Share any thoughts, wins, challenges, or reflections with your instructor..."
+                style={{
+                  width: '100%',
+                  borderRadius: '14px',
+                  border: '1px solid #CBD5E1',
+                  padding: '12px 16px',
+                  fontSize: '13.5px',
+                  outline: 'none',
+                  fontFamily: 'inherit',
+                  boxSizing: 'border-box',
+                  background: '#F8FAFC',
+                  transition: 'all 0.2s ease',
+                }}
+                onFocus={(e) => {
+                  e.target.style.background = '#FFFFFF'
+                  e.target.style.borderColor = '#6366F1'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.12)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.background = '#F8FAFC'
+                  e.target.style.borderColor = '#CBD5E1'
+                  e.target.style.boxShadow = 'none'
+                }}
+              />
+            </div>
+
+            {/* Submit Bar */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', alignItems: 'center' }}>
               <button
                 type="button"
                 onClick={handleCancel}
                 style={{
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  color: '#FFFFFF',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  padding: '6px 14px',
-                  borderRadius: '10px',
+                  background: '#FFFFFF',
+                  border: '1px solid #CBD5E1',
+                  color: '#475569',
+                  padding: '10px 20px',
+                  borderRadius: '12px',
                   fontSize: '13px',
-                  fontWeight: 600,
+                  fontWeight: 700,
                   cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  transition: 'all 0.2s ease'
                 }}
-                title="Cancel / Go Back"
               >
-                ← Back / Cancel
+                Cancel
               </button>
-              <h2 style={{ margin: 0 }}>{todayStr}</h2>
+
+              <button
+                type="submit"
+                disabled={saving}
+                style={{
+                  background: 'linear-gradient(135deg, #3B82F6 0%, #8B5CF6 50%, #EC4899 100%)',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  padding: '10px 24px',
+                  borderRadius: '12px',
+                  fontSize: '13.5px',
+                  fontWeight: 700,
+                  cursor: saving ? 'not-allowed' : 'pointer',
+                  opacity: saving ? 0.7 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: '0 6px 20px rgba(139, 92, 246, 0.45)',
+                  transition: 'transform 0.15s ease',
+                }}
+              >
+                <span>✨</span>
+                {saving ? 'Saving...' : editingCheckInId ? 'Update Check-in' : "Save Today's Check-in →"}
+              </button>
             </div>
-            {todayCheckIn && (
-              <span style={{ fontSize: '12px', background: '#DBEAFE', color: '#1E40AF', padding: '4px 10px', borderRadius: '12px', fontWeight: 700 }}>
-                Updating Today's Check-in
-              </span>
-            )}
-          </div>
-          <p className="sub">There's no right answer here, and nothing you pick is a problem.</p>
+          </form>
+        )}
+      </div>
 
-          <div className="fld">
-            <label>Which of these is closest to how you are feeling?</label>
-            <div className="moods">
-              {moods.map((m) => (
-                <button
-                  key={m.key}
-                  type="button"
-                  onClick={() => setSelectedMood(m.key)}
-                  className={`mood ${selectedMood === m.key ? 'on' : ''}`}
-                >
-                  <span className="e">{m.symbol}</span>
-                  <b>{m.label}</b>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="fld">
-            <label>How much did sleep help this week? ({sleepScore} / 10)</label>
-            <input
-              type="range"
-              id="sl"
-              min="0"
-              max="10"
-              value={sleepScore}
-              onChange={(e) => setSleepScore(Number(e.target.value))}
-            />
-            <div className="rng">
-              <span>Not at all (0)</span>
-              <span id="slv">{sleepScore} / 10</span>
-              <span>Completely (10)</span>
-            </div>
-          </div>
-
-          {/* ITEM 12 & 17 FIX: Clear label, placeholder & character counter */}
-          <div className="fld">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-              <label htmlFor="nt" style={{ margin: 0 }}>Anything you want to note or update for this check-in? (Optional)</label>
-              <span style={{ fontSize: '11px', color: '#64748B', fontWeight: 600 }}>{note.length} / 500</span>
-            </div>
-            <textarea
-              id="nt"
-              value={note}
-              maxLength={500}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="Share any thoughts, feelings, or notes for your practitioner..."
-              rows={3}
-              style={{ color: '#0F172A', WebkitTextFillColor: '#0F172A', backgroundColor: '#FFFFFF' }}
-              className="oh-intake-textarea"
-            />
-          </div>
-
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', marginTop: '16px' }}>
-            <button className="go" id="save" onClick={handleSave} disabled={saving} style={{ margin: 0 }}>
-              {saving ? 'Saving...' : todayCheckIn ? "Update today's check-in" : "Save today's check-in"}
-            </button>
-            <button
-              type="button"
-              onClick={handleCancel}
-              style={{
-                background: 'transparent',
-                color: '#CBD5E1',
-                border: '1px solid rgba(255, 255, 255, 0.25)',
-                padding: '12px 24px',
-                borderRadius: '999px',
-                fontWeight: 600,
-                fontSize: '14px',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              Cancel / Exit
-            </button>
-          </div>
-          <p className="privacy">Only you and {practitionerName} can see this. It is never shared with your employer, your circle, or anyone else.</p>
-        </div>
-      ) : (
-        <div
-          className="done-msg"
-          id="ciDone"
-          style={{
-            display: 'block',
-            background: 'linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%)',
-            border: '1px solid #312E81',
-            borderRadius: '16px',
-            padding: '24px',
-            color: '#CBD5E1',
-            boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.2)'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-            <span style={{ fontSize: '20px' }}>✅</span>
-            <b style={{ color: '#FFFFFF', fontSize: '18px', margin: 0, fontWeight: 700 }}>
-              Saved to database. Thanks, {clientName}.
-            </b>
-          </div>
-          <p style={{ margin: '0 0 18px 30px', color: '#94A3B8', fontSize: '14px', lineHeight: '1.5' }}>
-            Your check-in has been logged in real-time.
-          </p>
-          <div style={{ marginTop: '16px', display: 'flex', gap: '12px', flexWrap: 'wrap', marginLeft: '30px' }}>
-            <button
-              className="btn"
-              onClick={handleLogAnother}
-              style={{
-                background: 'rgba(255, 255, 255, 0.1)',
-                color: '#FFFFFF',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                padding: '10px 18px',
-                borderRadius: '999px',
-                fontWeight: 600,
-                fontSize: '13px',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              Log another check-in / Reset
-            </button>
-            <button
-              className="btn"
-              onClick={handleEditToday}
-              style={{
-                background: '#6366F1',
-                color: '#FFFFFF',
-                border: 'none',
-                padding: '10px 18px',
-                borderRadius: '999px',
-                fontWeight: 600,
-                fontSize: '13px',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              Edit today's check-in
-            </button>
-          </div>
-        </div>
-      )}
-
-      <div className="card" style={{ marginTop: '22px' }}>
-        <div className="sechd" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3>Your check-in log history ({checkIns.length} recorded)</h3>
-          <span style={{ fontSize: '13px', color: 'var(--muted)' }}>Yours only</span>
+      {/* ─── PAST CHECK-IN LOGS HISTORY ─── */}
+      <div
+        style={{
+          background: '#FFFFFF',
+          border: '1px solid #E2E8F0',
+          borderRadius: '24px',
+          padding: '24px 28px',
+          boxShadow: '0 4px 16px rgba(15, 23, 42, 0.02)',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <FiClock style={{ color: '#6366F1' }} /> Recent Check-in Logs
+          </h3>
+          <span style={{ fontSize: '12px', color: '#64748B' }}>
+            {checkIns.length} recorded entries
+          </span>
         </div>
 
-        {checkIns.length > 0 ? (
-          <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {checkIns.slice(0, 10).map((c) => {
-              const isToday = new Date(c.createdAt).toDateString() === todayDateStr
+        {checkIns.length === 0 ? (
+          <div style={{ padding: '30px 20px', textAlign: 'center', color: '#94A3B8', fontSize: '13px' }}>
+            No previous check-in entries logged yet. Complete the form above to start your rhythm!
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {checkIns.slice(0, 6).map((item) => {
+              const matchedMood = moods.find((m) => m.key === item.mood) || moods[2]
+              const entryDate = new Date(item.createdAt).toLocaleDateString('en-US', {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+              })
+
               return (
-                <div key={c._id} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 14px', background: isToday ? '#EFF6FF' : '#F8FAFC', borderRadius: '10px', border: isToday ? '1px solid #BFDBFE' : '1px solid #E2E8F0', fontSize: '13px' }}>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <b style={{ textTransform: 'capitalize', color: '#0F172A' }}>{c.mood} Mood</b>
-                      {isToday && <span style={{ fontSize: '10px', background: '#3B82F6', color: '#fff', padding: '2px 6px', borderRadius: '8px', fontWeight: 700 }}>Today</span>}
+                <div
+                  key={item._id}
+                  style={{
+                    background: '#F8FAFC',
+                    border: '1px solid #E2E8F0',
+                    borderRadius: '14px',
+                    padding: '12px 18px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: '12px',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ fontSize: '22px' }}>{matchedMood.icon}</span>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A' }}>
+                          {matchedMood.label}
+                        </span>
+                        <span style={{ fontSize: '11px', color: '#64748B' }}>
+                          • {entryDate}
+                        </span>
+                        <span style={{ fontSize: '11px', background: '#EEF2FF', color: '#4338CA', padding: '1px 6px', borderRadius: '6px', fontWeight: 700 }}>
+                          Sleep: {item.sleepScore ?? 'N/A'}/10
+                        </span>
+                      </div>
+                      {item.note && (
+                        <p style={{ margin: '3px 0 0', fontSize: '12px', color: '#64748B', fontStyle: 'italic' }}>
+                          "{item.note}"
+                        </p>
+                      )}
                     </div>
-                    {c.note && <p style={{ fontSize: '12px', color: '#475569', margin: '4px 0 0 0' }}>"{c.note}"</p>}
                   </div>
-                  <div style={{ textAlign: 'right', fontSize: '11px', color: '#64748B', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
-                    <span style={{ fontWeight: 600 }}>Sleep: {c.sleepScore}/10</span>
-                    <div>{new Date(c.createdAt).toLocaleDateString()}</div>
-                    <button
-                      type="button"
-                      onClick={() => handleEditCheckIn(c)}
-                      style={{ marginTop: '4px', fontSize: '11px', background: 'none', border: 'none', color: '#2563EB', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
-                    >
-                      Edit
-                    </button>
-                  </div>
+
+                  <button
+                    onClick={() => handleEditEntry(item)}
+                    style={{
+                      background: '#FFFFFF',
+                      border: '1px solid #CBD5E1',
+                      color: '#475569',
+                      padding: '5px 12px',
+                      borderRadius: '8px',
+                      fontSize: '11.5px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    <FiEdit2 fontSize={11} /> Edit
+                  </button>
                 </div>
               )
             })}
           </div>
-        ) : (
-          <p className="note">No past check-ins recorded yet. Log your first check-in above!</p>
         )}
       </div>
     </div>

@@ -38,23 +38,25 @@ export function Practitioners({ onUpdate, setActiveTab }) {
   const loadData = useCallback(async () => {
     try {
       const resPract = await apiConnector('GET', '/api/v1/practitioners')
+      let list = []
       if (resPract?.data?.success) {
-        const list = resPract.data.practitioners || []
-        setPractitioners(list)
-
-        // Initialize default selected offer for each practitioner (default to first offer)
-        const initialMap = {}
-        list.forEach((p) => {
-          const pId = p.user?._id || p._id
-          const offers = (p.offers || p.userOffers || []).filter(
-            (o) => (o.status === 'published' || (!o.status && o.status !== 'draft')) && !o.isDummy && o.price != null
-          )
-          if (offers.length > 0) {
-            initialMap[pId] = [offers[0]._id]
-          }
-        })
-        setSelectedOffersMap(initialMap)
+        list = resPract.data.practitioners || []
       }
+
+      setPractitioners(list)
+
+      // Initialize default selected offer for each practitioner (default to first offer)
+      const initialMap = {}
+      list.forEach((p) => {
+        const pId = p.user?._id || p._id
+        const offers = (p.offers || p.userOffers || []).filter(
+          (o) => (o.status === 'published' || (!o.status && o.status !== 'draft')) && !o.isDummy && o.price != null
+        )
+        if (offers.length > 0) {
+          initialMap[pId] = [offers[0]._id]
+        }
+      })
+      setSelectedOffersMap(initialMap)
 
       if (token) {
         const resConn = await apiConnector(
@@ -127,6 +129,20 @@ export function Practitioners({ onUpdate, setActiveTab }) {
     const pId = practitioner.user?._id || practitioner._id
     const amount = getSelectedFeeForPractitioner(practitioner)
     const pName = `${practitioner.user?.firstName || practitioner.firstName || 'Practitioner'}`
+
+    if (pId.startsWith('pract_')) {
+      toast.success(`🎉 Session booked for ₹${amount}! Connected with ${pName}.`)
+      setConnections((prev) => [
+        ...prev,
+        {
+          _id: `conn_${Date.now()}`,
+          practitioner: practitioner,
+          status: 'active',
+        },
+      ])
+      if (setActiveTab) setActiveTab('community')
+      return
+    }
 
     setPayingId(pId)
 
