@@ -14,13 +14,6 @@ const { paymentSuccessEmail } = require("../mail/templates/paymentSuccessEmail")
 const PractitionerAvailability = require("../models/PractitionerAvailability")
 const { google } = require("googleapis")
 
-// Initialize Google OAuth2 client for Calendar API
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID || "mock-client-id",
-  process.env.GOOGLE_CLIENT_SECRET || "mock-client-secret",
-  process.env.GOOGLE_REDIRECT_URI || "http://localhost:5000/api/v1/calendar/auth/callback"
-)
-
 const addGoogleCalendarEvent = async (booking, clientUser, practitionerUser) => {
   try {
     const availability = await PractitionerAvailability.findOne({ practitioner: booking.practitioner })
@@ -28,13 +21,30 @@ const addGoogleCalendarEvent = async (booking, clientUser, practitionerUser) => 
       return
     }
 
-    oauth2Client.setCredentials({
+    const client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID || "mock-client-id",
+      process.env.GOOGLE_CLIENT_SECRET || "mock-client-secret"
+    )
+
+    client.setCredentials({
       access_token: availability.googleAccessToken,
       refresh_token: availability.googleRefreshToken,
       expiry_date: availability.googleTokenExpiry,
     })
 
-    const calendar = google.calendar({ version: "v3", auth: oauth2Client })
+    // Listen for automatic token refresh and persist new tokens
+    client.on("tokens", async (tokens) => {
+      try {
+        if (tokens.access_token) availability.googleAccessToken = tokens.access_token
+        if (tokens.refresh_token) availability.googleRefreshToken = tokens.refresh_token
+        if (tokens.expiry_date) availability.googleTokenExpiry = tokens.expiry_date
+        await availability.save()
+      } catch (saveErr) {
+        console.error("Error saving refreshed Google Calendar token:", saveErr)
+      }
+    })
+
+    const calendar = google.calendar({ version: "v3", auth: client })
     
     const startTime = new Date(booking.scheduledAt)
     const duration = booking.offer?.durationMinutes || 50
@@ -42,7 +52,7 @@ const addGoogleCalendarEvent = async (booking, clientUser, practitionerUser) => 
 
     const event = {
       summary: `Session: ${clientUser.firstName} ${clientUser.lastName}`,
-      description: `OpenHand Booking: ${booking.offer?.title}`,
+      description: `OpenHand Booking: ${booking.offer?.title || "1:1 Session"}`,
       start: { dateTime: startTime.toISOString() },
       end: { dateTime: endTime.toISOString() },
       attendees: [{ email: clientUser.email }, { email: practitionerUser.email }],

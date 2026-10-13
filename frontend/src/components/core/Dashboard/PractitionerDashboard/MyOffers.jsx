@@ -125,6 +125,18 @@ export function MyOffers({ telemetryData, onUpdate }) {
         return next
       })
     }
+
+    // Check for calendar_error callback
+    if (searchParams.get('calendar_error')) {
+      const errReason = searchParams.get('calendar_error')
+      toast.error(`Google Calendar connection failed: ${errReason}`)
+      setShowScheduleModal(true)
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev)
+        next.delete('calendar_error')
+        return next
+      })
+    }
   }, [loadOffers, searchParams, setSearchParams])
 
   // Auto-open create modal when navigated from popup with ?create=true

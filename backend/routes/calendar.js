@@ -5,6 +5,7 @@ const { auth } = require("../middleware/auth")
 const {
   getGoogleAuthUrl,
   googleAuthCallback,
+  disconnectCalendar,
   getAvailability,
   updateAvailability,
   getAvailableSlots,
@@ -12,6 +13,7 @@ const {
 
 router.get("/auth/google", auth, getGoogleAuthUrl)
 router.get("/auth/callback", googleAuthCallback)
+router.post("/disconnect", auth, disconnectCalendar)
 
 router.get("/availability", auth, getAvailability)
 router.put("/availability", auth, updateAvailability)

@@ -2,27 +2,56 @@ const PractitionerAvailability = require("../models/PractitionerAvailability")
 const User = require("../models/User")
 const { google } = require("googleapis")
 
-// Initialize Google OAuth2 client
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID || "mock-client-id",
-  process.env.GOOGLE_CLIENT_SECRET || "mock-client-secret",
-  process.env.GOOGLE_REDIRECT_URI || "http://localhost:5000/api/v1/calendar/auth/callback"
-)
+// Resolve correct OAuth redirect URI dynamically based on env or request host
+const resolveRedirectUri = (req) => {
+  if (process.env.GOOGLE_REDIRECT_URI) {
+    return process.env.GOOGLE_REDIRECT_URI
+  }
+  const appEnv = String(process.env.APP_ENV || "").toLowerCase()
+  if (appEnv === "production") {
+    return "https://api.openhand.live/api/v1/calendar/auth/callback"
+  }
+  if (appEnv === "uat") {
+    return "https://api-uat.openhand.live/api/v1/calendar/auth/callback"
+  }
+  if (req) {
+    const proto = req.headers["x-forwarded-proto"] || req.protocol || "http"
+    const host = req.get("host") || `localhost:${process.env.PORT || 4000}`
+    return `${proto}://${host}/api/v1/calendar/auth/callback`
+  }
+  return `http://localhost:${process.env.PORT || 4000}/api/v1/calendar/auth/callback`
+}
+
+const createOAuthClient = (redirectUri) => {
+  return new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID || "mock-client-id",
+    process.env.GOOGLE_CLIENT_SECRET || "mock-client-secret",
+    redirectUri
+  )
+}
 
 exports.getGoogleAuthUrl = async (req, res) => {
   try {
     const userId = req.user.id
-    // We encode the userId in the state parameter to know who is connecting
-    const state = Buffer.from(JSON.stringify({ userId })).toString("base64")
+    const redirectUri = resolveRedirectUri(req)
+    const returnTo = req.query.returnTo || "/practice"
 
-    const url = oauth2Client.generateAuthUrl({
+    // Encode userId, redirectUri, and returnTo in state so callback uses exact same URI
+    const state = Buffer.from(
+      JSON.stringify({ userId, redirectUri, returnTo })
+    ).toString("base64")
+
+    const client = createOAuthClient(redirectUri)
+
+    const url = client.generateAuthUrl({
       access_type: "offline",
       scope: ["https://www.googleapis.com/auth/calendar.events"],
       state,
       prompt: "consent",
+      redirect_uri: redirectUri,
     })
 
-    return res.status(200).json({ success: true, url })
+    return res.status(200).json({ success: true, url, redirectUri })
   } catch (error) {
     console.error("Error generating auth url:", error)
     return res.status(500).json({ success: false, message: "Internal server error" })
@@ -30,15 +59,39 @@ exports.getGoogleAuthUrl = async (req, res) => {
 }
 
 exports.googleAuthCallback = async (req, res) => {
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000"
   try {
-    const { code, state } = req.query
-    if (!code || !state) {
-      return res.status(400).send("Invalid callback request")
+    const { code, state, error: authError } = req.query
+
+    if (authError) {
+      console.warn("Google OAuth was rejected or cancelled:", authError)
+      return res.redirect(`${frontendUrl}/practice?calendar_error=${encodeURIComponent(authError)}`)
     }
 
-    const { userId } = JSON.parse(Buffer.from(state, "base64").toString("ascii"))
+    if (!code || !state) {
+      return res.status(400).send("Invalid callback request: missing code or state")
+    }
 
-    const { tokens } = await oauth2Client.getToken(code)
+    let parsedState = {}
+    try {
+      parsedState = JSON.parse(Buffer.from(state, "base64").toString("ascii"))
+    } catch (parseErr) {
+      console.error("Failed to decode OAuth state:", parseErr)
+      return res.status(400).send("Invalid state parameter")
+    }
+
+    const { userId, redirectUri, returnTo } = parsedState
+    if (!userId) {
+      return res.status(400).send("User ID missing from OAuth state")
+    }
+
+    const effectiveRedirectUri = redirectUri || resolveRedirectUri(req)
+    const client = createOAuthClient(effectiveRedirectUri)
+
+    const { tokens } = await client.getToken({
+      code,
+      redirect_uri: effectiveRedirectUri,
+    })
     
     // Save tokens in PractitionerAvailability
     let availability = await PractitionerAvailability.findOne({ practitioner: userId })
@@ -47,20 +100,36 @@ exports.googleAuthCallback = async (req, res) => {
     }
 
     availability.googleCalendarConnected = true
-    availability.googleAccessToken = tokens.access_token
-    if (tokens.refresh_token) {
-      availability.googleRefreshToken = tokens.refresh_token
-    }
-    availability.googleTokenExpiry = tokens.expiry_date
+    if (tokens.access_token) availability.googleAccessToken = tokens.access_token
+    if (tokens.refresh_token) availability.googleRefreshToken = tokens.refresh_token
+    if (tokens.expiry_date) availability.googleTokenExpiry = tokens.expiry_date
 
     await availability.save()
 
     // Redirect back to frontend
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000"
-    return res.redirect(`${frontendUrl}/dashboard/practitioner?calendar_connected=true`)
+    const targetPath = returnTo || "/practice"
+    return res.redirect(`${frontendUrl}${targetPath}?calendar_connected=true`)
   } catch (error) {
-    console.error("Google Auth Callback Error:", error)
-    return res.status(500).send("Failed to connect Google Calendar")
+    console.error("Google Auth Callback Error:", error?.response?.data || error)
+    return res.redirect(`${frontendUrl}/practice?calendar_error=token_exchange_failed`)
+  }
+}
+
+exports.disconnectCalendar = async (req, res) => {
+  try {
+    const userId = req.user.id
+    const availability = await PractitionerAvailability.findOne({ practitioner: userId })
+    if (availability) {
+      availability.googleCalendarConnected = false
+      availability.googleAccessToken = null
+      availability.googleRefreshToken = null
+      availability.googleTokenExpiry = null
+      await availability.save()
+    }
+    return res.status(200).json({ success: true, message: "Google Calendar disconnected successfully" })
+  } catch (error) {
+    console.error("Error disconnecting calendar:", error)
+    return res.status(500).json({ success: false, message: "Server error" })
   }
 }
 

@@ -54,7 +54,8 @@ export function PractitionerScheduleModal({ isOpen, onClose }) {
 
   const handleConnectGoogle = async () => {
     try {
-      const res = await apiConnector('GET', '/api/v1/calendar/auth/google', null, {
+      const returnTo = window.location.pathname || "/practice"
+      const res = await apiConnector('GET', `/api/v1/calendar/auth/google?returnTo=${encodeURIComponent(returnTo)}`, null, {
         Authorization: `Bearer ${token}`
       })
       if (res?.data?.success) {
@@ -62,6 +63,21 @@ export function PractitionerScheduleModal({ isOpen, onClose }) {
       }
     } catch (err) {
       toast.error("Failed to initiate Google Auth")
+    }
+  }
+
+  const handleDisconnectGoogle = async () => {
+    if (!window.confirm("Are you sure you want to disconnect Google Calendar?")) return
+    try {
+      const res = await apiConnector('POST', '/api/v1/calendar/disconnect', null, {
+        Authorization: `Bearer ${token}`
+      })
+      if (res?.data?.success) {
+        toast.success("Google Calendar disconnected")
+        loadAvailability()
+      }
+    } catch (err) {
+      toast.error("Failed to disconnect calendar")
     }
   }
 
@@ -248,9 +264,17 @@ export function PractitionerScheduleModal({ isOpen, onClose }) {
                     <FiCalendar /> Connect Google
                   </button>
                 ) : (
-                  <span style={{ background: '#DCFCE7', color: '#166534', padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    ✅ Connected
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ background: '#DCFCE7', color: '#166534', padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      ✅ Connected
+                    </span>
+                    <button
+                      onClick={handleDisconnectGoogle}
+                      style={{ background: '#FEE2E2', color: '#DC2626', border: 'none', padding: '6px 12px', borderRadius: '10px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      Disconnect
+                    </button>
+                  </div>
                 )}
               </div>
 
