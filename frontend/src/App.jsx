@@ -171,9 +171,6 @@ function App() {
           }
         />
 
-        <Route path="/app2" element={<LearnerApp />} />
-        <Route path="/app3" element={<PractitionerApp />} />
-
 
         {/* Practitioner App (7 Sections) */}
         <Route
