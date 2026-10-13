@@ -19,11 +19,19 @@ const OTPSchema = new mongoose.Schema({
 
 // Define a function to send emails
 async function sendVerificationEmail(email, otp) {
-	// Create a transporter to send emails
+	// If mail credentials are not configured (local dev), skip sending and log OTP to console
+	const mailUser = process.env.MAIL_USER
+	const mailPass = process.env.MAIL_PASS
+	if (!mailUser || !mailPass) {
+		console.log("─────────────────────────────────────────────────────")
+		console.log("⚠️  DEV MODE: Email credentials not configured.")
+		console.log(`📧  OTP for ${email} → ${otp}`)
+		console.log("     Use this OTP in the signup form to verify your email.")
+		console.log("─────────────────────────────────────────────────────")
+		return
+	}
 
-	// Define the email options
-
-	// Send the email
+	// Send the email via SMTP
 	try {
 		const mailResponse = await mailSender(
 			email,
