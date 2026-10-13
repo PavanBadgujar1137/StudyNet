@@ -21,6 +21,8 @@ export function PractitionerScheduleModal({ isOpen, onClose }) {
   
   const [timezone, setTimezone] = useState('Asia/Kolkata')
   const [weeklySchedule, setWeeklySchedule] = useState([])
+  const [maxSessionsPerDay, setMaxSessionsPerDay] = useState(5)
+  const [sessionDurationMinutes, setSessionDurationMinutes] = useState(50)
 
   useEffect(() => {
     if (isOpen) {
@@ -39,6 +41,8 @@ export function PractitionerScheduleModal({ isOpen, onClose }) {
         setAvailability(res.data.availability)
         setTimezone(res.data.availability.timezone || 'Asia/Kolkata')
         setWeeklySchedule(res.data.availability.weeklySchedule || [])
+        setMaxSessionsPerDay(res.data.availability.maxSessionsPerDay || 5)
+        setSessionDurationMinutes(res.data.availability.sessionDurationMinutes || 50)
       }
     } catch (err) {
       console.error(err)
@@ -50,7 +54,8 @@ export function PractitionerScheduleModal({ isOpen, onClose }) {
 
   const handleConnectGoogle = async () => {
     try {
-      const res = await apiConnector('GET', '/api/v1/calendar/auth/google', null, {
+      const returnTo = window.location.pathname || "/practice"
+      const res = await apiConnector('GET', `/api/v1/calendar/auth/google?returnTo=${encodeURIComponent(returnTo)}`, null, {
         Authorization: `Bearer ${token}`
       })
       if (res?.data?.success) {
@@ -61,53 +66,138 @@ export function PractitionerScheduleModal({ isOpen, onClose }) {
     }
   }
 
-  const addTimeSlot = (dayId) => {
-    setWeeklySchedule(prev => {
-      const schedule = [...prev]
-      const dayIndex = schedule.findIndex(d => d.day === dayId)
-      const newSlot = { startTime: "09:00", endTime: "17:00" }
-      
-      if (dayIndex >= 0) {
-        schedule[dayIndex].slots.push(newSlot)
-      } else {
-        schedule.push({ day: dayId, slots: [newSlot] })
+  const handleDisconnectGoogle = async () => {
+    if (!window.confirm("Are you sure you want to disconnect Google Calendar?")) return
+    try {
+      const res = await apiConnector('POST', '/api/v1/calendar/disconnect', null, {
+        Authorization: `Bearer ${token}`
+      })
+      if (res?.data?.success) {
+        toast.success("Google Calendar disconnected")
+        loadAvailability()
       }
-      return schedule
+    } catch (err) {
+      toast.error("Failed to disconnect calendar")
+    }
+  }
+
+  const addMinutesToTime = (timeStr, minutes) => {
+    const [h, m] = (timeStr || "09:00").split(':').map(Number)
+    const totalMins = (h * 60 + m + minutes) % (24 * 60)
+    const newH = Math.floor(totalMins / 60)
+    const newM = totalMins % 60
+    return `${String(newH).padStart(2, '0')}:${String(newM).padStart(2, '0')}`
+  }
+
+  const handleDurationChange = (newDur) => {
+    const durNum = Number(newDur) || 30
+    setSessionDurationMinutes(durNum)
+    // Automatically recalculate end times of all existing slots to match the new duration!
+    setWeeklySchedule(prev => {
+      return prev.map(dayObj => ({
+        ...dayObj,
+        slots: (dayObj.slots || []).map(s => ({
+          ...s,
+          endTime: addMinutesToTime(s.startTime, durNum),
+        })),
+      }))
     })
   }
 
-  const updateTimeSlot = (dayId, slotIndex, field, value) => {
+  const toggleDay = (dayId) => {
     setWeeklySchedule(prev => {
-      const schedule = [...prev]
-      const dayIndex = schedule.findIndex(d => d.day === dayId)
-      if (dayIndex >= 0) {
-        schedule[dayIndex].slots[slotIndex][field] = value
+      const dayExists = prev.some(d => d.day === dayId && d.slots && d.slots.length > 0)
+      if (dayExists) {
+        // Toggle OFF -> completely remove day (100% immutable)
+        return prev.filter(d => d.day !== dayId)
+      } else {
+        // Toggle ON -> add default initial slot using current sessionDurationMinutes!
+        const dur = Number(sessionDurationMinutes) || 30
+        const initialSlot = {
+          startTime: "11:00",
+          endTime: addMinutesToTime("11:00", dur),
+        }
+        return [...prev.filter(d => d.day !== dayId), { day: dayId, slots: [initialSlot] }]
       }
-      return schedule
+    })
+  }
+
+  const addTimeSlot = (dayId) => {
+    const dur = Number(sessionDurationMinutes) || 30
+    setWeeklySchedule(prev => {
+      const dayIndex = prev.findIndex(d => d.day === dayId)
+      if (dayIndex < 0) {
+        const initialSlot = {
+          startTime: "11:00",
+          endTime: addMinutesToTime("11:00", dur),
+        }
+        return [...prev, { day: dayId, slots: [initialSlot] }]
+      }
+
+      const currentDay = prev[dayIndex]
+      const currentSlots = currentDay.slots || []
+      let nextStart = "11:00"
+      if (currentSlots.length > 0) {
+        const lastSlot = currentSlots[currentSlots.length - 1]
+        nextStart = lastSlot.endTime || "12:00"
+      }
+      const nextEnd = addMinutesToTime(nextStart, dur)
+      const newSlot = { startTime: nextStart, endTime: nextEnd }
+
+      // 100% immutable copy
+      return prev.map((d, idx) => {
+        if (idx !== dayIndex) return d
+        return {
+          ...d,
+          slots: [...currentSlots, newSlot],
+        }
+      })
     })
   }
 
   const removeTimeSlot = (dayId, slotIndex) => {
     setWeeklySchedule(prev => {
-      const schedule = [...prev]
-      const dayIndex = schedule.findIndex(d => d.day === dayId)
-      if (dayIndex >= 0) {
-        schedule[dayIndex].slots.splice(slotIndex, 1)
-        if (schedule[dayIndex].slots.length === 0) {
-          schedule.splice(dayIndex, 1)
+      return prev
+        .map(d => {
+          if (d.day !== dayId) return d
+          const updatedSlots = (d.slots || []).filter((_, idx) => idx !== slotIndex)
+          return {
+            ...d,
+            slots: updatedSlots,
+          }
+        })
+        .filter(d => d.slots && d.slots.length > 0)
+    })
+  }
+
+  const updateTimeSlot = (dayId, slotIndex, field, value) => {
+    setWeeklySchedule(prev => {
+      return prev.map(d => {
+        if (d.day !== dayId) return d
+        const updatedSlots = (d.slots || []).map((s, idx) => {
+          if (idx !== slotIndex) return s
+          return { ...s, [field]: value }
+        })
+        return {
+          ...d,
+          slots: updatedSlots,
         }
-      }
-      return schedule
+      })
     })
   }
 
   const saveAvailability = async () => {
     try {
-      const res = await apiConnector('PUT', '/api/v1/calendar/availability', { timezone, weeklySchedule }, {
+      const res = await apiConnector('PUT', '/api/v1/calendar/availability', {
+        timezone,
+        weeklySchedule,
+        maxSessionsPerDay: Number(maxSessionsPerDay),
+        sessionDurationMinutes: Number(sessionDurationMinutes),
+      }, {
         Authorization: `Bearer ${token}`
       })
       if (res?.data?.success) {
-        toast.success("Schedule saved successfully!")
+        toast.success("Schedule & daily session limit saved!")
         onClose()
       }
     } catch (err) {
@@ -174,9 +264,17 @@ export function PractitionerScheduleModal({ isOpen, onClose }) {
                     <FiCalendar /> Connect Google
                   </button>
                 ) : (
-                  <span style={{ background: '#DCFCE7', color: '#166534', padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    ✅ Connected
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ background: '#DCFCE7', color: '#166534', padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      ✅ Connected
+                    </span>
+                    <button
+                      onClick={handleDisconnectGoogle}
+                      style={{ background: '#FEE2E2', color: '#DC2626', border: 'none', padding: '6px 12px', borderRadius: '10px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      Disconnect
+                    </button>
+                  </div>
                 )}
               </div>
 
@@ -196,9 +294,59 @@ export function PractitionerScheduleModal({ isOpen, onClose }) {
                 </select>
               </div>
 
+              {/* Daily Session Limit & Slot Duration */}
+              <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '18px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '13.5px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>
+                    ⚡ Daily Max Sessions Capacity
+                  </label>
+                  <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: '#64748B' }}>
+                    Maximum sessions you can accept per day. Once reached, remaining slots become locked/full.
+                  </p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <input
+                      type="number"
+                      min="1"
+                      max="24"
+                      value={maxSessionsPerDay}
+                      onChange={(e) => setMaxSessionsPerDay(Math.max(1, parseInt(e.target.value) || 1))}
+                      style={{ width: '90px', padding: '10px 14px', borderRadius: '10px', border: '1px solid #CBD5E1', fontSize: '16px', fontWeight: 800, color: '#1F5FE0', textAlign: 'center', outline: 'none' }}
+                    />
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#475569' }}>sessions / day max</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '13.5px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>
+                    ⏱️ Default Slot Duration
+                  </label>
+                  <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: '#64748B' }}>
+                    Length of each bookable session slot generated on your learner booking calendar.
+                  </p>
+                  <select
+                    value={sessionDurationMinutes}
+                    onChange={(e) => handleDurationChange(Number(e.target.value))}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #CBD5E1', fontSize: '14px', fontWeight: 700, color: '#0F172A', outline: 'none' }}
+                  >
+                    <option value={30}>30 Minutes</option>
+                    <option value={45}>45 Minutes</option>
+                    <option value={50}>50 Minutes (Standard)</option>
+                    <option value={60}>60 Minutes (1 Hour)</option>
+                    <option value={90}>90 Minutes</option>
+                  </select>
+                </div>
+              </div>
+
               {/* Weekly Schedule */}
               <div>
-                <h4 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 700, color: '#0F172A' }}>Weekly Availability</h4>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#0F172A' }}>Weekly Availability</h4>
+                </div>
+                
+                <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '12px', padding: '12px 16px', marginBottom: '16px', fontSize: '13px', color: '#1E40AF', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '16px' }}>🗓️</span>
+                  <span><b>Only active slots are bookable:</b> Learners can only see and book the exact days and time slots you check and add here. If a day is unchecked ("Unavailable"), no slots will ever be shown for that day.</span>
+                </div>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {DAYS.map((day) => {
@@ -212,8 +360,8 @@ export function PractitionerScheduleModal({ isOpen, onClose }) {
                           <input 
                             type="checkbox" 
                             checked={hasSlots}
-                            onChange={() => hasSlots ? removeTimeSlot(day.id, 0) : addTimeSlot(day.id)}
-                            style={{ width: '18px', height: '18px' }}
+                            onChange={() => toggleDay(day.id)}
+                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                           />
                           <span style={{ fontSize: '14px', fontWeight: 700, color: hasSlots ? '#0F172A' : '#94A3B8' }}>{day.label}</span>
                         </div>
@@ -238,8 +386,14 @@ export function PractitionerScheduleModal({ isOpen, onClose }) {
                                   style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '14px', fontWeight: 600 }}
                                 />
                                 <button 
-                                  onClick={() => removeTimeSlot(day.id, idx)}
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    removeTimeSlot(day.id, idx)
+                                  }}
                                   style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', padding: '6px' }}
+                                  title="Delete this slot"
                                 >
                                   <FiTrash2 size={16} />
                                 </button>
@@ -249,7 +403,12 @@ export function PractitionerScheduleModal({ isOpen, onClose }) {
 
                           {hasSlots && (
                             <button 
-                              onClick={() => addTimeSlot(day.id)}
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                addTimeSlot(day.id)
+                              }}
                               style={{ alignSelf: 'flex-start', background: 'none', border: 'none', color: '#2563EB', fontSize: '13px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 0' }}
                             >
                               <FiPlus /> Add Time Slot

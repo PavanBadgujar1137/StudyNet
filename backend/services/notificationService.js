@@ -167,7 +167,7 @@ Warmly,
       console.log(`[NotificationService] No phone number available for client ${client.email}`)
     }
 
-    // C. Send Email
+    // C. Send Email to Learner
     if (client.email) {
       const emailHtml = sessionBookingConfirmedEmail({
         learnerName: clientName,
@@ -185,10 +185,50 @@ Warmly,
       )
     }
 
+    // D. Send WhatsApp to Practitioner
+    const practPhone = resolveUserPhone(practitioner)
+    if (practPhone) {
+      const practWhatsappText = `🌿 *OpenHand — New 1:1 Session Booked!*
+
+Dear *${practitionerName}*,
+*${clientName}* has booked a direct session with you!
+
+📋 *Session Information:*
+• *Learner:* ${clientName} (${client.email || ""})
+• *Topic:* ${sessionTitle}
+• *Scheduled Time:* ${scheduledDateStr}
+• *Duration:* ${durationMinutes} Minutes
+• *Room Access Link:* ${meetingLink}
+
+💡 Please review your dashboard and prepare for this session.
+
+Warmly,
+*OpenHand Care Team*`
+      await sendWhatsAppMessage(practPhone, practWhatsappText)
+    }
+
+    // E. Send Email to Practitioner
+    if (practitioner.email) {
+      const practEmailHtml = sessionBookingConfirmedEmail({
+        learnerName: clientName,
+        practitionerName,
+        sessionTitle,
+        scheduledDateStr,
+        durationMinutes,
+        meetingLink,
+        amount: booking.amount || 0,
+      })
+      await mailSender(
+        practitioner.email,
+        `🎉 New Session Booked: ${sessionTitle} with ${clientName} (${scheduledDateStr})`,
+        practEmailHtml
+      )
+    }
+
     // Mark as sent
     booking.reminderPurchaseSent = true
     await booking.save()
-    console.log(`[NotificationService] ✅ Purchase notifications dispatched for booking ${booking._id}`)
+    console.log(`[NotificationService] ✅ Purchase notifications dispatched to both Learner & Practitioner for booking ${booking._id}`)
   } catch (err) {
     console.error("[NotificationService] Error sending purchase notification:", err.message)
   }

@@ -6,14 +6,15 @@ import {
   FiSearch,
   FiFilter,
   FiMessageSquare,
-  FiCreditCard,
   FiShield,
   FiCheckSquare,
   FiSquare,
+  FiCalendar,
 } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import { apiConnector } from '../../../../services/apiConnector'
 import PayGlocalCheckoutModal from '../../../openhand/PayGlocalCheckoutModal'
+import { LearnerScheduleSelectionModal } from '../../../openhand/LearnerScheduleSelectionModal'
 
 export function Practitioners({ onUpdate, setActiveTab }) {
 
@@ -29,6 +30,11 @@ export function Practitioners({ onUpdate, setActiveTab }) {
   const [payglocalModalOpen, setPayglocalModalOpen] = useState(false)
   const [payglocalOrderData, setPayglocalOrderData] = useState(null)
   const [pendingPractitioner, setPendingPractitioner] = useState(null)
+
+  // Scheduling states
+  const [showScheduleModal, setShowScheduleModal] = useState(false)
+  const [schedulePractitioner, setSchedulePractitioner] = useState(null)
+  const [scheduleOffer, setScheduleOffer] = useState(null)
 
 
   // Map of practitioner ID -> Array of selected offer IDs
@@ -119,15 +125,51 @@ export function Practitioners({ onUpdate, setActiveTab }) {
     return selectedOffers.reduce((sum, o) => sum + (o.price || 0), 0)
   }
 
-  // Handle client selecting practitioner, paying fee via PayGlocal, and submitting connection request
-  const handlePayAndConnect = async (practitioner) => {
+  // Step 1: Learner clicks book session -> Opens interactive date and time slot calendar
+  const handleOpenBookingSchedule = (practitioner) => {
     if (!token) {
       toast.error('Please login to select and connect with a practitioner')
       return
     }
 
     const pId = practitioner.user?._id || practitioner._id
-    const amount = getSelectedFeeForPractitioner(practitioner)
+    const offers = (practitioner.offers || practitioner.userOffers || []).filter(
+      (o) => (o.status === 'published' || (!o.status && o.status !== 'draft')) && !o.isDummy && o.price != null
+    )
+    const selectedIds = selectedOffersMap[pId] || []
+    const chosenOffer = offers.find((o) => selectedIds.includes(o._id)) || offers[0]
+
+    if (!chosenOffer) {
+      toast.error('Please select an offer to book')
+      return
+    }
+
+    setSchedulePractitioner(practitioner)
+    setScheduleOffer(chosenOffer)
+    setShowScheduleModal(true)
+  }
+
+  // Step 2: Learner picks an available slot and confirms -> Opens PayGlocal checkout
+  const handleSlotConfirmed = async (dateTimeString, slotInfo) => {
+    setShowScheduleModal(false)
+    if (!schedulePractitioner || !scheduleOffer) return
+
+    await handlePayAndConnect(schedulePractitioner, scheduleOffer, {
+      scheduledAt: slotInfo?.fullDateTime || dateTimeString,
+      slotTime: slotInfo?.slotTime || '',
+      date: slotInfo?.date || '',
+    })
+  }
+
+  // Step 3: Initiate PayGlocal Checkout with practitioner, offer, and chosen scheduled slot
+  const handlePayAndConnect = async (practitioner, chosenOffer, slotData = {}) => {
+    if (!token) {
+      toast.error('Please login to select and connect with a practitioner')
+      return
+    }
+
+    const pId = practitioner.user?._id || practitioner._id
+    const amount = chosenOffer?.price || getSelectedFeeForPractitioner(practitioner)
     const pName = `${practitioner.user?.firstName || practitioner.firstName || 'Practitioner'}`
 
     if (pId.startsWith('pract_')) {
@@ -171,22 +213,33 @@ export function Practitioners({ onUpdate, setActiveTab }) {
       const keyId = orderData?.key || process.env.REACT_APP_PAYGLOCAL_KEY_ID
       const finalAmount = orderData?.amount || amount
 
+      const planNameStr = slotData.slotTime
+        ? `${chosenOffer?.title || 'Session'} • ${slotData.slotTime}`
+        : `Counseling Fee for ${pName}`
+
       const modalOrder = {
         orderId: orderObj.id || orderObj.merchantTxnId || `txn_pgl_${Date.now()}`,
         gid: orderObj.gid || `GL_${Date.now()}`,
         amount: finalAmount || (orderObj.amount ? orderObj.amount / 100 : amount),
         currency: orderObj.currency || 'INR',
-        planName: `Counseling Fee for ${pName}`,
+        planName: planNameStr,
         keyId: keyId,
         merchantId: orderObj.merchantId || process.env.REACT_APP_PAYGLOCAL_MERCHANT_ID,
         customerData: {
           name: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : '',
           email: user?.email || '',
-          phone: user?.additionalDetails?.contactNumber || user?.contactNumber || '',
+          phone: user?.whatsappNumber || user?.additionalDetails?.contactNumber || user?.contactNumber || '',
         },
       }
 
-      setPendingPractitioner({ id: pId, name: pName, amount: finalAmount || amount })
+      setPendingPractitioner({
+        id: pId,
+        name: pName,
+        amount: finalAmount || amount,
+        offerId: chosenOffer?._id,
+        scheduledAt: slotData.scheduledAt,
+        slotTime: slotData.slotTime,
+      })
       setPayglocalOrderData(modalOrder)
       setPayglocalModalOpen(true)
     } catch (err) {
@@ -197,9 +250,10 @@ export function Practitioners({ onUpdate, setActiveTab }) {
     }
   }
 
+  // Step 4: PayGlocal payment verified -> lock slot, notify via WhatsApp & Email to both Learner & Practitioner
   const handlePayGlocalSuccess = async (response) => {
     if (!pendingPractitioner) return
-    const vToast = toast.loading('Confirming connection with PayGlocal...')
+    const vToast = toast.loading('Reserving your slot and confirming booking...')
     try {
       const res = await apiConnector(
         'POST',
@@ -207,6 +261,11 @@ export function Practitioners({ onUpdate, setActiveTab }) {
         {
           practitionerId: pendingPractitioner.id,
           amountPaid: pendingPractitioner.amount,
+          offerId: pendingPractitioner.offerId,
+          scheduledAt: pendingPractitioner.scheduledAt,
+          slotTime: pendingPractitioner.slotTime,
+          clientPhone: user?.whatsappNumber || user?.contactNumber || user?.additionalDetails?.contactNumber || '',
+          clientEmail: user?.email || '',
           payglocal_order_id: response.payglocal_order_id || response.merchantTxnId,
           payglocal_payment_id: response.payglocal_payment_id || response.gid,
           payglocal_gid: response.payglocal_gid || response.gid,
@@ -216,7 +275,10 @@ export function Practitioners({ onUpdate, setActiveTab }) {
       )
 
       if (res?.data?.success) {
-        toast.success(`🎉 Payment of ₹${pendingPractitioner.amount} successful! Net payout credited to ${pendingPractitioner.name}.`, { id: vToast })
+        toast.success(
+          `🎉 Session reserved for ${pendingPractitioner.slotTime || 'your slot'}! Confirmation sent to your WhatsApp & Email.`,
+          { id: vToast, duration: 6000 }
+        )
         loadData()
         if (onUpdate) onUpdate()
       } else {
@@ -381,8 +443,14 @@ export function Practitioners({ onUpdate, setActiveTab }) {
             const firstName = p.user?.firstName || p.firstName || 'Practitioner'
             const lastName = p.user?.lastName || p.lastName || ''
             const fullName = `${firstName} ${lastName}`.trim()
-            const image = p.user?.image || p.image
-            const initials = `${firstName.slice(0, 1)}${lastName.slice(0, 1) || ''}`.toUpperCase()
+            const rawImg = p.user?.image || p.image
+            const hasCustomImage = Boolean(
+              rawImg &&
+              typeof rawImg === 'string' &&
+              rawImg.trim() !== '' &&
+              !rawImg.includes('dicebear')
+            )
+            const firstLetter = (firstName.trim().slice(0, 1) || 'P').toUpperCase()
 
             const conn = getConnectionForPractitioner(pId)
             const connStatus = conn?.status // 'active' | 'approved' | 'pending_approval'
@@ -426,16 +494,36 @@ export function Practitioners({ onUpdate, setActiveTab }) {
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontWeight: 800,
-                      fontSize: '16px',
+                      fontSize: '18px',
                       flexShrink: 0,
                       overflow: 'hidden',
+                      userSelect: 'none',
                     }}
                   >
-                    {image ? (
-                      <img src={image} alt={fullName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      initials
-                    )}
+                    {hasCustomImage ? (
+                      <img
+                        src={rawImg}
+                        alt={fullName}
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none'
+                          const fallback = e.currentTarget.nextElementSibling
+                          if (fallback) fallback.style.display = 'flex'
+                        }}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    ) : null}
+                    <span
+                      style={{
+                        display: hasCustomImage ? 'none' : 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '100%',
+                        height: '100%',
+                        lineHeight: 1,
+                      }}
+                    >
+                      {firstLetter}
+                    </span>
                   </div>
 
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -669,7 +757,7 @@ export function Practitioners({ onUpdate, setActiveTab }) {
                     </button>
                   ) : offers.length > 0 ? (
                     <button
-                      onClick={() => handlePayAndConnect(p)}
+                      onClick={() => handleOpenBookingSchedule(p)}
                       disabled={payingId === pId || selectedFee <= 0}
                       style={{
                         width: '100%',
@@ -686,11 +774,14 @@ export function Practitioners({ onUpdate, setActiveTab }) {
                         justifyContent: 'center',
                         gap: '6px',
                         boxShadow: '0 4px 12px rgba(31, 95, 224, 0.25)',
+                        transition: 'transform 0.15s ease',
                       }}
+                      onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-1px)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
                     >
-                      <FiCreditCard size={15} />
+                      <FiCalendar size={15} />
                       <span>
-                        {payingId === pId ? 'Processing Order...' : `Pay ₹${selectedFee} & Request Connection`}
+                        {payingId === pId ? 'Opening Calendar...' : `Book Session & Choose Slot (₹${selectedFee})`}
                       </span>
                     </button>
                   ) : (
@@ -735,6 +826,21 @@ export function Practitioners({ onUpdate, setActiveTab }) {
         </div>
       )}
 
+      {/* ── Interactive Date & Time Slot Calendar Modal ── */}
+      <LearnerScheduleSelectionModal
+        isOpen={showScheduleModal}
+        onClose={() => {
+          setShowScheduleModal(false)
+          setSchedulePractitioner(null)
+          setScheduleOffer(null)
+        }}
+        practitionerId={schedulePractitioner?.user?._id || schedulePractitioner?._id}
+        practitionerName={schedulePractitioner?.user?.firstName || schedulePractitioner?.firstName}
+        offer={scheduleOffer}
+        onSlotSelected={handleSlotConfirmed}
+      />
+
+      {/* ── PayGlocal Checkout Modal ── */}
       {payglocalModalOpen && (
         <PayGlocalCheckoutModal
           isOpen={payglocalModalOpen}

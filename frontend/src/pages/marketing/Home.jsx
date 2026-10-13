@@ -700,13 +700,24 @@ export function Home() {
                 <div key={practitioner._id} className="w-full sm:w-[320px] bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:shadow-xl transition-all flex flex-col items-center text-center group cursor-pointer" onClick={() => navigate(practitioner.handle ? `/handle/${practitioner.handle}` : `/find-a-practitioner`)}>
                   <div className="relative mb-6">
                     <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-amber-50 shadow-inner group-hover:scale-105 transition-transform duration-300">
-                      {practitioner.image ? (
-                        <img src={practitioner.image} alt={practitioner.firstName} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-2xl font-black">
-                          {practitioner.firstName?.[0]}{practitioner.lastName?.[0]}
-                        </div>
-                      )}
+                      {practitioner.image && !practitioner.image.includes('dicebear') ? (
+                        <img
+                          src={practitioner.image}
+                          alt={practitioner.firstName}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none'
+                            const fallback = e.currentTarget.nextElementSibling
+                            if (fallback) fallback.style.display = 'flex'
+                          }}
+                        />
+                      ) : null}
+                      <div
+                        className="w-full h-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-3xl font-black uppercase"
+                        style={{ display: practitioner.image && !practitioner.image.includes('dicebear') ? 'none' : 'flex' }}
+                      >
+                        {(practitioner.firstName?.trim()?.charAt(0) || 'P').toUpperCase()}
+                      </div>
                     </div>
                     <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-md border border-white">
                       Rank {practitioner.practitionerOfTheMonthRank}

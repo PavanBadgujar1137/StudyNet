@@ -480,7 +480,7 @@ exports.socialLogin = async (req, res) => {
         accountType: userAccountType,
         contactNumber: "",
         additionalDetails: profileDetails._id,
-        image: image || `https://api.dicebear.com/5.x/initials/svg?seed=${encodeURIComponent(fName + " " + lName)}`,
+        image: (image && !image.includes("dicebear")) ? image : "",
         approved: true,
         active: true,
         trialStartedAt: now,

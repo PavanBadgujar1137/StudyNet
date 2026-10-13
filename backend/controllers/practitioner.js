@@ -80,7 +80,9 @@ exports.getPractitioners = async (req, res) => {
 
       // Populate user field with crisp high-resolution image
       let highResImage = u.image
-      if (highResImage && highResImage.includes("googleusercontent.com")) {
+      if (highResImage && highResImage.includes("dicebear")) {
+        highResImage = ""
+      } else if (highResImage && highResImage.includes("googleusercontent.com")) {
         highResImage = highResImage.replace(/=s\d+(-[a-zA-Z0-9]+)?/i, "=s800-c")
       }
       profile.user = {
@@ -436,6 +438,13 @@ exports.getPractitionerByHandle = async (req, res) => {
     const updatedViewCount = (profile.viewCount || 0) + 1
 
     const profileObj = profile.toObject()
+    if (profileObj.user?.image) {
+      if (profileObj.user.image.includes("dicebear")) {
+        profileObj.user.image = ""
+      } else if (profileObj.user.image.includes("googleusercontent.com")) {
+        profileObj.user.image = profileObj.user.image.replace(/=s\d+(-[a-zA-Z0-9]+)?/i, "=s800-c")
+      }
+    }
     profileObj.viewCount = updatedViewCount
     profileObj.reviews = practitionerReviews || []
     profileObj.rating = finalRating
@@ -668,6 +677,11 @@ exports.connectClientWithPractitioner = async (req, res) => {
       signature,
       token,
       offerId,
+      scheduledAt,
+      slotTime,
+      clientPhone,
+      clientEmail,
+      whatsappNumber,
     } = req.body
 
     if (!practitionerId) {
@@ -738,15 +752,55 @@ exports.connectClientWithPractitioner = async (req, res) => {
     )
 
     // 2. Create Booking record
+    let targetOffer = null
     let targetOfferId = offerId
-    if (!targetOfferId) {
-      const defaultOffer = await Offer.findOne({ practitioner: practUser._id })
-      if (defaultOffer) targetOfferId = defaultOffer._id
+    if (targetOfferId) {
+      targetOffer = await Offer.findById(targetOfferId)
+    }
+    if (!targetOffer) {
+      targetOffer = await Offer.findOne({ practitioner: practUser._id })
+      if (targetOffer) targetOfferId = targetOffer._id
     }
 
     const clientUser = await User.findById(clientId).select("firstName lastName email contactNumber whatsappNumber additionalDetails")
-    const resolvedPhone = req.body?.clientPhone || req.body?.phone || req.body?.whatsappNumber || clientUser?.whatsappNumber || clientUser?.contactNumber || clientUser?.additionalDetails?.contactNumber || ""
-    const resolvedEmail = req.body?.clientEmail || clientUser?.email || ""
+    const resolvedPhone = clientPhone || whatsappNumber || req.body?.phone || clientUser?.whatsappNumber || clientUser?.contactNumber || clientUser?.additionalDetails?.contactNumber || ""
+    const resolvedEmail = clientEmail || req.body?.clientEmail || clientUser?.email || ""
+
+    let finalScheduledAt = scheduledAt ? new Date(scheduledAt) : new Date(Date.now() + 86400000)
+    if (isNaN(finalScheduledAt.getTime())) {
+      finalScheduledAt = new Date(Date.now() + 86400000)
+    }
+    const finalSlotTime = slotTime || ""
+
+    // Also create LiveClass session record for interactive video room
+    let liveClass = null
+    try {
+      const LiveClass = require("../models/LiveClass")
+      const slotEnd = new Date(finalScheduledAt.getTime() + (targetOffer?.durationMinutes || 50) * 60 * 1000)
+      const sessionUniqueId = require("crypto").randomBytes(4).toString("hex")
+      const offerTitle = targetOffer?.title || "1:1 Counseling & Healing Session"
+      liveClass = await LiveClass.create({
+        title: offerTitle,
+        description: `Booked session with ${practUser.firstName} ${practUser.lastName}`,
+        instructor: practUser._id,
+        sessionType: "1-on-1",
+        client: clientId,
+        scheduledStart: finalScheduledAt,
+        scheduledEnd: slotEnd,
+        chatEnabled: true,
+        maxAttendees: 1,
+        streamProvider: "livekit",
+        livekitRoomName: `room-${sessionUniqueId}`,
+        livekitServerUrl: process.env.LIVEKIT_API_URL || "wss://openhand-dev.livekit.cloud",
+        status: "scheduled",
+      })
+    } catch (lcErr) {
+      console.warn("Could not create LiveClass entry for session:", lcErr.message)
+    }
+
+    const meetingLink = liveClass
+      ? `${process.env.FRONTEND_URL || "http://localhost:3000"}/live-classroom/${liveClass._id}?role=learner`
+      : `${process.env.FRONTEND_URL || "http://localhost:3000"}/dashboard?tab=sessions`
 
     const booking = await Booking.create({
       client: clientId,
@@ -764,7 +818,9 @@ exports.connectClientWithPractitioner = async (req, res) => {
       payglocalGid: glPaymentId,
       status: "confirmed",
       settlementStatus: "pending_t2",
-      scheduledAt: new Date(Date.now() + 86400000),
+      scheduledAt: finalScheduledAt,
+      slotTime: finalSlotTime,
+      meetingLink,
     })
 
     // 3. Create Payout record crediting practitioner (Automated 72-Hour PayGlocal Direct Transfer)

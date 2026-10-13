@@ -668,30 +668,59 @@ export default function CommunityChatHub({ defaultPractitionerId = null }) {
                         }}
                       >
                         <div style={{ position: "relative" }}>
-                          <div
-                            style={{
-                              width: "28px",
-                              height: "28px",
-                              borderRadius: "8px",
-                              background: "#2563EB",
-                              color: "#FFF",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              fontWeight: 700,
-                              fontSize: "11px",
-                            }}
-                          >
-                            {contact.image ? (
-                              <img
-                                src={contact.image}
-                                alt={contact.firstName}
-                                style={{ width: "100%", height: "100%", borderRadius: "8px", objectFit: "cover" }}
-                              />
-                            ) : (
-                              `${contact.firstName?.slice(0, 1) || "U"}`
-                            )}
-                          </div>
+                          {(() => {
+                            const hasCustomImg = Boolean(
+                              contact.image &&
+                              typeof contact.image === "string" &&
+                              contact.image.trim() !== "" &&
+                              !contact.image.includes("dicebear")
+                            )
+                            const initial = (contact.firstName?.trim()?.slice(0, 1) || "U").toUpperCase()
+
+                            return (
+                              <div
+                                style={{
+                                  width: "28px",
+                                  height: "28px",
+                                  borderRadius: "8px",
+                                  background: "#2563EB",
+                                  color: "#FFF",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  fontWeight: 700,
+                                  fontSize: "12px",
+                                  overflow: "hidden",
+                                  userSelect: "none",
+                                }}
+                              >
+                                {hasCustomImg ? (
+                                  <img
+                                    src={contact.image}
+                                    alt={contact.firstName}
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = "none"
+                                      const fallback = e.currentTarget.nextElementSibling
+                                      if (fallback) fallback.style.display = "flex"
+                                    }}
+                                    style={{ width: "100%", height: "100%", borderRadius: "8px", objectFit: "cover" }}
+                                  />
+                                ) : null}
+                                <span
+                                  style={{
+                                    display: hasCustomImg ? "none" : "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    width: "100%",
+                                    height: "100%",
+                                    lineHeight: 1,
+                                  }}
+                                >
+                                  {initial}
+                                </span>
+                              </div>
+                            )
+                          })()}
                           <span style={{ position: "absolute", bottom: "-1px", right: "-1px", width: "7px", height: "7px", background: "#22C55E", border: "1.5px solid #FFF", borderRadius: "50%" }}></span>
                         </div>
 

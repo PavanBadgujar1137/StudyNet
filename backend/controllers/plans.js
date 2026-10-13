@@ -462,7 +462,7 @@ exports.verifySubscriptionCallOrder = async (req, res) => {
           accountType: "Practitioner",
           activePlan: keyLower,
           additionalDetails: profileDetails._id,
-          image: `https://api.dicebear.com/5.x/initials/svg?seed=${encodeURIComponent(effectiveName)}`,
+          image: "",
         })
       } catch (userCreateErr) {
         console.warn("Could not auto-create user for guest practitioner:", userCreateErr.message)

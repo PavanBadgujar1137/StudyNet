@@ -34,6 +34,7 @@ export function PractitionerPublicProfile() {
 
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [avatarError, setAvatarError] = useState(false)
 
   const [showIntakeModal, setShowIntakeModal] = useState(false)
   const [showScheduleModal, setShowScheduleModal] = useState(false)
@@ -119,6 +120,7 @@ export function PractitionerPublicProfile() {
   }
 
   useEffect(() => {
+    setAvatarError(false)
     const fetchProfile = async () => {
       setLoading(true)
       try {
@@ -306,6 +308,18 @@ export function PractitionerPublicProfile() {
 
   const user = profile.user || {}
   const practitionerName = formatPractitionerName(user, 'Practitioner')
+  const hasCustomAvatar = Boolean(
+    user?.image &&
+    typeof user.image === 'string' &&
+    user.image.trim() !== '' &&
+    !user.image.includes('dicebear') &&
+    !avatarError
+  )
+  const firstLetter = (
+    user?.firstName?.trim()?.charAt(0) ||
+    practitionerName?.trim()?.charAt(0) ||
+    'P'
+  ).toUpperCase()
   const offers = (profile.offers || profile.userOffers || []).filter(
     (o) => o.status === 'published' || (!o.status && o.status !== 'draft')
   )
@@ -444,18 +458,20 @@ export function PractitionerPublicProfile() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '48px',
+              fontSize: '54px',
               fontWeight: 800,
               border: '4px solid #DBEAFE',
               boxShadow: '0 10px 25px rgba(59, 130, 246, 0.22)',
               flexShrink: 0,
               overflow: 'hidden',
+              userSelect: 'none',
             }}
           >
-            {user.image ? (
+            {hasCustomAvatar ? (
               <img
                 src={getOptimizedImageUrl(user.image, 800)}
                 alt={practitionerName}
+                onError={() => setAvatarError(true)}
                 style={{
                   width: '100%',
                   height: '100%',
@@ -464,7 +480,9 @@ export function PractitionerPublicProfile() {
                 }}
               />
             ) : (
-              <span>{user.firstName?.slice(0, 1) || 'P'}</span>
+              <span style={{ lineHeight: 1, textTransform: 'uppercase' }}>
+                {firstLetter}
+              </span>
             )}
           </div>
 
