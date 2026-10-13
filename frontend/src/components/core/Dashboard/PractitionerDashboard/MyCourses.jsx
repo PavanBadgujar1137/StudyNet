@@ -2544,7 +2544,7 @@ export default function MyCourses() {
   const draftCount = courses.filter(c => c.status === 'draft').length
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div className="oh-view-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       {showCreate && <CreateCourseModal onClose={() => setShowCreate(false)} onSuccess={() => { setShowCreate(false); loadCourses() }} />}
       {editingCourse && <EditCourseModal course={editingCourse} onClose={() => setEditingCourse(null)} onSuccess={() => { setEditingCourse(null); loadCourses() }} />}
 

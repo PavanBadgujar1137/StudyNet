@@ -31,24 +31,29 @@ export default function UpdatePassword() {
     }
   }
 
-  const inputClass = "w-full rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3 pr-10 text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 focus:outline-none transition-all"
-  const labelClass = "text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5"
+  const inputClass = "oh-profile-input pr-10"
+  const labelClass = "oh-profile-label"
 
   return (
     <form onSubmit={handleSubmit(submitPasswordForm)} className="flex flex-col gap-6">
       {/* Password Update Box */}
-      <div className="rounded-3xl border border-slate-200/80 bg-white p-6 md:p-8 shadow-sm flex flex-col gap-6 text-left">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+      <div className="oh-profile-card">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #F1F5F9', paddingBottom: '20px', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            <h2 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
-              <FiShield className="text-indigo-600" /> Security &amp; Password
+            <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#0F172A', margin: 0, letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(99, 102, 241, 0.1)', color: '#6366F1', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                <FiShield size={18} />
+              </span>
+              Security &amp; Password
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">Manage your password and secure your account credentials</p>
+            <p style={{ fontSize: '13px', color: '#64748B', margin: '4px 0 0' }}>
+              Keep your account safe by updating your password regularly with strong credentials
+            </p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div className="relative flex flex-col gap-2">
+          <div className="relative flex flex-col">
             <label htmlFor="oldPassword" className={labelClass}>
               Current Password
             </label>
@@ -57,29 +62,29 @@ export default function UpdatePassword() {
                 type={showOldPassword ? "text" : "password"}
                 name="oldPassword"
                 id="oldPassword"
-                placeholder="Enter Current Password"
+                placeholder="Enter current password"
                 className={inputClass}
                 {...register("oldPassword", { required: true })}
               />
               <span
                 onClick={() => setShowOldPassword((prev) => !prev)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 z-[10] cursor-pointer"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 z-[10] cursor-pointer text-slate-400 hover:text-slate-600 transition-colors"
               >
                 {showOldPassword ? (
-                  <AiOutlineEyeInvisible fontSize={18} fill="#64748B" />
+                  <AiOutlineEyeInvisible fontSize={18} />
                 ) : (
-                  <AiOutlineEye fontSize={18} fill="#64748B" />
+                  <AiOutlineEye fontSize={18} />
                 )}
               </span>
             </div>
             {errors.oldPassword && (
-              <span className="text-[11px] font-semibold text-rose-500">
+              <span className="text-[11px] font-semibold text-rose-500 mt-1">
                 Please enter your Current Password.
               </span>
             )}
           </div>
 
-          <div className="relative flex flex-col gap-2">
+          <div className="relative flex flex-col">
             <label htmlFor="newPassword" className={labelClass}>
               New Password
             </label>
@@ -88,51 +93,58 @@ export default function UpdatePassword() {
                 type={showNewPassword ? "text" : "password"}
                 name="newPassword"
                 id="newPassword"
-                placeholder="Enter New Password"
+                placeholder="Enter new password"
                 className={inputClass}
                 {...register("newPassword", { required: true })}
               />
               <span
                 onClick={() => setShowNewPassword((prev) => !prev)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 z-[10] cursor-pointer"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 z-[10] cursor-pointer text-slate-400 hover:text-slate-600 transition-colors"
               >
                 {showNewPassword ? (
-                  <AiOutlineEyeInvisible fontSize={18} fill="#64748B" />
+                  <AiOutlineEyeInvisible fontSize={18} />
                 ) : (
-                  <AiOutlineEye fontSize={18} fill="#64748B" />
+                  <AiOutlineEye fontSize={18} />
                 )}
               </span>
             </div>
             {errors.newPassword && (
-              <span className="text-[11px] font-semibold text-rose-500">
+              <span className="text-[11px] font-semibold text-rose-500 mt-1">
                 Please enter your New Password.
               </span>
             )}
           </div>
         </div>
-      </div>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
-        <button
-          type="submit"
+        {/* Password Security Tip Box */}
+        <div
           style={{
-            background: 'linear-gradient(135deg, #1F5FE0 0%, #8A2BE0 100%)',
-            color: '#FFFFFF',
-            padding: '12px 28px',
-            borderRadius: '12px',
-            fontWeight: 700,
-            fontSize: '13px',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            boxShadow: '0 4px 14px rgba(31, 95, 224, 0.35)',
-            transition: 'all 0.15s ease'
+            marginTop: "20px",
+            background: "#F8FAFC",
+            border: "1px solid #E2E8F0",
+            borderRadius: "14px",
+            padding: "14px 16px",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            fontSize: "12.5px",
+            color: "#475569"
           }}
         >
-          <FiCheck style={{ fontSize: '16px' }} /> Update Password
-        </button>
+          <span style={{ fontSize: "16px" }}>💡</span>
+          <span>
+            <strong>Tip:</strong> Use a combination of uppercase letters, numbers, and symbols to maximize security across your OpenHand sessions.
+          </span>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #F1F5F9' }}>
+          <button
+            type="submit"
+            className="oh-profile-btn-primary"
+          >
+            <FiCheck size={16} /> Update Password
+          </button>
+        </div>
       </div>
     </form>
   )

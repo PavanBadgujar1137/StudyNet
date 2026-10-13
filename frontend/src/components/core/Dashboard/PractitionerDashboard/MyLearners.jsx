@@ -209,7 +209,7 @@ export function MyLearners({ setActiveSection, telemetryData, onUpdate }) {
     : []
 
   return (
-    <section className="view on" id="clients">
+    <section className="view on oh-view-fade-in" id="clients">
       {/* Header */}
       <div className="htop" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
         <div>
@@ -219,7 +219,7 @@ export function MyLearners({ setActiveSection, telemetryData, onUpdate }) {
       </div>
 
       {/* QUICK LEARNER ID LOOKUP CARD */}
-      <div style={{ background: 'linear-gradient(135deg, #1E1B4B 0%, #312E81 100%)', borderRadius: '16px', padding: '22px 24px', marginBottom: '24px', color: '#FFF', boxShadow: '0 10px 25px -5px rgba(30, 27, 75, 0.3)' }}>
+      <div className="oh-card-interactive" style={{ background: 'linear-gradient(135deg, #1E1B4B 0%, #312E81 100%)', borderRadius: '16px', padding: '22px 24px', marginBottom: '24px', color: '#FFF', boxShadow: '0 10px 25px -5px rgba(30, 27, 75, 0.3)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '14px', marginBottom: '16px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '17px', fontWeight: 800, color: '#FFFFFF' }}>
@@ -562,7 +562,7 @@ export function MyLearners({ setActiveSection, telemetryData, onUpdate }) {
               {filteredClients.length > 0 ? (
                 filteredClients.map((client) => {
                   return (
-                    <tr key={client._id} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                    <tr key={client._id} className="interactive-row" style={{ borderBottom: '1px solid #F1F5F9' }}>
                       <td style={{ padding: '14px 16px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                           <div
@@ -704,6 +704,7 @@ export function MyLearners({ setActiveSection, telemetryData, onUpdate }) {
       {/* LEARNER REFLECTIONS MODAL */}
       {reflectionModalLearner && (
         <div
+          className="oh-modal-backdrop-animated"
           style={{
             position: 'fixed',
             inset: 0,
@@ -716,6 +717,7 @@ export function MyLearners({ setActiveSection, telemetryData, onUpdate }) {
           }}
         >
           <div
+            className="oh-modal-box-animated"
             style={{
               background: '#FFFFFF',
               borderRadius: '20px',

@@ -433,110 +433,113 @@ export default function MySubscription() {
     : "Active Subscription"
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
       {/* Active Subscription Banner */}
       <div
         style={{
-          background: "#0F172A",
-          borderRadius: "20px",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
-          padding: "28px",
+          background: "linear-gradient(135deg, #080D1B 0%, #0F172A 50%, #1E1B4B 100%)",
+          borderRadius: "24px",
+          border: "1px solid rgba(255, 255, 255, 0.12)",
+          padding: "32px",
           color: "#FFFFFF",
           position: "relative",
           overflow: "hidden",
-          boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.2)"
+          boxShadow: "0 20px 40px -10px rgba(8, 13, 27, 0.4)",
         }}
       >
-        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-start", gap: "20px" }}>
+        {/* Ambient Glow */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            width: '300px',
+            height: '300px',
+            background: 'radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, transparent 70%)',
+            pointerEvents: 'none'
+          }}
+        />
+
+        <div style={{ position: 'relative', zIndex: 1, display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-start", gap: "20px" }}>
           <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
               <span
                 style={{
                   background: planInfo.badgeColor,
                   color: "#FFFFFF",
-                  padding: "4px 12px",
+                  padding: "4px 14px",
                   borderRadius: "999px",
                   fontSize: "11px",
                   fontWeight: 800,
                   textTransform: "uppercase",
-                  letterSpacing: "0.5px"
+                  letterSpacing: "0.5px",
+                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.25)"
                 }}
               >
                 {isLifetime ? "LIFETIME VIP" : isExpired ? "EXPIRED" : "ACTIVE PLAN"}
               </span>
-              <span style={{ color: "#94A3B8", fontSize: "13px", fontWeight: 600 }}>
+              <span style={{ color: "#A5B4FC", fontSize: "13px", fontWeight: 700 }}>
                 {planInfo.type}
               </span>
             </div>
 
-            <h2 style={{ fontSize: "28px", fontWeight: 800, color: "#FFFFFF", margin: "4px 0 8px", letterSpacing: "-0.02em" }}>
+            <h2 style={{ fontSize: "30px", fontWeight: 800, color: "#FFFFFF", margin: "4px 0 8px", letterSpacing: "-0.025em" }}>
               {planInfo.name}
             </h2>
 
-            <p style={{ color: "#94A3B8", fontSize: "14px", margin: 0 }}>
+            <p style={{ color: "#94A3B8", fontSize: "14px", margin: 0, maxWidth: "560px", lineHeight: 1.5 }}>
               Manage your practice tools, live circle capacity, and platform publishing status.
             </p>
           </div>
 
           <button
             onClick={() => navigate("/schedule-call?plan=pro_yearly")}
-            style={{
-              background: "linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)",
-              color: "#FFFFFF",
-              border: "none",
-              padding: "12px 20px",
-              borderRadius: "12px",
-              fontWeight: 700,
-              fontSize: "14px",
-              cursor: "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              boxShadow: "0 4px 14px rgba(99, 102, 241, 0.4)",
-              transition: "transform 0.15s ease"
-            }}
+            className="oh-profile-btn-primary"
+            style={{ padding: "14px 24px", fontSize: "14px" }}
           >
-            <FiZap /> Book a Call &amp; Take Subscription <FiArrowRight />
+            <FiZap size={16} /> Book a Call &amp; Take Subscription <FiArrowRight size={16} />
           </button>
         </div>
 
         {/* Subscription Meta Details Grid */}
         <div
           style={{
+            position: 'relative',
+            zIndex: 1,
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
             gap: "16px",
-            marginTop: "24px",
-            paddingTop: "20px",
+            marginTop: "28px",
+            paddingTop: "24px",
             borderTop: "1px solid rgba(255, 255, 255, 0.1)"
           }}
         >
           {/* Price */}
-          <div style={{ background: "rgba(255, 255, 255, 0.04)", borderRadius: "14px", padding: "14px 16px", border: "1px solid rgba(255, 255, 255, 0.08)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#94A3B8", fontSize: "12px", fontWeight: 600 }}>
-              <FiCreditCard style={{ color: "#818CF8" }} /> Platform Fee
+          <div style={{ background: "rgba(255, 255, 255, 0.04)", borderRadius: "16px", padding: "16px 18px", border: "1px solid rgba(255, 255, 255, 0.08)", backdropFilter: "blur(4px)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#94A3B8", fontSize: "12px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+              <FiCreditCard style={{ color: "#818CF8" }} size={15} /> Platform Fee
             </div>
-            <div style={{ color: "#FFFFFF", fontSize: "18px", fontWeight: 800, marginTop: "4px" }}>
+            <div style={{ color: "#FFFFFF", fontSize: "20px", fontWeight: 800, marginTop: "6px", letterSpacing: "-0.01em" }}>
               {planInfo.price}
             </div>
           </div>
 
           {/* Expiration / Renewal Date */}
-          <div style={{ background: "rgba(255, 255, 255, 0.04)", borderRadius: "14px", padding: "14px 16px", border: "1px solid rgba(255, 255, 255, 0.08)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#94A3B8", fontSize: "12px", fontWeight: 600 }}>
-              <FiCalendar style={{ color: "#34D399" }} /> Next Renewal / Expiration
+          <div style={{ background: "rgba(255, 255, 255, 0.04)", borderRadius: "16px", padding: "16px 18px", border: "1px solid rgba(255, 255, 255, 0.08)", backdropFilter: "blur(4px)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#94A3B8", fontSize: "12px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+              <FiCalendar style={{ color: "#34D399" }} size={15} /> Next Renewal / Expiry
             </div>
-            <div style={{ color: "#FFFFFF", fontSize: "15px", fontWeight: 700, marginTop: "4px" }}>
+            <div style={{ color: "#FFFFFF", fontSize: "16px", fontWeight: 700, marginTop: "6px" }}>
               {formattedDate}
             </div>
           </div>
 
           {/* Days Remaining */}
-          <div style={{ background: "rgba(255, 255, 255, 0.04)", borderRadius: "14px", padding: "14px 16px", border: "1px solid rgba(255, 255, 255, 0.08)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#94A3B8", fontSize: "12px", fontWeight: 600 }}>
-              <FiClock style={{ color: "#FBBF24" }} /> Plan Status
+          <div style={{ background: "rgba(255, 255, 255, 0.04)", borderRadius: "16px", padding: "16px 18px", border: "1px solid rgba(255, 255, 255, 0.08)", backdropFilter: "blur(4px)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#94A3B8", fontSize: "12px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+              <FiClock style={{ color: "#FBBF24" }} size={15} /> Plan Status
             </div>
-            <div style={{ color: isLifetime ? "#34D399" : isExpired ? "#F87171" : "#818CF8", fontSize: "15px", fontWeight: 800, marginTop: "4px" }}>
+            <div style={{ color: isLifetime ? "#34D399" : isExpired ? "#F87171" : "#818CF8", fontSize: "16px", fontWeight: 800, marginTop: "6px" }}>
               {daysRemaining}
             </div>
           </div>
@@ -544,38 +547,38 @@ export default function MySubscription() {
       </div>
 
       {/* Plan Features Included */}
-      <div
-        style={{
-          background: "#FFFFFF",
-          borderRadius: "20px",
-          border: "1px solid #E2E8F0",
-          padding: "28px",
-          boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)"
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "18px" }}>
-          <FiAward style={{ fontSize: "20px", color: "#4F46E5" }} />
-          <h3 style={{ fontSize: "18px", fontWeight: 800, color: "#0F172A", margin: 0 }}>
-            Features Included in Your Practitioner Plan
-          </h3>
+      <div className="oh-profile-card">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #F1F5F9', paddingBottom: '20px', marginBottom: '24px' }}>
+          <div>
+            <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0F172A', margin: 0, letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(99, 102, 241, 0.1)', color: '#6366F1', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                <FiAward size={18} />
+              </span>
+              Features Included in Your Practitioner Plan
+            </h3>
+            <p style={{ fontSize: '13px', color: '#64748B', margin: '4px 0 0' }}>
+              Everything enabled with your current practice status
+            </p>
+          </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "14px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "14px" }}>
           {planInfo.features.map((feat, idx) => (
             <div
               key={idx}
               style={{
                 display: "flex",
                 alignItems: "flex-start",
-                gap: "10px",
+                gap: "12px",
                 background: "#F8FAFC",
-                padding: "12px 14px",
-                borderRadius: "12px",
-                border: "1px solid #E2E8F0"
+                padding: "14px 16px",
+                borderRadius: "14px",
+                border: "1px solid #E2E8F0",
+                transition: "all 0.15s ease"
               }}
             >
-              <FiCheckCircle style={{ color: "#10B981", fontSize: "16px", flexShrink: 0, marginTop: "2px" }} />
-              <span style={{ color: "#334155", fontSize: "13px", fontWeight: 600 }}>
+              <FiCheckCircle style={{ color: "#10B981", fontSize: "18px", flexShrink: 0, marginTop: "1px" }} />
+              <span style={{ color: "#1E293B", fontSize: "13.5px", fontWeight: 600, lineHeight: 1.45 }}>
                 {feat}
               </span>
             </div>

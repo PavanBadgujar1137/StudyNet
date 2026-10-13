@@ -244,6 +244,7 @@ export function PractitionerDashboard() {
                     key={`${item.id}-${idx}`}
                     onClick={() => handleTabClick(item)}
                     className={`oh-sidebar-btn ${isActive ? 'active' : ''}`}
+                    aria-current={isActive ? 'page' : undefined}
                   >
                     <div className="oh-sidebar-btn-left">
                       <span className="oh-sidebar-btn-icon">{item.icon}</span>
@@ -264,6 +265,7 @@ export function PractitionerDashboard() {
                     key={item.id}
                     onClick={() => handleTabClick(item)}
                     className={`oh-sidebar-btn ${isActive ? 'active' : ''}`}
+                    aria-current={isActive ? 'page' : undefined}
                   >
                     <div className="oh-sidebar-btn-left">
                       <span className="oh-sidebar-btn-icon" style={{ color: '#F87171' }}>{item.icon}</span>
@@ -289,6 +291,7 @@ export function PractitionerDashboard() {
                     key={item.id}
                     onClick={() => handleTabClick(item)}
                     className={`oh-sidebar-btn ${isActive ? 'active' : ''}`}
+                    aria-current={isActive ? 'page' : undefined}
                   >
                     <div className="oh-sidebar-btn-left">
                       <span className="oh-sidebar-btn-icon">{item.icon}</span>
@@ -309,6 +312,7 @@ export function PractitionerDashboard() {
                     key={item.id}
                     onClick={() => handleTabClick(item)}
                     className={`oh-sidebar-btn ${isActive ? 'active' : ''}`}
+                    aria-current={isActive ? 'page' : undefined}
                   >
                     <div className="oh-sidebar-btn-left">
                       <span className="oh-sidebar-btn-icon">{item.icon}</span>
@@ -442,7 +446,11 @@ export function PractitionerDashboard() {
         </div>
 
         {/* View Content */}
-        <div className="oh-view-body" style={activeSection === 'aura' ? { padding: 0, maxWidth: '100%', width: '100%', flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' } : {}}>
+        <div 
+          key={activeSection}
+          className={`oh-view-body ${activeSection !== 'aura' ? 'oh-view-fade-in' : ''}`} 
+          style={activeSection === 'aura' ? { padding: 0, maxWidth: '100%', width: '100%', flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' } : {}}
+        >
           {isPractitionerExpired && activeSection !== 'profile' ? (
             <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '10px 0 40px' }}>
               {/* Expired Lock Header Banner */}

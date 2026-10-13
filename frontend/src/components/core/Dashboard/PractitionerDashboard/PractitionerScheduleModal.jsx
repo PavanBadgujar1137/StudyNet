@@ -209,6 +209,7 @@ export function PractitionerScheduleModal({ isOpen, onClose }) {
 
   return (
     <div
+      className="oh-modal-backdrop-animated"
       style={{
         position: 'fixed',
         inset: 0,
@@ -223,6 +224,7 @@ export function PractitionerScheduleModal({ isOpen, onClose }) {
       onClick={onClose}
     >
       <div
+        className="oh-modal-box-animated"
         style={{
           background: '#FFFFFF',
           borderRadius: '24px',

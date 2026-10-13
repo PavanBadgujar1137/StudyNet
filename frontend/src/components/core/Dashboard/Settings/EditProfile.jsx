@@ -166,19 +166,24 @@ export default function EditProfile() {
     }
   }
 
-  const inputClass = "w-full rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 focus:outline-none transition-all"
-  const labelClass = "text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5"
+  const inputClass = "oh-profile-input"
+  const labelClass = "oh-profile-label"
 
   return (
     <form onSubmit={handleSubmit(submitProfileForm)} className="flex flex-col gap-6">
       {/* Profile Information Box */}
-      <div className="rounded-3xl border border-slate-200/80 bg-white p-6 md:p-8 shadow-sm flex flex-col gap-6 text-left">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+      <div className="oh-profile-card">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #F1F5F9', paddingBottom: '20px', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            <h2 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
-              <FiUser className="text-indigo-600" /> Personal Information
+            <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#0F172A', margin: 0, letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(99, 102, 241, 0.1)', color: '#6366F1', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                <FiUser size={18} />
+              </span>
+              Personal Information
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">Update your personal details and contact information</p>
+            <p style={{ fontSize: '13px', color: '#64748B', margin: '4px 0 0' }}>
+              Update your personal details, honorific title, contact numbers, and bio
+            </p>
           </div>
         </div>
 
@@ -563,26 +568,12 @@ export default function EditProfile() {
         <BankDetailsCard token={token} />
       )}
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
         <button
           type="submit"
-          style={{
-            background: 'linear-gradient(135deg, #1F5FE0 0%, #8A2BE0 100%)',
-            color: '#FFFFFF',
-            padding: '12px 28px',
-            borderRadius: '12px',
-            fontWeight: 700,
-            fontSize: '13px',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            boxShadow: '0 4px 14px rgba(31, 95, 224, 0.35)',
-            transition: 'all 0.15s ease'
-          }}
+          className="oh-profile-btn-primary"
         >
-          <FiCheck style={{ fontSize: '16px' }} /> Save Personal Details
+          <FiCheck size={16} /> Save Personal Details
         </button>
       </div>
     </form>
@@ -681,23 +672,26 @@ function BankDetailsCard({ token }) {
     return c.name.toLowerCase().includes(q) || (c.code && c.code.includes(q))
   })
 
-  const inputClass = "w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 focus:outline-none transition-all"
-  const labelClass = "text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5"
+  const inputClass = "oh-profile-input"
+  const labelClass = "oh-profile-label"
 
   return (
-    <div className="rounded-3xl border border-indigo-100 bg-gradient-to-br from-white to-indigo-50/30 p-6 md:p-8 shadow-sm flex flex-col gap-6 text-left">
+    <div className="oh-profile-card flex flex-col gap-6 text-left">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-indigo-100 pb-4 gap-3">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #F1F5F9', paddingBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h2 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <FiCreditCard className="text-indigo-600" /> Worldwide Bank &amp; Payout Details
+          <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#0F172A', margin: 0, letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(99, 102, 241, 0.1)', color: '#6366F1', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+              <FiCreditCard size={18} />
+            </span>
+            Worldwide Bank &amp; Payout Details
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p style={{ fontSize: '13px', color: '#64748B', margin: '4px 0 0' }}>
             Admin uses these international credentials to disburse your monthly earnings directly to your bank or digital account
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ padding: '6px 14px', borderRadius: '999px', fontSize: '12px', fontWeight: 700, background: '#ECFDF5', color: '#065F46', border: '1px solid #A7F3D0' }}>
             ✓ 200+ Countries Supported
           </span>
         </div>
@@ -963,22 +957,13 @@ function BankDetailsCard({ token }) {
               type="button"
               onClick={handleSaveBankDetails}
               disabled={saving}
+              className="oh-profile-btn-primary"
               style={{
-                background: "linear-gradient(135deg, #10B981 0%, #059669 100%)",
-                color: "#FFFFFF",
-                padding: "11px 26px",
-                borderRadius: "12px",
-                fontWeight: 700,
-                fontSize: "13px",
-                border: "none",
-                cursor: saving ? "not-allowed" : "pointer",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
+                background: "linear-gradient(135deg, #059669 0%, #10B981 100%)",
                 boxShadow: "0 4px 14px rgba(16, 185, 129, 0.35)",
               }}
             >
-              <FiCheck /> {saving ? "Saving Payout Details..." : "Save Bank & Payout Details"}
+              <FiCheck size={16} /> {saving ? "Saving Payout Details..." : "Save Bank & Payout Details"}
             </button>
           </div>
         </div>

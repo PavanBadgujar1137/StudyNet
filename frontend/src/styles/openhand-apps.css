@@ -3668,6 +3668,1464 @@ html:has(.oh-dashboard-layout) {
   }
 }
 
+/* ==========================================================================
+   PRACTITIONER GROWTH TOOLS REDESIGN
+   ========================================================================== */
 
+.oh-growth-page {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
 
+/* ─── Hero Section ─── */
+.oh-growth-hero {
+  border-radius: 24px;
+  background: radial-gradient(circle at 85% 25%, rgba(99, 102, 241, 0.22) 0%, rgba(139, 92, 246, 0.08) 45%, transparent 70%),
+              linear-gradient(135deg, #080D1B 0%, #0F172A 50%, #161F37 100%);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  color: #FFFFFF;
+  padding: 34px 38px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  box-shadow: 0 20px 45px -10px rgba(8, 13, 27, 0.45);
+}
 
+.oh-growth-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(99, 102, 241, 0.4) 30%, rgba(168, 85, 247, 0.4) 70%, transparent 100%);
+}
+
+.oh-growth-hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 660px;
+}
+
+.oh-growth-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.oh-growth-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #34D399;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.oh-growth-pill-pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 8px #10B981;
+}
+
+.oh-growth-badge-sub {
+  color: #94A3B8;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.oh-growth-hero-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #FFFFFF;
+  margin: 0 0 10px;
+  line-height: 1.15;
+}
+
+.oh-growth-hero-desc {
+  font-size: 14.5px;
+  color: #CBD5E1;
+  line-height: 1.6;
+  margin: 0 0 24px;
+  max-width: 620px;
+}
+
+.oh-growth-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.oh-growth-btn-primary {
+  background: linear-gradient(135deg, #2563EB 0%, #3B82F6 100%);
+  color: #FFFFFF;
+  border: none;
+  padding: 11px 20px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 13.5px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.oh-growth-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.45);
+  background: linear-gradient(135deg, #1D4ED8 0%, #2563EB 100%);
+}
+
+.oh-growth-btn-primary.copied {
+  background: linear-gradient(135deg, #059669 0%, #10B981 100%);
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.35);
+}
+
+.oh-growth-btn-glass {
+  background: rgba(255, 255, 255, 0.08);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(8px);
+  padding: 11px 18px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 13.5px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.oh-growth-btn-glass:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.28);
+  transform: translateY(-2px);
+}
+
+/* Hero Right Floating Preview */
+.oh-growth-hero-side {
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+  max-width: 320px;
+  width: 100%;
+}
+
+.oh-growth-side-box {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: 20px 22px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.oh-growth-side-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.oh-growth-side-label {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94A3B8;
+}
+
+.oh-growth-live-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #34D399;
+}
+
+.oh-growth-side-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin: 0 0 6px;
+}
+
+.oh-growth-side-desc {
+  font-size: 12.5px;
+  color: #CBD5E1;
+  line-height: 1.45;
+  margin: 0 0 14px;
+}
+
+.oh-growth-side-chip {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.oh-growth-side-chip:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.oh-growth-side-chip-url {
+  font-size: 12px;
+  font-weight: 600;
+  color: #93C5FD;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ─── Growth Overview Cards (3 Cards) ─── */
+.oh-growth-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.oh-growth-stat-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 20px;
+  padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.04);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.oh-growth-stat-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.oh-growth-stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px -4px rgba(15, 23, 42, 0.08);
+}
+
+.oh-growth-stat-card:hover::after {
+  opacity: 1;
+}
+
+.oh-growth-stat-card.emerald::after {
+  background: linear-gradient(90deg, #10B981, #059669);
+}
+
+.oh-growth-stat-card.blue::after {
+  background: linear-gradient(90deg, #3B82F6, #1D4ED8);
+}
+
+.oh-growth-stat-card.amber::after {
+  background: linear-gradient(90deg, #F59E0B, #D97706);
+}
+
+.oh-growth-stat-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.oh-growth-stat-category {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.oh-growth-stat-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.oh-growth-stat-icon-wrap.emerald {
+  background: #ECFDF5;
+  color: #059669;
+}
+
+.oh-growth-stat-icon-wrap.blue {
+  background: #EFF6FF;
+  color: #2563EB;
+}
+
+.oh-growth-stat-icon-wrap.amber {
+  background: #FFFBEB;
+  color: #D97706;
+}
+
+.oh-growth-stat-val {
+  font-family: 'Outfit', sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  color: #0F172A;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+
+.oh-growth-stat-desc {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 14px;
+}
+
+.oh-growth-stat-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding-top: 12px;
+  border-top: 1px solid #F1F5F9;
+}
+
+.oh-growth-stat-footer.emerald {
+  color: #059669;
+}
+
+.oh-growth-stat-footer.blue {
+  color: #2563EB;
+}
+
+.oh-growth-stat-footer.amber {
+  color: #D97706;
+}
+
+/* ─── Main Two-Column Layout ─── */
+.oh-growth-two-col {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.oh-growth-col {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ─── Reusable Growth Surface Card ─── */
+.oh-growth-surface {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 20px;
+  padding: 26px 28px;
+  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.04);
+}
+
+.oh-growth-surface-dark {
+  background: linear-gradient(135deg, #090F24 0%, #111A36 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 26px 28px;
+  color: #FFFFFF;
+  box-shadow: 0 12px 30px -6px rgba(9, 15, 36, 0.35);
+}
+
+.oh-growth-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.oh-growth-card-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 19px;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.oh-growth-card-title.light {
+  color: #FFFFFF;
+}
+
+.oh-growth-card-subtitle {
+  font-size: 13px;
+  color: #64748B;
+  margin: 4px 0 0;
+  line-height: 1.5;
+}
+
+.oh-growth-card-subtitle.light {
+  color: #94A3B8;
+}
+
+/* ─── Dedicated Practice Link Container ─── */
+.oh-growth-url-box {
+  background: #F8FAFC;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  transition: all 0.2s ease;
+}
+
+.oh-growth-url-box:focus-within,
+.oh-growth-url-box:hover {
+  border-color: #93C5FD;
+  background: #F0F7FF;
+}
+
+.oh-growth-url-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2563EB;
+  word-break: break-all;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.15s ease;
+}
+
+.oh-growth-url-text:hover {
+  color: #1D4ED8;
+  text-decoration: underline;
+}
+
+.oh-growth-url-copy-btn {
+  background: #0F172A;
+  color: #FFFFFF;
+  border: none;
+  padding: 9px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.oh-growth-url-copy-btn:hover {
+  background: #1E293B;
+  transform: translateY(-1px);
+}
+
+.oh-growth-url-copy-btn.copied {
+  background: #10B981;
+}
+
+.oh-growth-link-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.oh-growth-link-hint {
+  font-size: 12.5px;
+  color: #64748B;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ─── Practice Setup Checklist ─── */
+.oh-growth-progress-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.oh-growth-progress-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.oh-growth-progress-track {
+  height: 8px;
+  background: #F1F5F9;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.oh-growth-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #10B981 0%, #3B82F6 100%);
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.oh-growth-checklist-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.oh-growth-task-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid #E2E8F0;
+  background: #F8FAFC;
+  gap: 14px;
+  transition: all 0.2s ease;
+}
+
+.oh-growth-task-item.completed {
+  background: #F0FDF4;
+  border-color: #DCFCE7;
+}
+
+.oh-growth-task-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.oh-growth-task-icon {
+  margin-top: 2px;
+  font-size: 19px;
+  flex-shrink: 0;
+}
+
+.oh-growth-task-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0;
+}
+
+.oh-growth-task-title.completed {
+  color: #64748B;
+  text-decoration: line-through;
+}
+
+.oh-growth-task-desc {
+  font-size: 12px;
+  color: #64748B;
+  margin: 2px 0 0;
+}
+
+.oh-growth-task-btn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: none;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.oh-growth-task-btn.primary {
+  background: #EFF6FF;
+  color: #1D4ED8;
+}
+
+.oh-growth-task-btn.primary:hover {
+  background: #DBEAFE;
+}
+
+.oh-growth-task-btn.amber {
+  background: #FEF3C7;
+  color: #92400E;
+}
+
+.oh-growth-task-btn.amber:hover {
+  background: #FDE68A;
+}
+
+/* ─── Specialties & Languages Management ─── */
+.oh-growth-tag-group {
+  margin-bottom: 14px;
+}
+
+.oh-growth-tag-group:last-child {
+  margin-bottom: 0;
+}
+
+.oh-growth-tag-group-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.oh-growth-tags-wrap {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.oh-growth-spec-chip {
+  background: #EEF2FF;
+  color: #3730A3;
+  border: 1px solid #C7D2FE;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.oh-growth-lang-chip {
+  background: #ECFDF5;
+  color: #065F46;
+  border: 1px solid #A7F3D0;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.oh-growth-tag-del {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 800;
+  opacity: 0.7;
+}
+
+.oh-growth-tag-del:hover {
+  opacity: 1;
+}
+
+.oh-growth-editor-box {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #F8FAFC;
+  padding: 18px;
+  border-radius: 14px;
+  border: 1px solid #E2E8F0;
+}
+
+.oh-growth-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.oh-growth-input {
+  flex: 1;
+  padding: 9px 13px;
+  border-radius: 10px;
+  border: 1.5px solid #CBD5E1;
+  font-size: 13.5px;
+  color: #0F172A;
+  background: #FFFFFF;
+  transition: border-color 0.15s ease;
+}
+
+.oh-growth-input:focus {
+  outline: none;
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.oh-growth-input-btn {
+  border: none;
+  padding: 9px 16px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  color: #FFFFFF;
+  transition: all 0.15s ease;
+}
+
+.oh-growth-input-btn.blue {
+  background: #3B82F6;
+}
+
+.oh-growth-input-btn.blue:hover {
+  background: #2563EB;
+}
+
+.oh-growth-input-btn.emerald {
+  background: #10B981;
+}
+
+.oh-growth-input-btn.emerald:hover {
+  background: #059669;
+}
+
+/* ─── Client Reviews Section ─── */
+.oh-growth-reviews-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.oh-growth-review-card {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  transition: all 0.2s ease;
+}
+
+.oh-growth-review-card:hover {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
+}
+
+.oh-growth-review-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.oh-growth-review-stars {
+  color: #F59E0B;
+  font-size: 14px;
+  letter-spacing: 2px;
+}
+
+.oh-growth-review-client {
+  font-weight: 700;
+  font-size: 13.5px;
+  color: #0F172A;
+}
+
+.oh-growth-feature-btn {
+  border: none;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.oh-growth-feature-btn.active {
+  background: #DCFCE7;
+  color: #15803D;
+}
+
+.oh-growth-feature-btn.muted {
+  background: #F1F5F9;
+  color: #64748B;
+}
+
+.oh-growth-review-text {
+  margin: 0;
+  font-size: 13.5px;
+  color: #334155;
+  line-height: 1.5;
+  font-style: italic;
+}
+
+.oh-growth-empty-reviews {
+  padding: 36px 20px;
+  text-align: center;
+  color: #64748B;
+  background: #F8FAFC;
+  border: 1.5px dashed #CBD5E1;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ─── Modals ─── */
+.oh-growth-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 13, 27, 0.65);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: ohFadeIn 0.2s ease;
+}
+
+.oh-growth-modal-box {
+  background: #FFFFFF;
+  border-radius: 24px;
+  padding: 32px;
+  max-width: 460px;
+  width: 100%;
+  box-shadow: 0 25px 60px -15px rgba(8, 13, 27, 0.4);
+  position: relative;
+  animation: ohScaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes ohFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ohScaleUp {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ─── Responsive Media Queries ─── */
+@media (max-width: 1100px) {
+  .oh-growth-hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .oh-growth-hero-side {
+    max-width: 100%;
+  }
+  .oh-growth-two-col {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 860px) {
+  .oh-growth-stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .oh-growth-hero {
+    padding: 26px 24px;
+  }
+  .oh-growth-hero-title {
+    font-size: 26px;
+  }
+  .oh-growth-surface,
+  .oh-growth-surface-dark {
+    padding: 20px 22px;
+  }
+}
+
+@media (max-width: 600px) {
+  .oh-growth-url-box {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .oh-growth-url-copy-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .oh-growth-hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+  .oh-growth-btn-primary,
+  .oh-growth-btn-glass {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ==========================================================================
+   OPENHAND — ELITE PRACTITIONER MOTION DESIGN & MICRO-INTERACTIONS SYSTEM
+   ========================================================================== */
+
+:root {
+  --oh-motion-fast: 130ms;
+  --oh-motion-base: 220ms;
+  --oh-motion-slow: 320ms;
+  --oh-motion-modal: 240ms;
+  --oh-motion-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --oh-motion-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --oh-motion-decel: cubic-bezier(0.0, 0.0, 0.2, 1);
+}
+
+/* ─── 1. View & Tab Entrance Animations ─── */
+@keyframes ohViewFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ohCardReveal {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.oh-view-fade-in {
+  animation: ohViewFadeIn var(--oh-motion-base) var(--oh-motion-spring) forwards;
+  will-change: opacity, transform;
+}
+
+/* Stagger reveal utilities */
+.oh-stagger-1 { animation: ohCardReveal var(--oh-motion-base) var(--oh-motion-spring) 0ms forwards; }
+.oh-stagger-2 { animation: ohCardReveal var(--oh-motion-base) var(--oh-motion-spring) 40ms forwards; }
+.oh-stagger-3 { animation: ohCardReveal var(--oh-motion-base) var(--oh-motion-spring) 80ms forwards; }
+.oh-stagger-4 { animation: ohCardReveal var(--oh-motion-base) var(--oh-motion-spring) 120ms forwards; }
+.oh-stagger-5 { animation: ohCardReveal var(--oh-motion-base) var(--oh-motion-spring) 160ms forwards; }
+
+/* ─── 2. Tactile Card Hover & Elevation (Scoped to Practitioner) ─── */
+.practitioner-app-layout .card,
+.practitioner-app-layout .oh-card-interactive,
+.practitioner-app-layout .oh-growth-surface,
+.practitioner-app-layout .oh-growth-stat-card,
+.practitioner-app-layout .oh-prac-stat-card {
+  transition: transform var(--oh-motion-base) var(--oh-motion-spring),
+              box-shadow var(--oh-motion-base) var(--oh-motion-spring),
+              border-color var(--oh-motion-fast) ease;
+}
+
+.practitioner-app-layout .card:hover,
+.practitioner-app-layout .oh-card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -4px rgba(15, 23, 42, 0.08);
+  border-color: #CBD5E1;
+}
+
+.practitioner-app-layout .card:active,
+.practitioner-app-layout .oh-card-interactive:active {
+  transform: translateY(0) scale(0.995);
+  transition-duration: 90ms;
+}
+
+/* ─── 3. Button Feedback & Pressed States ─── */
+.practitioner-app-layout button,
+.practitioner-app-layout .btn,
+.practitioner-app-layout .oh-action-btn,
+.practitioner-app-layout .practitioner-live-btn {
+  transition: transform var(--oh-motion-fast) var(--oh-motion-spring),
+              box-shadow var(--oh-motion-fast) var(--oh-motion-spring),
+              background var(--oh-motion-fast) ease,
+              border-color var(--oh-motion-fast) ease,
+              color var(--oh-motion-fast) ease;
+}
+
+.practitioner-app-layout button:active:not(:disabled),
+.practitioner-app-layout .btn:active:not(:disabled),
+.practitioner-app-layout .oh-action-btn:active:not(:disabled),
+.practitioner-app-layout .practitioner-live-btn:active:not(:disabled) {
+  transform: translateY(1px) scale(0.98);
+}
+
+.practitioner-app-layout button:focus-visible,
+.practitioner-app-layout a:focus-visible,
+.practitioner-app-layout input:focus-visible {
+  outline: 2px solid #4F46E5;
+  outline-offset: 2px;
+}
+
+/* ─── 4. Sidebar Refinement & Micro-Interactions ─── */
+.practitioner-app-layout .oh-sidebar-btn {
+  transition: background var(--oh-motion-fast) ease,
+              color var(--oh-motion-fast) ease,
+              border-color var(--oh-motion-fast) ease,
+              transform var(--oh-motion-fast) var(--oh-motion-spring);
+}
+
+.practitioner-app-layout .oh-sidebar-btn:hover {
+  background: rgba(255, 255, 255, 0.07);
+  transform: translateX(2px);
+}
+
+.practitioner-app-layout .oh-sidebar-btn:active {
+  transform: translateX(1px) scale(0.99);
+}
+
+.practitioner-app-layout .oh-sidebar-btn .oh-sidebar-btn-icon {
+  transition: transform var(--oh-motion-fast) var(--oh-motion-spring),
+              color var(--oh-motion-fast) ease;
+}
+
+.practitioner-app-layout .oh-sidebar-btn:hover .oh-sidebar-btn-icon {
+  transform: scale(1.08);
+}
+
+.practitioner-app-layout .oh-sidebar-user {
+  transition: transform var(--oh-motion-fast) var(--oh-motion-spring),
+              background var(--oh-motion-fast) ease,
+              border-color var(--oh-motion-fast) ease,
+              box-shadow var(--oh-motion-fast) ease;
+}
+
+.practitioner-app-layout .oh-sidebar-user:hover {
+  background: rgba(30, 41, 59, 0.95);
+  border-color: rgba(99, 102, 241, 0.35);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  transform: translateY(-1px);
+}
+
+.practitioner-app-layout .oh-sidebar-user:active {
+  transform: translateY(1px);
+}
+
+/* ─── 5. Top Header Micro-Interactions ─── */
+.practitioner-app-layout .practitioner-header-search {
+  transition: background var(--oh-motion-fast) ease,
+              border-color var(--oh-motion-fast) ease,
+              box-shadow var(--oh-motion-base) var(--oh-motion-spring),
+              transform var(--oh-motion-fast) ease;
+}
+
+.practitioner-app-layout .practitioner-header-search:focus-within {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 18px rgba(99, 102, 241, 0.15), 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.practitioner-app-layout .practitioner-icon-btn {
+  transition: transform var(--oh-motion-fast) var(--oh-motion-spring),
+              background var(--oh-motion-fast) ease,
+              color var(--oh-motion-fast) ease,
+              border-color var(--oh-motion-fast) ease;
+}
+
+.practitioner-app-layout .practitioner-icon-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+.practitioner-app-layout .practitioner-icon-btn:hover svg {
+  transform: scale(1.1);
+  transition: transform var(--oh-motion-fast) var(--oh-motion-spring);
+}
+
+.practitioner-app-layout .practitioner-live-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.practitioner-app-layout .practitioner-live-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(13, 148, 136, 0.45);
+}
+
+/* ─── 6. Profile Dropdown Transition ─── */
+@keyframes ohDropdownEnter {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.oh-dropdown-menu-animated {
+  animation: ohDropdownEnter var(--oh-motion-fast) var(--oh-motion-spring) forwards;
+  transform-origin: top right;
+  will-change: opacity, transform;
+}
+
+/* ─── 7. Interactive Table Rows & List Items ─── */
+.practitioner-app-layout .oh-prac-learner-item,
+.practitioner-app-layout .oh-prac-action-row,
+.practitioner-app-layout tr.interactive-row {
+  transition: background var(--oh-motion-fast) ease,
+              transform var(--oh-motion-fast) var(--oh-motion-spring),
+              border-color var(--oh-motion-fast) ease;
+}
+
+.practitioner-app-layout .oh-prac-learner-item:hover,
+.practitioner-app-layout .oh-prac-action-row:hover {
+  transform: translateX(3px);
+}
+
+/* ─── 8. Modal & Dialog Overlays ─── */
+@keyframes ohBackdropFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ohModalPop {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.oh-modal-backdrop-animated {
+  animation: ohBackdropFade var(--oh-motion-fast) ease forwards;
+}
+
+.oh-modal-box-animated {
+  animation: ohModalPop var(--oh-motion-modal) var(--oh-motion-spring) forwards;
+  will-change: opacity, transform;
+}
+
+/* ─── 9. Form Input Interactions ─── */
+.practitioner-app-layout input[type="text"],
+.practitioner-app-layout input[type="email"],
+.practitioner-app-layout input[type="number"],
+.practitioner-app-layout textarea,
+.practitioner-app-layout select {
+  transition: border-color var(--oh-motion-fast) ease,
+              box-shadow var(--oh-motion-fast) ease,
+              background-color var(--oh-motion-fast) ease;
+}
+
+.practitioner-app-layout input[type="text"]:focus,
+.practitioner-app-layout input[type="email"]:focus,
+.practitioner-app-layout input[type="number"]:focus,
+.practitioner-app-layout textarea:focus,
+.practitioner-app-layout select:focus {
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+/* ─── 10. Badges & Tags Subtle Micro-Interactions ─── */
+.practitioner-app-layout .oh-growth-spec-chip,
+.practitioner-app-layout .oh-growth-lang-chip,
+.practitioner-app-layout .badge,
+.practitioner-app-layout .tag-chip {
+  transition: transform var(--oh-motion-fast) var(--oh-motion-spring),
+              box-shadow var(--oh-motion-fast) ease;
+}
+
+.practitioner-app-layout .oh-growth-spec-chip:hover,
+.practitioner-app-layout .oh-growth-lang-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* ─── 11. Accessibility: Prefers-Reduced-Motion ─── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .practitioner-app-layout .card:hover,
+  .practitioner-app-layout .oh-card-interactive:hover,
+  .practitioner-app-layout .oh-growth-surface:hover,
+  .practitioner-app-layout .oh-sidebar-btn:hover,
+  .practitioner-app-layout button:hover,
+  .oh-view-fade-in {
+    transform: none !important;
+    animation: none !important;
+  }
+}
+/* ─── 12. OpenHand Practitioner Profile Redesign System ─── */
+.oh-profile-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  text-align: left;
+  max-width: 1040px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.oh-profile-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 28px;
+  background: #080D1B;
+  color: #FFFFFF;
+  box-shadow: 0 20px 40px -10px rgba(8, 13, 27, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.oh-profile-hero-mesh {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: 
+    radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.22) 0%, transparent 45%),
+    radial-gradient(circle at 90% 10%, rgba(139, 92, 246, 0.25) 0%, transparent 50%),
+    radial-gradient(circle at 50% 100%, rgba(30, 27, 75, 0.8) 0%, transparent 60%);
+}
+
+.oh-profile-hero-banner {
+  height: 140px;
+  width: 100%;
+  background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 40%, #312E81 75%, #4338CA 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.oh-profile-hero-banner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
+  opacity: 0.35;
+}
+
+.oh-profile-avatar-wrap {
+  position: relative;
+  border-radius: 24px;
+  padding: 4px;
+  background: linear-gradient(135deg, #6366F1, #A855F7, #EC4899);
+  box-shadow: 0 12px 28px rgba(79, 70, 229, 0.35);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.oh-profile-avatar-wrap:hover {
+  transform: scale(1.02);
+  box-shadow: 0 16px 36px rgba(124, 58, 237, 0.45);
+}
+
+.oh-profile-avatar-img {
+  width: 108px;
+  height: 108px;
+  border-radius: 20px;
+  object-fit: cover;
+  background: #0F172A;
+  border: 4px solid #080D1B;
+  display: block;
+}
+
+.oh-profile-avatar-placeholder {
+  width: 108px;
+  height: 108px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #4338CA, #7C3AED);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+  font-weight: 900;
+  color: #FFFFFF;
+  border: 4px solid #080D1B;
+  letter-spacing: -1px;
+}
+
+.oh-profile-tab-btn {
+  background: transparent;
+  color: #94A3B8;
+  border: none;
+  border-bottom: 3px solid transparent;
+  padding: 16px 20px;
+  font-weight: 700;
+  font-size: 13.5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  user-select: none;
+}
+
+.oh-profile-tab-btn:hover {
+  color: #F1F5F9;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.oh-profile-tab-btn.active {
+  color: #FFFFFF;
+  background: rgba(99, 102, 241, 0.12);
+  border-bottom-color: #818CF8;
+}
+
+.oh-profile-tab-btn.danger-tab:hover {
+  color: #FCA5A5;
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.oh-profile-tab-btn.danger-tab.active {
+  color: #F87171;
+  background: rgba(239, 68, 68, 0.15);
+  border-bottom-color: #EF4444;
+}
+
+.oh-profile-tab-pane {
+  animation: ohProfileTabIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes ohProfileTabIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.oh-profile-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.02);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.oh-profile-card:hover {
+  border-color: #CBD5E1;
+  box-shadow: 0 8px 30px -4px rgba(15, 23, 42, 0.07);
+}
+
+.oh-profile-input {
+  width: 100%;
+  border-radius: 14px;
+  border: 1.5px solid #E2E8F0;
+  background: #F8FAFC;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0F172A;
+  transition: all 0.15s ease;
+  outline: none;
+}
+
+.oh-profile-input:hover {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+}
+
+.oh-profile-input:focus {
+  background: #FFFFFF;
+  border-color: #6366F1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+}
+
+.oh-profile-label {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.oh-profile-btn-primary {
+  background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+  color: #FFFFFF;
+  padding: 13px 28px;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 13.5px;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+  transition: all 0.2s ease;
+}
+
+.oh-profile-btn-primary:hover:not(:disabled) {
+  transform: translateY(-1.5px);
+  box-shadow: 0 8px 22px rgba(79, 70, 229, 0.45);
+  background: linear-gradient(135deg, #4338CA 0%, #6D28D9 100%);
+}
+
+.oh-profile-btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.oh-profile-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+@media (max-width: 768px) {
+  .oh-profile-card {
+    padding: 20px;
+    border-radius: 20px;
+  }
+  .oh-profile-avatar-img,
+  .oh-profile-avatar-placeholder {
+    width: 84px;
+    height: 84px;
+    font-size: 26px;
+  }
+}

@@ -101,7 +101,7 @@ export function Overview({ practitionerName = 'Practitioner', setActiveSection, 
   const nextClass = upcomingClasses.length > 0 ? upcomingClasses[0] : null
 
   return (
-    <section className="oh-prac-overview" id="dash">
+    <section className="oh-prac-overview oh-view-fade-in" id="dash">
       {/* ─── Setup Incomplete Banner (Preserved) ─── */}
       {savedStep && (
         <div style={{
@@ -249,7 +249,7 @@ export function Overview({ practitionerName = 'Practitioner', setActiveSection, 
       {/* ─── 2. Five Summary Stat Cards Row (Real Data Contracts) ─── */}
       <div className="oh-prac-stats-grid">
         {/* Card 1: Total Learners */}
-        <div className="oh-prac-stat-card">
+        <div className="oh-prac-stat-card oh-stagger-1">
           <div>
             <div className="oh-prac-stat-top">
               <span className="oh-prac-stat-lbl">Total Learners</span>
@@ -266,7 +266,7 @@ export function Overview({ practitionerName = 'Practitioner', setActiveSection, 
         </div>
 
         {/* Card 2: Sessions Scheduled */}
-        <div className="oh-prac-stat-card">
+        <div className="oh-prac-stat-card oh-stagger-2">
           <div>
             <div className="oh-prac-stat-top">
               <span className="oh-prac-stat-lbl">Scheduled Sessions</span>
@@ -283,7 +283,7 @@ export function Overview({ practitionerName = 'Practitioner', setActiveSection, 
         </div>
 
         {/* Card 3: Circle Seats Filled */}
-        <div className="oh-prac-stat-card">
+        <div className="oh-prac-stat-card oh-stagger-3">
           <div>
             <div className="oh-prac-stat-top">
               <span className="oh-prac-stat-lbl">Circle Seats Filled</span>
@@ -300,7 +300,7 @@ export function Overview({ practitionerName = 'Practitioner', setActiveSection, 
         </div>
 
         {/* Card 4: Avg. Rating */}
-        <div className="oh-prac-stat-card">
+        <div className="oh-prac-stat-card oh-stagger-4">
           <div>
             <div className="oh-prac-stat-top">
               <span className="oh-prac-stat-lbl">Avg. Rating</span>
@@ -318,7 +318,7 @@ export function Overview({ practitionerName = 'Practitioner', setActiveSection, 
 
         {/* Card 5: Your Impact (Gradient Card) */}
         <div 
-          className="oh-prac-impact-card"
+          className="oh-prac-impact-card oh-stagger-5"
           onClick={() => setShowBadgesModal(true)}
           title="Click to view verified Honors & Master Badges"
         >

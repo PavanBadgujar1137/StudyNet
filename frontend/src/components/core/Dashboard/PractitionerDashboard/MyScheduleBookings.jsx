@@ -30,7 +30,7 @@ export default function MyScheduleBookings() {
   }
 
   return (
-    <div style={{ padding: '24px' }}>
+    <div className="oh-view-fade-in" style={{ padding: '24px' }}>
       <h2 style={{ margin: '0 0 24px 0', fontSize: '24px', fontWeight: 800, color: '#0F172A' }}>My Schedule & Bookings</h2>
       
       {loading ? (
@@ -44,7 +44,7 @@ export default function MyScheduleBookings() {
       ) : (
         <div style={{ display: 'grid', gap: '16px' }}>
           {bookings.map((booking) => (
-            <div key={booking._id} style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column' }}>
+            <div key={booking._id} className="oh-card-interactive" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>

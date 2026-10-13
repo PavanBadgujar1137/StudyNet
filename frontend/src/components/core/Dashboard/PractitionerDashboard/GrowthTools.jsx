@@ -12,7 +12,15 @@ import {
   FiMaximize2,
   FiMail,
   FiExternalLink,
-  FiAward
+  FiAward,
+  FiX,
+  FiEdit3,
+  FiPlus,
+  FiSliders,
+  FiArrowRight,
+  FiDownload,
+  FiClock,
+  FiTag
 } from 'react-icons/fi'
 import { apiConnector } from '../../../../services/apiConnector'
 import { toast } from 'react-hot-toast'
@@ -32,7 +40,7 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
 
   const practitioner = telemetryData?.practitioner || telemetryData?.data?.practitioner || user || {}
 
-  // ITEM 27 FIX: Inline Specialties & Languages Editing State
+  // Inline Specialties & Languages Editing State
   const [editingSpecLang, setEditingSpecLang] = useState(false)
   const [specialties, setSpecialties] = useState(
     practitioner.specialties?.length ? practitioner.specialties : ['Emotional Intelligence']
@@ -87,7 +95,7 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
     setLanguages(languages.filter((l) => l !== lang))
   }
 
-  // ITEM 28 & 34 FIX: Send Real Review Invitation Email
+  // Send Review Invitation Email
   const handleSendReviewRequest = async (e) => {
     e.preventDefault()
     if (!clientEmail.trim()) {
@@ -152,6 +160,7 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
   const activeClients = telemetryData?.stats?.activeClientsCount || telemetryData?.telemetry?.activeClientsCount || 0
   const ratingVal = practitioner?.rating || telemetryData?.telemetry?.rating || telemetryData?.rating || (reviews.length > 0 ? (reviews.reduce((s, r) => s + Number(r.rating || 5), 0) / reviews.length).toFixed(1) : null)
   const ratingDisplay = ratingVal ? `${ratingVal} ★` : 'No reviews yet'
+
   // Copy Booking Link
   const handleCopyLink = () => {
     navigator.clipboard.writeText(bookingLink)
@@ -159,7 +168,6 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
     toast.success('Practice booking link copied to clipboard!')
     setTimeout(() => setCopiedLink(false), 2500)
   }
-
 
   // Toggle Featured Review State
   const toggleFeature = (id) => {
@@ -234,283 +242,505 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
     }
   }
 
+  // Dynamic checklist completion progress
+  const hasProfileBio = Boolean(practitioner?.firstName || user?.firstName)
+  const hasOffers = Boolean(telemetryData?.offers?.length > 0)
+  const hasReviews = Boolean(reviews?.length > 0)
+  const completedTasksCount = (hasProfileBio ? 1 : 0) + (hasOffers ? 1 : 0) + (hasReviews ? 1 : 0)
+  const checklistPercent = Math.round((completedTasksCount / 3) * 100)
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      
-      {/* Sleek Hero Banner Header */}
-      <div
-        style={{
-          background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
-          borderRadius: '16px',
-          padding: '28px 32px',
-          color: '#ffffff',
-          boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.2)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '20px'
-        }}
-      >
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-            <span style={{ background: '#10B981', color: '#fff', padding: '4px 10px', borderRadius: '20px', fontSize: '11.5px', fontWeight: 700, letterSpacing: '0.5px' }}>
-              GROWTH &amp; ACQUISITION HUB
+    <div className="oh-growth-page oh-view-fade-in">
+
+      {/* ─── 1. Premium Growth Hero ─── */}
+      <section className="oh-growth-hero">
+        <div className="oh-growth-hero-content">
+          <div className="oh-growth-badge-row">
+            <span className="oh-growth-pill">
+              <span className="oh-growth-pill-pulse"></span>
+              Growth &amp; Acquisition Hub
             </span>
-            <span style={{ color: '#94A3B8', fontSize: '13px' }}>• Verified Practitioner Directory</span>
+            <span className="oh-growth-badge-sub">• Verified Practitioner Directory</span>
           </div>
-          <h2 style={{ fontSize: '26px', fontWeight: 800, margin: 0, letterSpacing: '-0.5px', color: '#ffffff' }}>
+
+          <h1 className="oh-growth-hero-title">
             Practice Growth Suite
-          </h2>
-          <p style={{ color: '#94A3B8', margin: '6px 0 0 0', fontSize: '14px', maxWidth: '640px', lineHeight: '1.5' }}>
-            Expand your practice reach, share direct booking links, embed booking widgets on your website, and showcase verified client reviews.
+          </h1>
+
+          <p className="oh-growth-hero-desc">
+            Expand your practice reach, share direct booking links, distribute QR codes,
+            showcase verified client reviews, and accelerate your client acquisition funnel.
           </p>
-        </div>
 
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <button
-            onClick={handleCopyLink}
-            style={{
-              background: '#3B82F6',
-              color: '#ffffff',
-              border: 'none',
-              padding: '10px 18px',
-              borderRadius: '10px',
-              fontWeight: 700,
-              fontSize: '13.5px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
-            }}
-          >
-            {copiedLink ? <FiCheck fontSize={16} /> : <FiShare2 fontSize={16} />}
-            {copiedLink ? 'Link Copied!' : 'Share Practice Link'}
-          </button>
-
-          <button
-            onClick={() => setShowQrModal(true)}
-            style={{
-              background: 'rgba(255, 255, 255, 0.1)',
-              color: '#ffffff',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              padding: '10px 16px',
-              borderRadius: '10px',
-              fontWeight: 700,
-              fontSize: '13.5px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
-            <FiMaximize2 fontSize={16} /> QR Code
-          </button>
-
-          <button
-            onClick={() => setActiveSection('setup')}
-            style={{
-              background: 'rgba(255, 255, 255, 0.15)',
-              color: '#ffffff',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              padding: '10px 16px',
-              borderRadius: '10px',
-              fontWeight: 700,
-              fontSize: '13.5px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
-            ⚙️ Setup Wizard
-          </button>
-        </div>
-      </div>
-
-      {/* Analytics KPI Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
-        <div className="card stat" style={{ padding: '20px', background: '#ffffff', border: '1px solid #E2E8F0', borderRadius: '12px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ color: '#64748B', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase' }}>Directory Status</span>
-            <FiGlobe color="#10B981" fontSize={20} />
-          </div>
-          <div style={{ fontSize: '24px', fontWeight: 800, color: '#0F172A', margin: '8px 0 4px 0' }}>Verified &amp; Live</div>
-          <div style={{ fontSize: '12px', color: '#059669', fontWeight: 600 }}>Listed in Global Practitioner Directory</div>
-        </div>
-
-        <div className="card stat" style={{ padding: '20px', background: '#ffffff', border: '1px solid #E2E8F0', borderRadius: '12px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ color: '#64748B', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase' }}>Active Learners</span>
-            <FiUsers color="#3B82F6" fontSize={20} />
-          </div>
-          <div style={{ fontSize: '24px', fontWeight: 800, color: '#0F172A', margin: '8px 0 4px 0' }}>{activeClients}</div>
-          <div style={{ fontSize: '12px', color: '#2563EB', fontWeight: 600 }}>Connected &amp; Enrolled Clients</div>
-        </div>
-
-        <div className="card stat" style={{ padding: '20px', background: '#ffffff', border: '1px solid #E2E8F0', borderRadius: '12px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ color: '#64748B', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase' }}>Client Rating</span>
-            <FiStar color="#F59E0B" fontSize={20} />
-          </div>
-          <div style={{ fontSize: ratingVal ? '24px' : '17px', fontWeight: 800, color: '#0F172A', margin: '8px 0 4px 0' }}>{ratingDisplay}</div>
-          <div style={{ fontSize: '12px', color: '#D97706', fontWeight: 600 }}>
-            {reviews.length > 0 ? `Based on ${reviews.length} client review${reviews.length === 1 ? '' : 's'}` : 'No client reviews submitted yet'}
-          </div>
-        </div>
-      </div>
-
-      {/* Main Grid: Booking Link vs Growth Checklist */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '24px', alignItems: 'start' }}>
-        
-        {/* Left Column: Direct Booking Link */}
-        <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', alignSelf: 'start' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
-            <div>
-              <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#0F172A', margin: 0 }}>Your Dedicated Practice Link</h3>
-              <p style={{ fontSize: '13px', color: '#64748B', margin: '4px 0 0 0' }}>
-                Share this link on your email signature, Instagram bio, LinkedIn, or business cards.
-              </p>
-            </div>
-            <button
-              onClick={() => setActiveSection('setup')}
-              style={{
-                background: '#EFF6FF',
-                color: '#1D4ED8',
-                border: '1px solid #BFDBFE',
-                padding: '6px 14px',
-                borderRadius: '8px',
-                fontSize: '12.5px',
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                whiteSpace: 'nowrap'
-              }}
-              title="Open Practice Setup Wizard to edit specialties and bio"
-            >
-              ⚙️ Customize Profile Setup →
-            </button>
-          </div>
-
-          {/* Link Box */}
-          <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
-            <a
-              href={bookingLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                fontSize: '13.5px',
-                fontWeight: 600,
-                color: '#2563EB',
-                wordBreak: 'break-all',
-                textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
-              title="Open public profile in new tab"
-            >
-              {bookingLink}
-              <FiExternalLink style={{ flexShrink: 0 }} />
-            </a>
+          <div className="oh-growth-hero-actions">
             <button
               onClick={handleCopyLink}
-              style={{
-                background: copiedLink ? '#10B981' : '#1E293B',
-                color: '#ffffff',
-                border: 'none',
-                padding: '8px 14px',
-                borderRadius: '8px',
-                fontSize: '12.5px',
-                fontWeight: 700,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
+              className={`oh-growth-btn-primary ${copiedLink ? 'copied' : ''}`}
+              title="Copy public booking link to clipboard"
             >
-              {copiedLink ? <FiCheck /> : <FiCopy />}
-              {copiedLink ? 'Copied' : 'Copy Link'}
+              {copiedLink ? <FiCheck fontSize={17} /> : <FiShare2 fontSize={17} />}
+              <span>{copiedLink ? 'Link Copied!' : 'Share Practice Link'}</span>
             </button>
+
+            <button
+              onClick={() => setShowQrModal(true)}
+              className="oh-growth-btn-glass"
+              title="View and download high-resolution QR code"
+            >
+              <FiMaximize2 fontSize={16} />
+              <span>QR Code</span>
+            </button>
+
+            {setActiveSection && (
+              <button
+                onClick={() => setActiveSection('setup')}
+                className="oh-growth-btn-glass"
+                title="Open Practice Setup Wizard"
+              >
+                <FiSliders fontSize={16} />
+                <span>Setup Wizard</span>
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Right Column: Growth Acceleration Checklist & Testimonials */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          
-          {/* Growth Action Checklist */}
-          <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0F172A', margin: 0 }}>Practice Setup Checklist</h3>
-              <span style={{ fontSize: '12px', background: '#DCFCE7', color: '#15803D', padding: '3px 8px', borderRadius: '10px', fontWeight: 700 }}>
-                {((practitioner.firstName ? 1 : 0) + (telemetryData?.offers?.length > 0 ? 1 : 0) + (reviews.length > 0 ? 1 : 0))} of 3 Completed
+        {/* Ambient Right Card: Quick Handle Preview */}
+        <div className="oh-growth-hero-side">
+          <div className="oh-growth-side-box">
+            <div className="oh-growth-side-head">
+              <span className="oh-growth-side-label">Direct Channel</span>
+              <span className="oh-growth-live-status">
+                <span className="oh-growth-pill-pulse"></span> Live Route
+              </span>
+            </div>
+            <div className="oh-growth-side-title">
+              /{cleanHandle}
+            </div>
+            <p className="oh-growth-side-desc">
+              Your verified profile link is active worldwide on OpenHand's encrypted network.
+            </p>
+            <div
+              className="oh-growth-side-chip"
+              onClick={handleCopyLink}
+              title="Click to copy booking link"
+            >
+              <span className="oh-growth-side-chip-url">{bookingLink}</span>
+              <span style={{ color: '#93C5FD', display: 'flex', alignItems: 'center' }}>
+                {copiedLink ? <FiCheck size={14} color="#10B981" /> : <FiCopy size={14} />}
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── 2. Growth Overview Cards (3 Cards) ─── */}
+      <section className="oh-growth-stats-grid">
+        {/* Card 1: Directory Status */}
+        <div className="oh-growth-stat-card emerald">
+          <div className="oh-growth-stat-top">
+            <span className="oh-growth-stat-category">Directory Status</span>
+            <div className="oh-growth-stat-icon-wrap emerald">
+              <FiGlobe />
+            </div>
+          </div>
+          <div>
+            <div className="oh-growth-stat-val">Verified &amp; Live</div>
+            <div className="oh-growth-stat-desc">Listed in Global Practitioner Directory</div>
+          </div>
+          <div className="oh-growth-stat-footer emerald">
+            <FiCheckCircle size={14} /> Learners worldwide can discover &amp; book sessions
+          </div>
+        </div>
+
+        {/* Card 2: Active Learners */}
+        <div className="oh-growth-stat-card blue">
+          <div className="oh-growth-stat-top">
+            <span className="oh-growth-stat-category">Active Learners</span>
+            <div className="oh-growth-stat-icon-wrap blue">
+              <FiUsers />
+            </div>
+          </div>
+          <div>
+            <div className="oh-growth-stat-val">{activeClients}</div>
+            <div className="oh-growth-stat-desc">Connected &amp; Enrolled Clients</div>
+          </div>
+          <div className="oh-growth-stat-footer blue">
+            <FiArrowRight size={14} /> Active 1-on-1 and circle learners currently enrolled
+          </div>
+        </div>
+
+        {/* Card 3: Client Rating */}
+        <div className="oh-growth-stat-card amber">
+          <div className="oh-growth-stat-top">
+            <span className="oh-growth-stat-category">Reputation Score</span>
+            <div className="oh-growth-stat-icon-wrap amber">
+              <FiStar />
+            </div>
+          </div>
+          <div>
+            <div className="oh-growth-stat-val" style={{ fontSize: ratingVal ? '28px' : '20px' }}>
+              {ratingDisplay}
+            </div>
+            <div className="oh-growth-stat-desc">
+              {reviews.length > 0 
+                ? `Based on ${reviews.length} client review${reviews.length === 1 ? '' : 's'}` 
+                : 'No client reviews submitted yet'}
+            </div>
+          </div>
+          <div className="oh-growth-stat-footer amber">
+            <FiAward size={14} /> Verified reviews display prominently on your booking page
+          </div>
+        </div>
+      </section>
+
+      {/* ─── 3. Main Two-Column Layout ─── */}
+      <section className="oh-growth-two-col">
+
+        {/* Left Column: Direct Booking Link & Specialties */}
+        <div className="oh-growth-col">
+
+          {/* Dedicated Practice Link */}
+          <div className="oh-growth-surface">
+            <div className="oh-growth-card-head">
+              <div>
+                <h3 className="oh-growth-card-title">Dedicated Practice Link</h3>
+                <p className="oh-growth-card-subtitle">
+                  Share this public URL across your email signature, LinkedIn bio, Instagram, or business cards.
+                </p>
+              </div>
+              {setActiveSection && (
+                <button
+                  onClick={() => setActiveSection('setup')}
+                  className="oh-growth-task-btn primary"
+                  title="Open Practice Setup Wizard to configure profile"
+                >
+                  <FiSliders size={13} />
+                  <span>Customize Profile Setup →</span>
+                </button>
+              )}
+            </div>
+
+            {/* URL Display Box */}
+            <div className="oh-growth-url-box">
+              <a
+                href={bookingLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="oh-growth-url-text"
+                title="Open public profile in new tab"
+              >
+                <span>{bookingLink}</span>
+                <FiExternalLink style={{ flexShrink: 0 }} size={15} />
+              </a>
+
+              <button
+                onClick={handleCopyLink}
+                className={`oh-growth-url-copy-btn ${copiedLink ? 'copied' : ''}`}
+                title="Copy link to clipboard"
+              >
+                {copiedLink ? <FiCheck size={15} /> : <FiCopy size={15} />}
+                <span>{copiedLink ? 'Copied' : 'Copy Link'}</span>
+              </button>
+            </div>
+
+            <div className="oh-growth-link-footer">
+              <span className="oh-growth-link-hint">
+                💡 Direct booking links bypass directory search and navigate learners straight to your calendar.
+              </span>
+            </div>
+          </div>
+
+          {/* Specialties & Languages Management */}
+          <div className="oh-growth-surface">
+            <div className="oh-growth-card-head">
+              <div>
+                <h3 className="oh-growth-card-title">Specialties &amp; Languages</h3>
+                <p className="oh-growth-card-subtitle">
+                  Manage professional focus tags displayed on your public booking profile.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setEditingSpecLang(!editingSpecLang)}
+                className="oh-growth-task-btn primary"
+              >
+                {editingSpecLang ? <FiX size={13} /> : <FiEdit3 size={13} />}
+                <span>{editingSpecLang ? 'Close' : 'Edit Tags'}</span>
+              </button>
+            </div>
+
+            {!editingSpecLang ? (
+              /* View Mode Tag Chips */
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div className="oh-growth-tag-group">
+                  <span className="oh-growth-tag-group-label">Clinical &amp; Guidance Specialties</span>
+                  <div className="oh-growth-tags-wrap">
+                    {specialties.map((s, i) => (
+                      <span key={i} className="oh-growth-spec-chip">
+                        <FiTag size={12} /> {s}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="oh-growth-tag-group">
+                  <span className="oh-growth-tag-group-label">Languages Spoken</span>
+                  <div className="oh-growth-tags-wrap">
+                    {languages.map((l, i) => (
+                      <span key={i} className="oh-growth-lang-chip">
+                        🌐 {l}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* Edit Mode Form */
+              <div className="oh-growth-editor-box">
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '8px' }}>
+                    Specialties
+                  </label>
+                  <div className="oh-growth-tags-wrap" style={{ marginBottom: '10px' }}>
+                    {specialties.map((s) => (
+                      <span key={s} className="oh-growth-spec-chip">
+                        {s}
+                        <button
+                          type="button"
+                          onClick={() => removeSpecialtyTag(s)}
+                          className="oh-growth-tag-del"
+                          title={`Remove ${s}`}
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="oh-growth-input-row">
+                    <input
+                      type="text"
+                      placeholder="Add specialty (e.g. Anxiety Management)"
+                      value={newSpecInput}
+                      onChange={(e) => setNewSpecInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          addSpecialtyTag()
+                        }
+                      }}
+                      className="oh-growth-input"
+                    />
+                    <button
+                      type="button"
+                      onClick={addSpecialtyTag}
+                      className="oh-growth-input-btn blue"
+                    >
+                      <FiPlus size={14} style={{ display: 'inline', verticalAlign: '-2px' }} /> Add
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '8px' }}>
+                    Languages Spoken
+                  </label>
+                  <div className="oh-growth-tags-wrap" style={{ marginBottom: '10px' }}>
+                    {languages.map((l) => (
+                      <span key={l} className="oh-growth-lang-chip">
+                        {l}
+                        <button
+                          type="button"
+                          onClick={() => removeLanguageTag(l)}
+                          className="oh-growth-tag-del"
+                          title={`Remove ${l}`}
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="oh-growth-input-row">
+                    <input
+                      type="text"
+                      placeholder="Add language (e.g. Spanish, French)"
+                      value={newLangInput}
+                      onChange={(e) => setNewLangInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          addLanguageTag()
+                        }
+                      }}
+                      className="oh-growth-input"
+                    />
+                    <button
+                      type="button"
+                      onClick={addLanguageTag}
+                      className="oh-growth-input-btn emerald"
+                    >
+                      <FiPlus size={14} style={{ display: 'inline', verticalAlign: '-2px' }} /> Add
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '6px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setEditingSpecLang(false)}
+                    style={{ background: '#F1F5F9', color: '#475569', border: 'none', padding: '9px 16px', borderRadius: '10px', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveSpecLang}
+                    disabled={savingSpecLang}
+                    style={{ background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)', color: '#FFFFFF', border: 'none', padding: '9px 20px', borderRadius: '10px', fontSize: '13px', fontWeight: 700, cursor: savingSpecLang ? 'not-allowed' : 'pointer', boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)' }}
+                  >
+                    {savingSpecLang ? 'Saving Tags...' : 'Save Profile Tags'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+        </div>
+
+        {/* Right Column: Practice Setup Checklist & Badges */}
+        <div className="oh-growth-col">
+
+          {/* Practice Setup Checklist */}
+          <div className="oh-growth-surface">
+            <div className="oh-growth-card-head">
+              <div>
+                <h3 className="oh-growth-card-title">Practice Setup Checklist</h3>
+                <p className="oh-growth-card-subtitle">
+                  Key milestones to optimize your practice profile conversion and discovery.
+                </p>
+              </div>
+              <span style={{ fontSize: '12px', background: '#DCFCE7', color: '#15803D', padding: '4px 10px', borderRadius: '999px', fontWeight: 700 }}>
+                {completedTasksCount} of 3 Completed
               </span>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: '#334155' }}>
-                <FiCheckCircle color={practitioner.firstName ? "#10B981" : "#CBD5E1"} fontSize={18} />
-                <span style={{ textDecoration: practitioner.firstName ? 'line-through' : 'none', color: practitioner.firstName ? '#94A3B8' : '#334155' }}>
-                  Complete Practitioner Profile &amp; Bio
-                </span>
+            {/* Visual Progress Bar */}
+            <div className="oh-growth-progress-wrap">
+              <div className="oh-growth-progress-meta">
+                <span style={{ color: '#64748B' }}>Onboarding Readiness</span>
+                <span style={{ color: '#0F172A' }}>{checklistPercent}%</span>
               </div>
+              <div className="oh-growth-progress-track">
+                <div
+                  className="oh-growth-progress-fill"
+                  style={{ width: `${checklistPercent}%` }}
+                ></div>
+              </div>
+            </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '13px', color: '#334155' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <FiCheckCircle color={telemetryData?.offers?.length > 0 ? "#10B981" : "#CBD5E1"} fontSize={18} />
-                  <span style={{ textDecoration: telemetryData?.offers?.length > 0 ? 'line-through' : 'none', color: telemetryData?.offers?.length > 0 ? '#94A3B8' : '#334155' }}>
-                    Set up Consultation Offers &amp; Rates
-                  </span>
+            {/* Checklist Items */}
+            <div className="oh-growth-checklist-list">
+              {/* Task 1 */}
+              <div className={`oh-growth-task-item ${hasProfileBio ? 'completed' : ''}`}>
+                <div className="oh-growth-task-left">
+                  <FiCheckCircle
+                    className="oh-growth-task-icon"
+                    color={hasProfileBio ? '#10B981' : '#CBD5E1'}
+                  />
+                  <div>
+                    <h4 className={`oh-growth-task-title ${hasProfileBio ? 'completed' : ''}`}>
+                      Complete Practitioner Profile &amp; Bio
+                    </h4>
+                    <p className="oh-growth-task-desc">
+                      Introduce your background, clinical philosophy, and expertise.
+                    </p>
+                  </div>
                 </div>
                 {setActiveSection && (
                   <button
-                    onClick={() => setActiveSection('offers')}
-                    style={{ background: '#EFF6FF', color: '#1D4ED8', border: 'none', padding: '4px 10px', borderRadius: '6px', fontSize: '11.5px', fontWeight: 700, cursor: 'pointer' }}
+                    onClick={() => setActiveSection('setup')}
+                    className="oh-growth-task-btn primary"
                   >
-                    Manage Offers →
+                    {hasProfileBio ? 'Edit Bio →' : 'Set Up →'}
                   </button>
                 )}
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '13px', color: '#334155' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <FiMail color={reviews.length > 0 ? "#10B981" : "#F59E0B"} fontSize={18} />
-                  <span style={{ fontWeight: reviews.length > 0 ? 400 : 600 }}>Request Reviews from Clients</span>
+              {/* Task 2 */}
+              <div className={`oh-growth-task-item ${hasOffers ? 'completed' : ''}`}>
+                <div className="oh-growth-task-left">
+                  <FiCheckCircle
+                    className="oh-growth-task-icon"
+                    color={hasOffers ? '#10B981' : '#CBD5E1'}
+                  />
+                  <div>
+                    <h4 className={`oh-growth-task-title ${hasOffers ? 'completed' : ''}`}>
+                      Set up Consultation Offers &amp; Rates
+                    </h4>
+                    <p className="oh-growth-task-desc">
+                      Configure 1-on-1 sessions, introductory calls, or circle packages.
+                    </p>
+                  </div>
+                </div>
+                {setActiveSection && (
+                  <button
+                    onClick={() => setActiveSection('offers')}
+                    className="oh-growth-task-btn primary"
+                  >
+                    {hasOffers ? 'Edit Offers →' : 'Create Offers →'}
+                  </button>
+                )}
+              </div>
+
+              {/* Task 3 */}
+              <div className={`oh-growth-task-item ${hasReviews ? 'completed' : ''}`}>
+                <div className="oh-growth-task-left">
+                  <FiCheckCircle
+                    className="oh-growth-task-icon"
+                    color={hasReviews ? '#10B981' : '#CBD5E1'}
+                  />
+                  <div>
+                    <h4 className={`oh-growth-task-title ${hasReviews ? 'completed' : ''}`}>
+                      Request Reviews from Clients
+                    </h4>
+                    <p className="oh-growth-task-desc">
+                      Build trust and social proof by collecting verified learner feedback.
+                    </p>
+                  </div>
                 </div>
                 <button
                   onClick={() => setShowReviewModal(true)}
-                  style={{ background: '#FEF3C7', color: '#92400E', border: 'none', padding: '4px 10px', borderRadius: '6px', fontSize: '11.5px', fontWeight: 700, cursor: 'pointer' }}
+                  className="oh-growth-task-btn amber"
                 >
-                  Send Request →
+                  <FiSend size={12} /> Send Request →
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Practitioner Badges & Honors Card */}
-          <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)', color: '#FFFFFF', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+          {/* Practitioner Honors & Badges Card */}
+          <div className="oh-growth-surface-dark">
+            <div className="oh-growth-card-head">
               <div>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(245, 158, 11, 0.18)', border: '1px solid rgba(245, 158, 11, 0.35)', color: '#FCD34D', padding: '3px 8px', borderRadius: '12px', fontSize: '10.5px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
-                  <FiAward size={12} /> Platform Recognition
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(245, 158, 11, 0.18)', border: '1px solid rgba(245, 158, 11, 0.35)', color: '#FCD34D', padding: '3px 10px', borderRadius: '12px', fontSize: '10.5px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+                  <FiAward size={13} /> Platform Recognition
                 </div>
-                <h3 style={{ fontSize: '17px', fontWeight: 800, color: '#FFFFFF', margin: 0 }}>Practitioner Honors &amp; Badges</h3>
-                <p style={{ fontSize: '12px', color: '#94A3B8', margin: '2px 0 0 0' }}>Badges awarded to your practice and shown on your public booking profile</p>
+                <h3 className="oh-growth-card-title light">Practitioner Honors &amp; Badges</h3>
+                <p className="oh-growth-card-subtitle light">
+                  Badges awarded to your practice and featured on your public booking profile.
+                </p>
               </div>
+
               <button
                 type="button"
                 onClick={() => setShowBadgesModal(true)}
-                style={{ background: 'rgba(255, 255, 255, 0.12)', color: '#FFFFFF', border: '1px solid rgba(255, 255, 255, 0.2)', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+                className="oh-growth-btn-glass"
+                style={{ padding: '8px 14px', fontSize: '12px' }}
               >
                 View Details &amp; Criteria →
               </button>
             </div>
 
-            <div style={{ paddingTop: '4px' }}>
+            <div style={{ paddingTop: '8px' }}>
               <PractitionerBadgeStrip
                 badges={practitioner?.badges}
                 maxDisplay={5}
@@ -519,193 +749,150 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
             </div>
           </div>
 
-          {/* ITEM 27 FIX: Inline Specialties & Languages Editor Card */}
-          <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0F172A', margin: 0 }}>Specialties &amp; Languages</h3>
-                <p style={{ fontSize: '12px', color: '#64748B', margin: '2px 0 0 0' }}>Manage tags displayed on your public booking profile</p>
-              </div>
-              <button
-                onClick={() => setEditingSpecLang(!editingSpecLang)}
-                style={{ background: editingSpecLang ? '#F1F5F9' : '#EFF6FF', color: editingSpecLang ? '#475569' : '#2563EB', border: 'none', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
-              >
-                {editingSpecLang ? 'Close' : '✏️ Edit Specialties'}
-              </button>
-            </div>
-
-            {/* View Mode Tag Chips */}
-            {!editingSpecLang ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div>
-                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', display: 'block', marginBottom: '6px' }}>Specialties:</span>
-                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                    {specialties.map((s, i) => (
-                      <span key={i} style={{ background: '#EEF2FF', color: '#3730A3', padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 600 }}>{s}</span>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', display: 'block', marginBottom: '6px' }}>Languages Spoken:</span>
-                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                    {languages.map((l, i) => (
-                      <span key={i} style={{ background: '#F0FDF4', color: '#166534', padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 600 }}>{l}</span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              /* Edit Mode Form */
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', background: '#F8FAFC', padding: '16px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '6px' }}>Specialties</label>
-                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '10px' }}>
-                    {specialties.map((s) => (
-                      <span key={s} style={{ background: '#EEF2FF', color: '#3730A3', padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                        {s}
-                        <button type="button" onClick={() => removeSpecialtyTag(s)} style={{ background: 'none', border: 'none', color: '#4338CA', cursor: 'pointer', padding: 0, fontWeight: 800 }}>✕</button>
-                      </span>
-                    ))}
-                  </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <input
-                      type="text"
-                      placeholder="Add specialty (e.g. Anxiety Management)"
-                      value={newSpecInput}
-                      onChange={(e) => setNewSpecInput(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSpecialtyTag() } }}
-                      style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '13px' }}
-                    />
-                    <button type="button" onClick={addSpecialtyTag} style={{ background: '#3B82F6', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>+ Add</button>
-                  </div>
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '6px' }}>Languages Spoken</label>
-                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '10px' }}>
-                    {languages.map((l) => (
-                      <span key={l} style={{ background: '#F0FDF4', color: '#166534', padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                        {l}
-                        <button type="button" onClick={() => removeLanguageTag(l)} style={{ background: 'none', border: 'none', color: '#15803D', cursor: 'pointer', padding: 0, fontWeight: 800 }}>✕</button>
-                      </span>
-                    ))}
-                  </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <input
-                      type="text"
-                      placeholder="Add language (e.g. Spanish, French)"
-                      value={newLangInput}
-                      onChange={(e) => setNewLangInput(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addLanguageTag() } }}
-                      style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '13px' }}
-                    />
-                    <button type="button" onClick={addLanguageTag} style={{ background: '#10B981', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>+ Add</button>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' }}>
-                  <button type="button" onClick={() => setEditingSpecLang(false)} style={{ background: '#F1F5F9', color: '#475569', border: 'none', padding: '8px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-                  <button type="button" onClick={handleSaveSpecLang} disabled={savingSpecLang} style={{ background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)', color: '#fff', border: 'none', padding: '8px 18px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>{savingSpecLang ? 'Saving...' : 'Save Profile Tags'}</button>
-                </div>
-              </div>
-            )}
-          </div>
-
-
-          {/* Testimonials Card */}
-          <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0F172A', margin: 0 }}>Client Reviews &amp; Testimonials ({reviews.length})</h3>
-                <p style={{ fontSize: '12.5px', color: '#64748B', margin: '2px 0 0 0' }}>Verified feedback shown on your profile</p>
-              </div>
-
-              <button
-                onClick={() => setShowReviewModal(true)}
-                style={{ background: '#1E293B', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-              >
-                <FiSend fontSize={12} /> Request Review
-              </button>
-            </div>
-
-            {reviews.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {reviews.map((rev, idx) => {
-                  const isFeatured = featuredReviews[rev._id || idx] !== false
-                  return (
-                    <div key={rev._id || idx} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '14px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ color: '#F59E0B', fontWeight: 700, fontSize: '13px' }}>
-                            {'★'.repeat(rev.rating || 5)}
-                          </span>
-                          <span style={{ fontWeight: 700, fontSize: '13px', color: '#0F172A' }}>
-                            — {rev.clientName || (rev.user?.firstName ? `${rev.user.firstName} ${rev.user.lastName || ''}`.trim() : 'Verified Client')}
-                          </span>
-                        </div>
-
-                        <button
-                          onClick={() => toggleFeature(rev._id || idx)}
-                          style={{
-                            background: isFeatured ? '#DCFCE7' : '#F1F5F9',
-                            color: isFeatured ? '#15803D' : '#64748B',
-                            border: 'none',
-                            padding: '2px 8px',
-                            borderRadius: '10px',
-                            fontSize: '11px',
-                            fontWeight: 700,
-                            cursor: 'pointer'
-                          }}
-                        >
-                          {isFeatured ? 'Featured ✓' : 'Hidden'}
-                        </button>
-                      </div>
-
-                      <p style={{ margin: 0, fontSize: '13px', color: '#334155', lineHeight: '1.4', fontStyle: 'italic' }}>
-                        "{rev.review || rev.content || 'Great experience working together.'}"
-                      </p>
-                    </div>
-                  )
-                })}
-              </div>
-            ) : (
-              <div style={{ padding: '24px 0', textAlign: 'center', color: '#64748B', fontSize: '13px' }}>
-                No client reviews submitted yet. Click "Request Review" to send feedback invitations.
-              </div>
-            )}
-          </div>
-
         </div>
 
-      </div>
+      </section>
 
-      {/* QR CODE MODAL */}
+      {/* ─── 4. Client Reviews & Testimonials ─── */}
+      <section className="oh-growth-surface">
+        <div className="oh-growth-card-head">
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <h3 className="oh-growth-card-title">Client Reviews &amp; Testimonials</h3>
+              <span style={{ background: '#EFF6FF', color: '#1D4ED8', padding: '3px 9px', borderRadius: '999px', fontSize: '12px', fontWeight: 800 }}>
+                {reviews.length}
+              </span>
+            </div>
+            <p className="oh-growth-card-subtitle">
+              Verified learner feedback showcased directly on your public practice landing page.
+            </p>
+          </div>
+
+          <button
+            onClick={() => setShowReviewModal(true)}
+            className="oh-growth-btn-primary"
+            style={{ padding: '9px 16px', fontSize: '13px' }}
+          >
+            <FiSend size={14} />
+            <span>Request Review</span>
+          </button>
+        </div>
+
+        {reviews.length > 0 ? (
+          <div className="oh-growth-reviews-grid">
+            {reviews.map((rev, idx) => {
+              const isFeatured = featuredReviews[rev._id || idx] !== false
+              const clientName = rev.clientName || (rev.user?.firstName ? `${rev.user.firstName} ${rev.user.lastName || ''}`.trim() : 'Verified Client')
+              const ratingCount = rev.rating || 5
+
+              return (
+                <div key={rev._id || idx} className="oh-growth-review-card">
+                  <div className="oh-growth-review-top">
+                    <div>
+                      <div className="oh-growth-review-stars">
+                        {'★'.repeat(ratingCount)}
+                      </div>
+                      <div className="oh-growth-review-client">
+                        — {clientName}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => toggleFeature(rev._id || idx)}
+                      className={`oh-growth-feature-btn ${isFeatured ? 'active' : 'muted'}`}
+                      title={isFeatured ? 'Click to hide from featured profile list' : 'Click to feature on profile'}
+                    >
+                      {isFeatured ? 'Featured ✓' : 'Hidden'}
+                    </button>
+                  </div>
+
+                  <p className="oh-growth-review-text">
+                    "{rev.review || rev.content || 'Great experience working together.'}"
+                  </p>
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="oh-growth-empty-reviews">
+            <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#EFF6FF', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>
+              <FiStar />
+            </div>
+            <div style={{ fontWeight: 700, color: '#0F172A', fontSize: '15px' }}>
+              No client reviews submitted yet
+            </div>
+            <p style={{ margin: 0, fontSize: '13px', maxWidth: '420px', lineHeight: 1.5 }}>
+              Collect feedback from your previous sessions to establish credibility and boost new learner bookings.
+            </p>
+            <button
+              onClick={() => setShowReviewModal(true)}
+              className="oh-growth-task-btn primary"
+              style={{ marginTop: '6px', padding: '8px 16px', fontSize: '13px' }}
+            >
+              <FiSend size={13} /> Send First Review Invitation →
+            </button>
+          </div>
+        )}
+      </section>
+
+      {/* ─── 5. Modals ─── */}
+
+      {/* QR Code Modal */}
       {showQrModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <div style={{ background: '#ffffff', borderRadius: '16px', padding: '28px', maxWidth: '400px', width: '100%', textAlign: 'center', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
-            <h3 style={{ margin: '0 0 6px 0', fontSize: '20px', fontWeight: 800, color: '#0F172A' }}>Your Practice QR Code</h3>
-            <p style={{ fontSize: '13px', color: '#64748B', margin: '0 0 20px 0' }}>Scan to open direct booking profile for {firstName} {lastName}</p>
-            
-            {/* Real Dynamic QR Code Image */}
-            <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '16px', display: 'inline-block', marginBottom: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+        <div className="oh-growth-modal-backdrop" onClick={() => setShowQrModal(false)}>
+          <div className="oh-growth-modal-box" onClick={(e) => e.stopPropagation()} style={{ textAlign: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <h3 style={{ margin: 0, fontSize: '21px', fontWeight: 800, color: '#0F172A', fontFamily: 'Outfit, sans-serif' }}>
+                Practice QR Code
+              </h3>
+              <button
+                onClick={() => setShowQrModal(false)}
+                style={{ background: '#F1F5F9', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748B' }}
+              >
+                <FiX size={16} />
+              </button>
+            </div>
+
+            <p style={{ fontSize: '13px', color: '#64748B', margin: '0 0 20px 0' }}>
+              Scan to open direct booking profile for {firstName} {lastName}
+            </p>
+
+            {/* Dynamic High-Res QR Code Preview */}
+            <div style={{ background: '#FFFFFF', border: '1.5px solid #E2E8F0', borderRadius: '20px', padding: '20px', display: 'inline-block', marginBottom: '20px', boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }}>
               <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(bookingLink)}`}
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(bookingLink)}`}
                 alt="Booking Link QR Code"
-                style={{ width: '180px', height: '180px', borderRadius: '8px', display: 'block' }}
+                style={{ width: '200px', height: '200px', borderRadius: '8px', display: 'block' }}
               />
+            </div>
+
+            <div style={{ fontSize: '12px', color: '#64748B', wordBreak: 'break-all', marginBottom: '20px', background: '#F8FAFC', padding: '8px 12px', borderRadius: '10px' }}>
+              {bookingLink}
             </div>
 
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
               <button
                 onClick={handleDownloadQr}
                 disabled={downloadingQr}
-                style={{ background: downloadingQr ? '#94A3B8' : '#3B82F6', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: 700, cursor: downloadingQr ? 'not-allowed' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                className="oh-growth-btn-primary"
+                style={{ cursor: downloadingQr ? 'not-allowed' : 'pointer' }}
               >
-                {downloadingQr ? 'Downloading...' : '📥 Download PNG'}
+                <FiDownload size={15} />
+                <span>{downloadingQr ? 'Downloading...' : 'Download PNG'}</span>
               </button>
+
+              <button
+                onClick={handleCopyLink}
+                className="oh-growth-task-btn primary"
+                style={{ padding: '11px 18px', fontSize: '13px' }}
+              >
+                {copiedLink ? <FiCheck size={14} /> : <FiCopy size={14} />}
+                <span>{copiedLink ? 'Copied' : 'Copy Link'}</span>
+              </button>
+
               <button
                 onClick={() => setShowQrModal(false)}
-                style={{ background: '#F1F5F9', color: '#475569', border: 'none', padding: '10px 16px', borderRadius: '8px', fontWeight: 700, cursor: 'pointer' }}
+                style={{ background: '#F1F5F9', color: '#475569', border: 'none', padding: '11px 18px', borderRadius: '12px', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}
               >
                 Close
               </button>
@@ -714,24 +901,42 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
         </div>
       )}
 
-      {/* REQUEST REVIEW MODAL */}
+      {/* Request Review Modal */}
       {showReviewModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <div style={{ background: '#ffffff', borderRadius: '16px', padding: '28px', maxWidth: '440px', width: '100%', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
-            <h3 style={{ margin: '0 0 6px 0', fontSize: '20px', fontWeight: 800, color: '#0F172A' }}>Request Client Review</h3>
-            <p style={{ fontSize: '13px', color: '#64748B', margin: '0 0 18px 0' }}>Send an automated review invitation to your learner or client.</p>
-            
-            <form onSubmit={handleSendReviewRequest} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <div className="oh-growth-modal-backdrop" onClick={() => setShowReviewModal(false)}>
+          <div className="oh-growth-modal-box" onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#EFF6FF', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
+                  <FiMail />
+                </div>
+                <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 800, color: '#0F172A', fontFamily: 'Outfit, sans-serif' }}>
+                  Request Client Review
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowReviewModal(false)}
+                style={{ background: '#F1F5F9', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748B' }}
+              >
+                <FiX size={16} />
+              </button>
+            </div>
+
+            <p style={{ fontSize: '13px', color: '#64748B', margin: '0 0 20px 0', lineHeight: 1.5 }}>
+              Send an automated review invitation to your client's email. When submitted, their verified rating will display on your profile.
+            </p>
+
+            <form onSubmit={handleSendReviewRequest} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '6px' }}>
+                <label style={{ fontSize: '12.5px', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '6px' }}>
                   Client Email Address
                 </label>
                 <input
                   type="email"
-                  placeholder="client@example.com"
+                  placeholder="learner@example.com"
                   value={clientEmail}
                   onChange={(e) => setClientEmail(e.target.value)}
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '14px' }}
+                  className="oh-growth-input"
                   required
                 />
               </div>
@@ -740,20 +945,21 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
                 <button
                   type="button"
                   onClick={() => setShowReviewModal(false)}
-                  style={{ background: '#F1F5F9', color: '#475569', border: 'none', padding: '10px 16px', borderRadius: '8px', fontWeight: 700, cursor: 'pointer' }}
+                  style={{ background: '#F1F5F9', color: '#475569', border: 'none', padding: '10px 18px', borderRadius: '10px', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={sendingReview}
-                  style={{ background: sendingReview ? '#94A3B8' : '#10B981', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: 700, cursor: sendingReview ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  className="oh-growth-btn-primary"
+                  style={{ cursor: sendingReview ? 'not-allowed' : 'pointer' }}
                 >
-                  <FiSend /> {sendingReview ? 'Sending Email...' : 'Send Review Invitation'}
+                  <FiSend size={14} />
+                  <span>{sendingReview ? 'Sending Email...' : 'Send Review Invitation'}</span>
                 </button>
               </div>
             </form>
-
           </div>
         </div>
       )}
@@ -763,7 +969,7 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
         isOpen={showBadgesModal}
         onClose={() => setShowBadgesModal(false)}
         badges={practitioner?.badges}
-        practitionerName={practitioner?.firstName || 'Practitioner'}
+        practitionerName={practitioner?.firstName || user?.firstName || 'Practitioner'}
       />
 
     </div>

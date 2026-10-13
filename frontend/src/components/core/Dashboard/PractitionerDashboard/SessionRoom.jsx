@@ -216,7 +216,7 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
   }
 
   return (
-    <section className="view on" id="room">
+    <section className="view on oh-view-fade-in" id="room">
       {/* ── Booked Clients Section ─────────────────────────────────────── */}
       <div style={{ marginBottom: 28, background: '#fff', borderRadius: 16, border: '1px solid #E2E8F0', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
         <div style={{ padding: '18px 24px', borderBottom: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -433,7 +433,7 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
           upcomingClasses.map((cls) => (
             <div
               key={cls._id}
-              className="row"
+              className="row oh-card-interactive"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -608,6 +608,7 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
       {/* Schedule Modal */}
       {showScheduleModal && (
         <div
+          className="oh-modal-backdrop-animated"
           style={{
             position: 'fixed',
             inset: 0,
@@ -621,6 +622,7 @@ export function SessionRoom({ practitionerName = 'Dr. Meera Iyer', telemetryData
           }}
         >
           <div
+            className="oh-modal-box-animated"
             style={{
               background: '#FFFFFF',
               borderRadius: '20px',

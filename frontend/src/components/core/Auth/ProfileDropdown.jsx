@@ -83,7 +83,7 @@ export default function ProfileDropdown({ onSelectSection }) {
       {open && (
         <div
           onClick={(e) => e.stopPropagation()}
-          className="absolute top-[calc(100%+8px)] right-0 z-[1050] w-52 overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-1.5 shadow-xl text-left"
+          className="oh-dropdown-menu-animated absolute top-[calc(100%+8px)] right-0 z-[1050] w-52 overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-1.5 shadow-xl text-left"
           style={{
             boxShadow:
               "0 14px 35px -10px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(15, 23, 42, 0.04)",

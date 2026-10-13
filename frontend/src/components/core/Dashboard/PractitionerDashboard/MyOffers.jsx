@@ -321,7 +321,7 @@ export function MyOffers({ telemetryData, onUpdate }) {
   const programCount = offersList.filter((o) => (o.type || 'session').toLowerCase() === 'program').length
 
   return (
-    <section className="view on" id="offers">
+    <section className="view on oh-view-fade-in" id="offers">
       {/* HEADER BAR */}
       <div
         className="htop"
@@ -481,6 +481,7 @@ export function MyOffers({ telemetryData, onUpdate }) {
               return (
                 <div
                   key={o._id}
+                  className="oh-card-interactive"
                   style={{
                     background: '#FFFFFF',
                     borderRadius: '16px',
@@ -697,6 +698,7 @@ export function MyOffers({ telemetryData, onUpdate }) {
       {/* CREATE / EDIT OFFER MODAL */}
       {showCreateModal && (
         <div
+          className="oh-modal-backdrop-animated"
           onClick={() => setShowCreateModal(false)}
           style={{
             position: 'fixed',
@@ -714,6 +716,7 @@ export function MyOffers({ telemetryData, onUpdate }) {
           }}
         >
           <div
+            className="oh-modal-box-animated"
             onClick={(e) => e.stopPropagation()}
             style={{
               position: 'fixed',
@@ -998,6 +1001,7 @@ export function MyOffers({ telemetryData, onUpdate }) {
       {/* DELETE CONFIRMATION MODAL */}
       {deleteTargetOffer && (
         <div
+          className="oh-modal-backdrop-animated"
           onClick={() => !deleteLoading && setDeleteTargetOffer(null)}
           style={{
             position: 'fixed',
@@ -1012,6 +1016,7 @@ export function MyOffers({ telemetryData, onUpdate }) {
           }}
         >
           <div
+            className="oh-modal-box-animated"
             onClick={(e) => e.stopPropagation()}
             style={{
               background: '#FFFFFF',

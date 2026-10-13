@@ -468,7 +468,7 @@ export function SocialPostStudio() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '28px', maxWidth: '1440px', margin: '0 auto', width: '100%', fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif" }}>
+    <div className="oh-view-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '28px', maxWidth: '1440px', margin: '0 auto', width: '100%', fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif" }}>
       
       {/* 🚀 COMPACT ELEGANT STUDIO HEADER & CONTROL BAR */}
       <div

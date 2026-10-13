@@ -300,7 +300,7 @@ export default function PractitionerCoupons() {
   )
 
   return (
-    <div style={{ padding: '4px 0 32px' }}>
+    <div className="oh-view-fade-in" style={{ padding: '4px 0 32px' }}>
       {/* Header Banner */}
       <div
         style={{

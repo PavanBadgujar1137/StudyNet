@@ -28,7 +28,7 @@ export function PayoutsInvoices({ telemetryData }) {
   const formattedClearing = formatAmount(clearingThisWeek)
 
   return (
-    <section className="view on" id="payouts">
+    <section className="view on oh-view-fade-in" id="payouts">
       <div className="htop" style={{ marginBottom: '24px' }}>
         <div>
           <div className="crumb">Business / Payouts</div>
@@ -42,7 +42,7 @@ export function PayoutsInvoices({ telemetryData }) {
       {/* Stats Cards Grid */}
       <div className="g4" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
         {/* Earned This Month */}
-        <div className="card stat" style={{ background: '#FFFFFF', padding: '20px', borderRadius: '14px', border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', justify: 'space-between' }}>
+        <div className="card stat oh-card-interactive" style={{ background: '#FFFFFF', padding: '20px', borderRadius: '14px', border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', justify: 'space-between' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
               <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748B' }}>Earned This Month</span>
@@ -70,7 +70,7 @@ export function PayoutsInvoices({ telemetryData }) {
         </div>
 
         {/* Total Lifetime Earnings */}
-        <div className="card stat" style={{ background: '#FFFFFF', padding: '20px', borderRadius: '14px', border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', justify: 'space-between' }}>
+        <div className="card stat oh-card-interactive" style={{ background: '#FFFFFF', padding: '20px', borderRadius: '14px', border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', justify: 'space-between' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
               <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748B' }}>Total Lifetime Earnings</span>
@@ -98,7 +98,7 @@ export function PayoutsInvoices({ telemetryData }) {
         </div>
 
         {/* Pending Admin Settlement */}
-        <div className="card stat" style={{ background: '#FFFFFF', padding: '20px', borderRadius: '14px', border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', justify: 'space-between' }}>
+        <div className="card stat oh-card-interactive" style={{ background: '#FFFFFF', padding: '20px', borderRadius: '14px', border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', justify: 'space-between' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
               <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748B' }}>Pending Admin Settlement</span>

@@ -69,48 +69,49 @@ export default function DeleteAccount() {
     <>
       <div
         style={{
-          background: "#FEF2F2",
-          border: "1px solid #FECDD3",
+          background: "linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%)",
+          border: "1.5px solid #FECDD3",
           borderRadius: "24px",
-          padding: "28px",
+          padding: "32px",
           display: "flex",
-          gap: "20px",
+          gap: "24px",
           alignItems: "flex-start",
           textAlign: "left",
+          boxShadow: "0 10px 25px -5px rgba(225, 29, 72, 0.08)",
         }}
       >
         <div
           style={{
-            width: "48px",
-            height: "48px",
-            borderRadius: "14px",
+            width: "52px",
+            height: "52px",
+            borderRadius: "16px",
             background: "#FEE2E2",
             color: "#DC2626",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             flexShrink: 0,
-            boxShadow: "0 2px 6px rgba(220,38,38,0.1)",
+            boxShadow: "0 4px 12px rgba(220, 38, 38, 0.15)",
           }}
         >
-          <FiAlertTriangle style={{ fontSize: "22px" }} />
+          <FiAlertTriangle style={{ fontSize: "24px" }} />
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px", flex: 1 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px", flex: 1 }}>
           <div>
-            <h3 style={{ fontSize: "18px", fontWeight: 800, color: "#991B1B", margin: 0 }}>
-              Delete Account
+            <h3 style={{ fontSize: "20px", fontWeight: 800, color: "#9F1239", margin: 0, letterSpacing: "-0.02em" }}>
+              Account Management &amp; Deletion
             </h3>
-            <p style={{ fontSize: "12px", color: "#9F1239", margin: "2px 0 0", fontWeight: 600 }}>
-              30-day permanent account removal queue
+            <p style={{ fontSize: "13px", color: "#BE123C", margin: "3px 0 0", fontWeight: 700 }}>
+              30-day permanent account removal queue &amp; data privacy
             </p>
           </div>
 
-          <div style={{ fontSize: "13px", color: "#475569", lineHeight: "1.6", maxWidth: "600px" }}>
-            <p style={{ fontWeight: 700, color: "#991B1B", margin: 0 }}>
-              Would you like to delete your account?
+          <div style={{ fontSize: "13.5px", color: "#475569", lineHeight: "1.65", maxWidth: "640px" }}>
+            <p style={{ fontWeight: 700, color: "#9F1239", margin: 0 }}>
+              Would you like to permanently delete your account?
             </p>
-            <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#64748B" }}>
-              Requesting permanent deletion will initiate a <strong>30-day grace period</strong>. After 30 days, your account and all associated data, enrolled spaces, and learning records will be completely wiped from the database.
+            <p style={{ margin: "4px 0 0", fontSize: "13px", color: "#64748B" }}>
+              Requesting permanent deletion initiates a <strong>30-day grace period</strong>. After 30 days, your credentials, enrolled sessions, messages, and uploaded materials are completely wiped from our database.
             </p>
           </div>
 
@@ -121,20 +122,28 @@ export default function DeleteAccount() {
                 background: "linear-gradient(135deg, #EF4444 0%, #DC2626 100%)",
                 color: "#FFFFFF",
                 border: "none",
-                padding: "12px 24px",
-                borderRadius: "12px",
+                padding: "13px 26px",
+                borderRadius: "14px",
                 fontWeight: 700,
-                fontSize: "13px",
+                fontSize: "13.5px",
                 cursor: "pointer",
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "8px",
                 boxShadow: "0 4px 14px rgba(220, 38, 38, 0.4)",
-                transition: "all 0.15s ease",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-1.5px)"
+                e.currentTarget.style.boxShadow = "0 8px 22px rgba(220, 38, 38, 0.5)"
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)"
+                e.currentTarget.style.boxShadow = "0 4px 14px rgba(220, 38, 38, 0.4)"
               }}
               onClick={handleOpenModal}
             >
-              <FiTrash2 style={{ fontSize: "15px" }} /> Delete My Account Permanently
+              <FiTrash2 style={{ fontSize: "16px" }} /> Schedule Permanent Deletion
             </button>
           </div>
         </div>

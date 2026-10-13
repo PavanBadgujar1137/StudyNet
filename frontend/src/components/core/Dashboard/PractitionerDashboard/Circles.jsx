@@ -147,7 +147,7 @@ export function Circles({ telemetryData, onUpdate, setActiveSection }) {
   const activeCircles = circlesList.filter((c) => c.status !== 'completed' && c.kanbanStage !== 'completed')
 
   return (
-    <section className="view on" id="circles" style={{ padding: '4px 0 24px 0' }}>
+    <section className="view on oh-view-fade-in" id="circles" style={{ padding: '4px 0 24px 0' }}>
       {/* Header Section */}
       <div
         style={{
@@ -244,6 +244,7 @@ export function Circles({ telemetryData, onUpdate, setActiveSection }) {
                 return (
                   <div
                     key={c._id}
+                    className="oh-card-interactive"
                     style={{
                       background: '#F8FAFC',
                       border: '1px solid #E2E8F0',
@@ -363,6 +364,7 @@ export function Circles({ telemetryData, onUpdate, setActiveSection }) {
       {/* Create Circle Modal */}
       {showCreateModal && (
         <div
+          className="oh-modal-backdrop-animated"
           style={{
             position: 'fixed',
             inset: 0,
@@ -375,6 +377,7 @@ export function Circles({ telemetryData, onUpdate, setActiveSection }) {
           }}
         >
           <div
+            className="oh-modal-box-animated"
             style={{
               background: '#FFFFFF',
               borderRadius: '20px',
@@ -502,6 +505,7 @@ export function Circles({ telemetryData, onUpdate, setActiveSection }) {
       {/* Edit Circle Modal */}
       {editingCircle && (
         <div
+          className="oh-modal-backdrop-animated"
           style={{
             position: 'fixed',
             inset: 0,
@@ -514,6 +518,7 @@ export function Circles({ telemetryData, onUpdate, setActiveSection }) {
           }}
         >
           <div
+            className="oh-modal-box-animated"
             style={{
               background: '#FFFFFF',
               borderRadius: '20px',
