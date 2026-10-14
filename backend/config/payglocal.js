@@ -1,4 +1,6 @@
 const crypto = require("crypto")
+const fs = require("fs")
+const path = require("path")
 
 /**
  * PayGlocal Payment Gateway Integration Module
@@ -24,6 +26,40 @@ const isUnsetSecret = (value) => {
 
 const realSecret = (value) => (isUnsetSecret(value) ? "" : String(value).trim())
 
+const resolveKey = (envVal, envPath, defaultFileName) => {
+  let val = realSecret(envVal)
+  if (val && !val.includes("-----BEGIN")) {
+    // Might be a file path passed in env
+    try {
+      const resolved = path.isAbsolute(val) ? val : path.resolve(process.cwd(), val)
+      if (fs.existsSync(resolved)) {
+        return fs.readFileSync(resolved, "utf8").trim()
+      }
+    } catch (_) {}
+  }
+  if (val) return val
+
+  const customPath = realSecret(envPath)
+  if (customPath) {
+    try {
+      const resolved = path.isAbsolute(customPath) ? customPath : path.resolve(process.cwd(), customPath)
+      if (fs.existsSync(resolved)) {
+        return fs.readFileSync(resolved, "utf8").trim()
+      }
+    } catch (_) {}
+  }
+
+  // Check default keys folder in backend/config/keys
+  try {
+    const defaultPath = path.join(__dirname, "keys", defaultFileName)
+    if (fs.existsSync(defaultPath)) {
+      return fs.readFileSync(defaultPath, "utf8").trim()
+    }
+  } catch (_) {}
+
+  return ""
+}
+
 const getPayGlocalConfig = () => {
   const isProd =
     process.env.PAYGLOCAL_ENV === "production" ||
@@ -34,8 +70,16 @@ const getPayGlocalConfig = () => {
   const apiKey = realSecret(
     process.env.PAYGLOCAL_API_KEY || process.env.PAYGLOCAL_SECRET_KEY
   )
-  const publicKey = realSecret(process.env.PAYGLOCAL_PUBLIC_KEY)
-  const privateKey = realSecret(process.env.PAYGLOCAL_PRIVATE_KEY)
+  const publicKey = resolveKey(
+    process.env.PAYGLOCAL_PUBLIC_KEY,
+    process.env.PAYGLOCAL_PUBLIC_KEY_PATH,
+    "payglocal_public_key.pem"
+  )
+  const privateKey = resolveKey(
+    process.env.PAYGLOCAL_PRIVATE_KEY,
+    process.env.PAYGLOCAL_PRIVATE_KEY_PATH,
+    "payglocal_private_key.pem"
+  )
 
   const env = process.env.PAYGLOCAL_ENV || (isProd ? "production" : "uat")
   const baseUrl =
@@ -58,7 +102,48 @@ const getPayGlocalConfig = () => {
     env,
     baseUrl,
     callbackUrl,
-    isConfigured: Boolean(merchantId && apiKey),
+    isConfigured: Boolean(merchantId && (apiKey || (keyId && privateKey))),
+  }
+}
+
+
+let jose = null
+try {
+  jose = require("jose")
+} catch (e) {
+  console.warn("jose library optional load:", e.message)
+}
+
+/**
+ * Generate official PayGlocal JWE (encrypted payload) and JWS (request signature)
+ */
+const createJweAndJws = async (payload, config) => {
+  if (!jose || !config.publicKey || !config.privateKey) {
+    return null
+  }
+
+  try {
+    const pubKey = await jose.importSPKI(config.publicKey, "RSA-OAEP-256")
+    const pvtKey = await jose.importPKCS8(config.privateKey, "RS256")
+
+    const jsonStr = JSON.stringify(payload)
+    const jwe = await new jose.CompactEncrypt(new TextEncoder().encode(jsonStr))
+      .setProtectedHeader({ alg: "RSA-OAEP-256", enc: "A256GCM" })
+      .encrypt(pubKey)
+
+    const jws = await new jose.CompactSign(new TextEncoder().encode(jwe))
+      .setProtectedHeader({
+        alg: "RS256",
+        kid: config.keyId || "ptplpairkraf8500_key",
+        iss: config.merchantId || "ptplpairkraf8500",
+        "x-gl-enc": "false",
+      })
+      .sign(pvtKey)
+
+    return { jwe, jws }
+  } catch (err) {
+    console.warn("PayGlocal JWE/JWS generation notice:", err.message)
+    return null
   }
 }
 
@@ -91,7 +176,7 @@ const generateAuthToken = (payload, config) => {
 
   if (!signature) {
     signature = crypto
-      .createHmac("sha256", config.apiKey)
+      .createHmac("sha256", config.apiKey || "fallback_secret")
       .update(`${encodedHeader}.${encodedPayload}`)
       .digest("base64url")
   }
@@ -132,10 +217,12 @@ const createPayCollectOrder = async ({
       totalAmount: numAmount.toFixed(2),
       txnCurrency: currency.toUpperCase(),
       billingData: {
-        firstName: customer.firstName || "Practitioner",
+        firstName: customer.firstName || "OpenHand",
         lastName: customer.lastName || "Member",
         addressStreet1: "OpenHand Practitioner Center",
         addressCity: "Mumbai",
+        addressState: "Maharashtra",
+        addressPostalCode: "400001",
         addressCountry: "IND",
         emailId: customer.email || "user@openhand.live",
         callingCode: "+91",
@@ -145,8 +232,6 @@ const createPayCollectOrder = async ({
     merchantCallbackURL: callbackUrl || config.callbackUrl,
     clientData: notes,
   }
-
-  const token = generateAuthToken(payload, config)
 
   if (!config.isConfigured) {
     const dynamicGid = `gl_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
@@ -164,6 +249,55 @@ const createPayCollectOrder = async ({
     }
   }
 
+  // 1. Attempt Official PayGlocal JWE Encrypted + JWS Signed Initiation
+  const cryptoTokens = await createJweAndJws(payload, config)
+  if (cryptoTokens) {
+    try {
+      const response = await fetch(`${config.baseUrl}/gl/v1/payments/initiate/paycollect`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain",
+          "Accept": "application/json",
+          "x-gl-token-external": cryptoTokens.jws,
+          "x-gl-merchant-id": config.merchantId,
+        },
+        body: cryptoTokens.jwe,
+      })
+
+      const rawText = await response.text()
+      let data = null
+      try {
+        data = JSON.parse(rawText)
+      } catch (_) {}
+
+      if (response.ok && data) {
+        const liveRedirect =
+          data.data?.redirectUrl ||
+          data.redirectUrl ||
+          (data.gid ? `https://paycollect.payglocal.in/${data.gid}` : null)
+
+        return {
+          success: true,
+          gid: data.gid || data.data?.gid || `gl_${Date.now()}`,
+          merchantTxnId: txnId,
+          amount: numAmount,
+          currency,
+          redirectUrl: liveRedirect,
+          raw: data,
+          keyId: config.keyId,
+          merchantId: config.merchantId,
+          isLiveGateway: true,
+        }
+      } else {
+        console.warn("PayGlocal JWE API response status:", response.status, rawText)
+      }
+    } catch (jweErr) {
+      console.warn("PayGlocal JWE live API error:", jweErr.message)
+    }
+  }
+
+  // 2. Secondary Direct HTTPS Initiation with JWS Token
+  const token = generateAuthToken(payload, config)
   try {
     const response = await fetch(`${config.baseUrl}/gl/v1/payments/initiate/paycollect`, {
       method: "POST",

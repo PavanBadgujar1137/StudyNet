@@ -130,6 +130,20 @@ export default function PayGlocalCheckoutModal({
     return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
   }
 
+  // Automatically redirect if real PayGlocal URL is returned
+  useEffect(() => {
+    if (
+      isOpen &&
+      redirectUrl &&
+      (redirectUrl.startsWith("http://") || redirectUrl.startsWith("https://")) &&
+      (redirectUrl.includes("payglocal") || redirectUrl.includes("pygcl")) &&
+      !redirectUrl.includes("status=")
+    ) {
+      toast.loading("Redirecting to PayGlocal Official Hosted Gateway...")
+      window.location.href = redirectUrl
+    }
+  }, [isOpen, redirectUrl])
+
   // Handle Form Submission -> Trigger 3D Secure / UPI / NetBanking Challenge
   const handleInitiatePayment = (e) => {
     if (e && e.preventDefault) e.preventDefault()
@@ -137,8 +151,8 @@ export default function PayGlocalCheckoutModal({
     // 1. If real live PayGlocal hosted URL is present, redirect directly to PayGlocal
     if (
       redirectUrl &&
-      redirectUrl.startsWith("https://") &&
-      redirectUrl.includes("paycollect.payglocal.in") &&
+      (redirectUrl.startsWith("http://") || redirectUrl.startsWith("https://")) &&
+      (redirectUrl.includes("payglocal") || redirectUrl.includes("pygcl")) &&
       !redirectUrl.includes("status=")
     ) {
       toast.loading("Redirecting to PayGlocal Official Hosted Gateway...")

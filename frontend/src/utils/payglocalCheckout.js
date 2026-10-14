@@ -27,7 +27,8 @@ export const initiatePayGlocalCheckout = ({
       // If user has a real PayGlocal hosted URL, redirect to PayGlocal's checkout
       if (
         redirectUrl &&
-        redirectUrl.includes("paycollect.payglocal.in") &&
+        (redirectUrl.startsWith("http://") || redirectUrl.startsWith("https://")) &&
+        (redirectUrl.includes("payglocal") || redirectUrl.includes("pygcl")) &&
         !redirectUrl.includes("status=")
       ) {
         window.location.href = redirectUrl
