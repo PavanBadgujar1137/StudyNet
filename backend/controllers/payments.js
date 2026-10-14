@@ -540,6 +540,13 @@ exports.bookOffer = async (req, res) => {
       })
     }
 
+    const backendUrl =
+      process.env.BACKEND_URL ||
+      (process.env.NODE_ENV === "production" ? "https://api.openhand.live" : "http://localhost:4000")
+    const resolvedCallback = req.body.callbackUrl
+      ? `${backendUrl}/api/v1/payments/payglocal/callback?returnUrl=${encodeURIComponent(req.body.callbackUrl)}`
+      : `${backendUrl}/api/v1/payments/payglocal/callback?returnUrl=/app/practitioners`
+
     // PayGlocal flow — create order with discounted amount
     const pglOrder = await createPayCollectOrder({
       merchantTxnId: `oh_offer_${Date.now()}`,
@@ -558,6 +565,7 @@ exports.bookOffer = async (req, res) => {
         offerType: offer.type,
         discountPercentage: discountPercentage.toString(),
       },
+      callbackUrl: resolvedCallback,
     })
 
     const booking = await Booking.create({
