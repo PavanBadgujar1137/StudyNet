@@ -1301,6 +1301,13 @@ exports.createPractitionerOrder = async (req, res) => {
     const effectivePhone = clientPhone || clientUser?.whatsappNumber || clientUser?.contactNumber || ""
     const effectiveEmail = clientEmail || clientUser?.email || ""
 
+    const backendUrl =
+      process.env.BACKEND_URL ||
+      (process.env.NODE_ENV === "production" ? "https://api.openhand.live" : "http://localhost:4000")
+    const resolvedCallback = req.body.callbackUrl
+      ? `${backendUrl}/api/v1/payments/payglocal/callback?returnUrl=${encodeURIComponent(req.body.callbackUrl)}`
+      : `${backendUrl}/api/v1/payments/payglocal/callback?returnUrl=/app/practitioners`
+
     const order = await createPayCollectOrder({
       merchantTxnId: `pract_${Date.now().toString().slice(-8)}`,
       amount: numericAmount,
@@ -1315,6 +1322,7 @@ exports.createPractitionerOrder = async (req, res) => {
         userId: String(userId),
         practitionerId: String(practitionerId),
       },
+      callbackUrl: resolvedCallback,
     })
 
     return res.status(200).json({
@@ -1333,5 +1341,54 @@ exports.createPractitionerOrder = async (req, res) => {
       success: false,
       message: error.message || "Failed to create practitioner payment order",
     })
+  }
+}
+
+// ─── 6. HANDLE PAYGLOCAL BROWSER RETURN CALLBACK ──────────────────────────────
+// Payment gateways perform an HTML form POST to the callback URL upon completion.
+// This endpoint receives the POST from PayGlocal, parses payment parameters,
+// and responds with a 303 GET redirect to the frontend so the browser loads smoothly.
+exports.handlePayGlocalCallback = async (req, res) => {
+  try {
+    const body = req.body || {}
+    const query = req.query || {}
+
+    const status = body.status || query.status || (body.data && body.data.status) || "SUCCESS"
+    const gid = body.gid || query.gid || body["x-gl-gid"] || query["x-gl-gid"] || (body.data && body.data.gid) || ""
+    const merchantTxnId = body.merchantTxnId || query.merchantTxnId || (body.data && body.data.merchantTxnId) || ""
+    const token = body["x-gl-token"] || query["x-gl-token"] || body.token || query.token || ""
+
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000"
+
+    let targetPath = "/app/practitioners"
+    if (query.returnUrl) {
+      targetPath = query.returnUrl
+    } else if (
+      merchantTxnId.startsWith("call_sub_") ||
+      merchantTxnId.startsWith("plan_") ||
+      merchantTxnId.startsWith("sub_")
+    ) {
+      targetPath = "/practice"
+    } else if (
+      merchantTxnId.startsWith("pract_") ||
+      merchantTxnId.startsWith("oh_offer_")
+    ) {
+      targetPath = "/app/practitioners"
+    }
+
+    const redirectBase = targetPath.startsWith("http") ? targetPath : `${frontendUrl}${targetPath}`
+    const urlObj = new URL(redirectBase)
+
+    if (status) urlObj.searchParams.set("status", status)
+    if (gid) urlObj.searchParams.set("gid", gid)
+    if (merchantTxnId) urlObj.searchParams.set("merchantTxnId", merchantTxnId)
+    if (token) urlObj.searchParams.set("x-gl-token", token)
+
+    // 303 forces the browser to make a GET request to the frontend URL
+    return res.redirect(303, urlObj.toString())
+  } catch (err) {
+    console.error("PayGlocal callback error:", err)
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000"
+    return res.redirect(303, `${frontendUrl}/app/practitioners?status=ERROR`)
   }
 }

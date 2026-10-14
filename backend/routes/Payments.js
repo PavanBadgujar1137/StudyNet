@@ -14,8 +14,15 @@ const {
   confirmFreeDiscountBooking,
   sendPaymentSuccessEmail,
   createPractitionerOrder,
+  handlePayGlocalCallback,
 } = require("../controllers/payments")
 const { auth, isInstructor } = require("../middleware/auth")
+
+// ─── PayGlocal Browser Return Callback (Receives POST from PayGlocal, redirects browser via 303 GET to frontend) ───
+router.post("/payglocal/callback", handlePayGlocalCallback)
+router.get("/payglocal/callback", handlePayGlocalCallback)
+router.post("/callback", handlePayGlocalCallback)
+router.get("/callback", handlePayGlocalCallback)
 
 // ─── Subscription Payments (Client pays admin for platform access) ────────────
 router.post("/subscription/create", auth, createSubscriptionOrder)

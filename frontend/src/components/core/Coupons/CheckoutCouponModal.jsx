@@ -231,8 +231,21 @@ export default function CheckoutCouponModal({
       }
 
       setProcessingPayment(false)
+
+      const liveTarget =
+        orderRes.data?.redirectUrl ||
+        orderRes.data?.order?.redirectUrl ||
+        orderRes.data?.payglocalOrder?.redirectUrl
+
+      if (liveTarget && (liveTarget.startsWith('http://') || liveTarget.startsWith('https://'))) {
+        toast.loading('Redirecting to PayGlocal Official Hosted Gateway...')
+        window.location.href = liveTarget
+        return
+      }
+
       setPayglocalOrderData({
         ...orderRes.data,
+        redirectUrl: liveTarget,
         amount: finalAmount,
         currency: 'INR',
         productType,

@@ -84,6 +84,66 @@ export function Practitioners({ onUpdate, setActiveTab }) {
     loadData()
   }, [loadData])
 
+  // Handle return from PayGlocal hosted payment redirect
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const status = params.get('status')
+    const gid = params.get('gid') || params.get('x-gl-gid')
+    const merchantTxnId = params.get('merchantTxnId') || params.get('orderId')
+    const tokenParam = params.get('x-gl-token')
+
+    if ((status === 'SUCCESS' || status === 'COMPLETED' || gid || tokenParam) && !params.get('verified')) {
+      const pendingStr = localStorage.getItem('openhand_pending_booking')
+      if (pendingStr) {
+        try {
+          const pending = JSON.parse(pendingStr)
+          localStorage.removeItem('openhand_pending_booking')
+
+          // Clean URL params to prevent duplicate verification
+          window.history.replaceState({}, document.title, window.location.pathname)
+
+          const confirmBooking = async () => {
+            const vToast = toast.loading('Confirming PayGlocal payment & reserving session...')
+            try {
+              const res = await apiConnector(
+                'POST',
+                '/api/v1/practitioners/connect',
+                {
+                  practitionerId: pending.id,
+                  amountPaid: pending.amount,
+                  offerId: pending.offerId,
+                  scheduledAt: pending.scheduledAt,
+                  slotTime: pending.slotTime,
+                  clientPhone: user?.whatsappNumber || user?.contactNumber || '',
+                  clientEmail: user?.email || '',
+                  payglocal_order_id: merchantTxnId,
+                  payglocal_payment_id: gid,
+                  payglocal_gid: gid,
+                  token: tokenParam,
+                },
+                { Authorization: `Bearer ${token}` }
+              )
+              if (res?.data?.success) {
+                toast.success(
+                  `🎉 Session reserved for ${pending.slotTime || 'your chosen slot'}! Confirmation sent to your WhatsApp & Email.`,
+                  { id: vToast, duration: 7000 }
+                )
+                loadData()
+                if (onUpdate) onUpdate()
+              } else {
+                toast.error(res?.data?.message || 'Could not verify booking.', { id: vToast })
+              }
+            } catch (e) {
+              console.error('Callback booking error:', e)
+              toast.error('Booking confirmation notice: ' + (e.message || 'Complete'), { id: vToast })
+            }
+          }
+          confirmBooking()
+        } catch (_) {}
+      }
+    }
+  }, [token, user, loadData, onUpdate])
+
   // Helper to get connection object for a practitioner
   const getConnectionForPractitioner = (practId) => {
     return connections.find(
@@ -174,28 +234,47 @@ export function Practitioners({ onUpdate, setActiveTab }) {
 
     try {
       // 1. Create PayGlocal order in backend
-      let orderData = null
-      try {
-        const orderRes = await apiConnector(
-          'POST',
-          '/api/v1/payment/create-practitioner-order',
-          { practitionerId: pId, amount },
-          { Authorization: `Bearer ${token}` }
-        )
-        if (orderRes?.data?.success) {
-          orderData = orderRes.data
-        }
-      } catch (err) {
-        console.warn('Backend order creation warning:', err)
+      const orderRes = await apiConnector(
+        'POST',
+        '/api/v1/payment/create-practitioner-order',
+        {
+          practitionerId: pId,
+          amount,
+          callbackUrl: `${window.location.origin}/app/practitioners`,
+        },
+        { Authorization: `Bearer ${token}` }
+      )
+
+      if (!orderRes?.data?.success) {
+        toast.error(orderRes?.data?.message || 'Failed to initialize PayGlocal payment')
+        setPayingId(null)
+        return
       }
 
-      const orderObj = orderData?.order || {
-        id: `txn_pract_${Date.now()}`,
-        amount: Math.round(amount * 100),
-        currency: 'INR',
+      const orderData = orderRes.data
+      const orderObj = orderData.order || {}
+      const finalAmount = orderData.amount || amount
+      const liveTarget = orderData.redirectUrl || orderObj.redirectUrl
+
+      const pendingData = {
+        id: pId,
+        name: pName,
+        amount: finalAmount,
+        offerId: chosenOffer?._id,
+        scheduledAt: slotData.scheduledAt,
+        slotTime: slotData.slotTime,
       }
-      const keyId = orderData?.key || process.env.REACT_APP_PAYGLOCAL_KEY_ID
-      const finalAmount = orderData?.amount || amount
+      setPendingPractitioner(pendingData)
+      try {
+        localStorage.setItem('openhand_pending_booking', JSON.stringify(pendingData))
+      } catch (_) {}
+
+      // 2. Direct real-time redirect to official PayGlocal hosted checkout
+      if (liveTarget && (liveTarget.startsWith('http://') || liveTarget.startsWith('https://'))) {
+        toast.loading('Redirecting to PayGlocal Official Hosted Gateway...')
+        window.location.href = liveTarget
+        return
+      }
 
       const planNameStr = slotData.slotTime
         ? `${chosenOffer?.title || 'Session'} • ${slotData.slotTime}`
@@ -204,11 +283,12 @@ export function Practitioners({ onUpdate, setActiveTab }) {
       const modalOrder = {
         orderId: orderObj.id || orderObj.merchantTxnId || `txn_pgl_${Date.now()}`,
         gid: orderObj.gid || `GL_${Date.now()}`,
-        amount: finalAmount || (orderObj.amount ? orderObj.amount / 100 : amount),
+        redirectUrl: liveTarget,
+        amount: finalAmount,
         currency: orderObj.currency || 'INR',
         planName: planNameStr,
-        keyId: keyId,
-        merchantId: orderObj.merchantId || process.env.REACT_APP_PAYGLOCAL_MERCHANT_ID,
+        keyId: orderData.key,
+        merchantId: orderObj.merchantId,
         customerData: {
           name: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : '',
           email: user?.email || '',
@@ -216,14 +296,6 @@ export function Practitioners({ onUpdate, setActiveTab }) {
         },
       }
 
-      setPendingPractitioner({
-        id: pId,
-        name: pName,
-        amount: finalAmount || amount,
-        offerId: chosenOffer?._id,
-        scheduledAt: slotData.scheduledAt,
-        slotTime: slotData.slotTime,
-      })
       setPayglocalOrderData(modalOrder)
       setPayglocalModalOpen(true)
     } catch (err) {

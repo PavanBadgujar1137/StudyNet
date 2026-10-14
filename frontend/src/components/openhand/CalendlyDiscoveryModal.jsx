@@ -402,6 +402,13 @@ export default function CalendlyDiscoveryModal({
       }
 
       toast.dismiss(toastId)
+      const liveTarget = res.data?.redirectUrl || res.data?.order?.redirectUrl
+      if (liveTarget && (liveTarget.startsWith("http://") || liveTarget.startsWith("https://"))) {
+        toast.loading("Redirecting to PayGlocal Official Hosted Gateway...")
+        window.location.href = liveTarget
+        return
+      }
+
       setPayglocalOrderData({
         ...res.data,
         planKey,

@@ -82,11 +82,19 @@ export function FindAPractitioner() {
         return
       }
 
-      const { order, key, amount: finalAmount } = orderRes.data
+      const { order, key, amount: finalAmount, redirectUrl } = orderRes.data
+      const liveTarget = redirectUrl || order?.redirectUrl
+
+      if (liveTarget && (liveTarget.startsWith('http://') || liveTarget.startsWith('https://'))) {
+        toast.loading('Redirecting to PayGlocal Official Payment Gateway...')
+        window.location.href = liveTarget
+        return
+      }
 
       const orderData = {
         orderId: order?.id || order?.merchantTxnId || `txn_pgl_${Date.now()}`,
         gid: order?.gid || `GL_${Date.now()}`,
+        redirectUrl: liveTarget,
         amount: finalAmount || (order?.amount ? order.amount / 100 : amount),
         currency: order?.currency || 'INR',
         planName: `Counseling Fee for ${pName}`,
