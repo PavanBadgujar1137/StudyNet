@@ -28,6 +28,25 @@ const socialAccountSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isAuthorized: {
+      type: Boolean,
+      default: false,
+    },
+    accessToken: {
+      type: String,
+      default: "",
+    },
+    refreshToken: {
+      type: String,
+      default: "",
+    },
+    platformUserId: {
+      type: String,
+      default: "",
+    },
+    tokenExpiry: {
+      type: Date,
+    },
     connectedAt: {
       type: Date,
       default: Date.now,

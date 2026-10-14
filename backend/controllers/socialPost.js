@@ -1,6 +1,27 @@
 const SocialPost = require("../models/SocialPost")
 const SocialAccount = require("../models/SocialAccount")
 const { uploadFileToS3 } = require("../utils/imageUploader")
+const { dispatchPostToPlatforms } = require("../services/socialDispatcher")
+
+// Resolve LinkedIn redirect URI dynamically
+const resolveLinkedInRedirectUri = (req) => {
+  if (process.env.LINKEDIN_REDIRECT_URI) {
+    return process.env.LINKEDIN_REDIRECT_URI
+  }
+  const appEnv = String(process.env.APP_ENV || "").toLowerCase()
+  if (appEnv === "production") {
+    return "https://api.openhand.live/api/v1/social-posts/oauth/linkedin/callback"
+  }
+  if (appEnv === "uat") {
+    return "https://api-uat.openhand.live/api/v1/social-posts/oauth/linkedin/callback"
+  }
+  if (req) {
+    const proto = req.headers["x-forwarded-proto"] || req.protocol || "http"
+    const host = req.get("host") || `localhost:${process.env.PORT || 4000}`
+    return `${proto}://${host}/api/v1/social-posts/oauth/linkedin/callback`
+  }
+  return `http://localhost:${process.env.PORT || 4000}/api/v1/social-posts/oauth/linkedin/callback`
+}
 
 // Helper function to build web share intents
 const generateShareIntents = (caption, mediaUrl) => {
@@ -76,10 +97,25 @@ exports.createPost = async (req, res) => {
       },
     })
 
+    // If published immediately, dispatch directly to connected social media platforms
+    let dispatchResults = {}
+    if (postStatus === "published") {
+      try {
+        dispatchResults = await dispatchPostToPlatforms(practitionerId, post)
+        post.dispatchResults = dispatchResults
+        const successfulCount = Object.values(dispatchResults).filter((r) => r && r.success).length
+        post.metrics.shares += successfulCount
+        await post.save()
+      } catch (dispatchErr) {
+        console.error("Auto dispatch error on createPost:", dispatchErr)
+      }
+    }
+
     return res.status(201).json({
       success: true,
       message: "Social post created successfully",
       post,
+      dispatchResults,
     })
   } catch (error) {
     console.error("Error in createPost:", error)
@@ -201,7 +237,17 @@ exports.publishPostNow = async (req, res) => {
     post.status = "published"
     post.publishedAt = new Date()
     post.webShareIntents = shareIntents
-    post.metrics.shares += 1
+
+    let dispatchResults = {}
+    try {
+      dispatchResults = await dispatchPostToPlatforms(practitionerId, post)
+      post.dispatchResults = dispatchResults
+      const successfulCount = Object.values(dispatchResults).filter((r) => r && r.success).length
+      post.metrics.shares += (successfulCount > 0 ? successfulCount : 1)
+    } catch (dispatchErr) {
+      console.error("Auto dispatch error on publishPostNow:", dispatchErr)
+      post.metrics.shares += 1
+    }
 
     await post.save()
 
@@ -209,6 +255,7 @@ exports.publishPostNow = async (req, res) => {
       success: true,
       message: "Post published to social channels!",
       post,
+      dispatchResults,
     })
   } catch (error) {
     console.error("Error in publishPostNow:", error)
@@ -284,6 +331,17 @@ exports.toggleSocialAccountConnection = async (req, res) => {
 
     let account = await SocialAccount.findOne({ practitioner: practitionerId, platform })
 
+    const cleanHandle = (rawHandle) => {
+      if (!rawHandle) return ""
+      let clean = String(rawHandle).trim().replace(/\/+$/, "")
+      if (clean.includes("/") || clean.startsWith("http")) {
+        const parts = clean.split("/").filter(Boolean)
+        clean = parts[parts.length - 1] || clean
+      }
+      clean = clean.replace(/^@+/, "")
+      return `@${clean}`
+    }
+
     if (account) {
       if (!account.isConnected) {
         if (!handle && !account.handle) {
@@ -293,7 +351,7 @@ exports.toggleSocialAccountConnection = async (req, res) => {
           })
         }
         account.isConnected = true
-        if (handle) account.handle = handle.startsWith("@") ? handle : `@${handle}`
+        if (handle) account.handle = cleanHandle(handle)
         if (accountName) account.accountName = accountName
         account.connectedAt = new Date()
       } else {
@@ -310,7 +368,7 @@ exports.toggleSocialAccountConnection = async (req, res) => {
       account = await SocialAccount.create({
         practitioner: practitionerId,
         platform,
-        handle: handle.startsWith("@") ? handle : `@${handle}`,
+        handle: cleanHandle(handle),
         accountName: accountName || handle,
         isConnected: true,
         connectedAt: new Date(),
@@ -364,4 +422,277 @@ exports.trackShare = async (req, res) => {
     })
   }
 }
+
+// 8. Generate LinkedIn OAuth Authorization URL
+exports.getLinkedInAuthUrl = async (req, res) => {
+  try {
+    const userId = req.user.id
+    const clientId = process.env.LINKEDIN_CLIENT_ID
+    if (!clientId) {
+      return res.status(400).json({
+        success: false,
+        message: "LinkedIn Client ID is not configured in backend environment",
+      })
+    }
+
+    const redirectUri = resolveLinkedInRedirectUri(req)
+    const returnTo = req.query.returnTo || "/dashboard/my-profile?tab=social-studio"
+
+    const state = Buffer.from(
+      JSON.stringify({ userId, redirectUri, returnTo, timestamp: Date.now() })
+    ).toString("base64")
+
+    // Scopes for LinkedIn API
+    const scope = "openid profile email w_member_social"
+
+    const url = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(
+      redirectUri
+    )}&state=${encodeURIComponent(state)}&scope=${encodeURIComponent(scope)}`
+
+    return res.status(200).json({
+      success: true,
+      url,
+      redirectUri,
+    })
+  } catch (error) {
+    console.error("Error generating LinkedIn auth url:", error)
+    return res.status(500).json({
+      success: false,
+      message: "Failed to generate LinkedIn authorization URL",
+      error: error.message,
+    })
+  }
+}
+
+// 9. LinkedIn OAuth Callback (Exchanges code for access token and saves profile)
+exports.linkedInAuthCallback = async (req, res) => {
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000"
+  try {
+    const { code, state, error: authError, error_description } = req.query
+
+    if (authError) {
+      console.warn("LinkedIn OAuth error from LinkedIn:", authError, error_description)
+      return res.redirect(
+        `${frontendUrl}/dashboard/my-profile?tab=social-studio&linkedin_error=${encodeURIComponent(
+          error_description || authError
+        )}`
+      )
+    }
+
+    if (!code || !state) {
+      return res.redirect(
+        `${frontendUrl}/dashboard/my-profile?tab=social-studio&linkedin_error=Missing+code+or+state`
+      )
+    }
+
+    let parsedState = {}
+    try {
+      parsedState = JSON.parse(Buffer.from(state, "base64").toString("ascii"))
+    } catch (parseErr) {
+      console.error("Failed to decode LinkedIn OAuth state:", parseErr)
+      return res.redirect(
+        `${frontendUrl}/dashboard/my-profile?tab=social-studio&linkedin_error=Invalid+state+parameter`
+      )
+    }
+
+    const { userId, redirectUri, returnTo } = parsedState
+    if (!userId) {
+      return res.redirect(
+        `${frontendUrl}/dashboard/my-profile?tab=social-studio&linkedin_error=User+missing+from+state`
+      )
+    }
+
+    const clientId = process.env.LINKEDIN_CLIENT_ID
+    const clientSecret = process.env.LINKEDIN_CLIENT_SECRET
+    const effectiveRedirectUri = redirectUri || resolveLinkedInRedirectUri(req)
+
+    // Exchange authorization code for access token
+    const tokenParams = new URLSearchParams()
+    tokenParams.append("grant_type", "authorization_code")
+    tokenParams.append("code", code)
+    tokenParams.append("redirect_uri", effectiveRedirectUri)
+    tokenParams.append("client_id", clientId)
+    tokenParams.append("client_secret", clientSecret)
+
+    const tokenRes = await fetch("https://www.linkedin.com/oauth/v2/accessToken", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: tokenParams.toString(),
+    })
+
+    const tokenData = await tokenRes.json()
+
+    if (!tokenRes.ok || !tokenData.access_token) {
+      console.error("LinkedIn token exchange error:", tokenData)
+      const msg = tokenData.error_description || tokenData.error || "Failed to exchange token"
+      return res.redirect(
+        `${frontendUrl}/dashboard/my-profile?tab=social-studio&linkedin_error=${encodeURIComponent(msg)}`
+      )
+    }
+
+    const accessToken = tokenData.access_token
+    const expiresIn = tokenData.expires_in
+    const refreshToken = tokenData.refresh_token
+
+    // Fetch user profile info via OpenID userinfo
+    let platformUserId = ""
+    let accountName = "LinkedIn Member"
+    let handle = "@linkedin_user"
+    let avatarUrl = ""
+
+    try {
+      const userinfoRes = await fetch("https://api.linkedin.com/v2/userinfo", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+      if (userinfoRes.ok) {
+        const uInfo = await userinfoRes.json()
+        if (uInfo.sub) {
+          platformUserId = `urn:li:person:${uInfo.sub}`
+        }
+        if (uInfo.name) {
+          accountName = uInfo.name
+          handle = `@${uInfo.name.replace(/\s+/g, "").toLowerCase()}`
+        }
+        if (uInfo.picture) {
+          avatarUrl = uInfo.picture
+        }
+      }
+    } catch (uErr) {
+      console.warn("userinfo fetch warning:", uErr.message)
+    }
+
+    // Fallback to /v2/me if sub not found
+    if (!platformUserId) {
+      try {
+        const meRes = await fetch("https://api.linkedin.com/v2/me", {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        })
+        if (meRes.ok) {
+          const meData = await meRes.json()
+          if (meData.id) {
+            platformUserId = `urn:li:person:${meData.id}`
+          }
+          if (meData.localizedFirstName) {
+            accountName = `${meData.localizedFirstName} ${meData.localizedLastName || ""}`.trim()
+            handle = `@${accountName.replace(/\s+/g, "").toLowerCase()}`
+          }
+        }
+      } catch (meErr) {
+        console.warn("/v2/me fetch warning:", meErr.message)
+      }
+    }
+
+    // Save or update SocialAccount in MongoDB
+    let account = await SocialAccount.findOne({ practitioner: userId, platform: "linkedin" })
+    if (!account) {
+      account = new SocialAccount({ practitioner: userId, platform: "linkedin" })
+    }
+
+    account.isConnected = true
+    account.isAuthorized = true
+    account.accessToken = accessToken
+    if (refreshToken) account.refreshToken = refreshToken
+    if (expiresIn) account.tokenExpiry = new Date(Date.now() + expiresIn * 1000)
+    if (platformUserId) account.platformUserId = platformUserId
+    if (accountName) account.accountName = accountName
+    if (handle) account.handle = handle
+    if (avatarUrl) account.avatarUrl = avatarUrl
+    account.connectedAt = new Date()
+
+    await account.save()
+
+    const destination = returnTo || "/dashboard/my-profile?tab=social-studio"
+    const sep = destination.includes("?") ? "&" : "?"
+    return res.redirect(`${frontendUrl}${destination}${sep}social_connected=linkedin`)
+  } catch (error) {
+    console.error("LinkedIn callback error:", error)
+    return res.redirect(
+      `${frontendUrl}/dashboard/my-profile?tab=social-studio&linkedin_error=${encodeURIComponent(
+        error.message
+      )}`
+    )
+  }
+}
+
+// 10. Direct Token Connection (Allows pasting LinkedIn Access Token or API Token)
+exports.connectTokenDirectly = async (req, res) => {
+  try {
+    const practitionerId = req.user.id
+    const { platform, accessToken, handle, platformUserId } = req.body
+
+    if (!platform || !accessToken) {
+      return res.status(400).json({
+        success: false,
+        message: "Platform and Access Token are required",
+      })
+    }
+
+    let resolvedUrn = platformUserId || ""
+    let resolvedName = handle || `${platform} User`
+    let resolvedHandle = handle || `@${platform}_user`
+    let avatarUrl = ""
+
+    // If platform is LinkedIn, verify and resolve userinfo
+    if (platform === "linkedin") {
+      try {
+        const uRes = await fetch("https://api.linkedin.com/v2/userinfo", {
+          headers: { Authorization: `Bearer ${accessToken.trim()}` },
+        })
+        if (uRes.ok) {
+          const uInfo = await uRes.json()
+          if (uInfo.sub) resolvedUrn = `urn:li:person:${uInfo.sub}`
+          if (uInfo.name) {
+            resolvedName = uInfo.name
+            resolvedHandle = `@${uInfo.name.replace(/\s+/g, "").toLowerCase()}`
+          }
+          if (uInfo.picture) avatarUrl = uInfo.picture
+        } else {
+          const meRes = await fetch("https://api.linkedin.com/v2/me", {
+            headers: { Authorization: `Bearer ${accessToken.trim()}` },
+          })
+          if (meRes.ok) {
+            const meData = await meRes.json()
+            if (meData.id) resolvedUrn = `urn:li:person:${meData.id}`
+            if (meData.localizedFirstName) {
+              resolvedName = `${meData.localizedFirstName} ${meData.localizedLastName || ""}`.trim()
+              resolvedHandle = `@${resolvedName.replace(/\s+/g, "").toLowerCase()}`
+            }
+          }
+        }
+      } catch (verifyErr) {
+        console.warn("LinkedIn direct token verification warning:", verifyErr.message)
+      }
+    }
+
+    let account = await SocialAccount.findOne({ practitioner: practitionerId, platform })
+    if (!account) {
+      account = new SocialAccount({ practitioner: practitionerId, platform })
+    }
+
+    account.isConnected = true
+    account.isAuthorized = true
+    account.accessToken = accessToken.trim()
+    if (resolvedUrn) account.platformUserId = resolvedUrn
+    if (resolvedName) account.accountName = resolvedName
+    if (resolvedHandle) account.handle = resolvedHandle
+    if (avatarUrl) account.avatarUrl = avatarUrl
+    account.connectedAt = new Date()
+
+    await account.save()
+
+    return res.status(200).json({
+      success: true,
+      message: `${platform.toUpperCase()} token connected and verified successfully! Direct auto-posting is now enabled.`,
+      account,
+    })
+  } catch (error) {
+    console.error("Error in connectTokenDirectly:", error)
+    return res.status(500).json({
+      success: false,
+      message: "Failed to connect token",
+      error: error.message,
+    })
+  }
+}
+
 

@@ -49,6 +49,10 @@ const socialPostSchema = new mongoose.Schema(
       facebook: { type: String, default: "" },
       whatsapp: { type: String, default: "" },
     },
+    dispatchResults: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
   },
   { timestamps: true }
 )

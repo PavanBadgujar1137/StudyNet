@@ -168,3 +168,49 @@ export const trackPostShare = async (postId, token) => {
   }
 }
 
+// Get LinkedIn OAuth Auth URL
+export const getLinkedInAuthUrl = async (token, returnTo) => {
+  try {
+    const urlEndpoint = endpoints.LINKEDIN_AUTH_URL_API || "/api/v1/social-posts/oauth/linkedin/url"
+    const response = await apiConnector(
+      "GET",
+      `${urlEndpoint}?returnTo=${encodeURIComponent(returnTo || "/dashboard/my-profile?tab=social-studio")}`,
+      null,
+      {
+        Authorization: `Bearer ${token}`,
+      }
+    )
+    return response?.data?.url || null
+  } catch (error) {
+    console.error("getLinkedInAuthUrl error:", error)
+    toast.error("Failed to generate LinkedIn authorization URL")
+    return null
+  }
+}
+
+// Connect token directly (for LinkedIn personal token or developer token)
+export const connectSocialTokenDirectly = async (data, token) => {
+  const toastId = toast.loading(`Connecting ${data.platform?.toUpperCase()} token...`)
+  try {
+    const response = await apiConnector(
+      "POST",
+      endpoints.CONNECT_TOKEN_API || "/api/v1/social-posts/accounts/connect-token",
+      data,
+      {
+        Authorization: `Bearer ${token}`,
+      }
+    )
+
+    if (!response?.data?.success) {
+      throw new Error(response?.data?.message || "Failed to connect token")
+    }
+
+    toast.success(response.data.message || "Token connected & verified!", { id: toastId })
+    return response.data.account
+  } catch (error) {
+    console.error("connectSocialTokenDirectly error:", error)
+    toast.error(error?.response?.data?.message || error?.message || "Failed to connect token", { id: toastId })
+    return null
+  }
+}
+

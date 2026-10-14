@@ -25,7 +25,10 @@ import {
   FiLayers,
   FiCopy,
   FiShare,
-  FiMessageCircle
+  FiMessageCircle,
+  FiKey,
+  FiExternalLink,
+  FiShield
 } from 'react-icons/fi'
 import { toast } from 'react-hot-toast'
 import {
@@ -37,10 +40,13 @@ import {
   fetchSocialAccounts,
   toggleSocialAccount,
   trackPostShare,
+  getLinkedInAuthUrl,
+  connectSocialTokenDirectly,
 } from '../../../../services/operations/socialPostAPI'
 
 import { formatPractitionerName } from '../../../../utils/formatName'
 import { processImageForUpload, validateImageFile } from '../../../../utils/imageProcessing'
+
 
 export function SocialPostStudio() {
   const { token } = useSelector((state) => state.auth)
@@ -48,6 +54,18 @@ export function SocialPostStudio() {
 
   const practitionerName = formatPractitionerName(user, 'Practitioner')
   const defaultHandle = user?.firstName ? `${user.firstName.toLowerCase()}_${user.lastName?.toLowerCase() || ''}` : 'practitioner'
+
+  // Helper to format social handles cleanly, extracting usernames from full URLs
+  const formatDisplayHandle = (rawHandle) => {
+    if (!rawHandle) return 'Not Linked'
+    let clean = String(rawHandle).trim().replace(/\/+$/, '')
+    if (clean.includes('/') || clean.startsWith('http')) {
+      const parts = clean.split('/').filter(Boolean)
+      clean = parts[parts.length - 1] || clean
+    }
+    clean = clean.replace(/^@+/, '')
+    return `@${clean}`
+  }
 
   // Studio Mode Navigation: 'canvas' | 'calendar' | 'feed' | 'channels' | 'analytics'
   const [activeTab, setActiveTab] = useState('canvas')
@@ -286,8 +304,9 @@ export function SocialPostStudio() {
         return
       }
 
+      const cleanHandle = formatDisplayHandle(inputHandle)
       const updated = await toggleSocialAccount(
-        { platform: platformId, handle: inputHandle, accountName: inputHandle },
+        { platform: platformId, handle: cleanHandle, accountName: cleanHandle },
         token
       )
       if (updated) {
@@ -1623,7 +1642,11 @@ export function SocialPostStudio() {
                       {post.webShareIntents?.linkedin && (
                         <button
                           type="button"
-                          onClick={() => handleIntentClick(post, post.webShareIntents.linkedin)}
+                          onClick={() => {
+                            handleCopyText(post.caption, 'Post caption')
+                            handleIntentClick(post, post.webShareIntents.linkedin)
+                            toast.success('Caption copied! Paste into your LinkedIn post box (Ctrl+V) and click Post.', { duration: 5000, icon: '📋' })
+                          }}
                           style={{ background: '#0A66C2', color: '#ffffff', border: 'none', padding: '8px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
                         >
                           <FiLinkedin /> LinkedIn
@@ -1727,21 +1750,45 @@ export function SocialPostStudio() {
                         display: 'flex',
                         flexDirection: 'column',
                         gap: '18px',
-                        boxShadow: '0 4px 16px rgba(0,0,0,0.03)'
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
+                        overflow: 'hidden',
+                        position: 'relative'
                       }}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <div style={{ color: channel.color, fontSize: '30px' }}>{channel.icon}</div>
-                          <div>
-                            <div style={{ fontWeight: 800, fontSize: '16px', color: '#0F172A' }}>{channel.label}</div>
-                            <div style={{ fontSize: '13px', color: isConnected ? '#059669' : '#64748B', fontWeight: isConnected ? 700 : 500 }}>
-                              {isConnected ? accountDoc.handle : 'Not Linked'}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', minWidth: 0, width: '100%' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1, overflow: 'hidden' }}>
+                          <div style={{ color: channel.color, fontSize: '30px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>{channel.icon}</div>
+                          <div style={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
+                            <div style={{ fontWeight: 800, fontSize: '16px', color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{channel.label}</div>
+                            <div
+                              title={accountDoc?.handle || ''}
+                              style={{
+                                fontSize: '13px',
+                                color: isConnected ? '#059669' : '#64748B',
+                                fontWeight: isConnected ? 700 : 500,
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                display: 'block'
+                              }}
+                            >
+                              {isConnected ? formatDisplayHandle(accountDoc.handle) : 'Not Linked'}
                             </div>
                           </div>
                         </div>
 
-                        <span style={{ fontSize: '12px', fontWeight: 800, padding: '4px 12px', borderRadius: '14px', background: isConnected ? '#DCFCE7' : '#FEE2E2', color: isConnected ? '#15803D' : '#DC2626' }}>
+                        <span
+                          style={{
+                            fontSize: '12px',
+                            fontWeight: 800,
+                            padding: '4px 12px',
+                            borderRadius: '14px',
+                            background: isConnected ? '#DCFCE7' : '#FEE2E2',
+                            color: isConnected ? '#15803D' : '#DC2626',
+                            flexShrink: 0,
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
                           {isConnected ? 'Active' : 'Unlinked'}
                         </span>
                       </div>
@@ -1918,7 +1965,11 @@ export function SocialPostStudio() {
                 {shareModalPost.webShareIntents?.linkedin && (
                   <button
                     type="button"
-                    onClick={() => handleIntentClick(shareModalPost, shareModalPost.webShareIntents.linkedin)}
+                    onClick={() => {
+                      handleCopyText(shareModalPost.caption, 'Caption')
+                      handleIntentClick(shareModalPost, shareModalPost.webShareIntents.linkedin)
+                      toast.success('Caption copied! Paste into your LinkedIn post box (Ctrl+V) and click Post.', { duration: 5000, icon: '📋' })
+                    }}
                     style={{ background: '#0A66C2', color: '#ffffff', border: 'none', padding: '12px 16px', borderRadius: '12px', fontWeight: 800, fontSize: '13.5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 4px 12px rgba(10, 102, 194, 0.2)' }}
                   >
                     <FiLinkedin fontSize={18} /> Share on LinkedIn

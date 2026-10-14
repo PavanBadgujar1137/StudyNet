@@ -81,6 +81,8 @@ export const socialPostEndpoints = {
   DELETE_POST_API: BASE_URL + "/social-posts",  // + "/:postId"
   GET_ACCOUNTS_API: BASE_URL + "/social-posts/accounts",
   TOGGLE_ACCOUNT_API: BASE_URL + "/social-posts/accounts/toggle",
+  CONNECT_TOKEN_API: BASE_URL + "/social-posts/accounts/connect-token",
+  LINKEDIN_AUTH_URL_API: BASE_URL + "/social-posts/oauth/linkedin/url",
   TRACK_SHARE_API: BASE_URL + "/social-posts", // + "/:postId/track-share"
 }
 
