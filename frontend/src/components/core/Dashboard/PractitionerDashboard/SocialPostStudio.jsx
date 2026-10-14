@@ -139,12 +139,12 @@ export function SocialPostStudio() {
     }
   }
 
-  const handleIntentClick = async (post, intentUrl) => {
-    if (post && post._id) {
-      await trackPostShare(post._id, token)
-      loadPosts()
-    }
+  const handleIntentClick = (post, intentUrl) => {
+    // Open immediately to prevent browser popup blockers from suppressing the window
     window.open(intentUrl, '_blank', 'noopener,noreferrer')
+    if (post && post._id) {
+      trackPostShare(post._id, token).then(() => loadPosts()).catch(() => {})
+    }
   }
 
   // Gradient Quote Card, Aspect Ratio & Manual Crop State
@@ -226,7 +226,7 @@ export function SocialPostStudio() {
     const activeAccs = data || []
     setAccounts(activeAccs)
     const connectedIds = activeAccs.filter((a) => a.isConnected).map((a) => a.platform)
-    setSelectedPlatforms(connectedIds)
+    setSelectedPlatforms(connectedIds.length > 0 ? connectedIds : ['instagram', 'twitter', 'linkedin', 'facebook'])
     setLoadingAccounts(false)
   }, [token])
 
@@ -265,14 +265,6 @@ export function SocialPostStudio() {
 
   // Handle Platform Toggle in Composer
   const togglePlatformSelect = (platId) => {
-    const connectedAcc = getConnectedAccount(platId)
-    if (!connectedAcc) {
-      toast.error(`Please connect your ${platId.toUpperCase()} channel under 'Connected Channels' first`, {
-        icon: '⚠️',
-      })
-      return
-    }
-
     if (selectedPlatforms.includes(platId)) {
       setSelectedPlatforms(selectedPlatforms.filter((p) => p !== platId))
     } else {
@@ -313,16 +305,15 @@ export function SocialPostStudio() {
       return
     }
 
-    if (selectedPlatforms.length === 0) {
-      toast.error('Please select at least one connected social channel')
-      return
-    }
+    const platformsToUse = selectedPlatforms.length > 0
+      ? selectedPlatforms
+      : ['instagram', 'twitter', 'linkedin', 'facebook']
 
     setSubmitting(true)
     const formData = new FormData()
     formData.append('title', title || 'Social Post')
     formData.append('caption', caption)
-    formData.append('platforms', JSON.stringify(selectedPlatforms))
+    formData.append('platforms', JSON.stringify(platformsToUse))
     formData.append('status', postStatus)
     if (scheduledAt) formData.append('scheduledAt', scheduledAt)
 

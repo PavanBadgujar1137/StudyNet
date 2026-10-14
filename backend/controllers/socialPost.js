@@ -45,11 +45,15 @@ exports.createPost = async (req, res) => {
 
     let mediaUrl = rawMediaUrl || ""
     if (req.files && req.files.mediaFile) {
-      const uploadDetails = await uploadFileToS3(
-        req.files.mediaFile,
-        "social_posts"
-      )
-      mediaUrl = uploadDetails.url
+      try {
+        const uploadDetails = await uploadFileToS3(
+          req.files.mediaFile,
+          "social_posts"
+        )
+        mediaUrl = uploadDetails.url
+      } catch (uploadErr) {
+        console.warn("S3 upload warning in social post:", uploadErr.message)
+      }
     }
 
     const shareIntents = generateShareIntents(caption, mediaUrl)
@@ -121,11 +125,15 @@ exports.updatePost = async (req, res) => {
 
     let mediaUrl = rawMediaUrl !== undefined ? rawMediaUrl : post.mediaUrl
     if (req.files && req.files.mediaFile) {
-      const uploadDetails = await uploadFileToS3(
-        req.files.mediaFile,
-        "social_posts"
-      )
-      mediaUrl = uploadDetails.url
+      try {
+        const uploadDetails = await uploadFileToS3(
+          req.files.mediaFile,
+          "social_posts"
+        )
+        mediaUrl = uploadDetails.url
+      } catch (uploadErr) {
+        console.warn("S3 upload warning in update post:", uploadErr.message)
+      }
     }
     post.mediaUrl = mediaUrl
 

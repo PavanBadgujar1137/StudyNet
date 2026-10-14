@@ -2,15 +2,14 @@ import { apiConnector } from "../apiConnector"
 import { socialPostEndpoints } from "../apis"
 import toast from "react-hot-toast"
 
-const {
-  CREATE_POST_API,
-  GET_POSTS_API,
-  PUBLISH_POST_API,
-  DELETE_POST_API,
-  GET_ACCOUNTS_API,
-  TOGGLE_ACCOUNT_API,
-  TRACK_SHARE_API,
-} = socialPostEndpoints
+const endpoints = socialPostEndpoints || {}
+const CREATE_POST_API = endpoints.CREATE_POST_API || "/api/v1/social-posts/create"
+const GET_POSTS_API = endpoints.GET_POSTS_API || "/api/v1/social-posts/mine"
+const PUBLISH_POST_API = endpoints.PUBLISH_POST_API || "/api/v1/social-posts"
+const DELETE_POST_API = endpoints.DELETE_POST_API || "/api/v1/social-posts"
+const GET_ACCOUNTS_API = endpoints.GET_ACCOUNTS_API || "/api/v1/social-posts/accounts"
+const TOGGLE_ACCOUNT_API = endpoints.TOGGLE_ACCOUNT_API || "/api/v1/social-posts/accounts/toggle"
+const TRACK_SHARE_API = endpoints.TRACK_SHARE_API || "/api/v1/social-posts"
 
 // Create a new social post
 export const createSocialPost = async (formData, token) => {
