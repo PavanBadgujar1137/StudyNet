@@ -9,18 +9,11 @@ const resolveLinkedInRedirectUri = (req) => {
     return process.env.LINKEDIN_REDIRECT_URI
   }
   const appEnv = String(process.env.APP_ENV || "").toLowerCase()
-  if (appEnv === "production") {
-    return "https://api.openhand.live/api/v1/social-posts/oauth/linkedin/callback"
-  }
   if (appEnv === "uat") {
     return "https://api-uat.openhand.live/api/v1/social-posts/oauth/linkedin/callback"
   }
-  if (req) {
-    const proto = req.headers["x-forwarded-proto"] || req.protocol || "http"
-    const host = req.get("host") || `localhost:${process.env.PORT || 4000}`
-    return `${proto}://${host}/api/v1/social-posts/oauth/linkedin/callback`
-  }
-  return `http://localhost:${process.env.PORT || 4000}/api/v1/social-posts/oauth/linkedin/callback`
+  // Default to official live production URL
+  return "https://api.openhand.live/api/v1/social-posts/oauth/linkedin/callback"
 }
 
 // Helper function to build web share intents
