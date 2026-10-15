@@ -10,7 +10,9 @@ import {
   TextInput,
   ActivityIndicator,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../context/AuthContext';
+import { useAppTheme } from '../../context/ThemeContext';
 import apiClient from '../../api/apiClient';
 import { ENDPOINTS } from '../../api/endpoints';
 import { theme } from '../../theme';
@@ -23,6 +25,7 @@ const MENU_ITEMS = [
 
 export default function ProfileTabScreen() {
   const { user, logout, updateUserData } = useAuth();
+  const { isDark, toggleTheme } = useAppTheme();
 
   const [editMode, setEditMode] = useState(false);
   const [firstName, setFirstName] = useState(user?.firstName || '');
@@ -107,213 +110,247 @@ export default function ProfileTabScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* ── Profile Hero Card ── */}
-      <View style={styles.profileCard}>
-        {/* Avatar */}
-        <View style={styles.avatarWrap}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{initials}</Text>
-          </View>
-        </View>
-
-        <Text style={styles.name}>{fullName}</Text>
-        <Text style={styles.email}>{user?.email}</Text>
-
-        {/* Learner ID Badge */}
-        {user?.learnerId ? (
-          <View style={styles.learnerIdWrap}>
-            <Text style={styles.learnerIdLabel}>OFFICIAL LEARNER ID</Text>
-            <View style={styles.learnerIdBadge}>
-              <Text style={styles.learnerIdValue}>{user.learnerId}</Text>
+    <LinearGradient
+      colors={
+        isDark
+          ? ['#040817', '#08112C', '#0E1D45', '#080E24']
+          : ['#DCEEFF', '#E8F2FF', '#F4F0FF', '#FFFFFF']
+      }
+      style={{ flex: 1 }}
+    >
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.content}>
+        {/* ── Profile Hero Card ── */}
+        <View style={[styles.profileCard, isDark && { backgroundColor: 'rgba(14, 23, 46, 0.85)', borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
+          {/* Avatar */}
+          <View style={styles.avatarWrap}>
+            <View style={[styles.avatar, isDark && { backgroundColor: '#1E64EB' }]}>
+              <Text style={styles.avatarText}>{initials}</Text>
             </View>
-            <Text style={styles.learnerIdHelp}>
-              Share this ID with your practitioner to claim scholarships & personal discounts.
-            </Text>
-          </View>
-        ) : null}
-
-        {/* Edit Profile Toggle */}
-        <TouchableOpacity
-          style={styles.editBtn}
-          onPress={() => {
-            if (editMode) {
-              // Cancel — reset fields
-              setFirstName(user?.firstName || '');
-              setLastName(user?.lastName || '');
-              setContactNumber(user?.contactNumber || user?.additionalDetails?.contactNumber || '');
-            }
-            setEditMode(!editMode);
-          }}
-        >
-          <Text style={styles.editBtnText}>{editMode ? 'Cancel Edit' : 'Edit Profile'}</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* ── Edit Profile Form ── */}
-      {editMode && (
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>EDIT PROFILE</Text>
-
-          <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>First Name</Text>
-            <TextInput
-              style={styles.fieldInput}
-              value={firstName}
-              onChangeText={setFirstName}
-              placeholder="First name"
-              placeholderTextColor={theme.colors.textLight}
-              autoCapitalize="words"
-            />
           </View>
 
-          <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Last Name</Text>
-            <TextInput
-              style={styles.fieldInput}
-              value={lastName}
-              onChangeText={setLastName}
-              placeholder="Last name"
-              placeholderTextColor={theme.colors.textLight}
-              autoCapitalize="words"
-            />
-          </View>
+          <Text style={[styles.name, isDark && { color: '#FFFFFF' }]}>{fullName}</Text>
+          <Text style={[styles.email, isDark && { color: '#94A3B8' }]}>{user?.email}</Text>
 
-          <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Contact Number</Text>
-            <TextInput
-              style={styles.fieldInput}
-              value={contactNumber}
-              onChangeText={setContactNumber}
-              placeholder="+91 9876543210"
-              placeholderTextColor={theme.colors.textLight}
-              keyboardType="phone-pad"
-            />
-          </View>
+          {/* Learner ID Badge */}
+          {user?.learnerId ? (
+            <View style={[styles.learnerIdWrap, isDark && { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
+              <Text style={[styles.learnerIdLabel, isDark && { color: '#38BDF8' }]}>OFFICIAL LEARNER ID</Text>
+              <View style={[styles.learnerIdBadge, isDark && { backgroundColor: 'rgba(56, 189, 248, 0.15)', borderColor: 'rgba(56, 189, 248, 0.3)' }]}>
+                <Text style={[styles.learnerIdValue, isDark && { color: '#38BDF8' }]}>{user.learnerId}</Text>
+              </View>
+              <Text style={[styles.learnerIdHelp, isDark && { color: '#64748B' }]}>
+                Share this ID with your practitioner to claim scholarships & personal discounts.
+              </Text>
+            </View>
+          ) : null}
 
+          {/* Edit Profile Toggle */}
           <TouchableOpacity
-            style={[styles.saveBtn, saving && { opacity: 0.7 }]}
-            onPress={handleSaveProfile}
-            disabled={saving}
+            style={[styles.editBtn, isDark && { borderColor: 'rgba(255, 255, 255, 0.2)' }]}
+            onPress={() => {
+              if (editMode) {
+                // Cancel — reset fields
+                setFirstName(user?.firstName || '');
+                setLastName(user?.lastName || '');
+                setContactNumber(user?.contactNumber || user?.additionalDetails?.contactNumber || '');
+              }
+              setEditMode(!editMode);
+            }}
           >
-            {saving ? (
-              <ActivityIndicator color="#FFF" />
-            ) : (
-              <Text style={styles.saveBtnText}>Save Changes</Text>
-            )}
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* ── Account Info ── */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>ACCOUNT & STATUS</Text>
-
-        <View style={styles.row}>
-          <Text style={styles.rowLabel}>Account Type</Text>
-          <Text style={styles.rowValue}>{user?.accountType || 'Learner'}</Text>
-        </View>
-
-        <View style={styles.row}>
-          <Text style={styles.rowLabel}>Access Tier</Text>
-          <Text style={[styles.rowValue, { color: theme.colors.successText }]}>
-            100% Free Access
-          </Text>
-        </View>
-
-        <View style={styles.row}>
-          <Text style={styles.rowLabel}>Contact Number</Text>
-          <Text style={styles.rowValue}>
-            {user?.contactNumber || user?.additionalDetails?.contactNumber || '—'}
-          </Text>
-        </View>
-
-        <View style={[styles.row, { borderBottomWidth: 0 }]}>
-          <Text style={styles.rowLabel}>Member Since</Text>
-          <Text style={styles.rowValue}>
-            {user?.createdAt
-              ? new Date(user.createdAt).toLocaleDateString('en-IN', {
-                  month: 'short',
-                  year: 'numeric',
-                })
-              : '—'}
-          </Text>
-        </View>
-      </View>
-
-      {/* ── Change Password ── */}
-      <View style={styles.card}>
-        <View style={styles.cardTitleRow}>
-          <Text style={styles.cardTitle}>SECURITY</Text>
-          <TouchableOpacity onPress={() => setChangingPassword(!changingPassword)}>
-            <Text style={styles.toggleLink}>
-              {changingPassword ? 'Cancel' : 'Change Password'}
-            </Text>
+            <Text style={[styles.editBtnText, isDark && { color: '#FFFFFF' }]}>{editMode ? 'Cancel Edit' : 'Edit Profile'}</Text>
           </TouchableOpacity>
         </View>
 
-        {changingPassword && (
-          <>
+        {/* ── Edit Profile Form ── */}
+        {editMode && (
+          <View style={[styles.card, isDark && { backgroundColor: 'rgba(14, 23, 46, 0.85)', borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
+            <Text style={[styles.cardTitle, isDark && { color: '#38BDF8' }]}>EDIT PROFILE</Text>
+
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Current Password</Text>
+              <Text style={[styles.fieldLabel, isDark && { color: '#FFFFFF' }]}>First Name</Text>
               <TextInput
-                style={styles.fieldInput}
-                value={oldPassword}
-                onChangeText={setOldPassword}
-                placeholder="••••••••"
-                placeholderTextColor={theme.colors.textLight}
-                secureTextEntry
+                style={[styles.fieldInput, isDark && { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderColor: 'rgba(255, 255, 255, 0.12)', color: '#FFFFFF' }]}
+                value={firstName}
+                onChangeText={setFirstName}
+                placeholder="First name"
+                placeholderTextColor={isDark ? '#64748B' : theme.colors.textLight}
+                autoCapitalize="words"
               />
             </View>
+
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>New Password (min 8 chars)</Text>
+              <Text style={[styles.fieldLabel, isDark && { color: '#FFFFFF' }]}>Last Name</Text>
               <TextInput
-                style={styles.fieldInput}
-                value={newPassword}
-                onChangeText={setNewPassword}
-                placeholder="••••••••"
-                placeholderTextColor={theme.colors.textLight}
-                secureTextEntry
+                style={[styles.fieldInput, isDark && { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderColor: 'rgba(255, 255, 255, 0.12)', color: '#FFFFFF' }]}
+                value={lastName}
+                onChangeText={setLastName}
+                placeholder="Last name"
+                placeholderTextColor={isDark ? '#64748B' : theme.colors.textLight}
+                autoCapitalize="words"
               />
             </View>
+
+            <View style={styles.fieldGroup}>
+              <Text style={[styles.fieldLabel, isDark && { color: '#FFFFFF' }]}>Contact Number</Text>
+              <TextInput
+                style={[styles.fieldInput, isDark && { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderColor: 'rgba(255, 255, 255, 0.12)', color: '#FFFFFF' }]}
+                value={contactNumber}
+                onChangeText={setContactNumber}
+                placeholder="+91 9876543210"
+                placeholderTextColor={isDark ? '#64748B' : theme.colors.textLight}
+                keyboardType="phone-pad"
+              />
+            </View>
+
             <TouchableOpacity
-              style={[styles.saveBtn, savingPwd && { opacity: 0.7 }]}
-              onPress={handleChangePassword}
-              disabled={savingPwd}
+              style={[styles.saveBtn, saving && { opacity: 0.7 }]}
+              onPress={handleSaveProfile}
+              disabled={saving}
             >
-              {savingPwd ? (
+              {saving ? (
                 <ActivityIndicator color="#FFF" />
               ) : (
-                <Text style={styles.saveBtnText}>Update Password</Text>
+                <Text style={styles.saveBtnText}>Save Changes</Text>
               )}
             </TouchableOpacity>
-          </>
+          </View>
         )}
-      </View>
 
-      {/* ── App Menu ── */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>APP</Text>
-        {MENU_ITEMS.map((item, i) => (
+        {/* ── Account Info ── */}
+        <View style={[styles.card, isDark && { backgroundColor: 'rgba(14, 23, 46, 0.85)', borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
+          <Text style={[styles.cardTitle, isDark && { color: '#38BDF8' }]}>ACCOUNT & STATUS</Text>
+
+          <View style={[styles.row, isDark && { borderBottomColor: 'rgba(255, 255, 255, 0.08)' }]}>
+            <Text style={[styles.rowLabel, isDark && { color: '#94A3B8' }]}>Account Type</Text>
+            <Text style={[styles.rowValue, isDark && { color: '#FFFFFF' }]}>{user?.accountType || 'Learner'}</Text>
+          </View>
+
+          <View style={[styles.row, isDark && { borderBottomColor: 'rgba(255, 255, 255, 0.08)' }]}>
+            <Text style={[styles.rowLabel, isDark && { color: '#94A3B8' }]}>Access Tier</Text>
+            <Text style={[styles.rowValue, { color: isDark ? '#34D399' : theme.colors.successText }]}>
+              100% Free Access
+            </Text>
+          </View>
+
+          <View style={[styles.row, isDark && { borderBottomColor: 'rgba(255, 255, 255, 0.08)' }]}>
+            <Text style={[styles.rowLabel, isDark && { color: '#94A3B8' }]}>Contact Number</Text>
+            <Text style={[styles.rowValue, isDark && { color: '#FFFFFF' }]}>
+              {user?.contactNumber || user?.additionalDetails?.contactNumber || '—'}
+            </Text>
+          </View>
+
+          <View style={[styles.row, { borderBottomWidth: 0 }]}>
+            <Text style={[styles.rowLabel, isDark && { color: '#94A3B8' }]}>Member Since</Text>
+            <Text style={[styles.rowValue, isDark && { color: '#FFFFFF' }]}>
+              {user?.createdAt
+                ? new Date(user.createdAt).toLocaleDateString('en-IN', {
+                    month: 'short',
+                    year: 'numeric',
+                  })
+                : '—'}
+            </Text>
+          </View>
+        </View>
+
+        {/* ── Change Password ── */}
+        <View style={[styles.card, isDark && { backgroundColor: 'rgba(14, 23, 46, 0.85)', borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
+          <View style={styles.cardTitleRow}>
+            <Text style={[styles.cardTitle, isDark && { color: '#38BDF8' }]}>SECURITY</Text>
+            <TouchableOpacity onPress={() => setChangingPassword(!changingPassword)}>
+              <Text style={[styles.toggleLink, isDark && { color: '#38BDF8' }]}>
+                {changingPassword ? 'Cancel' : 'Change Password'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {changingPassword && (
+            <>
+              <View style={styles.fieldGroup}>
+                <Text style={[styles.fieldLabel, isDark && { color: '#FFFFFF' }]}>Current Password</Text>
+                <TextInput
+                  style={[styles.fieldInput, isDark && { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderColor: 'rgba(255, 255, 255, 0.12)', color: '#FFFFFF' }]}
+                  value={oldPassword}
+                  onChangeText={setOldPassword}
+                  placeholder="••••••••"
+                  placeholderTextColor={isDark ? '#64748B' : theme.colors.textLight}
+                  secureTextEntry
+                />
+              </View>
+              <View style={styles.fieldGroup}>
+                <Text style={[styles.fieldLabel, isDark && { color: '#FFFFFF' }]}>New Password (min 8 chars)</Text>
+                <TextInput
+                  style={[styles.fieldInput, isDark && { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderColor: 'rgba(255, 255, 255, 0.12)', color: '#FFFFFF' }]}
+                  value={newPassword}
+                  onChangeText={setNewPassword}
+                  placeholder="••••••••"
+                  placeholderTextColor={isDark ? '#64748B' : theme.colors.textLight}
+                  secureTextEntry
+                />
+              </View>
+              <TouchableOpacity
+                style={[styles.saveBtn, savingPwd && { opacity: 0.7 }]}
+                onPress={handleChangePassword}
+                disabled={savingPwd}
+              >
+                {savingPwd ? (
+                  <ActivityIndicator color="#FFF" />
+                ) : (
+                  <Text style={styles.saveBtnText}>Update Password</Text>
+                )}
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+
+        {/* ── App Preferences (including Theme Mode) ── */}
+        <View style={[styles.card, isDark && { backgroundColor: 'rgba(14, 23, 46, 0.85)', borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
+          <Text style={[styles.cardTitle, isDark && { color: '#38BDF8' }]}>APPEARANCE & APP</Text>
+
+          {/* Theme switcher row */}
           <TouchableOpacity
-            key={i}
-            style={[styles.menuRow, i === MENU_ITEMS.length - 1 && { borderBottomWidth: 0 }]}
-            onPress={item.onPress}
+            style={[styles.menuRow, isDark && { borderBottomColor: 'rgba(255, 255, 255, 0.08)' }]}
+            onPress={toggleTheme}
           >
-            <Text style={styles.menuIcon}>{item.icon}</Text>
-            <Text style={styles.menuLabel}>{item.label}</Text>
-            <Text style={styles.menuChevron}>›</Text>
+            <Text style={styles.menuIcon}>{isDark ? '☀️' : '🌙'}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.menuLabel, isDark && { color: '#FFFFFF' }]}>Theme Appearance</Text>
+              <Text style={{ fontSize: 10, color: isDark ? '#94A3B8' : theme.colors.textMuted }}>
+                {isDark ? 'Dark Mode (Phone 1)' : 'Bright Mode (Phone 2)'}
+              </Text>
+            </View>
+            <View style={{
+              backgroundColor: isDark ? 'rgba(56, 189, 248, 0.2)' : 'rgba(30, 100, 235, 0.1)',
+              paddingHorizontal: 10,
+              paddingVertical: 4,
+              borderRadius: 12,
+            }}>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: isDark ? '#38BDF8' : '#1E64EB' }}>
+                {isDark ? 'Dark' : 'Bright'}
+              </Text>
+            </View>
           </TouchableOpacity>
-        ))}
-      </View>
 
-      {/* ── Sign Out ── */}
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Text style={styles.logoutText}>Sign Out</Text>
-      </TouchableOpacity>
+          {MENU_ITEMS.map((item, i) => (
+            <TouchableOpacity
+              key={i}
+              style={[styles.menuRow, isDark && { borderBottomColor: 'rgba(255, 255, 255, 0.08)' }, i === MENU_ITEMS.length - 1 && { borderBottomWidth: 0 }]}
+              onPress={item.onPress}
+            >
+              <Text style={styles.menuIcon}>{item.icon}</Text>
+              <Text style={[styles.menuLabel, isDark && { color: '#FFFFFF' }]}>{item.label}</Text>
+              <Text style={[styles.menuChevron, isDark && { color: '#64748B' }]}>›</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
-      <Text style={styles.versionText}>OpenHand Learner • v1.0.0</Text>
-    </ScrollView>
+        {/* ── Sign Out ── */}
+        <TouchableOpacity style={[styles.logoutButton, isDark && { backgroundColor: 'rgba(239, 68, 68, 0.15)', borderColor: 'rgba(239, 68, 68, 0.3)' }]} onPress={handleLogout}>
+          <Text style={styles.logoutText}>Sign Out</Text>
+        </TouchableOpacity>
+
+        <Text style={[styles.versionText, isDark && { color: '#64748B' }]}>OpenHand Learner • v1.0.0</Text>
+      </ScrollView>
+    </LinearGradient>
   );
 }
 

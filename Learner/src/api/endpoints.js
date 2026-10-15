@@ -43,6 +43,7 @@ export const ENDPOINTS = {
   COURSES: {
     GET_ALL_COURSES: `${BASE_URL}/courses`,
     GET_COURSE_DETAILS: (courseId) => `${BASE_URL}/courses/${courseId}`,
+    GET_COURSE_VIDEOS: (courseId) => `${BASE_URL}/courses/${courseId}/videos`,
   },
 
   // AURA AI Counselor

@@ -10,7 +10,9 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../context/AuthContext';
+import { useAppTheme } from '../../context/ThemeContext';
 import apiClient from '../../api/apiClient';
 import { ENDPOINTS } from '../../api/endpoints';
 import { theme } from '../../theme';
@@ -23,6 +25,7 @@ const AURA_WELCOME = (name) =>
 
 export default function AuraTabScreen() {
   const { user } = useAuth();
+  const { isDark } = useAppTheme();
   const userName = user?.firstName || 'Friend';
   const scrollRef = useRef(null);
 
@@ -91,136 +94,147 @@ export default function AuraTabScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.container}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+    <LinearGradient
+      colors={
+        isDark
+          ? ['#040817', '#08112C', '#0E1D45', '#080E24']
+          : ['#DCEEFF', '#E8F2FF', '#F4F0FF', '#FFFFFF']
+      }
+      style={{ flex: 1 }}
     >
-      {/* ── Header ── */}
-      <View style={styles.header}>
-        <View style={styles.auraAvatar}>
-          <Text style={styles.auraAvatarText}>🌿</Text>
-        </View>
-        <View style={styles.headerInfo}>
-          <Text style={styles.headerTitle}>AURA Counselor</Text>
-          <View style={styles.onlinePill}>
-            <View style={styles.onlineDot} />
-            <Text style={styles.onlineText}>Active — Somatic Grounding</Text>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      >
+        {/* ── Header ── */}
+        <View style={[styles.header, isDark && { backgroundColor: 'rgba(13, 21, 44, 0.75)', borderBottomColor: 'rgba(255, 255, 255, 0.1)' }]}>
+          <View style={[styles.auraAvatar, isDark && { backgroundColor: 'rgba(56, 189, 248, 0.15)', borderColor: 'rgba(56, 189, 248, 0.3)' }]}>
+            <Text style={styles.auraAvatarText}>🌿</Text>
+          </View>
+          <View style={styles.headerInfo}>
+            <Text style={[styles.headerTitle, isDark && { color: '#FFFFFF' }]}>AURA Counselor</Text>
+            <View style={styles.onlinePill}>
+              <View style={[styles.onlineDot, isDark && { backgroundColor: '#38BDF8' }]} />
+              <Text style={[styles.onlineText, isDark && { color: '#38BDF8' }]}>Active — Somatic Grounding</Text>
+            </View>
           </View>
         </View>
-      </View>
 
-      {/* ── Disclaimer Banner ── */}
-      {showDisclaimer && (
-        <View style={styles.disclaimer}>
-          <Text style={styles.disclaimerText}>ⓘ {DISCLAIMER}</Text>
-          <TouchableOpacity onPress={() => setShowDisclaimer(false)}>
-            <Text style={styles.disclaimerDismiss}>Dismiss</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* ── Chat Messages ── */}
-      <ScrollView
-        ref={scrollRef}
-        contentContainerStyle={styles.messageList}
-        showsVerticalScrollIndicator={false}
-      >
-        {messages.map((m) => {
-          const isAura = m.sender === 'aura';
-          return (
-            <View
-              key={m.id}
-              style={[
-                styles.bubbleWrap,
-                isAura ? styles.bubbleWrapAura : styles.bubbleWrapUser,
-              ]}
-            >
-              {isAura && (
-                <View style={styles.miniAvatarWrap}>
-                  <Text style={styles.miniAvatar}>🌿</Text>
-                </View>
-              )}
-              <View
-                style={[
-                  styles.bubble,
-                  isAura ? styles.bubbleAura : styles.bubbleUser,
-                  { maxWidth: '82%' },
-                ]}
-              >
-                <Text style={isAura ? styles.textAura : styles.textUser}>
-                  {m.text}
-                </Text>
-                <Text style={isAura ? styles.timeAura : styles.timeUser}>
-                  {m.time}
-                </Text>
-              </View>
-            </View>
-          );
-        })}
-
-        {/* Typing indicator */}
-        {isTyping && (
-          <View style={[styles.bubbleWrap, styles.bubbleWrapAura]}>
-            <View style={styles.miniAvatarWrap}>
-              <Text style={styles.miniAvatar}>🌿</Text>
-            </View>
-            <View style={[styles.bubble, styles.bubbleAura]}>
-              <ActivityIndicator size="small" color={theme.colors.accent} />
-            </View>
+        {/* ── Disclaimer Banner ── */}
+        {showDisclaimer && (
+          <View style={[styles.disclaimer, isDark && { backgroundColor: 'rgba(245, 158, 11, 0.15)', borderBottomColor: 'rgba(245, 158, 11, 0.3)' }]}>
+            <Text style={[styles.disclaimerText, isDark && { color: '#FCD34D' }]}>ⓘ {DISCLAIMER}</Text>
+            <TouchableOpacity onPress={() => setShowDisclaimer(false)}>
+              <Text style={[styles.disclaimerDismiss, isDark && { color: '#FBBF24' }]}>Dismiss</Text>
+            </TouchableOpacity>
           </View>
         )}
-      </ScrollView>
 
-      {/* ── Quick Prompts ── */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.quickPromptBar}
-        contentContainerStyle={styles.quickPromptContent}
-      >
-        {[
-          'I feel overwhelmed',
-          'Help me breathe',
-          'I need grounding',
-          'I feel disconnected',
-          'Talk me through it',
-        ].map((prompt) => (
-          <TouchableOpacity
-            key={prompt}
-            style={styles.quickPromptChip}
-            onPress={() => {
-              setInputText(prompt);
-            }}
-          >
-            <Text style={styles.quickPromptText}>{prompt}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-
-      {/* ── Input Bar ── */}
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          value={inputText}
-          onChangeText={setInputText}
-          placeholder="Share what is on your mind…"
-          placeholderTextColor={theme.colors.textLight}
-          multiline
-          maxLength={800}
-          returnKeyType="send"
-          blurOnSubmit={false}
-          onSubmitEditing={handleSend}
-        />
-        <TouchableOpacity
-          style={[styles.sendButton, (!inputText.trim() || isTyping) && styles.sendDisabled]}
-          onPress={handleSend}
-          disabled={!inputText.trim() || isTyping}
+        {/* ── Chat Messages ── */}
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={styles.messageList}
+          showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.sendButtonText}>Send</Text>
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+          {messages.map((m) => {
+            const isAura = m.sender === 'aura';
+            return (
+              <View
+                key={m.id}
+                style={[
+                  styles.bubbleWrap,
+                  isAura ? styles.bubbleWrapAura : styles.bubbleWrapUser,
+                ]}
+              >
+                {isAura && (
+                  <View style={[styles.miniAvatarWrap, isDark && { backgroundColor: 'rgba(56, 189, 248, 0.15)' }]}>
+                    <Text style={styles.miniAvatar}>🌿</Text>
+                  </View>
+                )}
+                <View
+                  style={[
+                    styles.bubble,
+                    isAura
+                      ? [styles.bubbleAura, isDark && { backgroundColor: 'rgba(14, 23, 46, 0.85)', borderColor: 'rgba(255, 255, 255, 0.1)' }]
+                      : styles.bubbleUser,
+                    { maxWidth: '82%' },
+                  ]}
+                >
+                  <Text style={isAura ? [styles.textAura, isDark && { color: '#F1F5F9' }] : styles.textUser}>
+                    {m.text}
+                  </Text>
+                  <Text style={isAura ? [styles.timeAura, isDark && { color: '#64748B' }] : styles.timeUser}>
+                    {m.time}
+                  </Text>
+                </View>
+              </View>
+            );
+          })}
+
+          {/* Typing indicator */}
+          {isTyping && (
+            <View style={[styles.bubbleWrap, styles.bubbleWrapAura]}>
+              <View style={[styles.miniAvatarWrap, isDark && { backgroundColor: 'rgba(56, 189, 248, 0.15)' }]}>
+                <Text style={styles.miniAvatar}>🌿</Text>
+              </View>
+              <View style={[styles.bubble, styles.bubbleAura, isDark && { backgroundColor: 'rgba(14, 23, 46, 0.85)', borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
+                <ActivityIndicator size="small" color={isDark ? '#38BDF8' : theme.colors.accent} />
+              </View>
+            </View>
+          )}
+        </ScrollView>
+
+        {/* ── Quick Prompts ── */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={[styles.quickPromptBar, isDark && { backgroundColor: 'rgba(13, 21, 44, 0.75)', borderTopColor: 'rgba(255, 255, 255, 0.1)' }]}
+          contentContainerStyle={styles.quickPromptContent}
+        >
+          {[
+            'I feel overwhelmed',
+            'Help me breathe',
+            'I need grounding',
+            'I feel disconnected',
+            'Talk me through it',
+          ].map((prompt) => (
+            <TouchableOpacity
+              key={prompt}
+              style={[styles.quickPromptChip, isDark && { backgroundColor: 'rgba(56, 189, 248, 0.15)', borderColor: 'rgba(56, 189, 248, 0.3)' }]}
+              onPress={() => {
+                setInputText(prompt);
+              }}
+            >
+              <Text style={[styles.quickPromptText, isDark && { color: '#38BDF8' }]}>{prompt}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        {/* ── Input Bar ── */}
+        <View style={[styles.inputContainer, isDark && { backgroundColor: 'rgba(13, 21, 44, 0.85)', borderTopColor: 'rgba(255, 255, 255, 0.1)' }]}>
+          <TextInput
+            style={[styles.input, isDark && { backgroundColor: 'rgba(255, 255, 255, 0.05)', color: '#FFFFFF' }]}
+            value={inputText}
+            onChangeText={setInputText}
+            placeholder="Share what is on your mind…"
+            placeholderTextColor={isDark ? '#64748B' : theme.colors.textLight}
+            multiline
+            maxLength={800}
+            returnKeyType="send"
+            blurOnSubmit={false}
+            onSubmitEditing={handleSend}
+          />
+          <TouchableOpacity
+            style={[styles.sendButton, (!inputText.trim() || isTyping) && styles.sendDisabled]}
+            onPress={handleSend}
+            disabled={!inputText.trim() || isTyping}
+          >
+            <Text style={styles.sendButtonText}>Send</Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 }
 

@@ -1,53 +1,40 @@
-/**
- * OpenHand Learner App Design Tokens
- * Faithful reproduction of openhand-apps.css & web visual identity
- */
-
 export const colors = {
-  // Backgrounds
-  background: '#F7F8FD', // --mist
-  card: '#FFFFFF',       // --card
+  // Modern Wellness SaaS Dashboard Redesign Tokens
+  primary: '#2563EB',
+  primaryDark: '#1D4ED8',
+  background: '#F6F7FF',
   surface: '#FFFFFF',
-  surfaceSubtle: '#F1F5F9',
-  surfaceLight: '#F8FAFC',
+  text: '#101943',
+  muted: '#68749A',
+  border: '#E5EAF5',
+  lavender: '#EDE9FE',
+  blueSoft: '#DBEAFE',
+  mint: '#D1FAE5',
+  amber: '#FEF3C7',
+  pink: '#FCE7F3',
 
-  // Typography & Text
-  text: '#0E1235',          // --ink
-  textSecondary: '#2A2F5C', // --ink-2
-  textMuted: '#6A6F94',     // --muted
+  // Backward-compatible tokens & aliases
+  blue: '#2563EB',
+  indigo: '#4733C9',
+  violet: '#8A2BE0',
+  gradient: ['#2563EB', '#4733C9', '#8A2BE0'],
+  card: '#FFFFFF',
+  surfaceSubtle: '#F8FAFC',
+  surfaceLight: '#F1F5F9',
+  textSecondary: '#2A2F5C',
+  textMuted: '#68749A',
   textLight: '#94A3B8',
   textWhite: '#FFFFFF',
-
-  // Brand Gradient & Accents
-  blue: '#1F5FE0',     // --blue
-  indigo: '#4733C9',   // --indigo
-  violet: '#8A2BE0',   // --violet
-  gradient: ['#1F5FE0', '#4733C9', '#8A2BE0'], // --grad
-
-  // Functional Status
-  success: '#2E9E6B',       // --ok
-  successLight: '#DCFCE7',
-  successText: '#15803D',
-  warning: '#B08328',       // --warn
+  success: '#10B981',
+  successLight: '#D1FAE5',
+  successText: '#059669',
+  warning: '#F59E0B',
   warningLight: '#FEF3C7',
-  warningText: '#92400E',
-  danger: '#EF4444',        // --stop
+  warningText: '#B45309',
+  danger: '#EF4444',
   dangerLight: '#FEE2E2',
   dangerText: '#B91C1C',
-
-  // Borders & Dividers
-  border: '#E2E8F0',
-  borderSubtle: 'rgba(14, 18, 53, 0.08)',
-  borderActive: '#BFDBFE',
-
-  // App-specific Accent (Learner Somatic Teal / AURA Counselor)
-  accent: '#0D9488',
-  accentLight: '#ECFDF5',
-  accentBorder: '#A7F3D0',
-  accentDark: '#064E3B',
-
-  // Shadows
-  shadowColor: '#0E1235',
+  shadowColor: 'rgba(37, 59, 120, 0.08)',
 };
 
 export default colors;
