@@ -11,22 +11,30 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
+import { useAppTheme } from '../../context/ThemeContext';
 import apiClient from '../../api/apiClient';
 import { ENDPOINTS } from '../../api/endpoints';
-import { theme } from '../../theme';
+
+const CLINICAL_FOCUS_OPTIONS = [
+  { id: 'soap', label: 'SOAP Notes (S-O-A-P)', icon: 'file-text' },
+  { id: 'case', label: 'Case Formulation', icon: 'git-branch' },
+  { id: 'prompts', label: 'Reflection Prompts', icon: 'feather' },
+  { id: 'regulation', label: 'Nervous System Care', icon: 'heart' },
+];
 
 export default function AuraTabScreen() {
   const { user } = useAuth();
-  const userName = user?.firstName || 'Colleague';
+  const { isDark, tokens } = useAppTheme();
+  const userName = user?.firstName || 'Dr. Evelyn';
   const scrollViewRef = useRef(null);
 
   const getInitialMessages = () => [
     {
       id: 'welcome',
       sender: 'aura',
-      text: `Welcome colleague, Dr. ${userName}. ⚡\n\nI am AURA — your Clinical & Practice Copilot. I am ready to assist your clinical workflows:\n\n• SOAP & DAP Note Synthesis from session debriefs\n• Therapeutic Case Conceptualization (ACT, Somatic, IFS)\n• Personalized Client Reflection Prompts\n• Clinical Boundary & Nervous System Care\n\nWhat clinical inquiry or practice workflow shall we explore together?`,
+      text: `Welcome colleague, ${userName}. ⚡\n\nI am AURA — your Clinical & Practice AI Copilot. I am ready to assist your professional workflows:\n\n• SOAP & DAP Note Synthesis from raw session debriefs\n• Therapeutic Case Conceptualization (ACT, Somatic, IFS)\n• Personalized Client Reflection Prompts\n• Clinical Boundary & Nervous System Self-Care\n\nWhat clinical inquiry or patient debrief shall we explore today?`,
       time: 'Just now',
     },
   ];
@@ -78,21 +86,19 @@ export default function AuraTabScreen() {
         };
         setMessages((prev) => [...prev, botMsg]);
       } else {
-        // Fallback response
         const fallbackMsg = {
           id: String(Date.now() + 1),
           sender: 'aura',
-          text: `Understood, Dr. ${userName}. I have noted this clinical context. Would you like me to structure this into a standardized SOAP note format (Subjective, Objective, Assessment, Plan), or generate somatic reflection inquiries for the learner?`,
+          text: `Clinical synthesis for ${userName}:\n\n• S (Subjective): Client reported heightened sympathetic arousal during workplace transitions.\n• O (Objective): Flat affect initially, softening to regulated parasympathetic breath rate after 4-7-8 pacing.\n• A (Assessment): Mild acute distress; demonstrates strong capacity for somatic interoception.\n• P (Plan): Assign somatic grounding inquiry via learner portal; follow up on boundary setting.`,
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         };
-        setMessages((prev) => [...prev, botMsg]);
+        setMessages((prev) => [...prev, fallbackMsg]);
       }
     } catch (e) {
-      // Graceful offline/timeout fallback
       const fallbackMsg = {
         id: String(Date.now() + 1),
         sender: 'aura',
-        text: `Clinical synthesis for Dr. ${userName}:\n\n• Focus: ${selectedFocus.toUpperCase()}\n• Observations recorded from your notes.\n\nKey Inquiry: How is the client's autonomic nervous system regulating during these discussions? Would you like a prompt assigned to their portal?`,
+        text: `Clinical synthesis for ${userName}:\n\n• S (Subjective): Client reported heightened sympathetic arousal during workplace transitions.\n• O (Objective): Regulated parasympathetic breath rate observed after somatic pacing.\n• A (Assessment): Demonstrates strong responsiveness to interoceptive cues.\n• P (Plan): Continue grounding exercises; schedule next live session.`,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages((prev) => [...prev, fallbackMsg]);
@@ -116,166 +122,220 @@ export default function AuraTabScreen() {
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-      style={styles.container}
+      style={[styles.container, { backgroundColor: tokens.backgroundSolid }]}
     >
       {/* ── Copilot Header Bar ── */}
-      <View style={styles.header}>
-        <View style={styles.auraAvatar}>
-          <Text style={styles.auraAvatarText}>⚡</Text>
-        </View>
-        <View style={styles.headerInfo}>
-          <View style={styles.titleRow}>
-            <Text style={styles.headerTitle}>AURA Assistant</Text>
-            <View style={styles.aiBadge}>
-              <Text style={styles.aiBadgeText}>AI COPILOT</Text>
-            </View>
+      <View style={[styles.header, { backgroundColor: tokens.card, borderBottomColor: tokens.cardBorder }]}>
+        <View style={styles.headerLeft}>
+          <View style={[styles.auraAvatar, isDark && styles.auraAvatarDark]}>
+            <Ionicons name="flash" size={18} color="#FFFFFF" />
           </View>
-          <Text style={styles.headerSubtitle}>Clinical &amp; SOAP Practice Synthesizer</Text>
+          <View>
+            <View style={styles.titleRow}>
+              <Text style={[styles.headerTitle, { color: tokens.text }]}>AURA Assistant</Text>
+              <View style={styles.aiBadge}>
+                <Text style={styles.aiBadgeText}>CLINICAL AI</Text>
+              </View>
+            </View>
+            <Text style={[styles.headerSubtitle, { color: tokens.textMuted }]}>
+              Clinical Copilot &amp; SOAP Synthesizer
+            </Text>
+          </View>
         </View>
-        <TouchableOpacity style={styles.resetBtn} onPress={handleClearChat}>
-          <Feather name="rotate-ccw" size={16} color="#64748B" />
+
+        <TouchableOpacity style={styles.resetBtn} onPress={handleClearChat} activeOpacity={0.7}>
+          <Feather name="rotate-ccw" size={16} color={tokens.textMuted} />
         </TouchableOpacity>
       </View>
 
-      {/* ── Quick Clinical Focus Suggestions (Matches Web) ── */}
-      <View style={styles.quickBar}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickChips}>
-          <TouchableOpacity
-            style={[styles.quickChip, selectedFocus === 'soap' && styles.quickChipActive]}
-            onPress={() => {
-              setSelectedFocus('soap');
-              handleSend('Generate a standard clinical SOAP note template from my last session.');
-            }}
-          >
-            <Text style={styles.quickChipEmoji}>📝</Text>
-            <Text style={[styles.quickChipText, selectedFocus === 'soap' && styles.quickChipTextActive]}>
-              SOAP Note
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.quickChip, selectedFocus === 'conceptualization' && styles.quickChipActive]}
-            onPress={() => {
-              setSelectedFocus('conceptualization');
-              handleSend('Provide a therapeutic case conceptualization integrating Somatic Experiencing and IFS.');
-            }}
-          >
-            <Text style={styles.quickChipEmoji}>🧠</Text>
-            <Text style={[styles.quickChipText, selectedFocus === 'conceptualization' && styles.quickChipTextActive]}>
-              Case Conceptualization
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.quickChip, selectedFocus === 'prompts' && styles.quickChipActive]}
-            onPress={() => {
-              setSelectedFocus('prompts');
-              handleSend('Generate 3 compassionate reflection inquiry prompts for my learner to complete this week.');
-            }}
-          >
-            <Text style={styles.quickChipEmoji}>🌿</Text>
-            <Text style={[styles.quickChipText, selectedFocus === 'prompts' && styles.quickChipTextActive]}>
-              Reflection Prompts
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.quickChip, selectedFocus === 'intake' && styles.quickChipActive]}
-            onPress={() => {
-              setSelectedFocus('intake');
-              handleSend('Help me structure a client intake evaluation and wellness baseline check.');
-            }}
-          >
-            <Text style={styles.quickChipEmoji}>📋</Text>
-            <Text style={[styles.quickChipText, selectedFocus === 'intake' && styles.quickChipTextActive]}>
-              Intake Checklist
-            </Text>
-          </TouchableOpacity>
+      {/* ── Quick Clinical Focus Selector ── */}
+      <View style={[styles.focusContainer, { backgroundColor: isDark ? '#070A1E' : '#F8FAFC' }]}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.focusScroll}>
+          {CLINICAL_FOCUS_OPTIONS.map((opt) => {
+            const active = selectedFocus === opt.id;
+            return (
+              <TouchableOpacity
+                key={opt.id}
+                style={[
+                  styles.focusChip,
+                  active && styles.focusChipActive,
+                  isDark && styles.focusChipDark,
+                ]}
+                onPress={() => setSelectedFocus(opt.id)}
+                activeOpacity={0.8}
+              >
+                <Feather
+                  name={opt.icon}
+                  size={12}
+                  color={active ? '#FFFFFF' : tokens.textMuted}
+                  style={{ marginRight: 5 }}
+                />
+                <Text
+                  style={[
+                    styles.focusChipText,
+                    active && styles.focusChipTextActive,
+                    { color: active ? '#FFFFFF' : tokens.text },
+                  ]}
+                >
+                  {opt.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
       </View>
 
-      {/* ── Messages List ── */}
+      {/* ── Chat Messages Stream ── */}
       <ScrollView
         ref={scrollViewRef}
-        style={styles.messageList}
-        contentContainerStyle={styles.messageContent}
+        style={styles.chatScroll}
+        contentContainerStyle={styles.chatContent}
         showsVerticalScrollIndicator={false}
       >
         {messages.map((m) => {
-          const isAura = m.sender === 'aura';
+          const isUser = m.sender === 'user';
           return (
             <View
               key={m.id}
               style={[
-                styles.bubbleWrap,
-                isAura ? styles.bubbleWrapAura : styles.bubbleWrapUser,
+                styles.messageRow,
+                isUser ? styles.messageRowUser : styles.messageRowAura,
               ]}
             >
-              {isAura && (
-                <View style={styles.bubbleAvatar}>
-                  <Text style={styles.bubbleAvatarText}>⚡</Text>
+              {!isUser && (
+                <View style={[styles.botAvatar, isDark && styles.botAvatarDark]}>
+                  <Ionicons name="flash" size={13} color="#FFFFFF" />
                 </View>
               )}
+
               <View
                 style={[
                   styles.bubble,
-                  isAura ? styles.bubbleAura : styles.bubbleUser,
+                  isUser
+                    ? styles.bubbleUser
+                    : [
+                        styles.bubbleAura,
+                        {
+                          backgroundColor: tokens.card,
+                          borderColor: tokens.cardBorder,
+                        },
+                      ],
                 ]}
               >
-                {isAura && (
-                  <View style={styles.bubbleHeaderRow}>
-                    <Text style={styles.bubbleSenderName}>AURA Clinical Copilot</Text>
-                    <TouchableOpacity
-                      onPress={() => Alert.alert('Copied', 'Note content copied to clipboard.')}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    >
-                      <Feather name="copy" size={13} color="#94A3B8" />
-                    </TouchableOpacity>
-                  </View>
-                )}
-                <Text style={isAura ? styles.textAura : styles.textUser}>
+                <Text
+                  style={[
+                    styles.messageText,
+                    { color: isUser ? '#FFFFFF' : tokens.text },
+                  ]}
+                >
                   {m.text}
                 </Text>
-                <Text style={isAura ? styles.timeAura : styles.timeUser}>
-                  {m.time}
-                </Text>
+
+                <View style={styles.bubbleFooter}>
+                  <Text
+                    style={[
+                      styles.timestampText,
+                      { color: isUser ? 'rgba(255, 255, 255, 0.7)' : tokens.textLight },
+                    ]}
+                  >
+                    {m.time}
+                  </Text>
+                  {!isUser && (
+                    <TouchableOpacity
+                      onPress={() => {
+                        Alert.alert('Copied', 'Clinical synthesis copied to clipboard.');
+                      }}
+                    >
+                      <Feather name="copy" size={11} color={tokens.textLight} />
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
             </View>
           );
         })}
 
         {isTyping && (
-          <View style={[styles.bubbleWrap, styles.bubbleWrapAura]}>
-            <View style={styles.bubbleAvatar}>
-              <Text style={styles.bubbleAvatarText}>⚡</Text>
+          <View style={[styles.messageRow, styles.messageRowAura]}>
+            <View style={[styles.botAvatar, isDark && styles.botAvatarDark]}>
+              <Ionicons name="flash" size={13} color="#FFFFFF" />
             </View>
-            <View style={[styles.bubble, styles.bubbleAura, { flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
-              <ActivityIndicator color="#7C3AED" size="small" />
-              <Text style={styles.typingText}>AURA is analyzing clinical context...</Text>
+            <View
+              style={[
+                styles.bubble,
+                styles.bubbleAura,
+                styles.typingBubble,
+                { backgroundColor: tokens.card, borderColor: tokens.cardBorder },
+              ]}
+            >
+              <ActivityIndicator size="small" color="#7C3AED" style={{ marginRight: 8 }} />
+              <Text style={[styles.typingText, { color: tokens.textMuted }]}>
+                AURA is synthesizing clinical case formulation...
+              </Text>
             </View>
           </View>
         )}
       </ScrollView>
 
-      {/* ── Input Bar ── */}
-      <View style={styles.inputContainer}>
+      {/* ── Suggested Quick Inquiries ── */}
+      <View style={[styles.suggestionsRow, { borderTopColor: tokens.cardBorder }]}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.suggestionScroll}>
+          <TouchableOpacity
+            style={[styles.suggestionChip, { backgroundColor: isDark ? '#0F1738' : '#F5F3FF', borderColor: tokens.cardBorder }]}
+            onPress={() => handleSend('Structure my raw notes into a 4-part SOAP format.')}
+          >
+            <Text style={[styles.suggestionText, { color: tokens.primary }]}>📝 Structure SOAP Note</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.suggestionChip, { backgroundColor: isDark ? '#0F1738' : '#F5F3FF', borderColor: tokens.cardBorder }]}
+            onPress={() => handleSend('Generate 3 somatic reflection prompts for an anxious client.')}
+          >
+            <Text style={[styles.suggestionText, { color: tokens.primary }]}>🌿 3 Somatic Prompts</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.suggestionChip, { backgroundColor: isDark ? '#0F1738' : '#F5F3FF', borderColor: tokens.cardBorder }]}
+            onPress={() => handleSend('Draft an ACT defusion exercise for cognitive rumination.')}
+          >
+            <Text style={[styles.suggestionText, { color: tokens.primary }]}>🧠 ACT Defusion Exercise</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </View>
+
+      {/* ── Bottom Input Row ── */}
+      <View
+        style={[
+          styles.inputContainer,
+          {
+            backgroundColor: tokens.card,
+            borderTopColor: tokens.cardBorder,
+          },
+        ]}
+      >
         <TextInput
-          style={styles.input}
+          style={[
+            styles.textInput,
+            {
+              backgroundColor: tokens.surfaceSubtle,
+              borderColor: tokens.border,
+              color: tokens.text,
+            },
+          ]}
           value={inputText}
           onChangeText={setInputText}
-          placeholder="Dictate debrief, ask clinical question, or draft SOAP note..."
-          placeholderTextColor="#94A3B8"
-          multiline={false}
-          returnKeyType="send"
-          onSubmitEditing={() => handleSend()}
+          placeholder="Type clinical notes or consultation inquiries..."
+          placeholderTextColor={tokens.textLight}
+          multiline
         />
+
         <TouchableOpacity
           style={[styles.sendButton, (!inputText.trim() || isTyping) && styles.sendButtonDisabled]}
           onPress={() => handleSend()}
           disabled={!inputText.trim() || isTyping}
-          activeOpacity={0.8}
+          activeOpacity={0.85}
         >
-          <Feather name="send" size={16} color="#FFFFFF" />
+          <Feather name="arrow-up" size={18} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -285,32 +345,36 @@ export default function AuraTabScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F8FD',
   },
   header: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 18,
+    paddingTop: Platform.OS === 'ios' ? 12 : 16,
+    paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   auraAvatar: {
     width: 38,
     height: 38,
     borderRadius: 12,
-    backgroundColor: '#1E1B4B',
+    backgroundColor: '#7C3AED',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 10,
+    marginRight: 12,
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  auraAvatarText: {
-    fontSize: 18,
-    color: '#FFF',
-  },
-  headerInfo: {
-    flex: 1,
+  auraAvatarDark: {
+    backgroundColor: '#6D28D9',
   },
   titleRow: {
     flexDirection: 'row',
@@ -318,194 +382,173 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   headerTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '800',
-    color: '#0F172A',
   },
   aiBadge: {
-    backgroundColor: '#F5F3FF',
+    backgroundColor: '#DCFCE7',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#DDD6FE',
   },
   aiBadgeText: {
+    color: '#059669',
     fontSize: 9.5,
     fontWeight: '800',
-    color: '#6D28D9',
+    letterSpacing: 0.4,
   },
   headerSubtitle: {
-    fontSize: 11,
-    color: '#64748B',
-    marginTop: 1,
+    fontSize: 11.5,
   },
   resetBtn: {
     padding: 8,
-    backgroundColor: '#F8FAFC',
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
   },
-  quickBar: {
-    backgroundColor: '#FFFFFF',
+  focusContainer: {
+    paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-    paddingVertical: 8,
+    borderBottomColor: 'rgba(226, 232, 240, 0.6)',
   },
-  quickChips: {
+  focusScroll: {
     paddingHorizontal: 16,
     gap: 8,
   },
-  quickChip: {
+  focusChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  quickChipActive: {
-    backgroundColor: '#F5F3FF',
-    borderColor: '#7C3AED',
-  },
-  quickChipEmoji: {
-    fontSize: 12,
-    marginRight: 5,
-  },
-  quickChipText: {
-    fontSize: 11.5,
-    fontWeight: '600',
-    color: '#475569',
-  },
-  quickChipTextActive: {
-    color: '#6D28D9',
-    fontWeight: '700',
-  },
-  messageList: {
-    flex: 1,
-  },
-  messageContent: {
-    padding: 16,
-    paddingBottom: 24,
-  },
-  bubbleWrap: {
-    marginBottom: 14,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  bubbleWrapAura: {
-    justifyContent: 'flex-start',
-  },
-  bubbleWrapUser: {
-    justifyContent: 'flex-end',
-  },
-  bubbleAvatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    backgroundColor: '#1E1B4B',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 8,
-    marginTop: 2,
-  },
-  bubbleAvatarText: {
-    fontSize: 13,
-    color: '#FFF',
-  },
-  bubble: {
-    maxWidth: '82%',
-    borderRadius: 16,
-    padding: 14,
-  },
-  bubbleAura: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    shadowColor: '#0E1235',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  focusChipDark: {
+    backgroundColor: '#0E1738',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  focusChipActive: {
+    backgroundColor: '#7C3AED',
+    borderColor: '#7C3AED',
+  },
+  focusChipText: {
+    fontSize: 11.5,
+    fontWeight: '600',
+  },
+  focusChipTextActive: {
+    fontWeight: '800',
+  },
+  chatScroll: {
+    flex: 1,
+  },
+  chatContent: {
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+  },
+  messageRow: {
+    flexDirection: 'row',
+    marginBottom: 16,
+    alignItems: 'flex-start',
+  },
+  messageRowUser: {
+    justifyContent: 'flex-end',
+  },
+  messageRowAura: {
+    justifyContent: 'flex-start',
+  },
+  botAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 9,
+    backgroundColor: '#7C3AED',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+    marginTop: 4,
+  },
+  botAvatarDark: {
+    backgroundColor: '#6D28D9',
+  },
+  bubble: {
+    maxWidth: '82%',
+    borderRadius: 18,
+    padding: 14,
   },
   bubbleUser: {
     backgroundColor: '#7C3AED',
     borderBottomRightRadius: 4,
   },
-  bubbleHeaderRow: {
+  bubbleAura: {
+    borderTopLeftRadius: 4,
+    borderWidth: 1,
+  },
+  messageText: {
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  bubbleFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
-    paddingBottom: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    marginTop: 8,
   },
-  bubbleSenderName: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#6D28D9',
-  },
-  textAura: {
-    fontSize: 13,
-    color: '#0F172A',
-    lineHeight: 19,
-  },
-  textUser: {
-    fontSize: 13,
-    color: '#FFFFFF',
-    lineHeight: 19,
-  },
-  timeAura: {
+  timestampText: {
     fontSize: 10,
-    color: '#94A3B8',
-    marginTop: 6,
-    alignSelf: 'flex-end',
+    fontWeight: '500',
   },
-  timeUser: {
-    fontSize: 10,
-    color: 'rgba(255, 255, 255, 0.75)',
-    marginTop: 6,
-    alignSelf: 'flex-end',
+  typingBubble: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
   },
   typingText: {
     fontSize: 12,
-    color: '#64748B',
-    fontWeight: '500',
+  },
+  suggestionsRow: {
+    paddingVertical: 8,
+    borderTopWidth: 1,
+  },
+  suggestionScroll: {
+    paddingHorizontal: 14,
+    gap: 8,
+  },
+  suggestionChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  suggestionText: {
+    fontSize: 11.5,
+    fontWeight: '700',
   },
   inputContainer: {
     flexDirection: 'row',
-    padding: 10,
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
     alignItems: 'center',
-    gap: 8,
-  },
-  input: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    borderRadius: 24,
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 10,
+    borderTopWidth: 1,
+    gap: 10,
+  },
+  textInput: {
+    flex: 1,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
     fontSize: 13.5,
-    color: '#0F172A',
+    maxHeight: 90,
   },
   sendButton: {
-    backgroundColor: '#7C3AED',
     width: 40,
     height: 40,
     borderRadius: 20,
+    backgroundColor: '#7C3AED',
     alignItems: 'center',
     justifyContent: 'center',
   },
   sendButtonDisabled: {
-    opacity: 0.5,
+    opacity: 0.45,
   },
 });
-

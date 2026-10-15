@@ -89,6 +89,112 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Quick Demo Preview Mode for testing/evaluating without live credentials
+  const enterDemoMode = async () => {
+    const demoUser = {
+      _id: 'demo_practitioner_1',
+      firstName: 'Dr. Evelyn',
+      lastName: 'Vance',
+      email: 'evelyn.vance@openhand.live',
+      accountType: 'Practitioner',
+      handle: 'dr-evelyn-vance',
+      contactNumber: '+1 (555) 234-5678',
+      specialties: ['Somatic Experiencing', 'Nervous System Care', 'Integrative Therapy'],
+      isVerified: true,
+      rating: 5.0,
+      activeClientsCount: 18,
+    };
+    const demoToken = 'demo_practitioner_jwt_token';
+    await SecureStoreService.setToken(demoToken);
+    await SecureStoreService.setUser(demoUser);
+    setToken(demoToken);
+    setUser(demoUser);
+    return { success: true, user: demoUser };
+  };
+
+  // Send OTP for signup/verification
+  const sendOtp = async (email) => {
+    try {
+      const response = await apiClient.post(ENDPOINTS.AUTH.SEND_OTP, {
+        email: email.trim().toLowerCase(),
+      });
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Failed to send OTP');
+      }
+      return { success: true, message: response.data.message || 'OTP sent successfully' };
+    } catch (error) {
+      const message =
+        error.response?.data?.message || error.message || 'Failed to send OTP. Please try again.';
+      return { success: false, error: message };
+    }
+  };
+
+  // Practitioner Registration handler
+  const signup = async ({
+    firstName,
+    lastName,
+    email,
+    password,
+    confirmPassword,
+    contactNumber,
+    otp,
+  }) => {
+    try {
+      const response = await apiClient.post(ENDPOINTS.AUTH.SIGNUP, {
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim().toLowerCase(),
+        password,
+        confirmPassword,
+        contactNumber: contactNumber?.trim() || '',
+        otp: otp.trim(),
+        accountType: 'Practitioner',
+      });
+
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Registration failed');
+      }
+
+      const registeredUser = response.data.user;
+      const authToken = response.data.token;
+
+      if (authToken && registeredUser) {
+        await SecureStoreService.setToken(authToken);
+        await SecureStoreService.setUser(registeredUser);
+        setToken(authToken);
+        setUser(registeredUser);
+      }
+
+      return {
+        success: true,
+        user: registeredUser,
+        token: authToken,
+        message: response.data?.message || 'Practitioner account created successfully!',
+      };
+    } catch (error) {
+      const message =
+        error.response?.data?.message || error.message || 'Registration failed. Please verify your inputs.';
+      return { success: false, error: message };
+    }
+  };
+
+  // Request Password Reset
+  const requestPasswordReset = async (email) => {
+    try {
+      const response = await apiClient.post(ENDPOINTS.AUTH.RESET_PASSWORD_TOKEN, {
+        email: email.trim().toLowerCase(),
+      });
+      if (response.data?.success === false) {
+        throw new Error(response.data?.message || 'Failed to request password reset');
+      }
+      return { success: true, message: response.data?.message || 'Password reset link sent to your email.' };
+    } catch (error) {
+      const message =
+        error.response?.data?.message || error.message || 'Failed to send reset link. Please try again.';
+      return { success: false, error: message };
+    }
+  };
+
   // Logout handler
   const logout = async () => {
     try {
@@ -112,6 +218,10 @@ export const AuthProvider = ({ children }) => {
     isLoading,
     isAuthenticated: !!token && !!user,
     login,
+    signup,
+    sendOtp,
+    requestPasswordReset,
+    enterDemoMode,
     logout,
     updateUserData,
     reloadSession: loadStoredSession,

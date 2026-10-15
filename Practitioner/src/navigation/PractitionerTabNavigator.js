@@ -1,48 +1,59 @@
 import React from 'react';
 import { Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Feather } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Feather, Ionicons } from '@expo/vector-icons';
 
+import { useAppTheme } from '../context/ThemeContext';
 import OverviewTabScreen from '../screens/tabs/OverviewTabScreen';
 import LearnersTabScreen from '../screens/tabs/LearnersTabScreen';
 import LiveRoomTabScreen from '../screens/tabs/LiveRoomTabScreen';
 import AuraTabScreen from '../screens/tabs/AuraTabScreen';
 import MoreTabScreen from '../screens/tabs/MoreTabScreen';
-import { theme } from '../theme';
 
 const Tab = createBottomTabNavigator();
 
 export default function PractitionerTabNavigator() {
+  const { isDark } = useAppTheme();
+  const insets = useSafeAreaInsets();
+
+  // Platform detection
+  const isWeb = Platform.OS === 'web';
+  const isIOS = Platform.OS === 'ios';
+
+  // Safe area & platform spacing
+  const tabPaddingBottom = isWeb ? 16 : (safeBottom > 0 ? safeBottom + 4 : 10);
+  const tabHeight = isWeb ? 84 : (isIOS ? 88 : 72 + safeBottom);
+
   return (
     <Tab.Navigator
       screenOptions={{
-        headerStyle: {
-          backgroundColor: '#FFFFFF',
-          elevation: 1,
-          shadowColor: '#0E1235',
-          shadowOpacity: 0.04,
-          shadowRadius: 6,
-          borderBottomWidth: 1,
-          borderBottomColor: '#E2E8F0',
-        },
-        headerTitleStyle: {
-          fontSize: 16,
-          fontWeight: '800',
-          color: '#0F172A',
-        },
+        headerShown: false,
+        tabBarShowLabel: true,
+        tabBarLabelPosition: 'below-icon',
         tabBarStyle: {
-          backgroundColor: '#FFFFFF',
-          borderTopColor: '#E2E8F0',
+          backgroundColor: isDark ? '#070A1E' : '#FFFFFF',
+          borderTopColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(226, 232, 240, 0.85)',
           borderTopWidth: 1,
-          height: Platform.OS === 'ios' ? 88 : 64,
-          paddingBottom: Platform.OS === 'ios' ? 24 : 8,
+          height: tabHeight,
           paddingTop: 8,
+          paddingBottom: tabPaddingBottom,
+          elevation: 12,
+          shadowColor: '#0E1235',
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: isDark ? 0.35 : 0.05,
+          shadowRadius: 12,
         },
-        tabBarActiveTintColor: '#7C3AED',
-        tabBarInactiveTintColor: '#94A3B8',
+        tabBarItemStyle: {
+          flex: 1,
+        },
+        tabBarActiveTintColor: isDark ? '#A78BFA' : '#7C3AED',
+        tabBarInactiveTintColor: isDark ? '#64748B' : '#94A3B8',
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: 10,
           fontWeight: '700',
+          marginTop: 2,
+          letterSpacing: -0.1,
         },
       }}
     >
@@ -50,9 +61,10 @@ export default function PractitionerTabNavigator() {
         name="Overview"
         component={OverviewTabScreen}
         options={{
-          title: 'Overview',
-          headerTitle: 'Practitioner Dashboard',
-          tabBarIcon: ({ color, size }) => <Feather name="grid" size={20} color={color} />,
+          title: 'Practice',
+          tabBarIcon: ({ color, focused }) => (
+            <Feather name="grid" size={focused ? 21 : 20} color={color} />
+          ),
         }}
       />
       <Tab.Screen
@@ -60,8 +72,9 @@ export default function PractitionerTabNavigator() {
         component={LearnersTabScreen}
         options={{
           title: 'Learners',
-          headerTitle: 'Learner Management',
-          tabBarIcon: ({ color, size }) => <Feather name="users" size={20} color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <Feather name="users" size={focused ? 21 : 20} color={color} />
+          ),
         }}
       />
       <Tab.Screen
@@ -69,17 +82,19 @@ export default function PractitionerTabNavigator() {
         component={LiveRoomTabScreen}
         options={{
           title: 'Live Room',
-          headerTitle: 'Session Room',
-          tabBarIcon: ({ color, size }) => <Feather name="video" size={20} color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <Feather name="video" size={focused ? 21 : 20} color={color} />
+          ),
         }}
       />
       <Tab.Screen
         name="Aura"
         component={AuraTabScreen}
         options={{
-          title: 'AURA',
-          headerTitle: 'Clinical Copilot',
-          tabBarIcon: ({ color, size }) => <Feather name="zap" size={20} color={color} />,
+          title: 'AURA AI',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'flash' : 'flash-outline'} size={focused ? 22 : 21} color={color} />
+          ),
         }}
       />
       <Tab.Screen
@@ -87,11 +102,11 @@ export default function PractitionerTabNavigator() {
         component={MoreTabScreen}
         options={{
           title: 'Practice Hub',
-          headerTitle: 'Practice Hub & Settings',
-          tabBarIcon: ({ color, size }) => <Feather name="sliders" size={20} color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <Feather name="sliders" size={focused ? 21 : 20} color={color} />
+          ),
         }}
       />
     </Tab.Navigator>
   );
 }
-
