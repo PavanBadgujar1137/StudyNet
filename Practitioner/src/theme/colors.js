@@ -40,17 +40,25 @@ export const colors = {
   borderSubtle: 'rgba(14, 18, 53, 0.08)',
   borderActive: '#BFDBFE',
 
-  // Practitioner App-specific Accent (Clinical Indigo / AURA Assistant)
-  accent: '#4F46E5',
-  accentLight: '#EEF2FF',
-  accentBorder: '#C7D2FE',
+  // Practitioner App-specific Accent (Clinical Indigo / AURA Assistant / Web Violet)
+  accent: '#7C3AED',
+  accentLight: '#F5F3FF',
+  accentBorder: '#DDD6FE',
   accentDark: '#1E1B4B',
+  violetBrand: '#7C3AED',
+  violetLight: '#F5F3FF',
+  violetBorder: '#DDD6FE',
+  violetText: '#6D28D9',
+  violetGradientStart: '#7C3AED',
+  violetGradientEnd: '#EC4899',
+  cyanGlow: '#0EA5E9',
 
   // Dark slate hero tone
   slateDark: '#090D16',
 
   // Shadows
   shadowColor: '#0E1235',
+  shadowViolet: 'rgba(124, 58, 237, 0.25)',
 };
 
 export default colors;
