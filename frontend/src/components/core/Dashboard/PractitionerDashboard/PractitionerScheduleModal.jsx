@@ -52,13 +52,28 @@ export function PractitionerScheduleModal({ isOpen, onClose }) {
     }
   }
 
+  useEffect(() => {
+    const handleCalendarMessage = (event) => {
+      if (event?.data?.type === "CALENDAR_AUTH_SUCCESS") {
+        toast.success("Google Calendar connected successfully!")
+        loadAvailability()
+      } else if (event?.data?.type === "CALENDAR_AUTH_ERROR") {
+        toast.error(`Google Calendar connection failed: ${event.data.error || "Unknown error"}`)
+      }
+    }
+    window.addEventListener("message", handleCalendarMessage)
+    return () => window.removeEventListener("message", handleCalendarMessage)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const handleConnectGoogle = async () => {
     try {
       const returnTo = window.location.pathname || "/practice"
-      const res = await apiConnector('GET', `/api/v1/calendar/auth/google?returnTo=${encodeURIComponent(returnTo)}`, null, {
+      const redirectUri = `${window.location.origin}/social-callback`
+      const res = await apiConnector('GET', `/api/v1/calendar/auth/google?returnTo=${encodeURIComponent(returnTo)}&redirectUri=${encodeURIComponent(redirectUri)}`, null, {
         Authorization: `Bearer ${token}`
       })
-      if (res?.data?.success) {
+      if (res?.data?.success && res.data.url) {
         window.location.href = res.data.url
       }
     } catch (err) {

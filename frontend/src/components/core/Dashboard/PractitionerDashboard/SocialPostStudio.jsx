@@ -102,6 +102,7 @@ export function SocialPostStudio() {
     facebook: false,
   })
   const [authorizingPlatform, setAuthorizingPlatform] = useState(null)
+  const [editingChannels, setEditingChannels] = useState({})
 
   // Composer Form State
   const [title, setTitle] = useState('')
@@ -166,6 +167,70 @@ export function SocialPostStudio() {
       }
     } else {
       toast.error('Native system share is not supported on this device/browser.')
+    }
+  }
+
+  // Dedicated Instagram Upload Helper (copies caption, auto-downloads photo, launches Instagram)
+  const handleInstagramShare = async (post) => {
+    if (!post) return
+    // 1. Copy caption to clipboard
+    handleCopyText(post.caption, 'Post Caption')
+
+    // 2. Track share metrics
+    if (post._id) {
+      trackPostShare(post._id, token).then(() => loadPosts()).catch(() => {})
+    }
+
+    // 3. Auto-download media file so user can immediately upload to Instagram
+    if (post.mediaUrl) {
+      try {
+        const res = await fetch(post.mediaUrl)
+        const blob = await res.blob()
+        const ext = blob.type && blob.type.includes('png') ? 'png' : 'jpg'
+        const blobUrl = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = blobUrl
+        link.download = `openhand-post-${Date.now()}.${ext}`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        window.URL.revokeObjectURL(blobUrl)
+      } catch (err) {
+        console.warn('Could not auto-download post media:', err)
+      }
+    }
+
+    // 4. On mobile with web share files support, offer native sheet directly
+    let usedNative = false
+    if (post.mediaUrl && navigator.share && /mobile|android|iphone|ipad/i.test(navigator.userAgent)) {
+      try {
+        const res = await fetch(post.mediaUrl)
+        const blob = await res.blob()
+        const file = new File([blob], 'openhand-post.jpg', { type: blob.type || 'image/jpeg' })
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: post.title || 'OpenHand Practice Update',
+            text: post.caption,
+          })
+          usedNative = true
+        }
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.warn('Native image share fallback:', err)
+        }
+      }
+    }
+
+    if (!usedNative) {
+      // 5. Open Instagram Web
+      window.open('https://www.instagram.com/', '_blank', 'noopener,noreferrer')
+      toast.success(
+        post.mediaUrl
+          ? '📸 Caption copied & image downloaded! In Instagram, click (+) Create to upload.'
+          : '📋 Caption copied! Open Instagram and paste into your new post.',
+        { duration: 6000, icon: '📸' }
+      )
     }
   }
 
@@ -265,7 +330,7 @@ export function SocialPostStudio() {
     loadAccounts()
   }, [loadPosts, loadAccounts])
 
-  // Listen for OAuth callbacks (e.g. from LinkedIn redirect)
+  // Listen for OAuth callbacks (e.g. from LinkedIn redirect or popup message)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.get('social_connected') === 'linkedin') {
@@ -283,6 +348,18 @@ export function SocialPostStudio() {
       const newSearch = params.toString() ? `?${params.toString()}` : ''
       window.history.replaceState({}, '', `${window.location.pathname}${newSearch}`)
     }
+
+    const handleMsg = (e) => {
+      if (e.data?.type === 'SOCIAL_STUDIO_AUTH_SUCCESS') {
+        toast.success('🎉 LinkedIn successfully connected & authorized for direct auto-posting!', { duration: 6000 })
+        setActiveTab('channels')
+        loadAccounts()
+      } else if (e.data?.type === 'SOCIAL_STUDIO_AUTH_ERROR') {
+        toast.error(`LinkedIn connection error: ${e.data.error || 'Failed to authorize'}`, { duration: 6000 })
+      }
+    }
+    window.addEventListener('message', handleMsg)
+    return () => window.removeEventListener('message', handleMsg)
   }, [loadAccounts])
 
   // Start LinkedIn OAuth Authorization
@@ -360,31 +437,43 @@ export function SocialPostStudio() {
     }
   }
 
-  // Connect or Disconnect Social Account
-  const handleConnectChannel = async (platformId) => {
-    const connectedAcc = getConnectedAccount(platformId)
+  // Save / Connect Social Channel Handle
+  const handleSaveChannelHandle = async (platformId) => {
+    const inputHandle = handleInputs[platformId]?.trim()
+    const existingAcc = getConnectedAccount(platformId)
+    if (!inputHandle && !existingAcc?.handle) {
+      toast.error(`Please enter your ${platformId.toUpperCase()} username or profile link before connecting`)
+      return
+    }
 
-    if (connectedAcc) {
-      const updated = await toggleSocialAccount({ platform: platformId }, token)
-      if (updated) loadAccounts()
-    } else {
-      const inputHandle = handleInputs[platformId]?.trim()
-      if (!inputHandle) {
-        toast.error(`Please enter your ${platformId.toUpperCase()} handle before connecting`)
-        return
-      }
-
-      const cleanHandle = formatDisplayHandle(inputHandle)
-      const updated = await toggleSocialAccount(
-        { platform: platformId, handle: cleanHandle, accountName: cleanHandle },
-        token
-      )
-      if (updated) {
-        setHandleInputs((prev) => ({ ...prev, [platformId]: '' }))
-        loadAccounts()
-      }
+    const cleanHandle = inputHandle ? formatDisplayHandle(inputHandle) : existingAcc.handle
+    const updated = await toggleSocialAccount(
+      { platform: platformId, handle: cleanHandle, accountName: cleanHandle, isConnected: true },
+      token
+    )
+    if (updated) {
+      setHandleInputs((prev) => ({ ...prev, [platformId]: '' }))
+      setEditingChannels((prev) => ({ ...prev, [platformId]: false }))
+      loadAccounts()
+      toast.success(`✓ ${platformId.toUpperCase()} handle connected!`)
     }
   }
+
+  // Disconnect Social Account
+  const handleDisconnectChannel = async (platformId) => {
+    const updated = await toggleSocialAccount(
+      { platform: platformId, action: 'disconnect' },
+      token
+    )
+    if (updated) {
+      setEditingChannels((prev) => ({ ...prev, [platformId]: false }))
+      loadAccounts()
+      toast.success(`${platformId.toUpperCase()} disconnected`)
+    }
+  }
+
+  // Backward compatibility alias
+  const handleConnectChannel = handleSaveChannelHandle
 
   // Create Post Submit
   const handleSubmitPost = async (e) => {
@@ -1694,7 +1783,7 @@ export function SocialPostStudio() {
                             }}
                           >
                             {res?.success ? <FiCheckCircle fontSize={12} /> : <FiAlertTriangle fontSize={12} />}
-                            {plat.toUpperCase()}: {res?.success ? 'Live' : 'Auth Required'}
+                            {plat.toUpperCase()}: {res?.success ? (res.mode === 'broadcast_ready' ? 'Ready' : 'Live') : 'Auth Required'}
                             {res?.postUrl && (
                               <a
                                 href={res.postUrl}
@@ -1736,6 +1825,27 @@ export function SocialPostStudio() {
                     </div>
                     
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        onClick={() => handleInstagramShare(post)}
+                        style={{
+                          background: 'linear-gradient(45deg, #F09433, #DC2743, #BC1888)',
+                          color: '#ffffff',
+                          border: 'none',
+                          padding: '8px 14px',
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          boxShadow: '0 2px 8px rgba(220, 39, 67, 0.25)'
+                        }}
+                      >
+                        <FiInstagram /> Instagram
+                      </button>
+
                       {post.webShareIntents?.twitter && (
                         <button
                           type="button"
@@ -1846,19 +1956,39 @@ export function SocialPostStudio() {
                   const accountDoc = getConnectedAccount(channel.id)
                   const isConnected = !!accountDoc
                   const isAuthorized = !!(accountDoc?.isAuthorized && accountDoc?.accessToken)
+                  const isEditing = !!editingChannels[channel.id]
+
+                  const rawHandleOnly = accountDoc?.handle ? String(accountDoc.handle).trim().replace(/^@+/, '') : ''
+                  const profileUrl = rawHandleOnly
+                    ? channel.id === 'instagram'
+                      ? `https://www.instagram.com/${rawHandleOnly}/`
+                      : channel.id === 'twitter'
+                      ? `https://x.com/${rawHandleOnly}`
+                      : channel.id === 'linkedin'
+                      ? accountDoc.handle?.startsWith('http')
+                        ? accountDoc.handle
+                        : `https://www.linkedin.com/in/${rawHandleOnly}`
+                      : `https://www.facebook.com/${rawHandleOnly}`
+                    : null
 
                   return (
                     <div
                       key={channel.id}
                       style={{
-                        border: isAuthorized ? '2px solid #10B981' : isConnected ? '2px solid #F59E0B' : '1px solid #E2E8F0',
+                        border: isAuthorized
+                          ? '2px solid #10B981'
+                          : isConnected
+                          ? '2px solid #10B981'
+                          : '1px solid #E2E8F0',
                         borderRadius: '18px',
                         padding: '24px',
                         background: '#ffffff',
                         display: 'flex',
                         flexDirection: 'column',
                         gap: '16px',
-                        boxShadow: isAuthorized ? '0 4px 20px rgba(16, 185, 129, 0.08)' : '0 4px 16px rgba(0,0,0,0.03)',
+                        boxShadow: isConnected
+                          ? '0 4px 20px rgba(16, 185, 129, 0.08)'
+                          : '0 4px 16px rgba(0,0,0,0.03)',
                         overflow: 'hidden',
                         position: 'relative'
                       }}
@@ -1876,7 +2006,7 @@ export function SocialPostStudio() {
                               title={accountDoc?.handle || ''}
                               style={{
                                 fontSize: '13px',
-                                color: isAuthorized ? '#059669' : isConnected ? '#D97706' : '#64748B',
+                                color: isConnected ? '#059669' : '#64748B',
                                 fontWeight: isConnected ? 700 : 500,
                                 whiteSpace: 'nowrap',
                                 overflow: 'hidden',
@@ -1895,9 +2025,9 @@ export function SocialPostStudio() {
                             fontWeight: 800,
                             padding: '4px 10px',
                             borderRadius: '12px',
-                            background: isAuthorized ? '#DCFCE7' : isConnected ? '#FEF3C7' : '#F1F5F9',
-                            color: isAuthorized ? '#15803D' : isConnected ? '#B45309' : '#64748B',
-                            border: `1px solid ${isAuthorized ? '#86EFAC' : isConnected ? '#FDE68A' : '#E2E8F0'}`,
+                            background: isAuthorized ? '#DCFCE7' : isConnected ? '#DCFCE7' : '#F1F5F9',
+                            color: isAuthorized ? '#15803D' : isConnected ? '#15803D' : '#64748B',
+                            border: `1px solid ${isConnected ? '#86EFAC' : '#E2E8F0'}`,
                             flexShrink: 0,
                             whiteSpace: 'nowrap',
                             display: 'inline-flex',
@@ -1905,7 +2035,7 @@ export function SocialPostStudio() {
                             gap: '4px'
                           }}
                         >
-                          {isAuthorized ? '⚡ Auto-Post Active' : isConnected ? '⚠️ Needs API Token' : 'Unlinked'}
+                          {isAuthorized ? '⚡ Direct Auto-Post' : isConnected ? '✓ Connected & Active' : 'Unlinked'}
                         </span>
                       </div>
 
@@ -1913,180 +2043,248 @@ export function SocialPostStudio() {
                       <div style={{ fontSize: '12.5px', color: '#64748B', lineHeight: '1.4' }}>
                         {isAuthorized ? (
                           <span style={{ color: '#059669', fontWeight: 600 }}>
-                            ✅ Direct background publishing is active. Posts will publish automatically to your {channel.label} feed from OpenHand.
+                            ✅ Direct background publishing is active. Posts publish automatically to your {channel.label} feed.
                           </span>
-                        ) : channel.id === 'linkedin' ? (
-                          'Authorize your LinkedIn account or paste an Access Token to enable automated background publishing directly from the dashboard.'
+                        ) : isConnected ? (
+                          <span style={{ color: '#059669', fontWeight: 600 }}>
+                            ✅ Connected as {accountDoc.handle}. Multi-channel 1-click broadcast and media dispatches are active.
+                          </span>
                         ) : (
-                          `Link your ${channel.label} account to enable multi-channel broadcasts.`
+                          `Link your ${channel.label} profile handle to enable 1-click multi-channel broadcasts and post assets.`
                         )}
                       </div>
 
-                      {/* LINKEDIN DEDICATED AUTH SECTION */}
-                      {channel.id === 'linkedin' && !isAuthorized && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                          <button
-                            type="button"
-                            onClick={handleLinkedInOAuth}
-                            disabled={authorizingPlatform === 'linkedin'}
+                      {/* CONNECTED STATE (Display handle & profile link, Edit, Disconnect) */}
+                      {isConnected && !isEditing ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: 'auto' }}>
+                          <div
                             style={{
-                              background: '#0A66C2',
-                              color: '#ffffff',
-                              border: 'none',
-                              padding: '12px 18px',
+                              background: '#F0FDF4',
+                              border: '1px solid #BBF7D0',
                               borderRadius: '12px',
-                              fontWeight: 800,
-                              fontSize: '13.5px',
-                              cursor: 'pointer',
+                              padding: '12px 14px',
                               display: 'flex',
                               alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '8px',
-                              boxShadow: '0 4px 12px rgba(10, 102, 194, 0.25)'
+                              justifyContent: 'space-between',
+                              gap: '10px'
                             }}
                           >
-                            <FiLinkedin fontSize={18} />
-                            {authorizingPlatform === 'linkedin' ? 'Redirecting to LinkedIn...' : 'Authorize LinkedIn for Auto-Posting'}
-                          </button>
-
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: '#94A3B8', fontSize: '11px', fontWeight: 700 }}>
-                            <span style={{ height: '1px', background: '#E2E8F0', flex: 1 }}></span>
-                            <span>OR ENTER TOKEN MANUALLY</span>
-                            <span style={{ height: '1px', background: '#E2E8F0', flex: 1 }}></span>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => setShowTokenInput((prev) => ({ ...prev, linkedin: !prev.linkedin }))}
-                            style={{
-                              background: '#F8FAFC',
-                              color: '#334155',
-                              border: '1px solid #CBD5E1',
-                              padding: '8px 14px',
-                              borderRadius: '10px',
-                              fontSize: '12px',
-                              fontWeight: 700,
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '6px'
-                            }}
-                          >
-                            <FiKey fontSize={14} />
-                            {showTokenInput.linkedin ? 'Hide Token Input' : 'Paste LinkedIn Access Token'}
-                          </button>
-
-                          {showTokenInput.linkedin && (
-                            <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                              <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#475569' }}>
-                                Paste LinkedIn Access Token (starts with AQ...):
-                              </label>
-                              <textarea
-                                rows={2}
-                                placeholder="AQEDATk..."
-                                value={tokenInputs.linkedin || ''}
-                                onChange={(e) => setTokenInputs({ ...tokenInputs, linkedin: e.target.value })}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                              <FiCheckCircle style={{ color: '#16A34A', fontSize: '18px', flexShrink: 0 }} />
+                              <span style={{ fontSize: '13px', fontWeight: 700, color: '#15803D', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                Active: {accountDoc.handle}
+                              </span>
+                            </div>
+                            {profileUrl && (
+                              <a
+                                href={profileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 style={{
-                                  width: '100%',
-                                  padding: '8px 10px',
-                                  borderRadius: '8px',
-                                  border: '1px solid #CBD5E1',
                                   fontSize: '12px',
-                                  fontFamily: 'monospace'
-                                }}
-                              />
-                              <button
-                                type="button"
-                                onClick={() => handleSaveDirectToken('linkedin')}
-                                style={{
-                                  background: '#10B981',
-                                  color: '#ffffff',
-                                  border: 'none',
-                                  padding: '8px 14px',
-                                  borderRadius: '8px',
-                                  fontSize: '12px',
-                                  fontWeight: 800,
-                                  cursor: 'pointer'
+                                  fontWeight: 700,
+                                  color: '#15803D',
+                                  textDecoration: 'underline',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '3px',
+                                  flexShrink: 0
                                 }}
                               >
-                                Verify &amp; Activate Auto-Posting
+                                Profile <FiExternalLink fontSize={11} />
+                              </a>
+                            )}
+                          </div>
+
+                          {/* LinkedIn optional full API authorization button */}
+                          {channel.id === 'linkedin' && !isAuthorized && (
+                            <div style={{ borderTop: '1px dashed #E2E8F0', paddingTop: '10px' }}>
+                              <button
+                                type="button"
+                                onClick={handleLinkedInOAuth}
+                                disabled={authorizingPlatform === 'linkedin'}
+                                style={{
+                                  width: '100%',
+                                  background: '#0A66C2',
+                                  color: '#ffffff',
+                                  border: 'none',
+                                  padding: '10px 14px',
+                                  borderRadius: '10px',
+                                  fontWeight: 700,
+                                  fontSize: '12.5px',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '8px'
+                                }}
+                              >
+                                <FiLinkedin fontSize={16} />
+                                {authorizingPlatform === 'linkedin' ? 'Redirecting...' : 'Authorize Full Background API (Optional)'}
                               </button>
                             </div>
                           )}
+
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setHandleInputs((prev) => ({ ...prev, [channel.id]: accountDoc.handle || '' }))
+                                setEditingChannels((prev) => ({ ...prev, [channel.id]: true }))
+                              }}
+                              style={{
+                                flex: 1,
+                                background: '#F8FAFC',
+                                color: '#334155',
+                                border: '1px solid #CBD5E1',
+                                padding: '9px 12px',
+                                borderRadius: '10px',
+                                fontWeight: 700,
+                                fontSize: '12.5px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px'
+                              }}
+                            >
+                              Edit Handle
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDisconnectChannel(channel.id)}
+                              style={{
+                                background: '#FEF2F2',
+                                color: '#DC2626',
+                                border: '1px solid #FECACA',
+                                padding: '9px 14px',
+                                borderRadius: '10px',
+                                fontWeight: 700,
+                                fontSize: '12.5px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '5px'
+                              }}
+                            >
+                              <FiTrash2 fontSize={13} /> Disconnect
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        /* UNLINKED OR EDITING STATE (Input box to enter username) */
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: 'auto' }}>
+                          {channel.id === 'linkedin' && !isEditing && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={handleLinkedInOAuth}
+                                disabled={authorizingPlatform === 'linkedin'}
+                                style={{
+                                  background: '#0A66C2',
+                                  color: '#ffffff',
+                                  border: 'none',
+                                  padding: '12px 18px',
+                                  borderRadius: '12px',
+                                  fontWeight: 800,
+                                  fontSize: '13.5px',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '8px',
+                                  boxShadow: '0 4px 12px rgba(10, 102, 194, 0.25)'
+                                }}
+                              >
+                                <FiLinkedin fontSize={18} />
+                                {authorizingPlatform === 'linkedin' ? 'Redirecting to LinkedIn...' : 'Connect with LinkedIn (1-Click OAuth)'}
+                              </button>
+
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: '#94A3B8', fontSize: '11px', fontWeight: 700 }}>
+                                <span style={{ height: '1px', background: '#E2E8F0', flex: 1 }}></span>
+                                <span>OR ENTER USERNAME / PROFILE URL</span>
+                                <span style={{ height: '1px', background: '#E2E8F0', flex: 1 }}></span>
+                              </div>
+                            </>
+                          )}
+
+                          <div>
+                            <label style={{ fontSize: '12px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '6px' }}>
+                              Enter {channel.label} Username or Profile URL:
+                            </label>
+                            <input
+                              type="text"
+                              placeholder={
+                                channel.id === 'instagram'
+                                  ? '@your_instagram or instagram.com/username'
+                                  : channel.id === 'twitter'
+                                  ? '@your_handle or x.com/username'
+                                  : channel.id === 'linkedin'
+                                  ? '@profile_name or linkedin.com/in/username'
+                                  : '@facebook_page or facebook.com/pagename'
+                              }
+                              value={handleInputs[channel.id] || ''}
+                              onChange={(e) => setHandleInputs({ ...handleInputs, [channel.id]: e.target.value })}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault()
+                                  handleSaveChannelHandle(channel.id)
+                                }
+                              }}
+                              style={{
+                                width: '100%',
+                                padding: '10px 14px',
+                                borderRadius: '10px',
+                                border: '1px solid #CBD5E1',
+                                fontSize: '13px',
+                                boxSizing: 'border-box'
+                              }}
+                            />
+                          </div>
+
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <button
+                              type="button"
+                              onClick={() => handleSaveChannelHandle(channel.id)}
+                              style={{
+                                flex: 1,
+                                background: channel.color,
+                                color: '#ffffff',
+                                border: 'none',
+                                padding: '10px 16px',
+                                borderRadius: '10px',
+                                fontWeight: 800,
+                                fontSize: '13px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px'
+                              }}
+                            >
+                              <FiCheckCircle /> {isEditing ? 'Update Handle' : `Connect ${channel.label}`}
+                            </button>
+                            {isEditing && (
+                              <button
+                                type="button"
+                                onClick={() => setEditingChannels((prev) => ({ ...prev, [channel.id]: false }))}
+                                style={{
+                                  background: '#F1F5F9',
+                                  color: '#475569',
+                                  border: '1px solid #CBD5E1',
+                                  padding: '10px 14px',
+                                  borderRadius: '10px',
+                                  fontWeight: 700,
+                                  fontSize: '13px',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                Cancel
+                              </button>
+                            )}
+                          </div>
                         </div>
                       )}
-
-                      {/* Non-authorized generic channel input */}
-                      {(!isConnected || (channel.id !== 'linkedin' && !isAuthorized)) && (
-                        <div>
-                          <label style={{ fontSize: '12px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '6px' }}>
-                            Enter Username / Profile URL
-                          </label>
-                          <input
-                            type="text"
-                            placeholder={`@your_${channel.id}_username`}
-                            value={handleInputs[channel.id] || ''}
-                            onChange={(e) => setHandleInputs({ ...handleInputs, [channel.id]: e.target.value })}
-                            style={{
-                              width: '100%',
-                              padding: '10px 14px',
-                              borderRadius: '10px',
-                              border: '1px solid #CBD5E1',
-                              fontSize: '13px'
-                            }}
-                          />
-                        </div>
-                      )}
-
-                      {/* Disconnect or Link Buttons */}
-                      <div style={{ display: 'flex', gap: '10px' }}>
-                        {isConnected ? (
-                          <button
-                            type="button"
-                            onClick={() => handleConnectChannel(channel.id)}
-                            style={{
-                              flex: 1,
-                              background: '#FEF2F2',
-                              color: '#991B1B',
-                              border: '1px solid #FECACA',
-                              padding: '10px 16px',
-                              borderRadius: '12px',
-                              fontWeight: 800,
-                              fontSize: '13px',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '6px'
-                            }}
-                          >
-                            <FiX /> Disconnect {channel.label}
-                          </button>
-                        ) : channel.id !== 'linkedin' ? (
-                          <button
-                            type="button"
-                            onClick={() => handleConnectChannel(channel.id)}
-                            style={{
-                              flex: 1,
-                              background: channel.color,
-                              color: '#ffffff',
-                              border: 'none',
-                              padding: '10px 16px',
-                              borderRadius: '12px',
-                              fontWeight: 800,
-                              fontSize: '13px',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '6px'
-                            }}
-                          >
-                            <FiLink /> Link &amp; Connect
-                          </button>
-                        ) : null}
-                      </div>
                     </div>
                   )
                 })}
@@ -2193,10 +2391,11 @@ export function SocialPostStudio() {
             {shareModalPost.dispatchResults && Object.keys(shareModalPost.dispatchResults).length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div style={{ fontSize: '12px', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Direct Publishing Status:
+                  Broadcast &amp; Publishing Status:
                 </div>
                 {Object.entries(shareModalPost.dispatchResults).map(([plat, res]) => {
                   const isSuccess = res?.success
+                  const isDirectLive = isSuccess && res?.externalPostId && res?.postUrl
                   const needsAuth = res?.requiresAuthorization
                   return (
                     <div
@@ -2220,15 +2419,15 @@ export function SocialPostStudio() {
                         )}
                         <div style={{ minWidth: 0 }}>
                           <div style={{ fontWeight: 800, fontSize: '13px', color: isSuccess ? '#065F46' : needsAuth ? '#92400E' : '#991B1B' }}>
-                            {plat.toUpperCase()}: {isSuccess ? 'Published Directly!' : needsAuth ? 'API Authorization Needed' : 'Publishing Notice'}
+                            {plat.toUpperCase()}: {isDirectLive ? 'Published Directly!' : isSuccess ? 'Ready to Broadcast!' : needsAuth ? 'API Authorization Needed' : 'Publishing Notice'}
                           </div>
                           <div style={{ fontSize: '11.5px', color: isSuccess ? '#047857' : needsAuth ? '#B45309' : '#B91C1C', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {res?.message || res?.error || (isSuccess ? 'Post is now live on feed!' : 'Could not publish')}
+                            {res?.message || res?.error || (isSuccess ? 'Ready to broadcast to your followers' : 'Could not publish')}
                           </div>
                         </div>
                       </div>
 
-                      {isSuccess && res?.postUrl && (
+                      {isDirectLive && res?.postUrl ? (
                         <a
                           href={res.postUrl}
                           target="_blank"
@@ -2249,9 +2448,95 @@ export function SocialPostStudio() {
                         >
                           View Live <FiExternalLink fontSize={12} />
                         </a>
-                      )}
-
-                      {!isSuccess && needsAuth && (
+                      ) : plat === 'instagram' ? (
+                        <button
+                          type="button"
+                          onClick={() => handleInstagramShare(shareModalPost)}
+                          style={{
+                            background: 'linear-gradient(45deg, #F09433, #DC2743, #BC1888)',
+                            color: '#ffffff',
+                            border: 'none',
+                            padding: '6px 14px',
+                            borderRadius: '8px',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            flexShrink: 0,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '5px'
+                          }}
+                        >
+                          <FiInstagram fontSize={13} /> Upload Now
+                        </button>
+                      ) : plat === 'twitter' ? (
+                        <button
+                          type="button"
+                          onClick={() => handleIntentClick(shareModalPost, shareModalPost.webShareIntents?.twitter || res.shareUrl)}
+                          style={{
+                            background: '#000000',
+                            color: '#ffffff',
+                            border: 'none',
+                            padding: '6px 14px',
+                            borderRadius: '8px',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            flexShrink: 0,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '5px'
+                          }}
+                        >
+                          <FiTwitter fontSize={13} /> Tweet
+                        </button>
+                      ) : plat === 'linkedin' ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleCopyText(shareModalPost.caption, 'Caption')
+                            handleIntentClick(shareModalPost, shareModalPost.webShareIntents?.linkedin || res.shareUrl)
+                            toast.success('Caption copied! Paste into your LinkedIn post box (Ctrl+V) and click Post.', { duration: 5000, icon: '📋' })
+                          }}
+                          style={{
+                            background: '#0A66C2',
+                            color: '#ffffff',
+                            border: 'none',
+                            padding: '6px 14px',
+                            borderRadius: '8px',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            flexShrink: 0,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '5px'
+                          }}
+                        >
+                          <FiLinkedin fontSize={13} /> Post
+                        </button>
+                      ) : plat === 'facebook' ? (
+                        <button
+                          type="button"
+                          onClick={() => handleIntentClick(shareModalPost, shareModalPost.webShareIntents?.facebook || res.shareUrl)}
+                          style={{
+                            background: '#1877F2',
+                            color: '#ffffff',
+                            border: 'none',
+                            padding: '6px 14px',
+                            borderRadius: '8px',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            flexShrink: 0,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '5px'
+                          }}
+                        >
+                          <FiFacebook fontSize={13} /> Share
+                        </button>
+                      ) : !isSuccess && needsAuth ? (
                         <button
                           type="button"
                           onClick={() => {
@@ -2272,7 +2557,7 @@ export function SocialPostStudio() {
                         >
                           Authorize →
                         </button>
-                      )}
+                      ) : null}
                     </div>
                   )
                 })}
@@ -2286,6 +2571,14 @@ export function SocialPostStudio() {
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => handleInstagramShare(shareModalPost)}
+                  style={{ background: 'linear-gradient(45deg, #F09433, #DC2743, #BC1888)', color: '#ffffff', border: 'none', padding: '12px 16px', borderRadius: '12px', fontWeight: 800, fontSize: '13.5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 4px 12px rgba(220, 39, 67, 0.2)' }}
+                >
+                  <FiInstagram fontSize={18} /> Upload on Instagram
+                </button>
+
                 {shareModalPost.webShareIntents?.twitter && (
                   <button
                     type="button"
@@ -2329,17 +2622,6 @@ export function SocialPostStudio() {
                     <FiMessageCircle fontSize={18} /> Share on WhatsApp
                   </button>
                 )}
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleCopyText(shareModalPost.caption, 'Caption')
-                    window.open('https://www.instagram.com', '_blank', 'noopener,noreferrer')
-                  }}
-                  style={{ background: 'linear-gradient(45deg, #F09433, #DC2743, #BC1888)', color: '#ffffff', border: 'none', padding: '12px 16px', borderRadius: '12px', fontWeight: 800, fontSize: '13.5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 4px 12px rgba(220, 39, 67, 0.2)' }}
-                >
-                  <FiInstagram fontSize={18} /> Copy &amp; Open Instagram
-                </button>
 
                 <button
                   type="button"

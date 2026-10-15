@@ -4,22 +4,41 @@ const { google } = require("googleapis")
 
 // Resolve correct OAuth redirect URI dynamically based on env or request host
 const resolveRedirectUri = (req) => {
-  if (process.env.GOOGLE_REDIRECT_URI) {
+  // 1. Explicit override passed from frontend
+  if (req?.query?.redirectUri) {
+    return req.query.redirectUri
+  }
+  if (req?.body?.redirectUri) {
+    return req.body.redirectUri
+  }
+
+  // 2. Explicit environment override if configured and valid
+  if (process.env.GOOGLE_REDIRECT_URI && !process.env.GOOGLE_REDIRECT_URI.includes("/api/v1/calendar/auth/callback")) {
     return process.env.GOOGLE_REDIRECT_URI
   }
+
+  // 3. Fallback based on incoming request origin or referer
+  if (req) {
+    const origin = req.headers["origin"] || req.headers["referer"]
+    if (origin) {
+      try {
+        const u = new URL(origin)
+        return `${u.origin}/social-callback`
+      } catch (e) {}
+    }
+  }
+
   const appEnv = String(process.env.APP_ENV || "").toLowerCase()
   if (appEnv === "production") {
-    return "https://api.openhand.live/api/v1/calendar/auth/callback"
+    return "https://openhand.live/social-callback"
   }
-  if (appEnv === "uat") {
-    return "https://api-uat.openhand.live/api/v1/calendar/auth/callback"
+
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000"
+  if (frontendUrl.includes("localhost")) {
+    return `${frontendUrl.replace(/\/$/, "")}/social-callback`
   }
-  if (req) {
-    const proto = req.headers["x-forwarded-proto"] || req.protocol || "http"
-    const host = req.get("host") || `localhost:${process.env.PORT || 4000}`
-    return `${proto}://${host}/api/v1/calendar/auth/callback`
-  }
-  return `http://localhost:${process.env.PORT || 4000}/api/v1/calendar/auth/callback`
+
+  return "https://openhand.live/social-callback"
 }
 
 const createOAuthClient = (redirectUri) => {
@@ -36,9 +55,9 @@ exports.getGoogleAuthUrl = async (req, res) => {
     const redirectUri = resolveRedirectUri(req)
     const returnTo = req.query.returnTo || "/practice"
 
-    // Encode userId, redirectUri, and returnTo in state so callback uses exact same URI
+    // Encode userId, redirectUri, returnTo, and flow identifier in state
     const state = Buffer.from(
-      JSON.stringify({ userId, redirectUri, returnTo })
+      JSON.stringify({ userId, redirectUri, returnTo, isCalendar: true, type: "google_calendar" })
     ).toString("base64")
 
     const client = createOAuthClient(redirectUri)
@@ -60,15 +79,25 @@ exports.getGoogleAuthUrl = async (req, res) => {
 
 exports.googleAuthCallback = async (req, res) => {
   const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000"
+  const isJsonRequest = req.method === "POST" || req.headers.accept?.includes("application/json") || req.is?.("json")
+  
   try {
-    const { code, state, error: authError } = req.query
+    const code = req.query?.code || req.body?.code
+    const state = req.query?.state || req.body?.state
+    const authError = req.query?.error || req.body?.error
 
     if (authError) {
       console.warn("Google OAuth was rejected or cancelled:", authError)
+      if (isJsonRequest) {
+        return res.status(400).json({ success: false, error: authError })
+      }
       return res.redirect(`${frontendUrl}/practice?calendar_error=${encodeURIComponent(authError)}`)
     }
 
     if (!code || !state) {
+      if (isJsonRequest) {
+        return res.status(400).json({ success: false, message: "Invalid request: missing code or state" })
+      }
       return res.status(400).send("Invalid callback request: missing code or state")
     }
 
@@ -76,12 +105,25 @@ exports.googleAuthCallback = async (req, res) => {
     try {
       parsedState = JSON.parse(Buffer.from(state, "base64").toString("ascii"))
     } catch (parseErr) {
-      console.error("Failed to decode OAuth state:", parseErr)
-      return res.status(400).send("Invalid state parameter")
+      try {
+        parsedState = JSON.parse(decodeURIComponent(state))
+      } catch (err2) {
+        console.error("Failed to decode OAuth state:", parseErr)
+        if (isJsonRequest) {
+          return res.status(400).json({ success: false, message: "Invalid state parameter" })
+        }
+        return res.status(400).send("Invalid state parameter")
+      }
     }
 
-    const { userId, redirectUri, returnTo } = parsedState
+    const userId = parsedState.userId || req.user?.id
+    const redirectUri = req.body?.redirectUri || parsedState.redirectUri || resolveRedirectUri(req)
+    const returnTo = parsedState.returnTo || "/practice"
+
     if (!userId) {
+      if (isJsonRequest) {
+        return res.status(400).json({ success: false, message: "User ID missing from OAuth state" })
+      }
       return res.status(400).send("User ID missing from OAuth state")
     }
 
@@ -106,11 +148,25 @@ exports.googleAuthCallback = async (req, res) => {
 
     await availability.save()
 
+    if (isJsonRequest) {
+      return res.status(200).json({
+        success: true,
+        message: "Google Calendar connected successfully",
+        returnTo,
+      })
+    }
+
     // Redirect back to frontend
     const targetPath = returnTo || "/practice"
     return res.redirect(`${frontendUrl}${targetPath}?calendar_connected=true`)
   } catch (error) {
     console.error("Google Auth Callback Error:", error?.response?.data || error)
+    if (isJsonRequest) {
+      return res.status(500).json({
+        success: false,
+        message: error?.response?.data?.error_description || "Token exchange failed",
+      })
+    }
     return res.redirect(`${frontendUrl}/practice?calendar_error=token_exchange_failed`)
   }
 }
