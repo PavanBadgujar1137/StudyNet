@@ -38,11 +38,12 @@
       "platformDomain": "openhand.live",
       "cloudfrontDomain": "d2ruooz1ktuxdd.cloudfront.net",
       "eas": {
-        "projectId": ""
+        "projectId": "ccd2d7b9-31a9-42be-83c1-76d334632421"
       }
     },
     "plugins": [
       "expo-font"
-    ]
+    ],
+    "owner": "aryan3025"
   }
 }

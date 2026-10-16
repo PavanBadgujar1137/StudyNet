@@ -47,15 +47,22 @@ export const AuthProvider = ({ children }) => {
     loadStoredSession();
   }, [loadStoredSession]);
 
-  // Login handler
-  const login = async (email, password) => {
+  // Login handler (Supports both Password and OTP login)
+  const login = async (email, password = null, otp = null) => {
     try {
-      const response = await apiClient.post(ENDPOINTS.AUTH.LOGIN, {
+      const payload = {
         email: email.trim().toLowerCase(),
-        password,
         accountType: 'Practitioner',
         expectedAccountType: 'Practitioner',
-      });
+      };
+
+      if (otp) {
+        payload.otp = String(otp).trim();
+      } else {
+        payload.password = password;
+      }
+
+      const response = await apiClient.post(ENDPOINTS.AUTH.LOGIN, payload);
 
       if (!response.data?.success) {
         throw new Error(response.data?.message || 'Login failed');
@@ -89,34 +96,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Quick Demo Preview Mode for testing/evaluating without live credentials
-  const enterDemoMode = async () => {
-    const demoUser = {
-      _id: 'demo_practitioner_1',
-      firstName: 'Dr. Evelyn',
-      lastName: 'Vance',
-      email: 'evelyn.vance@openhand.live',
-      accountType: 'Practitioner',
-      handle: 'dr-evelyn-vance',
-      contactNumber: '+1 (555) 234-5678',
-      specialties: ['Somatic Experiencing', 'Nervous System Care', 'Integrative Therapy'],
-      isVerified: true,
-      rating: 5.0,
-      activeClientsCount: 18,
-    };
-    const demoToken = 'demo_practitioner_jwt_token';
-    await SecureStoreService.setToken(demoToken);
-    await SecureStoreService.setUser(demoUser);
-    setToken(demoToken);
-    setUser(demoUser);
-    return { success: true, user: demoUser };
-  };
-
-  // Send OTP for signup/verification
-  const sendOtp = async (email) => {
+  // Send OTP for signup or login
+  const sendOtp = async (email, mode = 'signup') => {
     try {
       const response = await apiClient.post(ENDPOINTS.AUTH.SEND_OTP, {
         email: email.trim().toLowerCase(),
+        mode,
       });
       if (!response.data?.success) {
         throw new Error(response.data?.message || 'Failed to send OTP');
@@ -225,7 +210,6 @@ export const AuthProvider = ({ children }) => {
     signup,
     sendOtp,
     requestPasswordReset,
-    enterDemoMode,
     logout,
     updateUserData,
     reloadSession: loadStoredSession,
