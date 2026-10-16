@@ -26,7 +26,6 @@ import {
   FiCopy,
   FiShare,
   FiMessageCircle,
-  FiKey,
   FiExternalLink
 } from 'react-icons/fi'
 import { toast } from 'react-hot-toast'
@@ -40,7 +39,6 @@ import {
   toggleSocialAccount,
   trackPostShare,
   getLinkedInAuthUrl,
-  connectSocialTokenDirectly,
 } from '../../../../services/operations/socialPostAPI'
 
 import { formatPractitionerName } from '../../../../utils/formatName'
@@ -88,18 +86,6 @@ export function SocialPostStudio() {
     twitter: '',
     linkedin: '',
     facebook: '',
-  })
-  const [tokenInputs, setTokenInputs] = useState({
-    instagram: '',
-    twitter: '',
-    linkedin: '',
-    facebook: '',
-  })
-  const [showTokenInput, setShowTokenInput] = useState({
-    instagram: false,
-    twitter: false,
-    linkedin: false,
-    facebook: false,
   })
   const [authorizingPlatform, setAuthorizingPlatform] = useState(null)
   const [editingChannels, setEditingChannels] = useState({})
@@ -378,28 +364,6 @@ export function SocialPostStudio() {
     }
   }
 
-  // Save Direct Platform Access Token
-  const handleSaveDirectToken = async (platformId) => {
-    const rawToken = tokenInputs[platformId]?.trim()
-    if (!rawToken) {
-      toast.error(`Please enter your ${platformId.toUpperCase()} Access Token`)
-      return
-    }
-    const res = await connectSocialTokenDirectly(
-      {
-        platform: platformId,
-        accessToken: rawToken,
-        handle: handleInputs[platformId] || defaultHandle,
-      },
-      token
-    )
-    if (res) {
-      setTokenInputs((prev) => ({ ...prev, [platformId]: '' }))
-      setShowTokenInput((prev) => ({ ...prev, [platformId]: false }))
-      loadAccounts()
-    }
-  }
-
   // Helper to check if a platform is connected in DB
   const getConnectedAccount = (platformId) => {
     return accounts.find((a) => a.platform === platformId && a.isConnected)
@@ -471,9 +435,6 @@ export function SocialPostStudio() {
       toast.success(`${platformId.toUpperCase()} disconnected`)
     }
   }
-
-  // Backward compatibility alias
-  const handleConnectChannel = handleSaveChannelHandle
 
   // Create Post Submit
   const handleSubmitPost = async (e) => {

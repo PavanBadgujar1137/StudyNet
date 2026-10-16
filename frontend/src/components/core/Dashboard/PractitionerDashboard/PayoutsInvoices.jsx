@@ -704,7 +704,6 @@ export function PayoutsInvoices({ telemetryData }) {
 
                   const isSettled = p.status === 'settled'
                   const isMissingBank = p.status === 'pending_bank_details'
-                  const isProcessing = p.status === 'processing' || (!isSettled && !isMissingBank)
 
                   const destText = p.bankDetails?.bankName && p.bankDetails?.accountNumberMasked
                     ? `${p.bankDetails.bankName} (${p.bankDetails.accountNumberMasked})`
