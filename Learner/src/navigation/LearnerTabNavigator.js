@@ -1,8 +1,9 @@
 import React from 'react';
-import { Platform } from 'react-native';
+import { Platform, TouchableOpacity, Text, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 
+import { useAuth } from '../context/AuthContext';
 import { useAppTheme } from '../context/ThemeContext';
 import JourneyTabScreen from '../screens/tabs/JourneyTabScreen';
 import CheckInTabScreen from '../screens/tabs/CheckInTabScreen';
@@ -13,8 +14,36 @@ import { theme } from '../theme';
 
 const Tab = createBottomTabNavigator();
 
-export default function LearnerTabNavigator() {
+export default function LearnerTabNavigator({ navigation }) {
+  const { user } = useAuth();
   const { isDark } = useAppTheme();
+
+  const initials = `${user?.firstName?.[0] || 'L'}${user?.lastName?.[0] || ''}`.toUpperCase();
+
+  const renderProfileButton = () => (
+    <TouchableOpacity
+      onPress={() => navigation.navigate('Profile')}
+      style={{
+        marginRight: 16,
+        width: 34,
+        height: 34,
+        borderRadius: 17,
+        backgroundColor: isDark ? '#1E64EB' : '#2563EB',
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.15,
+        shadowRadius: 2,
+        elevation: 2,
+      }}
+      activeOpacity={0.8}
+    >
+      <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '700' }}>
+        {initials}
+      </Text>
+    </TouchableOpacity>
+  );
 
   return (
     <Tab.Navigator
@@ -59,8 +88,13 @@ export default function LearnerTabNavigator() {
           title: 'Check-In',
           headerShown: true,
           headerTitle: 'Check-In & Reflections',
-          headerStyle: { backgroundColor: '#FFFFFF' },
-          headerTitleStyle: { fontWeight: '700', color: '#0F172A' },
+          headerStyle: {
+            backgroundColor: isDark ? '#050914' : '#FFFFFF',
+            borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(226, 232, 240, 0.8)',
+            borderBottomWidth: 1,
+          },
+          headerTitleStyle: { fontWeight: '700', color: isDark ? '#FFFFFF' : '#0F172A' },
+          headerRight: renderProfileButton,
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? 'checkmark-circle' : 'checkmark-circle-outline'}
@@ -87,8 +121,13 @@ export default function LearnerTabNavigator() {
           title: 'Library',
           headerShown: true,
           headerTitle: 'Courses & Masterclasses',
-          headerStyle: { backgroundColor: '#FFFFFF' },
-          headerTitleStyle: { fontWeight: '700', color: '#0F172A' },
+          headerStyle: {
+            backgroundColor: isDark ? '#050914' : '#FFFFFF',
+            borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(226, 232, 240, 0.8)',
+            borderBottomWidth: 1,
+          },
+          headerTitleStyle: { fontWeight: '700', color: isDark ? '#FFFFFF' : '#0F172A' },
+          headerRight: renderProfileButton,
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? 'book' : 'book-outline'} size={24} color={color} />
           ),
@@ -101,8 +140,13 @@ export default function LearnerTabNavigator() {
           title: 'Community',
           headerShown: true,
           headerTitle: 'Community & Circles',
-          headerStyle: { backgroundColor: '#FFFFFF' },
-          headerTitleStyle: { fontWeight: '700', color: '#0F172A' },
+          headerStyle: {
+            backgroundColor: isDark ? '#050914' : '#FFFFFF',
+            borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(226, 232, 240, 0.8)',
+            borderBottomWidth: 1,
+          },
+          headerTitleStyle: { fontWeight: '700', color: isDark ? '#FFFFFF' : '#0F172A' },
+          headerRight: renderProfileButton,
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? 'people' : 'people-outline'}

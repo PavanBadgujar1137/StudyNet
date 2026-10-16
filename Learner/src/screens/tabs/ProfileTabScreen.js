@@ -38,11 +38,34 @@ export default function ProfileTabScreen() {
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [savingPwd, setSavingPwd] = useState(false);
+  const [copiedId, setCopiedId] = useState(false);
 
   const fullName = `${user?.firstName || 'Learner'} ${user?.lastName || ''}`.trim();
   const initials = `${user?.firstName?.[0] || 'L'}${user?.lastName?.[0] || ''}`.toUpperCase();
 
+  const handleCopyLearnerId = () => {
+    if (!user?.learnerId) return;
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(user.learnerId);
+      setCopiedId(true);
+      setTimeout(() => setCopiedId(false), 2500);
+    }
+    Alert.alert(
+      'Learner ID Copied! ✓',
+      `ID: ${user.learnerId}\n\nCopied to clipboard. Share with your practitioner guide to claim scholarships and discounts.`
+    );
+  };
+
   const handleLogout = () => {
+    if (Platform.OS === 'web') {
+      const confirmed = typeof window !== 'undefined' && window.confirm
+        ? window.confirm('Are you sure you want to sign out of OpenHand Learner?')
+        : true;
+      if (confirmed) {
+        logout();
+      }
+      return;
+    }
     Alert.alert('Sign Out', 'Are you sure you want to sign out of OpenHand Learner?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Sign Out', style: 'destructive', onPress: logout },
@@ -133,15 +156,21 @@ export default function ProfileTabScreen() {
 
           {/* Learner ID Badge */}
           {user?.learnerId ? (
-            <View style={[styles.learnerIdWrap, isDark && { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
-              <Text style={[styles.learnerIdLabel, isDark && { color: '#38BDF8' }]}>OFFICIAL LEARNER ID</Text>
+            <TouchableOpacity
+              style={[styles.learnerIdWrap, isDark && { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderColor: 'rgba(255, 255, 255, 0.1)' }]}
+              onPress={handleCopyLearnerId}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.learnerIdLabel, isDark && { color: '#38BDF8' }]}>
+                OFFICIAL LEARNER ID {copiedId ? '✓ COPIED' : '(TAP TO COPY)'}
+              </Text>
               <View style={[styles.learnerIdBadge, isDark && { backgroundColor: 'rgba(56, 189, 248, 0.15)', borderColor: 'rgba(56, 189, 248, 0.3)' }]}>
                 <Text style={[styles.learnerIdValue, isDark && { color: '#38BDF8' }]}>{user.learnerId}</Text>
               </View>
               <Text style={[styles.learnerIdHelp, isDark && { color: '#64748B' }]}>
                 Share this ID with your practitioner to claim scholarships & personal discounts.
               </Text>
-            </View>
+            </TouchableOpacity>
           ) : null}
 
           {/* Edit Profile Toggle */}

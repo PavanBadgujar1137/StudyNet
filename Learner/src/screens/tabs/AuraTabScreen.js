@@ -23,7 +23,7 @@ const DISCLAIMER =
 const AURA_WELCOME = (name) =>
   `Welcome into this space, ${name}. 🌿\n\nI am AURA — your Virtual Counselor. In this space, there is nothing you have to prove or carry alone.\n\nWhether your nervous system feels stretched or you need clarity, I am here to hold space with compassionate guidance.\n\nHow is your body and spirit feeling right in this moment?`;
 
-export default function AuraTabScreen() {
+export default function AuraTabScreen({ navigation }) {
   const { user } = useAuth();
   const { isDark } = useAppTheme();
   const userName = user?.firstName || 'Friend';
@@ -119,6 +119,22 @@ export default function AuraTabScreen() {
               <Text style={[styles.onlineText, isDark && { color: '#38BDF8' }]}>Active — Somatic Grounding</Text>
             </View>
           </View>
+          <TouchableOpacity
+            onPress={() => navigation?.navigate('Profile')}
+            style={{
+              width: 34,
+              height: 34,
+              borderRadius: 17,
+              backgroundColor: isDark ? '#1E64EB' : '#2563EB',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            activeOpacity={0.8}
+          >
+            <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '700' }}>
+              {`${user?.firstName?.[0] || 'L'}${user?.lastName?.[0] || ''}`.toUpperCase()}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* ── Disclaimer Banner ── */}

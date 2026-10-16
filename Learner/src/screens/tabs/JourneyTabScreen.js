@@ -50,11 +50,17 @@ export default function JourneyTabScreen({ navigation }) {
     fetchDashboard();
   };
 
+  const [copiedId, setCopiedId] = useState(false);
   const handleCopyLearnerId = () => {
     const idToCopy = user?.learnerId || 'LRN-250573';
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(idToCopy);
+      setCopiedId(true);
+      setTimeout(() => setCopiedId(false), 2500);
+    }
     Alert.alert(
-      'Learner ID',
-      `Your unique ID is: ${idToCopy}\n\nShare this ID with your practitioner guide to claim scholarships and personalized course access.`
+      'Learner ID Copied! ✓',
+      `Your unique ID is: ${idToCopy}\n\nCopied to clipboard. Share this ID with your practitioner guide to claim scholarships and personalized course access.`
     );
   };
 

@@ -89,6 +89,15 @@ export default function CoursesTabScreen({ navigation }) {
   );
 
   const handleJoinLiveClass = (cls) => {
+    if (Platform.OS === 'web') {
+      const confirmed = typeof window !== 'undefined' && window.confirm
+        ? window.confirm(`Ready to join "${cls.title || 'Live Interactive Class'}"?`)
+        : true;
+      if (confirmed && typeof window !== 'undefined' && window.alert) {
+        window.alert('Live Room Connecting: Connecting to encrypted LiveKit room for OpenHand interactive session.');
+      }
+      return;
+    }
     Alert.alert(
       'Live Class Room',
       `Ready to join "${cls.title || 'Live Interactive Class'}"?`,

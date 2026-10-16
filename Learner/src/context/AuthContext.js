@@ -174,31 +174,15 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Quick Demo / Mockup Preview Mode
-  const enterDemoMode = async () => {
-    const demoUser = {
-      _id: 'demo_learner_1',
-      firstName: 'Aryan',
-      lastName: '',
-      email: 'aryan@openhand.live',
-      accountType: 'Learner',
-      learnerId: 'LRN-250573',
-    };
-    const demoToken = 'demo_mock_token';
-    await SecureStoreService.setToken(demoToken);
-    await SecureStoreService.setUser(demoUser);
-    setToken(demoToken);
-    setUser(demoUser);
-  };
-
   // Logout handler
   const logout = async () => {
     try {
       await SecureStoreService.clearAll();
+    } catch (e) {
+      console.warn('Logout storage clear error:', e.message);
+    } finally {
       setToken(null);
       setUser(null);
-    } catch (e) {
-      console.warn('Logout error:', e.message);
     }
   };
 
@@ -218,7 +202,6 @@ export const AuthProvider = ({ children }) => {
     signup,
     sendOtp,
     requestPasswordReset,
-    enterDemoMode,
     logout,
     updateUserData,
     reloadSession: loadStoredSession,

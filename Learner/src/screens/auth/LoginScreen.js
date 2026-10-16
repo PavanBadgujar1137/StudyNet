@@ -17,7 +17,7 @@ import { useAuth } from '../../context/AuthContext';
 import { theme } from '../../theme';
 
 export default function LoginScreen({ navigation }) {
-  const { login, enterDemoMode } = useAuth();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -148,23 +148,6 @@ export default function LoginScreen({ navigation }) {
               ) : (
                 <Text style={styles.loginButtonText}>Sign In as Learner →</Text>
               )}
-            </TouchableOpacity>
-
-            {/* Divider */}
-            <View style={styles.dividerRow}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>or preview instantly</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
-            {/* Quick Demo Preview Button */}
-            <TouchableOpacity
-              style={styles.demoButton}
-              onPress={enterDemoMode}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="sparkles" size={16} color="#2563EB" />
-              <Text style={styles.demoButtonText}>Quick Preview Demo (Aryan)</Text>
             </TouchableOpacity>
 
             {/* Create Account Link */}
