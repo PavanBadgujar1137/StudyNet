@@ -38,11 +38,21 @@
       "platformDomain": "openhand.live",
       "cloudfrontDomain": "d2ruooz1ktuxdd.cloudfront.net",
       "eas": {
-        "projectId": ""
+        "projectId": "86186001-bcb9-4bc0-9157-24f5e41a24a8"
       }
     },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/86186001-bcb9-4bc0-9157-24f5e41a24a8"
+    },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      "expo-updates"
     ]
   }
 }

@@ -2,6 +2,8 @@ import React from 'react';
 import { StyleSheet, View, Platform, useWindowDimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useFonts } from 'expo-font';
+import { Ionicons } from '@expo/vector-icons';
 import { ThemeProvider, useAppTheme } from './src/context/ThemeContext';
 import { AuthProvider } from './src/context/AuthContext';
 import RootNavigator from './src/navigation/RootNavigator';
@@ -26,6 +28,14 @@ function AppContent() {
 }
 
 export default function App() {
+  const [fontsLoaded, fontError] = useFonts({
+    ...Ionicons.font,
+  });
+
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
+
   return (
     <SafeAreaProvider>
       <ThemeProvider>
