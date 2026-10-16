@@ -290,21 +290,34 @@ const dispatchPostToPlatforms = async (practitionerId, post) => {
           platform: "linkedin",
           mode: "broadcast_ready",
           handle: acc?.handle || "",
-          message: acc?.handle ? `Connected as ${acc.handle} • Ready for 1-click LinkedIn post` : "Ready to share on LinkedIn",
-          shareUrl: `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(post.caption || "")}`,
+          message: acc?.handle ? `Connected as ${acc.handle} • 1-Click Launch Ready` : "1-Click Launch Ready for LinkedIn",
+          shareUrl: `https://www.linkedin.com/feed/?shareActive=true`,
         }
       }
     } else if (plat === "twitter") {
       if (acc && acc.accessToken) {
         results.twitter = await publishToTwitter(acc, post)
       } else {
+        const rawCaption = post.caption || ""
+        const mediaUrl = post.mediaUrl || ""
+        const maxChars = mediaUrl ? 240 : 270
+        let tweetText = rawCaption
+        if (rawCaption.length > maxChars) {
+          const truncated = rawCaption.slice(0, maxChars)
+          const lastSpace = truncated.lastIndexOf(" ")
+          tweetText = (lastSpace > 160 ? truncated.slice(0, lastSpace) : truncated) + "..."
+        }
+        const twitterIntentUrl = mediaUrl
+          ? `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(mediaUrl)}`
+          : `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`
+
         results.twitter = {
           success: true,
           platform: "twitter",
           mode: "broadcast_ready",
           handle: acc?.handle || "",
-          message: acc?.handle ? `Connected as ${acc.handle} • Ready for 1-click tweet` : "Ready to post on 𝕏 / Twitter",
-          shareUrl: `https://twitter.com/intent/tweet?text=${encodeURIComponent(post.caption || "")}`,
+          message: acc?.handle ? `Connected as ${acc.handle} • Ready for 1-click tweet` : "Ready to launch on 𝕏 (Twitter)",
+          shareUrl: twitterIntentUrl,
         }
       }
     } else if (plat === "facebook") {

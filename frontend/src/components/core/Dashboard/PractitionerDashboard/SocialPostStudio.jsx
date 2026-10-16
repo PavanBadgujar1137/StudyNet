@@ -39,6 +39,7 @@ import {
   toggleSocialAccount,
   trackPostShare,
   getLinkedInAuthUrl,
+  connectSocialTokenDirectly,
 } from '../../../../services/operations/socialPostAPI'
 
 import { formatPractitionerName } from '../../../../utils/formatName'
@@ -87,6 +88,13 @@ export function SocialPostStudio() {
     linkedin: '',
     facebook: '',
   })
+  const [tokenInputs, setTokenInputs] = useState({
+    instagram: '',
+    twitter: '',
+    linkedin: '',
+    facebook: '',
+  })
+  const [showTokenInput, setShowTokenInput] = useState({})
   const [authorizingPlatform, setAuthorizingPlatform] = useState(null)
   const [editingChannels, setEditingChannels] = useState({})
 
@@ -104,6 +112,7 @@ export function SocialPostStudio() {
 
   // Share Launchpad Modal State
   const [shareModalPost, setShareModalPost] = useState(null)
+  const [launchedPlatforms, setLaunchedPlatforms] = useState({})
 
   const handleCopyText = (text, label = 'Content') => {
     if (!text) return
@@ -220,11 +229,61 @@ export function SocialPostStudio() {
     }
   }
 
-  const handleIntentClick = (post, intentUrl) => {
-    // Open immediately to prevent browser popup blockers from suppressing the window
+  const handleIntentClick = (post, intentUrl, platform = '') => {
+    // 1. Auto-copy caption to clipboard for effortless pasting
+    if (post?.caption) {
+      handleCopyText(post.caption, `${platform ? platform.toUpperCase() : 'Post'} Caption`)
+    }
+    // 2. Open immediately in new tab
     window.open(intentUrl, '_blank', 'noopener,noreferrer')
+    if (platform) {
+      setLaunchedPlatforms((prev) => ({ ...prev, [platform]: true }))
+    }
     if (post && post._id) {
       trackPostShare(post._id, token).then(() => loadPosts()).catch(() => {})
+    }
+    if (platform === 'twitter') {
+      toast.success('🐦 𝕏 / Twitter opened! Click the blue "Post" button on Twitter to publish.', { duration: 6000 })
+    } else if (platform === 'linkedin') {
+      toast.success('💼 LinkedIn opened! Caption copied — press Ctrl+V and click "Post" on LinkedIn.', { duration: 6000 })
+    } else if (platform === 'facebook') {
+      toast.success('📘 Facebook opened! Click "Post" on Facebook to publish.', { duration: 6000 })
+    }
+  }
+
+  // Launch All Active Channels simultaneously
+  const handleLaunchAllChannels = (post) => {
+    if (!post) return
+    handleCopyText(post.caption, 'Post Caption')
+    const results = post.dispatchResults || {}
+    let count = 0
+
+    Object.entries(results).forEach(([plat, res], idx) => {
+      if (res?.success && !res?.externalPostId) {
+        const url = plat === 'twitter' 
+          ? (post.webShareIntents?.twitter || res.shareUrl)
+          : plat === 'linkedin'
+          ? (post.webShareIntents?.linkedin || res.shareUrl)
+          : plat === 'facebook'
+          ? (post.webShareIntents?.facebook || res.shareUrl)
+          : plat === 'instagram'
+          ? 'https://www.instagram.com/'
+          : null
+
+        if (url) {
+          count++
+          setTimeout(() => {
+            window.open(url, '_blank', 'noopener,noreferrer')
+          }, idx * 400)
+          setLaunchedPlatforms((prev) => ({ ...prev, [plat]: true }))
+        }
+      }
+    })
+
+    if (count > 0) {
+      toast.success(`🚀 Launched ${count} channels! Finalize your post on each opened tab.`, { duration: 7000 })
+    } else {
+      toast('All channels already published or launched!', { icon: 'ℹ️' })
     }
   }
 
@@ -436,6 +495,31 @@ export function SocialPostStudio() {
     }
   }
 
+  // Connect direct API / Access token (for silent background auto-posting)
+  const handleSaveDirectToken = async (platformId) => {
+    const tokenVal = tokenInputs[platformId]?.trim()
+    if (!tokenVal) {
+      toast.error(`Please enter a valid ${platformId.toUpperCase()} Access / API Token`)
+      return
+    }
+
+    const cleanH = handleInputs[platformId]?.trim() || getConnectedAccount(platformId)?.handle || ''
+    const updated = await connectSocialTokenDirectly(
+      {
+        platform: platformId,
+        accessToken: tokenVal,
+        handle: cleanH,
+      },
+      token
+    )
+
+    if (updated) {
+      setTokenInputs((prev) => ({ ...prev, [platformId]: '' }))
+      setShowTokenInput((prev) => ({ ...prev, [platformId]: false }))
+      loadAccounts()
+    }
+  }
+
   // Create Post Submit
   const handleSubmitPost = async (e) => {
     e.preventDefault()
@@ -490,6 +574,7 @@ export function SocialPostStudio() {
       loadPosts()
       setActiveTab('feed')
       if (successPost.status === 'published') {
+        setLaunchedPlatforms({})
         setShareModalPost(successPost)
       }
     }
@@ -516,6 +601,7 @@ export function SocialPostStudio() {
     const updated = await publishSocialPostNow(postId, token)
     if (updated) {
       loadPosts()
+      setLaunchedPlatforms({})
       setShareModalPost(updated)
     }
   }
@@ -1986,9 +2072,9 @@ export function SocialPostStudio() {
                             fontWeight: 800,
                             padding: '4px 10px',
                             borderRadius: '12px',
-                            background: isAuthorized ? '#DCFCE7' : isConnected ? '#DCFCE7' : '#F1F5F9',
-                            color: isAuthorized ? '#15803D' : isConnected ? '#15803D' : '#64748B',
-                            border: `1px solid ${isConnected ? '#86EFAC' : '#E2E8F0'}`,
+                            background: isAuthorized ? '#DCFCE7' : isConnected ? '#EFF6FF' : '#F1F5F9',
+                            color: isAuthorized ? '#15803D' : isConnected ? '#1D4ED8' : '#64748B',
+                            border: `1px solid ${isAuthorized ? '#86EFAC' : isConnected ? '#BFDBFE' : '#E2E8F0'}`,
                             flexShrink: 0,
                             whiteSpace: 'nowrap',
                             display: 'inline-flex',
@@ -1996,7 +2082,7 @@ export function SocialPostStudio() {
                             gap: '4px'
                           }}
                         >
-                          {isAuthorized ? '⚡ Direct Auto-Post' : isConnected ? '✓ Connected & Active' : 'Unlinked'}
+                          {isAuthorized ? '⚡ Silent Auto-Post Active' : isConnected ? '🚀 1-Click Launch Ready' : 'Unlinked'}
                         </span>
                       </div>
 
@@ -2004,11 +2090,11 @@ export function SocialPostStudio() {
                       <div style={{ fontSize: '12.5px', color: '#64748B', lineHeight: '1.4' }}>
                         {isAuthorized ? (
                           <span style={{ color: '#059669', fontWeight: 600 }}>
-                            ✅ Direct background publishing is active. Posts publish automatically to your {channel.label} feed.
+                            ✅ Direct background publishing active. Posts publish automatically to your {channel.label} feed without opening a browser tab.
                           </span>
                         ) : isConnected ? (
-                          <span style={{ color: '#059669', fontWeight: 600 }}>
-                            ✅ Connected as {accountDoc.handle}. Multi-channel 1-click broadcast and media dispatches are active.
+                          <span style={{ color: '#1E40AF', fontWeight: 600 }}>
+                            🚀 Connected as {accountDoc.handle}. Pre-formatted 1-click broadcast launcher is ready whenever you publish.
                           </span>
                         ) : (
                           `Link your ${channel.label} profile handle to enable 1-click multi-channel broadcasts and post assets.`
@@ -2130,6 +2216,75 @@ export function SocialPostStudio() {
                             >
                               <FiTrash2 fontSize={13} /> Disconnect
                             </button>
+                          </div>
+
+                          {/* Direct API Token Drawer */}
+                          <div style={{ borderTop: '1px dashed #E2E8F0', paddingTop: '8px' }}>
+                            <button
+                              type="button"
+                              onClick={() => setShowTokenInput((prev) => ({ ...prev, [channel.id]: !prev[channel.id] }))}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                color: isAuthorized ? '#059669' : '#64748B',
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                padding: '4px 0'
+                              }}
+                            >
+                              <FiZap style={{ color: isAuthorized ? '#10B981' : '#F59E0B' }} />
+                              {showTokenInput[channel.id]
+                                ? 'Hide API Token Settings'
+                                : isAuthorized
+                                ? '⚡ Update API Access Token'
+                                : '⚡ Connect API Token (For Silent Auto-Post)'}
+                            </button>
+
+                            {showTokenInput[channel.id] && (
+                              <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px', background: '#F8FAFC', padding: '12px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+                                <p style={{ margin: 0, fontSize: '11.5px', color: '#64748B' }}>
+                                  Paste your <strong>{channel.label}</strong> API / OAuth access token to publish directly in the background without needing a browser tab:
+                                </p>
+                                <input
+                                  type="password"
+                                  placeholder={`Paste ${channel.label} Access Token`}
+                                  value={tokenInputs[channel.id] || ''}
+                                  onChange={(e) => setTokenInputs({ ...tokenInputs, [channel.id]: e.target.value })}
+                                  style={{
+                                    width: '100%',
+                                    padding: '8px 10px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #CBD5E1',
+                                    fontSize: '12px',
+                                    boxSizing: 'border-box'
+                                  }}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleSaveDirectToken(channel.id)}
+                                  style={{
+                                    background: '#0F172A',
+                                    color: '#ffffff',
+                                    border: 'none',
+                                    padding: '8px 12px',
+                                    borderRadius: '8px',
+                                    fontSize: '12px',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '6px'
+                                  }}
+                                >
+                                  <FiCheckCircle /> Save &amp; Authorize API Token
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </div>
                       ) : (
@@ -2258,366 +2413,566 @@ export function SocialPostStudio() {
       {/* -------------------------------------------------------------------------- */}
       {/* 🚀 INSTANT BROADCAST SHARE LAUNCHPAD MODAL */}
       {/* -------------------------------------------------------------------------- */}
-      {shareModalPost && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(15, 23, 42, 0.65)',
-            backdropFilter: 'blur(6px)',
-            zIndex: 9999,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '20px'
-          }}
-        >
+      {shareModalPost && (() => {
+        const dispatchEntries = Object.entries(shareModalPost.dispatchResults || {})
+        const pendingChannels = dispatchEntries.filter(
+          ([plat, res]) => res?.success && !res?.externalPostId && !launchedPlatforms[plat]
+        )
+        const hasPending = pendingChannels.length > 0
+        const hasLaunchedSomething = Object.values(launchedPlatforms).some(Boolean)
+
+        return (
           <div
             style={{
-              background: '#ffffff',
-              borderRadius: '24px',
-              maxWidth: '560px',
-              width: '100%',
-              padding: '28px',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(15, 23, 42, 0.7)',
+              backdropFilter: 'blur(8px)',
+              zIndex: 9999,
               display: 'flex',
-              flexDirection: 'column',
-              gap: '20px',
-              position: 'relative',
-              animation: 'fadeIn 0.2s ease-out'
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '20px'
             }}
           >
-            {/* Close Modal Button */}
-            <button
-              type="button"
-              onClick={() => setShareModalPost(null)}
+            <div
               style={{
-                position: 'absolute',
-                top: '20px',
-                right: '20px',
-                background: '#F1F5F9',
-                border: 'none',
-                width: '36px',
-                height: '36px',
-                borderRadius: '50%',
+                background: '#ffffff',
+                borderRadius: '24px',
+                maxWidth: '600px',
+                width: '100%',
+                maxHeight: '90vh',
+                overflowY: 'auto',
+                padding: '28px',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                color: '#64748B',
-                fontSize: '18px'
+                flexDirection: 'column',
+                gap: '18px',
+                position: 'relative',
+                animation: 'fadeIn 0.2s ease-out'
               }}
             >
-              <FiX />
-            </button>
-
-            {/* Modal Header */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)' }}>
-                <FiSend />
-              </div>
-              <div>
-                <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', margin: 0 }}>
-                  Post Ready to Broadcast!
-                </h3>
-                <p style={{ fontSize: '13.5px', color: '#64748B', margin: '2px 0 0 0' }}>
-                  Launch pre-formatted updates across your active social channels.
-                </p>
-              </div>
-            </div>
-
-            {/* Post Snippet Card */}
-            <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '16px', display: 'flex', gap: '14px', alignItems: 'center' }}>
-              {shareModalPost.mediaUrl ? (
-                <img src={shareModalPost.mediaUrl} alt="Post preview" style={{ width: '70px', height: '70px', borderRadius: '10px', objectFit: 'cover', flexShrink: 0 }} />
-              ) : (
-                <div style={{ width: '70px', height: '70px', borderRadius: '10px', background: '#EFF6FF', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>
-                  <FiShare2 />
-                </div>
-              )}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 800, fontSize: '14.5px', color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {shareModalPost.title || 'Social Broadcast'}
-                </div>
-                <div style={{ fontSize: '12.5px', color: '#475569', marginTop: '4px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                  {shareModalPost.caption}
-                </div>
-              </div>
-            </div>
-
-            {/* Direct Auto-Publish Live Results */}
-            {shareModalPost.dispatchResults && Object.keys(shareModalPost.dispatchResults).length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <div style={{ fontSize: '12px', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Broadcast &amp; Publishing Status:
-                </div>
-                {Object.entries(shareModalPost.dispatchResults).map(([plat, res]) => {
-                  const isSuccess = res?.success
-                  const isDirectLive = isSuccess && res?.externalPostId && res?.postUrl
-                  const needsAuth = res?.requiresAuthorization
-                  return (
-                    <div
-                      key={plat}
-                      style={{
-                        background: isSuccess ? '#ECFDF5' : needsAuth ? '#FFFBEB' : '#FEF2F2',
-                        border: `1px solid ${isSuccess ? '#A7F3D0' : needsAuth ? '#FDE68A' : '#FECACA'}`,
-                        borderRadius: '12px',
-                        padding: '12px 16px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: '12px'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
-                        {isSuccess ? (
-                          <FiCheckCircle style={{ color: '#059669', fontSize: '20px', flexShrink: 0 }} />
-                        ) : (
-                          <FiAlertTriangle style={{ color: needsAuth ? '#D97706' : '#DC2626', fontSize: '20px', flexShrink: 0 }} />
-                        )}
-                        <div style={{ minWidth: 0 }}>
-                          <div style={{ fontWeight: 800, fontSize: '13px', color: isSuccess ? '#065F46' : needsAuth ? '#92400E' : '#991B1B' }}>
-                            {plat.toUpperCase()}: {isDirectLive ? 'Published Directly!' : isSuccess ? 'Ready to Broadcast!' : needsAuth ? 'API Authorization Needed' : 'Publishing Notice'}
-                          </div>
-                          <div style={{ fontSize: '11.5px', color: isSuccess ? '#047857' : needsAuth ? '#B45309' : '#B91C1C', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {res?.message || res?.error || (isSuccess ? 'Ready to broadcast to your followers' : 'Could not publish')}
-                          </div>
-                        </div>
-                      </div>
-
-                      {isDirectLive && res?.postUrl ? (
-                        <a
-                          href={res.postUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{
-                            background: '#059669',
-                            color: '#ffffff',
-                            padding: '6px 14px',
-                            borderRadius: '8px',
-                            fontSize: '12px',
-                            fontWeight: 700,
-                            textDecoration: 'none',
-                            flexShrink: 0,
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}
-                        >
-                          View Live <FiExternalLink fontSize={12} />
-                        </a>
-                      ) : plat === 'instagram' ? (
-                        <button
-                          type="button"
-                          onClick={() => handleInstagramShare(shareModalPost)}
-                          style={{
-                            background: 'linear-gradient(45deg, #F09433, #DC2743, #BC1888)',
-                            color: '#ffffff',
-                            border: 'none',
-                            padding: '6px 14px',
-                            borderRadius: '8px',
-                            fontSize: '12px',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            flexShrink: 0,
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '5px'
-                          }}
-                        >
-                          <FiInstagram fontSize={13} /> Upload Now
-                        </button>
-                      ) : plat === 'twitter' ? (
-                        <button
-                          type="button"
-                          onClick={() => handleIntentClick(shareModalPost, shareModalPost.webShareIntents?.twitter || res.shareUrl)}
-                          style={{
-                            background: '#000000',
-                            color: '#ffffff',
-                            border: 'none',
-                            padding: '6px 14px',
-                            borderRadius: '8px',
-                            fontSize: '12px',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            flexShrink: 0,
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '5px'
-                          }}
-                        >
-                          <FiTwitter fontSize={13} /> Tweet
-                        </button>
-                      ) : plat === 'linkedin' ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            handleCopyText(shareModalPost.caption, 'Caption')
-                            handleIntentClick(shareModalPost, shareModalPost.webShareIntents?.linkedin || res.shareUrl)
-                            toast.success('Caption copied! Paste into your LinkedIn post box (Ctrl+V) and click Post.', { duration: 5000, icon: '📋' })
-                          }}
-                          style={{
-                            background: '#0A66C2',
-                            color: '#ffffff',
-                            border: 'none',
-                            padding: '6px 14px',
-                            borderRadius: '8px',
-                            fontSize: '12px',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            flexShrink: 0,
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '5px'
-                          }}
-                        >
-                          <FiLinkedin fontSize={13} /> Post
-                        </button>
-                      ) : plat === 'facebook' ? (
-                        <button
-                          type="button"
-                          onClick={() => handleIntentClick(shareModalPost, shareModalPost.webShareIntents?.facebook || res.shareUrl)}
-                          style={{
-                            background: '#1877F2',
-                            color: '#ffffff',
-                            border: 'none',
-                            padding: '6px 14px',
-                            borderRadius: '8px',
-                            fontSize: '12px',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            flexShrink: 0,
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '5px'
-                          }}
-                        >
-                          <FiFacebook fontSize={13} /> Share
-                        </button>
-                      ) : !isSuccess && needsAuth ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShareModalPost(null)
-                            setActiveTab('channels')
-                          }}
-                          style={{
-                            background: '#D97706',
-                            color: '#ffffff',
-                            border: 'none',
-                            padding: '6px 14px',
-                            borderRadius: '8px',
-                            fontSize: '12px',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            flexShrink: 0
-                          }}
-                        >
-                          Authorize →
-                        </button>
-                      ) : null}
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-
-            {/* 1-Click Launchpad Buttons Grid */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ fontSize: '12px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Select Channel to Launch &amp; Post:
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
-                <button
-                  type="button"
-                  onClick={() => handleInstagramShare(shareModalPost)}
-                  style={{ background: 'linear-gradient(45deg, #F09433, #DC2743, #BC1888)', color: '#ffffff', border: 'none', padding: '12px 16px', borderRadius: '12px', fontWeight: 800, fontSize: '13.5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 4px 12px rgba(220, 39, 67, 0.2)' }}
-                >
-                  <FiInstagram fontSize={18} /> Upload on Instagram
-                </button>
-
-                {shareModalPost.webShareIntents?.twitter && (
-                  <button
-                    type="button"
-                    onClick={() => handleIntentClick(shareModalPost, shareModalPost.webShareIntents.twitter)}
-                    style={{ background: '#000000', color: '#ffffff', border: 'none', padding: '12px 16px', borderRadius: '12px', fontWeight: 800, fontSize: '13.5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
-                  >
-                    <FiTwitter fontSize={18} /> Post on 𝕏 (Twitter)
-                  </button>
-                )}
-
-                {shareModalPost.webShareIntents?.linkedin && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      handleCopyText(shareModalPost.caption, 'Caption')
-                      handleIntentClick(shareModalPost, shareModalPost.webShareIntents.linkedin)
-                      toast.success('Caption copied! Paste into your LinkedIn post box (Ctrl+V) and click Post.', { duration: 5000, icon: '📋' })
-                    }}
-                    style={{ background: '#0A66C2', color: '#ffffff', border: 'none', padding: '12px 16px', borderRadius: '12px', fontWeight: 800, fontSize: '13.5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 4px 12px rgba(10, 102, 194, 0.2)' }}
-                  >
-                    <FiLinkedin fontSize={18} /> Share on LinkedIn
-                  </button>
-                )}
-
-                {shareModalPost.webShareIntents?.facebook && (
-                  <button
-                    type="button"
-                    onClick={() => handleIntentClick(shareModalPost, shareModalPost.webShareIntents.facebook)}
-                    style={{ background: '#1877F2', color: '#ffffff', border: 'none', padding: '12px 16px', borderRadius: '12px', fontWeight: 800, fontSize: '13.5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 4px 12px rgba(24, 119, 242, 0.2)' }}
-                  >
-                    <FiFacebook fontSize={18} /> Post on Facebook
-                  </button>
-                )}
-
-                {shareModalPost.webShareIntents?.whatsapp && (
-                  <button
-                    type="button"
-                    onClick={() => handleIntentClick(shareModalPost, shareModalPost.webShareIntents.whatsapp)}
-                    style={{ background: '#25D366', color: '#ffffff', border: 'none', padding: '12px 16px', borderRadius: '12px', fontWeight: 800, fontSize: '13.5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 4px 12px rgba(37, 211, 102, 0.2)' }}
-                  >
-                    <FiMessageCircle fontSize={18} /> Share on WhatsApp
-                  </button>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => handleNativeShare(shareModalPost)}
-                  style={{ background: '#334155', color: '#ffffff', border: 'none', padding: '12px 16px', borderRadius: '12px', fontWeight: 800, fontSize: '13.5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}
-                >
-                  <FiShare fontSize={18} /> System Native Share
-                </button>
-              </div>
-            </div>
-
-            {/* Bottom Copy Actions & Dismiss */}
-            <div style={{ borderTop: '1px solid #F1F5F9', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <button
-                type="button"
-                onClick={() => handleCopyText(shareModalPost.caption, 'Post Caption')}
-                style={{ background: '#F1F5F9', color: '#334155', border: '1px solid #CBD5E1', padding: '8px 14px', borderRadius: '10px', fontSize: '12.5px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
-              >
-                <FiCopy /> Copy Caption
-              </button>
-
+              {/* Close Modal Button */}
               <button
                 type="button"
                 onClick={() => setShareModalPost(null)}
-                style={{ background: '#2563EB', color: '#ffffff', border: 'none', padding: '8px 20px', borderRadius: '10px', fontSize: '13px', fontWeight: 800, cursor: 'pointer' }}
+                style={{
+                  position: 'absolute',
+                  top: '20px',
+                  right: '20px',
+                  background: '#F1F5F9',
+                  border: 'none',
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: '#64748B',
+                  fontSize: '18px'
+                }}
               >
-                Done
+                <FiX />
               </button>
+
+              {/* Modal Header */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)', flexShrink: 0 }}>
+                  <FiSend />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                    Social Broadcast Launch Center
+                  </h3>
+                  <p style={{ fontSize: '13.5px', color: '#64748B', margin: '2px 0 0 0' }}>
+                    Publish pre-formatted updates across your connected social platforms.
+                  </p>
+                </div>
+              </div>
+
+              {/* Post Snippet Card */}
+              <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '14px 16px', display: 'flex', gap: '14px', alignItems: 'center' }}>
+                {shareModalPost.mediaUrl ? (
+                  <img src={shareModalPost.mediaUrl} alt="Post preview" style={{ width: '65px', height: '65px', borderRadius: '10px', objectFit: 'cover', flexShrink: 0 }} />
+                ) : (
+                  <div style={{ width: '65px', height: '65px', borderRadius: '10px', background: '#EFF6FF', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>
+                    <FiShare2 />
+                  </div>
+                )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 800, fontSize: '14.5px', color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {shareModalPost.title || 'Social Broadcast'}
+                  </div>
+                  <div style={{ fontSize: '12.5px', color: '#475569', marginTop: '3px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                    {shareModalPost.caption}
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Banner: Prompts the practitioner to take action */}
+              {hasPending ? (
+                <div
+                  style={{
+                    background: 'linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)',
+                    border: '1.5px solid #93C5FD',
+                    borderRadius: '16px',
+                    padding: '16px 18px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '14px',
+                    flexWrap: 'wrap'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
+                    <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#2563EB', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', flexShrink: 0 }}>
+                      <FiSend />
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 800, fontSize: '14px', color: '#1E3A8A' }}>
+                        Action Required: 1-Click Launch
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#1E40AF', marginTop: '2px' }}>
+                        Click each channel button below to launch, or launch all channels at once:
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleLaunchAllChannels(shareModalPost)}
+                    style={{
+                      background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)',
+                      color: '#ffffff',
+                      border: 'none',
+                      padding: '10px 18px',
+                      borderRadius: '12px',
+                      fontSize: '12.5px',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      boxShadow: '0 4px 12px rgba(37, 99, 235, 0.35)',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    🚀 Launch All Channels
+                  </button>
+                </div>
+              ) : hasLaunchedSomething ? (
+                <div
+                  style={{
+                    background: '#ECFDF5',
+                    border: '1.5px solid #86EFAC',
+                    borderRadius: '16px',
+                    padding: '14px 18px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px'
+                  }}
+                >
+                  <FiCheckCircle style={{ color: '#059669', fontSize: '22px', flexShrink: 0 }} />
+                  <div style={{ fontSize: '13px', color: '#065F46', fontWeight: 600 }}>
+                    🎉 Social channels opened in your browser! Make sure to finalize the <strong>Post</strong> button on each opened tab.
+                  </div>
+                </div>
+              ) : null}
+
+              {/* Direct Results & 1-Click Action Cards */}
+              {dispatchEntries.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    Connected Channels &amp; Launch Actions:
+                  </div>
+
+                  {dispatchEntries.map(([plat, res]) => {
+                    const isSuccess = res?.success
+                    const isDirectLive = isSuccess && res?.externalPostId && res?.postUrl
+                    const isLaunched = !!launchedPlatforms[plat]
+                    const needsAuth = res?.requiresAuthorization
+                    const cleanHandle = res?.handle ? String(res.handle).replace(/^@+/, '') : ''
+
+                    return (
+                      <div
+                        key={plat}
+                        style={{
+                          background: isDirectLive || isLaunched ? '#F0FDF4' : '#FFFFFF',
+                          border: isDirectLive || isLaunched ? '1.5px solid #86EFAC' : '1.5px solid #CBD5E1',
+                          borderRadius: '14px',
+                          padding: '14px 16px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '12px',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
+                          {isDirectLive || isLaunched ? (
+                            <FiCheckCircle style={{ color: '#059669', fontSize: '22px', flexShrink: 0 }} />
+                          ) : plat === 'twitter' ? (
+                            <FiTwitter style={{ color: '#000000', fontSize: '22px', flexShrink: 0 }} />
+                          ) : plat === 'linkedin' ? (
+                            <FiLinkedin style={{ color: '#0A66C2', fontSize: '22px', flexShrink: 0 }} />
+                          ) : plat === 'instagram' ? (
+                            <FiInstagram style={{ color: '#E1306C', fontSize: '22px', flexShrink: 0 }} />
+                          ) : plat === 'facebook' ? (
+                            <FiFacebook style={{ color: '#1877F2', fontSize: '22px', flexShrink: 0 }} />
+                          ) : (
+                            <FiSend style={{ color: '#64748B', fontSize: '20px', flexShrink: 0 }} />
+                          )}
+
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontWeight: 800, fontSize: '13.5px', color: isDirectLive || isLaunched ? '#065F46' : '#0F172A' }}>
+                              {plat.toUpperCase()} {cleanHandle ? `(@${cleanHandle})` : ''}: {
+                                isDirectLive
+                                  ? 'Published Directly via API'
+                                  : isLaunched
+                                  ? 'Opened in Browser Tab!'
+                                  : '1-Click Launch Ready'
+                              }
+                            </div>
+                            <div style={{ fontSize: '12px', color: isDirectLive || isLaunched ? '#047857' : '#64748B', marginTop: '2px' }}>
+                              {isDirectLive
+                                ? `Live ID: ${res.externalPostId}`
+                                : isLaunched
+                                ? 'Finalize by clicking "Post" on the opened page.'
+                                : plat === 'twitter'
+                                ? 'Formatted to <= 280 chars. 1-click opens tweet draft.'
+                                : plat === 'linkedin'
+                                ? 'Caption copied. 1-click opens LinkedIn (press Ctrl+V and Post).'
+                                : plat === 'instagram'
+                                ? 'Photo & caption ready to upload on Instagram.'
+                                : 'Ready to share on Facebook.'}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        {isDirectLive && res?.postUrl ? (
+                          <a
+                            href={res.postUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              background: '#059669',
+                              color: '#ffffff',
+                              padding: '8px 16px',
+                              borderRadius: '10px',
+                              fontSize: '12.5px',
+                              fontWeight: 800,
+                              textDecoration: 'none',
+                              flexShrink: 0,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px'
+                            }}
+                          >
+                            View Live <FiExternalLink fontSize={13} />
+                          </a>
+                        ) : isLaunched ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (plat === 'instagram') handleInstagramShare(shareModalPost)
+                              else if (plat === 'twitter') handleIntentClick(shareModalPost, shareModalPost.webShareIntents?.twitter || res.shareUrl, 'twitter')
+                              else if (plat === 'linkedin') handleIntentClick(shareModalPost, shareModalPost.webShareIntents?.linkedin || res.shareUrl, 'linkedin')
+                              else if (plat === 'facebook') handleIntentClick(shareModalPost, shareModalPost.webShareIntents?.facebook || res.shareUrl, 'facebook')
+                            }}
+                            style={{
+                              background: '#F1F5F9',
+                              color: '#334155',
+                              border: '1px solid #CBD5E1',
+                              padding: '8px 14px',
+                              borderRadius: '10px',
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              flexShrink: 0,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '5px'
+                            }}
+                          >
+                            <FiRefreshCw fontSize={11} /> Re-Open ↗
+                          </button>
+                        ) : plat === 'twitter' ? (
+                          <button
+                            type="button"
+                            onClick={() => handleIntentClick(shareModalPost, shareModalPost.webShareIntents?.twitter || res.shareUrl, 'twitter')}
+                            style={{
+                              background: '#000000',
+                              color: '#ffffff',
+                              border: 'none',
+                              padding: '9px 18px',
+                              borderRadius: '10px',
+                              fontSize: '13px',
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                              flexShrink: 0,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                            }}
+                          >
+                            <FiTwitter fontSize={15} /> 🚀 Launch Tweet
+                          </button>
+                        ) : plat === 'linkedin' ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              handleCopyText(shareModalPost.caption, 'LinkedIn Caption')
+                              handleIntentClick(shareModalPost, shareModalPost.webShareIntents?.linkedin || res.shareUrl, 'linkedin')
+                            }}
+                            style={{
+                              background: '#0A66C2',
+                              color: '#ffffff',
+                              border: 'none',
+                              padding: '9px 18px',
+                              borderRadius: '10px',
+                              fontSize: '13px',
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                              flexShrink: 0,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              boxShadow: '0 4px 12px rgba(10, 102, 194, 0.25)'
+                            }}
+                          >
+                            <FiLinkedin fontSize={15} /> 🚀 Post on LinkedIn
+                          </button>
+                        ) : plat === 'instagram' ? (
+                          <button
+                            type="button"
+                            onClick={() => handleInstagramShare(shareModalPost)}
+                            style={{
+                              background: 'linear-gradient(45deg, #F09433, #DC2743, #BC1888)',
+                              color: '#ffffff',
+                              border: 'none',
+                              padding: '9px 18px',
+                              borderRadius: '10px',
+                              fontSize: '13px',
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                              flexShrink: 0,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              boxShadow: '0 4px 12px rgba(220, 39, 67, 0.25)'
+                            }}
+                          >
+                            <FiInstagram fontSize={15} /> 📸 Open Instagram
+                          </button>
+                        ) : plat === 'facebook' ? (
+                          <button
+                            type="button"
+                            onClick={() => handleIntentClick(shareModalPost, shareModalPost.webShareIntents?.facebook || res.shareUrl, 'facebook')}
+                            style={{
+                              background: '#1877F2',
+                              color: '#ffffff',
+                              border: 'none',
+                              padding: '9px 18px',
+                              borderRadius: '10px',
+                              fontSize: '13px',
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                              flexShrink: 0,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              boxShadow: '0 4px 12px rgba(24, 119, 242, 0.25)'
+                            }}
+                          >
+                            <FiFacebook fontSize={15} /> 📘 Share to Facebook
+                          </button>
+                        ) : !isSuccess && needsAuth ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShareModalPost(null)
+                              setActiveTab('channels')
+                            }}
+                            style={{
+                              background: '#D97706',
+                              color: '#ffffff',
+                              border: 'none',
+                              padding: '8px 14px',
+                              borderRadius: '8px',
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              flexShrink: 0
+                            }}
+                          >
+                            Authorize →
+                          </button>
+                        ) : null}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              {/* Instructions Callout Box */}
+              <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '12px 14px', fontSize: '12px', color: '#475569', lineHeight: '1.5' }}>
+                <div style={{ fontWeight: 800, color: '#1E293B', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  💡 Publishing Tips:
+                </div>
+                <ul style={{ margin: 0, paddingLeft: '18px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                  <li><strong>𝕏 / Twitter:</strong> We trimmed the draft to fit Twitter&apos;s 280-character limit. Click <strong>Post</strong> in Twitter&apos;s dialog.</li>
+                  <li><strong>LinkedIn:</strong> Caption is pre-copied. When LinkedIn opens, press <strong>Ctrl+V</strong> (Paste) into the post composer.</li>
+                  <li><strong>Direct Auto-Post:</strong> To post in the background without opening a tab, connect an API token in the Channels tab.</li>
+                </ul>
+              </div>
+
+              {/* Additional Quick Share Tools */}
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                {shareModalPost.webShareIntents?.whatsapp && (
+                  <button
+                    type="button"
+                    onClick={() => handleIntentClick(shareModalPost, shareModalPost.webShareIntents.whatsapp, 'whatsapp')}
+                    style={{
+                      flex: 1,
+                      background: '#25D366',
+                      color: '#ffffff',
+                      border: 'none',
+                      padding: '10px 14px',
+                      borderRadius: '10px',
+                      fontWeight: 800,
+                      fontSize: '12.5px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      boxShadow: '0 2px 8px rgba(37, 211, 102, 0.2)'
+                    }}
+                  >
+                    <FiMessageCircle fontSize={16} /> WhatsApp
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => handleNativeShare(shareModalPost)}
+                  style={{
+                    flex: 1,
+                    background: '#334155',
+                    color: '#ffffff',
+                    border: 'none',
+                    padding: '10px 14px',
+                    borderRadius: '10px',
+                    fontWeight: 800,
+                    fontSize: '12.5px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <FiShare fontSize={16} /> Native Device Share
+                </button>
+              </div>
+
+              {/* Bottom Actions & Dismiss */}
+              <div style={{ borderTop: '1px solid #F1F5F9', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+                <button
+                  type="button"
+                  onClick={() => handleCopyText(shareModalPost.caption, 'Post Caption')}
+                  style={{
+                    background: '#F1F5F9',
+                    color: '#334155',
+                    border: '1px solid #CBD5E1',
+                    padding: '9px 16px',
+                    borderRadius: '10px',
+                    fontSize: '12.5px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <FiCopy /> Copy Caption
+                </button>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  {hasPending && (
+                    <button
+                      type="button"
+                      onClick={() => setShareModalPost(null)}
+                      style={{
+                        background: '#FFFFFF',
+                        color: '#64748B',
+                        border: '1px solid #CBD5E1',
+                        padding: '9px 16px',
+                        borderRadius: '10px',
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Close
+                    </button>
+                  )}
+                  {hasPending ? (
+                    <button
+                      type="button"
+                      onClick={() => handleLaunchAllChannels(shareModalPost)}
+                      style={{
+                        background: '#2563EB',
+                        color: '#ffffff',
+                        border: 'none',
+                        padding: '9px 20px',
+                        borderRadius: '10px',
+                        fontSize: '13px',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)'
+                      }}
+                    >
+                      <FiSend /> Launch All Channels
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShareModalPost(null)}
+                      style={{
+                        background: '#10B981',
+                        color: '#ffffff',
+                        border: 'none',
+                        padding: '9px 24px',
+                        borderRadius: '10px',
+                        fontSize: '13px',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <FiCheckCircle /> Done
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
 
     </div>
   )
 }
 
 export default SocialPostStudio
+
