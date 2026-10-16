@@ -9,6 +9,7 @@ import {
   Image,
   Platform,
   Alert,
+  Modal,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -76,6 +77,72 @@ export default function JourneyTabScreen({ navigation }) {
     checkIns.some((c) => new Date(c.createdAt).toDateString() === new Date().toDateString()) ||
     dashboardData?.hasCheckedInToday;
 
+  const [showNotificationsModal, setShowNotificationsModal] = useState(false);
+
+  const notifications = [
+    {
+      id: 'notif_checkin',
+      title: hasCheckedInToday ? 'Daily Check-in Completed ✓' : 'Daily Rhythm Pending',
+      body: hasCheckedInToday
+        ? 'Great job! Your wellbeing & sleep rhythm for today are logged.'
+        : 'Take 60 seconds to log how your mind and body are feeling today.',
+      icon: hasCheckedInToday ? 'checkmark-circle' : 'time-outline',
+      iconColor: hasCheckedInToday ? '#10B981' : '#F59E0B',
+      unread: !hasCheckedInToday,
+      actionText: hasCheckedInToday ? 'View History' : 'Check In Now →',
+      onPress: () => {
+        setShowNotificationsModal(false);
+        navigation.navigate('CheckIn');
+      },
+    },
+    ...(dashboardData?.upcomingClasses && dashboardData.upcomingClasses.length > 0
+      ? dashboardData.upcomingClasses.map((cls, idx) => ({
+          id: `notif_class_${cls._id || idx}`,
+          title: 'Live Interactive Session',
+          body: `"${cls.title || 'Live Class'}" scheduled for ${new Date(cls.scheduledStart).toLocaleDateString([], { month: 'short', day: 'numeric' })}.`,
+          icon: 'videocam',
+          iconColor: '#3B82F6',
+          unread: true,
+          actionText: 'View Class →',
+          onPress: () => {
+            setShowNotificationsModal(false);
+            navigation.navigate('Courses');
+          },
+        }))
+      : []),
+    {
+      id: 'notif_scholarship',
+      title: 'Free Learner Tier Active',
+      body: `Your ID ${learnerId} grants 100% free access to all masterclasses and peer growth circles.`,
+      icon: 'sparkles',
+      iconColor: '#8B5CF6',
+      unread: false,
+      actionText: 'Copy ID',
+      onPress: () => {
+        handleCopyLearnerId();
+      },
+    },
+    ...(joinedCircles && joinedCircles.length > 0
+      ? [
+          {
+            id: 'notif_circle',
+            title: 'Peer Growth Circle',
+            body: `You are connected to ${joinedCircles.length} active circle(s). Chat with peers and your guide in the Community tab.`,
+            icon: 'people',
+            iconColor: '#06B6D4',
+            unread: false,
+            actionText: 'Open Circles →',
+            onPress: () => {
+              setShowNotificationsModal(false);
+              navigation.navigate('Community');
+            },
+          },
+        ]
+      : []),
+  ];
+
+  const unreadNotificationsCount = notifications.filter((n) => n.unread).length;
+
   const todayDateFormatted = new Date().toLocaleDateString('en-GB', {
     weekday: 'long',
     day: 'numeric',
@@ -132,7 +199,7 @@ export default function JourneyTabScreen({ navigation }) {
 
             <TouchableOpacity
               style={[styles.iconBtn, isDark && styles.iconBtnDark]}
-              onPress={() => Alert.alert('Notifications', 'You have no new notifications.')}
+              onPress={() => setShowNotificationsModal(true)}
               activeOpacity={0.8}
             >
               <Ionicons
@@ -140,6 +207,9 @@ export default function JourneyTabScreen({ navigation }) {
                 size={20}
                 color={isDark ? '#FFFFFF' : '#0F172A'}
               />
+              {unreadNotificationsCount > 0 && (
+                <View style={styles.unreadBadgeDot} />
+              )}
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -704,6 +774,97 @@ export default function JourneyTabScreen({ navigation }) {
           </Text>
         </View>
       </ScrollView>
+
+      {/* ── Notifications Center Modal ── */}
+      <Modal
+        visible={showNotificationsModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowNotificationsModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalBackdrop}
+          activeOpacity={1}
+          onPress={() => setShowNotificationsModal(false)}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            style={[
+              styles.notifModalCard,
+              isDark && styles.notifModalCardDark,
+            ]}
+          >
+            {/* Modal Header */}
+            <View style={[styles.notifModalHeader, isDark && styles.notifModalHeaderDark]}>
+              <View style={styles.notifTitleRow}>
+                <Ionicons name="notifications" size={20} color={isDark ? '#38BDF8' : '#2563EB'} />
+                <Text style={[styles.notifModalTitle, isDark && styles.textWhite]}>
+                  Notifications
+                </Text>
+                {unreadNotificationsCount > 0 && (
+                  <View style={styles.notifCountPill}>
+                    <Text style={styles.notifCountPillText}>{unreadNotificationsCount} new</Text>
+                  </View>
+                )}
+              </View>
+              <TouchableOpacity
+                onPress={() => setShowNotificationsModal(false)}
+                style={styles.notifCloseBtn}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="close" size={20} color={isDark ? '#94A3B8' : '#64748B'} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Notification List */}
+            <ScrollView style={styles.notifList} showsVerticalScrollIndicator={false}>
+              {notifications.map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={[
+                    styles.notifItem,
+                    isDark && styles.notifItemDark,
+                    item.unread && (isDark ? styles.notifItemUnreadDark : styles.notifItemUnreadLight),
+                  ]}
+                  onPress={item.onPress}
+                  activeOpacity={0.8}
+                >
+                  <View style={[styles.notifIconWrap, { backgroundColor: `${item.iconColor}20` }]}>
+                    <Ionicons name={item.icon} size={20} color={item.iconColor} />
+                  </View>
+                  <View style={styles.notifContent}>
+                    <View style={styles.notifItemTopRow}>
+                      <Text style={[styles.notifItemTitle, isDark && styles.textWhite]}>
+                        {item.title}
+                      </Text>
+                      {item.unread && <View style={styles.notifItemDot} />}
+                    </View>
+                    <Text style={[styles.notifItemBody, isDark && styles.textMutedDark]}>
+                      {item.body}
+                    </Text>
+                    {item.actionText && (
+                      <Text style={[styles.notifActionLink, isDark && { color: '#38BDF8' }]}>
+                        {item.actionText}
+                      </Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            {/* Modal Footer */}
+            <View style={[styles.notifModalFooter, isDark && styles.notifModalFooterDark]}>
+              <TouchableOpacity
+                style={[styles.notifDoneBtn, isDark && styles.notifDoneBtnDark]}
+                onPress={() => setShowNotificationsModal(false)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.notifDoneBtnText}>Dismiss</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </LinearGradient>
   );
 }
@@ -1430,5 +1591,173 @@ const styles = StyleSheet.create({
     color: '#64748B',
     marginTop: 10,
     lineHeight: 16,
+  },
+  unreadBadgeDot: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#EF4444',
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(5, 8, 20, 0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  notifModalCard: {
+    width: '100%',
+    maxWidth: 420,
+    maxHeight: '80%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    overflow: 'hidden',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(226, 232, 240, 0.8)',
+  },
+  notifModalCardDark: {
+    backgroundColor: '#0D152C',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    shadowOpacity: 0.5,
+  },
+  notifModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  notifModalHeaderDark: {
+    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  notifTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  notifModalTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  notifCountPill: {
+    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+  },
+  notifCountPillText: {
+    color: '#EF4444',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  notifCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(148, 163, 184, 0.12)',
+  },
+  notifList: {
+    padding: 16,
+  },
+  notifItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    padding: 14,
+    borderRadius: 16,
+    marginBottom: 10,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  notifItemDark: {
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  notifItemUnreadLight: {
+    backgroundColor: '#EFF6FF',
+    borderColor: '#BFDBFE',
+  },
+  notifItemUnreadDark: {
+    backgroundColor: 'rgba(56, 189, 248, 0.08)',
+    borderColor: 'rgba(56, 189, 248, 0.25)',
+  },
+  notifIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  notifContent: {
+    flex: 1,
+  },
+  notifItemTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  notifItemTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  notifItemDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#2563EB',
+  },
+  notifItemBody: {
+    fontSize: 12,
+    color: '#64748B',
+    lineHeight: 17,
+    marginBottom: 6,
+  },
+  notifActionLink: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#2563EB',
+  },
+  notifModalFooter: {
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+    alignItems: 'flex-end',
+  },
+  notifModalFooterDark: {
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  notifDoneBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: '#F1F5F9',
+  },
+  notifDoneBtnDark: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  notifDoneBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#64748B',
   },
 });
