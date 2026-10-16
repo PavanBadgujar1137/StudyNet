@@ -5,15 +5,32 @@ const { dispatchPostToPlatforms } = require("../services/socialDispatcher")
 
 // Resolve LinkedIn redirect URI dynamically
 const resolveLinkedInRedirectUri = (req) => {
-  if (process.env.LINKEDIN_REDIRECT_URI) {
+  // 1. Explicit override passed from frontend
+  if (req?.query?.redirectUri) {
+    return req.query.redirectUri
+  }
+  if (req?.body?.redirectUri) {
+    return req.body.redirectUri
+  }
+
+  // 2. Explicit environment override if configured and not matching old api route
+  if (process.env.LINKEDIN_REDIRECT_URI && !process.env.LINKEDIN_REDIRECT_URI.includes("/api/v1/social-posts/oauth/linkedin/callback")) {
     return process.env.LINKEDIN_REDIRECT_URI
   }
-  const appEnv = String(process.env.APP_ENV || "").toLowerCase()
-  if (appEnv === "uat") {
-    return "https://api-uat.openhand.live/api/v1/social-posts/oauth/linkedin/callback"
+
+  // 3. Fallback based on incoming request origin or referer
+  if (req) {
+    const origin = req.headers["origin"] || req.headers["referer"]
+    if (origin) {
+      try {
+        const u = new URL(origin)
+        return `${u.origin}/social-callback`
+      } catch (e) {}
+    }
   }
-  // Default to official live production URL
-  return "https://api.openhand.live/api/v1/social-posts/oauth/linkedin/callback"
+
+  const frontendUrl = process.env.FRONTEND_URL || "https://openhand.live"
+  return `${frontendUrl.replace(/\/$/, "")}/social-callback`
 }
 
 // Helper function to build web share intents
@@ -23,8 +40,9 @@ const generateShareIntents = (caption, mediaUrl) => {
   const encodedUrl = encodeURIComponent(mediaUrl || domain)
 
   return {
+    instagram: "https://www.instagram.com/",
     twitter: `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`,
-    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}&summary=${encodedText}`,
+    linkedin: `https://www.linkedin.com/feed/?shareActive=true&text=${encodedText}%20${encodedUrl}`,
     facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedText}`,
     whatsapp: `https://api.whatsapp.com/send?text=${encodedText}%20${encodedUrl}`,
   }
@@ -309,11 +327,11 @@ exports.getSocialAccounts = async (req, res) => {
   }
 }
 
-// 6. Toggle Social Account Connection
+// 6. Connect, Update or Disconnect Social Account
 exports.toggleSocialAccountConnection = async (req, res) => {
   try {
     const practitionerId = req.user.id
-    const { platform, handle, accountName } = req.body
+    const { platform, handle, accountName, action } = req.body
 
     if (!platform) {
       return res.status(400).json({
@@ -321,8 +339,6 @@ exports.toggleSocialAccountConnection = async (req, res) => {
         message: "Platform is required",
       })
     }
-
-    let account = await SocialAccount.findOne({ practitioner: practitionerId, platform })
 
     const cleanHandle = (rawHandle) => {
       if (!rawHandle) return ""
@@ -335,49 +351,49 @@ exports.toggleSocialAccountConnection = async (req, res) => {
       return `@${clean}`
     }
 
-    if (account) {
-      if (!account.isConnected) {
-        if (!handle && !account.handle) {
-          return res.status(400).json({
-            success: false,
-            message: "Social handle or username is required to connect",
-          })
-        }
-        account.isConnected = true
-        if (handle) account.handle = cleanHandle(handle)
-        if (accountName) account.accountName = accountName
-        account.connectedAt = new Date()
-      } else {
+    let account = await SocialAccount.findOne({ practitioner: practitionerId, platform })
+
+    if (action === "disconnect") {
+      if (account) {
         account.isConnected = false
+        await account.save()
       }
-      await account.save()
-    } else {
-      if (!handle) {
-        return res.status(400).json({
-          success: false,
-          message: "Social handle or username is required to connect",
-        })
-      }
-      account = await SocialAccount.create({
-        practitioner: practitionerId,
-        platform,
-        handle: cleanHandle(handle),
-        accountName: accountName || handle,
-        isConnected: true,
-        connectedAt: new Date(),
+      return res.status(200).json({
+        success: true,
+        message: `${platform.toUpperCase()} disconnected`,
+        account,
       })
     }
 
+    // Connect or update handle
+    if (!account) {
+      account = new SocialAccount({ practitioner: practitionerId, platform })
+    }
+
+    if (handle) {
+      account.handle = cleanHandle(handle)
+      account.accountName = accountName || account.handle
+    } else if (!account.handle) {
+      return res.status(400).json({
+        success: false,
+        message: "Social handle or username is required to connect",
+      })
+    }
+
+    account.isConnected = true
+    account.connectedAt = new Date()
+    await account.save()
+
     return res.status(200).json({
       success: true,
-      message: `${platform.toUpperCase()} ${account.isConnected ? "connected" : "disconnected"}`,
+      message: `${platform.toUpperCase()} connected successfully as ${account.handle}!`,
       account,
     })
   } catch (error) {
     console.error("Error in toggleSocialAccountConnection:", error)
     return res.status(500).json({
       success: false,
-      message: "Failed to toggle social account connection",
+      message: "Failed to update social account connection",
       error: error.message,
     })
   }
@@ -429,10 +445,10 @@ exports.getLinkedInAuthUrl = async (req, res) => {
     }
 
     const redirectUri = resolveLinkedInRedirectUri(req)
-    const returnTo = req.query.returnTo || "/dashboard/my-profile?tab=social-studio"
+    const returnTo = req.query.returnTo || "/practice?tab=channels"
 
     const state = Buffer.from(
-      JSON.stringify({ userId, redirectUri, returnTo, timestamp: Date.now() })
+      JSON.stringify({ userId, redirectUri, returnTo, isSocialStudio: true, platform: "linkedin", timestamp: Date.now() })
     ).toString("base64")
 
     // Scopes for LinkedIn API
@@ -460,21 +476,32 @@ exports.getLinkedInAuthUrl = async (req, res) => {
 // 9. LinkedIn OAuth Callback (Exchanges code for access token and saves profile)
 exports.linkedInAuthCallback = async (req, res) => {
   const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000"
+  const isJson = req.method === "POST" || req.headers.accept?.includes("application/json") || req.is?.("json")
+
   try {
-    const { code, state, error: authError, error_description } = req.query
+    const code = req.query?.code || req.body?.code
+    const state = req.query?.state || req.body?.state
+    const authError = req.query?.error || req.body?.error
+    const error_description = req.query?.error_description || req.body?.error_description
 
     if (authError) {
       console.warn("LinkedIn OAuth error from LinkedIn:", authError, error_description)
+      if (isJson) {
+        return res.status(400).json({ success: false, error: error_description || authError })
+      }
       return res.redirect(
-        `${frontendUrl}/dashboard/my-profile?tab=social-studio&linkedin_error=${encodeURIComponent(
+        `${frontendUrl}/practice?tab=channels&linkedin_error=${encodeURIComponent(
           error_description || authError
         )}`
       )
     }
 
     if (!code || !state) {
+      if (isJson) {
+        return res.status(400).json({ success: false, message: "Missing code or state" })
+      }
       return res.redirect(
-        `${frontendUrl}/dashboard/my-profile?tab=social-studio&linkedin_error=Missing+code+or+state`
+        `${frontendUrl}/practice?tab=channels&linkedin_error=Missing+code+or+state`
       )
     }
 
@@ -482,22 +509,35 @@ exports.linkedInAuthCallback = async (req, res) => {
     try {
       parsedState = JSON.parse(Buffer.from(state, "base64").toString("ascii"))
     } catch (parseErr) {
-      console.error("Failed to decode LinkedIn OAuth state:", parseErr)
-      return res.redirect(
-        `${frontendUrl}/dashboard/my-profile?tab=social-studio&linkedin_error=Invalid+state+parameter`
-      )
+      try {
+        parsedState = JSON.parse(decodeURIComponent(state))
+      } catch (err2) {
+        console.error("Failed to decode LinkedIn OAuth state:", parseErr)
+        if (isJson) {
+          return res.status(400).json({ success: false, message: "Invalid state parameter" })
+        }
+        return res.redirect(
+          `${frontendUrl}/practice?tab=channels&linkedin_error=Invalid+state+parameter`
+        )
+      }
     }
 
-    const { userId, redirectUri, returnTo } = parsedState
+    const userId = parsedState.userId || req.user?.id
+    const redirectUri = req.body?.redirectUri || parsedState.redirectUri || resolveLinkedInRedirectUri(req)
+    const returnTo = parsedState.returnTo || "/practice?tab=channels"
+
     if (!userId) {
+      if (isJson) {
+        return res.status(400).json({ success: false, message: "User missing from state" })
+      }
       return res.redirect(
-        `${frontendUrl}/dashboard/my-profile?tab=social-studio&linkedin_error=User+missing+from+state`
+        `${frontendUrl}/practice?tab=channels&linkedin_error=User+missing+from+state`
       )
     }
 
     const clientId = process.env.LINKEDIN_CLIENT_ID
     const clientSecret = process.env.LINKEDIN_CLIENT_SECRET
-    const effectiveRedirectUri = redirectUri || resolveLinkedInRedirectUri(req)
+    const effectiveRedirectUri = redirectUri
 
     // Exchange authorization code for access token
     const tokenParams = new URLSearchParams()
@@ -518,8 +558,11 @@ exports.linkedInAuthCallback = async (req, res) => {
     if (!tokenRes.ok || !tokenData.access_token) {
       console.error("LinkedIn token exchange error:", tokenData)
       const msg = tokenData.error_description || tokenData.error || "Failed to exchange token"
+      if (isJson) {
+        return res.status(400).json({ success: false, message: msg })
+      }
       return res.redirect(
-        `${frontendUrl}/dashboard/my-profile?tab=social-studio&linkedin_error=${encodeURIComponent(msg)}`
+        `${frontendUrl}/practice?tab=channels&linkedin_error=${encodeURIComponent(msg)}`
       )
     }
 
@@ -594,13 +637,25 @@ exports.linkedInAuthCallback = async (req, res) => {
 
     await account.save()
 
-    const destination = returnTo || "/dashboard/my-profile?tab=social-studio"
+    if (isJson) {
+      return res.status(200).json({
+        success: true,
+        message: "LinkedIn connected and authorized successfully!",
+        account,
+        returnTo,
+      })
+    }
+
+    const destination = returnTo || "/practice?tab=channels"
     const sep = destination.includes("?") ? "&" : "?"
     return res.redirect(`${frontendUrl}${destination}${sep}social_connected=linkedin`)
   } catch (error) {
     console.error("LinkedIn callback error:", error)
+    if (isJson) {
+      return res.status(500).json({ success: false, message: error.message })
+    }
     return res.redirect(
-      `${frontendUrl}/dashboard/my-profile?tab=social-studio&linkedin_error=${encodeURIComponent(
+      `${frontendUrl}/practice?tab=channels&linkedin_error=${encodeURIComponent(
         error.message
       )}`
     )

@@ -31,6 +31,8 @@ router.post("/accounts/connect-token", auth, isPractitioner, connectTokenDirectl
 // LinkedIn OAuth Flow
 router.get("/oauth/linkedin/url", auth, isPractitioner, getLinkedInAuthUrl)
 router.get("/oauth/linkedin/callback", linkedInAuthCallback)
+router.post("/oauth/linkedin/callback", linkedInAuthCallback)
+router.post("/oauth/linkedin/exchange", linkedInAuthCallback)
 
 module.exports = router
 

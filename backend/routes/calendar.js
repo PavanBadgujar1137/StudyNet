@@ -13,6 +13,8 @@ const {
 
 router.get("/auth/google", auth, getGoogleAuthUrl)
 router.get("/auth/callback", googleAuthCallback)
+router.post("/auth/callback", googleAuthCallback)
+router.post("/auth/exchange", googleAuthCallback)
 router.post("/disconnect", auth, disconnectCalendar)
 
 router.get("/availability", auth, getAvailability)
