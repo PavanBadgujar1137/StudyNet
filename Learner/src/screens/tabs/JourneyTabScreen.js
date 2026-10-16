@@ -708,12 +708,12 @@ export default function JourneyTabScreen({ navigation }) {
             </View>
           </View>
 
-          {/* Mountain Climber Illustration on right */}
+          {/* Stepping Stones Milestone Roadmap on right */}
           <View style={styles.climberColumn}>
             <Image
               source={
                 isDark
-                  ? require('../../assets/hero_dark.png')
+                  ? require('../../assets/roadmap_dark.png')
                   : require('../../assets/roadmap_climber.png')
               }
               style={[styles.climberImage, isDark && styles.climberImageDark]}
