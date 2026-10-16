@@ -68,26 +68,40 @@ export default function CourseDetailScreen({ route, navigation }) {
 
       if (res.data?.success) {
         setIsEnrolled(true);
-        Alert.alert(
-          '🎉 Enrolled Successfully!',
-          'You have lifetime free access to this course. You can now start watching the lectures.',
-          [
-            {
-              text: 'Start First Lesson',
-              onPress: () => {
-                if (videos.length > 0) {
-                  navigation.navigate('LessonPlayer', {
-                    courseTitle: course?.courseName,
-                    video: videos[0],
-                    allVideos: videos,
-                    currentIndex: 0,
-                  });
-                }
+        if (Platform.OS === 'web') {
+          const startNow = typeof window !== 'undefined' && window.confirm
+            ? window.confirm('🎉 Enrolled Successfully!\nYou have lifetime free access to this course. Would you like to start the first lesson now?')
+            : false;
+          if (startNow && videos.length > 0) {
+            navigation.navigate('LessonPlayer', {
+              courseTitle: course?.courseName,
+              video: videos[0],
+              allVideos: videos,
+              currentIndex: 0,
+            });
+          }
+        } else {
+          Alert.alert(
+            '🎉 Enrolled Successfully!',
+            'You have lifetime free access to this course. You can now start watching the lectures.',
+            [
+              {
+                text: 'Start First Lesson',
+                onPress: () => {
+                  if (videos.length > 0) {
+                    navigation.navigate('LessonPlayer', {
+                      courseTitle: course?.courseName,
+                      video: videos[0],
+                      allVideos: videos,
+                      currentIndex: 0,
+                    });
+                  }
+                },
               },
-            },
-            { text: 'OK' },
-          ]
-        );
+              { text: 'OK' },
+            ]
+          );
+        }
       } else {
         Alert.alert('Notice', res.data?.message || 'Could not complete enrollment.');
       }
@@ -101,6 +115,15 @@ export default function CourseDetailScreen({ route, navigation }) {
 
   const handlePlayVideo = (video, index) => {
     if (!isEnrolled && course?.price > 0) {
+      if (Platform.OS === 'web') {
+        const confirmed = typeof window !== 'undefined' && window.confirm
+          ? window.confirm('Enrollment Required: Please enroll in this course to access the video lectures. Enroll for free now?')
+          : true;
+        if (confirmed) {
+          handleEnroll();
+        }
+        return;
+      }
       Alert.alert('Enrollment Required', 'Please enroll in this course to access the video lectures.', [
         { text: 'Enroll for Free', onPress: handleEnroll },
         { text: 'Cancel', style: 'cancel' },
