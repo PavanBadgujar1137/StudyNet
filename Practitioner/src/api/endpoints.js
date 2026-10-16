@@ -84,6 +84,14 @@ export const ENDPOINTS = {
     CONTACTS: `${BASE_URL}/chat/contacts`,
     PRESIGN_MEDIA: `${BASE_URL}/chat/presign-media`,
   },
+
+  // Social Post & Media Studio
+  SOCIAL: {
+    MINE: `${BASE_URL}/social/mine`,
+    CREATE: `${BASE_URL}/social/create`,
+    PUBLISH: (postId) => `${BASE_URL}/social/${postId}/publish`,
+    ACCOUNTS: `${BASE_URL}/social/accounts`,
+  },
 };
 
 export default ENDPOINTS;

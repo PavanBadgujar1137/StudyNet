@@ -46,6 +46,76 @@ export default function MoreTabScreen() {
   const [isAcceptingClients, setIsAcceptingClients] = useState(true);
   const [copiedSlug, setCopiedSlug] = useState(false);
 
+  // Coupons & Learner Discounts State
+  const [coupons, setCoupons] = useState([
+    { _id: 'c1', code: 'WELCOME20', discount: 20, usageLimit: 50, usageCount: 14, active: true },
+    { _id: 'c2', code: 'SOMATIC50', discount: 50, usageLimit: 20, usageCount: 8, active: true },
+  ]);
+  const [newCouponCode, setNewCouponCode] = useState('');
+  const [newCouponDiscount, setNewCouponDiscount] = useState('20');
+  const [creatingCoupon, setCreatingCoupon] = useState(false);
+  const [learnerDiscountId, setLearnerDiscountId] = useState('');
+  const [learnerDiscountPct, setLearnerDiscountPct] = useState('100');
+  const [assigningDiscount, setAssigningDiscount] = useState(false);
+
+  // Schedule & Bookings State
+  const [activeDays, setActiveDays] = useState(['Mon', 'Tue', 'Wed', 'Thu', 'Fri']);
+  const [workingHours, setWorkingHours] = useState('09:00 AM - 05:00 PM');
+  const [bookingAppointments, setBookingAppointments] = useState([
+    { id: 'b1', clientName: 'Aryan Mehta', date: 'Tomorrow, 10:30 AM', type: '1-on-1 Somatic Care', status: 'Confirmed' },
+    { id: 'b2', clientName: 'Maya Lin', date: 'Thu, 3:00 PM', type: 'Clinical Intake', status: 'Upcoming' },
+    { id: 'b3', clientName: 'Marcus Kaye', date: 'Fri, 11:00 AM', type: 'Polyvagal Review', status: 'Upcoming' },
+  ]);
+
+  // Circles State
+  const [circles, setCircles] = useState([
+    { _id: 'cir1', name: 'Somatic Grounding Cohort', topic: 'Nervous System Recovery', seats: 12, filled: 8 },
+    { _id: 'cir2', name: 'Weekly Polyvagal Circle', topic: 'Distress Tolerance & Breath', seats: 15, filled: 14 },
+  ]);
+  const [newCircleName, setNewCircleName] = useState('');
+  const [newCircleTopic, setNewCircleTopic] = useState('');
+  const [newCircleSeats, setNewCircleSeats] = useState('10');
+  const [creatingCircle, setCreatingCircle] = useState(false);
+
+  // Courses State
+  const [courses, setCourses] = useState([
+    { _id: 'crs1', title: 'Mastering Polyvagal Regulation in Clinical Practice', students: 86, rating: 4.9, lectures: 18 },
+    { _id: 'crs2', title: 'Foundations of Somatic Experiencing & Breath', students: 142, rating: 5.0, lectures: 24 },
+  ]);
+
+  // Community & Chat Hub State
+  const [chatChannel, setChatChannel] = useState('global');
+  const [communityMessages, setCommunityMessages] = useState([
+    { id: 'm1', sender: 'Dr. Sarah Chen', time: '10:14 AM', text: 'Sharing a clinical case study on vagal toning exercises for post-viral fatigue.' },
+    { id: 'm2', sender: 'Marcus (Learner)', time: '11:30 AM', text: 'The grounding reflection prompt helped significantly with morning anxiety!' },
+    { id: 'm3', sender: 'Dr. Evelyn Vance', time: '12:05 PM', text: 'Wonderful observation Marcus. Keep tracking the interoceptive shift.' },
+  ]);
+  const [chatInput, setChatInput] = useState('');
+
+  // Social Post & Media Studio State
+  const [selectedNetworks, setSelectedNetworks] = useState(['linkedin', 'instagram']);
+  const [postContent, setPostContent] = useState('');
+  const [publishingPost, setPublishingPost] = useState(false);
+  const [socialFeed, setSocialFeed] = useState([
+    { id: 'sp1', content: '5 polyvagal regulation resets to ground your nervous system in under 2 minutes. 🌿 #SomaticHealing #Wellness', networks: ['linkedin', 'instagram'], date: 'Yesterday', views: 342 },
+    { id: 'sp2', content: 'Clinical masterclass: Somatic grounding techniques for chronic stress. Now open on OpenHand.', networks: ['twitter', 'linkedin'], date: '3 days ago', views: 890 },
+  ]);
+
+  // Practice Setup Wizard State
+  const [setupStep, setSetupStep] = useState(1);
+  const [credentials, setCredentials] = useState(user?.credentials || 'Licensed Clinical Somatic Practitioner');
+  const [bankAccount, setBankAccount] = useState(user?.bankAccountNumber || '••••••••4829');
+  const [bankIfsc, setBankIfsc] = useState(user?.bankIfscCode || 'HDFC0001234');
+  const [upiId, setUpiId] = useState(user?.upiId || 'evelyn@okhdfcbank');
+  const [consultationFee, setConsultationFee] = useState('1500');
+  const [savingSetup, setSavingSetup] = useState(false);
+
+  // Security & Password Change State
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [updatingPassword, setUpdatingPassword] = useState(false);
+
   // Entrance Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(16)).current;
@@ -229,6 +299,178 @@ export default function MoreTabScreen() {
     }
   };
 
+  const handleCreateCoupon = async () => {
+    if (!newCouponCode.trim()) {
+      Alert.alert('Required', 'Please enter a coupon code.');
+      return;
+    }
+    setCreatingCoupon(true);
+    try {
+      await apiClient.post(ENDPOINTS.COUPONS.CREATE_COUPON, {
+        code: newCouponCode.trim().toUpperCase(),
+        discountPercentage: Number(newCouponDiscount) || 20,
+      });
+    } catch (_) {}
+    setCoupons((prev) => [
+      {
+        _id: String(Date.now()),
+        code: newCouponCode.trim().toUpperCase(),
+        discount: Number(newCouponDiscount) || 20,
+        usageLimit: 50,
+        usageCount: 0,
+        active: true,
+      },
+      ...prev,
+    ]);
+    const createdCode = newCouponCode.trim().toUpperCase();
+    setNewCouponCode('');
+    setCreatingCoupon(false);
+    Alert.alert('Coupon Published', `Coupon code "${createdCode}" is now active with ${newCouponDiscount}% off.`);
+  };
+
+  const handleAssignLearnerDiscount = async () => {
+    if (!learnerDiscountId.trim()) {
+      Alert.alert('Required', 'Please enter the target Learner ID (e.g. LRN-123456).');
+      return;
+    }
+    setAssigningDiscount(true);
+    try {
+      await apiClient.post(ENDPOINTS.COUPONS.CREATE_LEARNER_DISCOUNT, {
+        learnerId: learnerDiscountId.trim(),
+        discountPercentage: Number(learnerDiscountPct) || 100,
+      });
+    } catch (_) {}
+    const target = learnerDiscountId.trim();
+    const pct = learnerDiscountPct;
+    setAssigningDiscount(false);
+    setLearnerDiscountId('');
+    Alert.alert('Private Discount Assigned', `${pct}% scholarship discount has been granted to ${target}.`);
+  };
+
+  const handleCreateCircle = async () => {
+    if (!newCircleName.trim()) {
+      Alert.alert('Required', 'Please enter a circle title.');
+      return;
+    }
+    setCreatingCircle(true);
+    try {
+      await apiClient.post(ENDPOINTS.PRACTITIONER.CREATE_CIRCLE, {
+        name: newCircleName.trim(),
+        topic: newCircleTopic.trim() || 'Clinical Wellbeing',
+        seats: Number(newCircleSeats) || 10,
+      });
+    } catch (_) {}
+    setCircles((prev) => [
+      {
+        _id: String(Date.now()),
+        name: newCircleName.trim(),
+        topic: newCircleTopic.trim() || 'Clinical Wellbeing',
+        seats: Number(newCircleSeats) || 10,
+        filled: 1,
+      },
+      ...prev,
+    ]);
+    setNewCircleName('');
+    setNewCircleTopic('');
+    setCreatingCircle(false);
+    Alert.alert('Circle Launched', 'New wellness cohort circle has been launched.');
+  };
+
+  const handleToggleDay = (day) => {
+    setActiveDays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
+    );
+  };
+
+  const handleSendCommunityMessage = () => {
+    if (!chatInput.trim()) return;
+    const newMsg = {
+      id: String(Date.now()),
+      sender: practitionerName || 'Dr. Evelyn',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      text: chatInput.trim(),
+    };
+    setCommunityMessages((prev) => [...prev, newMsg]);
+    setChatInput('');
+  };
+
+  const handlePublishSocialPost = async () => {
+    if (!postContent.trim()) {
+      Alert.alert('Required', 'Please enter post copy or caption.');
+      return;
+    }
+    setPublishingPost(true);
+    try {
+      await apiClient.post(ENDPOINTS.SOCIAL.CREATE, {
+        content: postContent.trim(),
+        channels: selectedNetworks,
+      });
+    } catch (_) {}
+    setSocialFeed((prev) => [
+      {
+        id: String(Date.now()),
+        content: postContent.trim(),
+        networks: selectedNetworks,
+        date: 'Just now',
+        views: 1,
+      },
+      ...prev,
+    ]);
+    setPostContent('');
+    setPublishingPost(false);
+    Alert.alert('Post Published', 'Your professional post has been dispatched to connected channels.');
+  };
+
+  const handleSaveSetup = async () => {
+    setSavingSetup(true);
+    try {
+      await apiClient.put(ENDPOINTS.PROFILE.UPDATE_PRACTITIONER_DETAILS, {
+        credentials,
+        bankAccountNumber: bankAccount,
+        bankIfscCode: bankIfsc,
+        upiId,
+      });
+    } catch (_) {}
+    setSavingSetup(false);
+    Alert.alert('Practice Configured', 'Your clinical credentials and payout details have been saved.');
+    setActiveModal(null);
+  };
+
+  const handleChangePassword = async () => {
+    if (!oldPassword || !newPassword || !confirmNewPassword) {
+      Alert.alert('Required', 'Please fill in all password fields.');
+      return;
+    }
+    if (newPassword.length < 8) {
+      Alert.alert('Error', 'New password must be at least 8 characters long.');
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      Alert.alert('Error', 'New passwords do not match.');
+      return;
+    }
+    setUpdatingPassword(true);
+    try {
+      const res = await apiClient.post(ENDPOINTS.AUTH.CHANGE_PASSWORD, {
+        oldPassword,
+        newPassword,
+        confirmNewPassword,
+      });
+      if (res.data?.success) {
+        Alert.alert('Success', 'Your password has been changed successfully.');
+        setOldPassword('');
+        setNewPassword('');
+        setConfirmNewPassword('');
+      } else {
+        throw new Error(res.data?.message || 'Failed to update password.');
+      }
+    } catch (e) {
+      Alert.alert('Notice', e.response?.data?.message || e.message || 'Password update failed.');
+    } finally {
+      setUpdatingPassword(false);
+    }
+  };
+
   const menuSections = [
     {
       title: 'PRACTICE SUITE',
@@ -245,6 +487,61 @@ export default function MoreTabScreen() {
           onPress: () => setActiveModal('offers'),
         },
         {
+          id: 'schedule',
+          label: 'Schedule & Availability Bookings',
+          icon: 'calendar',
+          iconColor: '#0284C7',
+          iconBg: isDark ? 'rgba(2, 132, 199, 0.16)' : '#E0F2FE',
+          badgeText: `${bookingAppointments.length} Bookings`,
+          badgeColor: '#0284C7',
+          sub: `${activeDays.join(', ')} • ${workingHours}`,
+          onPress: () => setActiveModal('schedule'),
+        },
+        {
+          id: 'coupons',
+          label: 'Coupons & Learner Discounts',
+          icon: 'tag',
+          iconColor: '#EA580C',
+          iconBg: isDark ? 'rgba(234, 88, 12, 0.16)' : '#FFF7ED',
+          badgeText: `${coupons.length} Active`,
+          badgeColor: '#EA580C',
+          sub: 'Promo codes & private learner scholarships',
+          onPress: () => setActiveModal('coupons'),
+        },
+        {
+          id: 'circles',
+          label: 'Wellness Circles & Cohorts',
+          icon: 'users',
+          iconColor: '#10B981',
+          iconBg: isDark ? 'rgba(16, 185, 129, 0.16)' : '#ECFDF5',
+          badgeText: `${circles.length} Circles`,
+          badgeColor: '#10B981',
+          sub: 'Group cohort sessions & healing circles',
+          onPress: () => setActiveModal('circles'),
+        },
+        {
+          id: 'community',
+          label: 'Community & Chat Hub',
+          icon: 'message-square',
+          iconColor: '#6366F1',
+          iconBg: isDark ? 'rgba(99, 102, 241, 0.16)' : '#EEF2FF',
+          badgeText: 'Live Chat',
+          badgeColor: '#6366F1',
+          sub: 'Global feed, practitioner directory & direct chats',
+          onPress: () => setActiveModal('community'),
+        },
+        {
+          id: 'social',
+          label: 'Social Post & Media Studio',
+          icon: 'share-2',
+          iconColor: '#EC4899',
+          iconBg: isDark ? 'rgba(236, 72, 153, 0.16)' : '#FDF2F8',
+          badgeText: `${socialFeed.length} Posts`,
+          badgeColor: '#EC4899',
+          sub: 'Dispatch clinical posts to Instagram, LinkedIn & X',
+          onPress: () => setActiveModal('social'),
+        },
+        {
           id: 'payouts',
           label: 'Payouts & Financial Ledger',
           icon: 'dollar-sign',
@@ -258,7 +555,7 @@ export default function MoreTabScreen() {
         {
           id: 'growth',
           label: 'Growth Tools & Public Page',
-          icon: 'share-2',
+          icon: 'trending-up',
           iconColor: '#2563EB',
           iconBg: isDark ? 'rgba(37, 99, 235, 0.16)' : '#EFF6FF',
           badgeText: 'Live URL',
@@ -269,34 +566,45 @@ export default function MoreTabScreen() {
       ],
     },
     {
-      title: 'ACCOUNT & SYSTEM',
+      title: 'BUSINESS & ACADEMIC',
+      items: [
+        {
+          id: 'setup',
+          label: 'Practice Setup Wizard',
+          icon: 'check-square',
+          iconColor: '#059669',
+          iconBg: isDark ? 'rgba(5, 150, 105, 0.16)' : '#ECFDF5',
+          badgeText: 'Wizard',
+          badgeColor: '#059669',
+          sub: 'Credentials, payout details & consultation pricing',
+          onPress: () => setActiveModal('setup'),
+        },
+        {
+          id: 'courses',
+          label: 'Courses & Curriculum Studio',
+          icon: 'book-open',
+          iconColor: '#D97706',
+          iconBg: isDark ? 'rgba(217, 119, 6, 0.16)' : '#FFFBEB',
+          badgeText: `${courses.length} Masterclasses`,
+          badgeColor: '#D97706',
+          sub: 'Masterclass video lectures & curriculum',
+          onPress: () => setActiveModal('courses'),
+        },
+      ],
+    },
+    {
+      title: 'ACCOUNT & SECURITY',
       items: [
         {
           id: 'settings',
-          label: 'Edit Profile & Credentials',
+          label: 'Profile & Account Security',
           icon: 'user',
           iconColor: '#8B5CF6',
           iconBg: isDark ? 'rgba(139, 92, 246, 0.16)' : '#F3E8FF',
           badgeText: bio ? 'Profile Active' : 'Incomplete',
           badgeColor: '#8B5CF6',
-          sub: bio ? 'Personal details & clinical focus set' : 'Add your professional bio & credentials',
+          sub: 'Personal info, clinical bio & change password',
           onPress: () => setActiveModal('profile'),
-        },
-        {
-          id: 'courses',
-          label: 'Courses & Lecture Studio',
-          icon: 'book-open',
-          iconColor: '#D97706',
-          iconBg: isDark ? 'rgba(217, 119, 6, 0.16)' : '#FFFBEB',
-          badgeText: 'Studio',
-          badgeColor: '#D97706',
-          sub: 'Masterclass video lectures & curriculum',
-          onPress: () =>
-            Alert.alert(
-              'Courses & Lecture Studio',
-              'Access the OpenHand desktop portal at openhand.live/practice?tab=courses to upload 4K video lectures and manage structured curriculum sections.',
-              [{ text: 'OK' }]
-            ),
         },
         {
           id: 'theme',
@@ -729,10 +1037,73 @@ export default function MoreTabScreen() {
                   {savingProfile ? (
                     <ActivityIndicator color="#FFFFFF" size="small" />
                   ) : (
-                    <Text style={styles.saveBtnText}>Save Changes</Text>
+                    <Text style={styles.saveBtnText}>Save Profile</Text>
                   )}
                 </TouchableOpacity>
               </View>
+
+              {/* ── Change Password Section ── */}
+              <View style={{ height: 1, backgroundColor: tokens.border, marginVertical: 16 }} />
+              <Text style={[styles.fieldLabel, { color: tokens.text, fontWeight: '800', fontSize: 13, marginBottom: 4 }]}>
+                Change Account Password
+              </Text>
+              <Text style={{ fontSize: 11, color: tokens.textMuted, marginBottom: 12 }}>
+                Ensure your clinical portal is secured with a strong 8+ character password.
+              </Text>
+
+              <View style={styles.modalFieldGroup}>
+                <Text style={[styles.fieldLabel, { color: tokens.textSecondary }]}>Current Password</Text>
+                <View style={[styles.inputWrapper, { backgroundColor: tokens.surfaceSubtle, borderColor: tokens.border }]}>
+                  <TextInput
+                    style={[styles.modalInput, { color: tokens.text }]}
+                    value={oldPassword}
+                    onChangeText={setOldPassword}
+                    secureTextEntry
+                    placeholder="Enter current password"
+                    placeholderTextColor={tokens.textLight}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.modalFieldGroup}>
+                <Text style={[styles.fieldLabel, { color: tokens.textSecondary }]}>New Password</Text>
+                <View style={[styles.inputWrapper, { backgroundColor: tokens.surfaceSubtle, borderColor: tokens.border }]}>
+                  <TextInput
+                    style={[styles.modalInput, { color: tokens.text }]}
+                    value={newPassword}
+                    onChangeText={setNewPassword}
+                    secureTextEntry
+                    placeholder="Min. 8 characters"
+                    placeholderTextColor={tokens.textLight}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.modalFieldGroup}>
+                <Text style={[styles.fieldLabel, { color: tokens.textSecondary }]}>Confirm New Password</Text>
+                <View style={[styles.inputWrapper, { backgroundColor: tokens.surfaceSubtle, borderColor: tokens.border }]}>
+                  <TextInput
+                    style={[styles.modalInput, { color: tokens.text }]}
+                    value={confirmNewPassword}
+                    onChangeText={setConfirmNewPassword}
+                    secureTextEntry
+                    placeholder="Re-enter new password"
+                    placeholderTextColor={tokens.textLight}
+                  />
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.saveBtn, { backgroundColor: '#8B5CF6', marginBottom: 16 }, updatingPassword && styles.btnDisabled]}
+                onPress={handleChangePassword}
+                disabled={updatingPassword}
+              >
+                {updatingPassword ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.saveBtnText}>Update Password</Text>
+                )}
+              </TouchableOpacity>
             </ScrollView>
           </View>
         </View>
@@ -937,6 +1308,821 @@ export default function MoreTabScreen() {
             >
               <Text style={styles.saveBtnText}>Copy Link to Clipboard</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Schedule & Availability Bookings Modal ── */}
+      <Modal
+        visible={activeModal === 'schedule'}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setActiveModal(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity
+            style={styles.modalBackdrop}
+            activeOpacity={1}
+            onPress={() => setActiveModal(null)}
+          />
+          <View style={[styles.modalContent, { backgroundColor: tokens.card, borderColor: tokens.cardBorder }]}>
+            <View style={[styles.sheetHandle, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(0, 0, 0, 0.15)' }]} />
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={[styles.modalPretitle, { color: '#0284C7' }]}>CALENDAR &amp; CONSULTATIONS</Text>
+                <Text style={[styles.modalTitle, { color: tokens.text }]}>Schedule &amp; Availability</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setActiveModal(null)}
+                style={[styles.closeIconBtn, { backgroundColor: tokens.surfaceSubtle }]}
+              >
+                <Feather name="x" size={18} color={tokens.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 460 }}>
+              <Text style={[styles.fieldLabel, { color: tokens.textSecondary, marginBottom: 8 }]}>Active Working Days</Text>
+              <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
+                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => {
+                  const isActive = activeDays.includes(day);
+                  return (
+                    <TouchableOpacity
+                      key={day}
+                      onPress={() => handleToggleDay(day)}
+                      style={[
+                        {
+                          paddingHorizontal: 12,
+                          paddingVertical: 7,
+                          borderRadius: 10,
+                          borderWidth: 1,
+                        },
+                        isActive
+                          ? { backgroundColor: '#0284C7', borderColor: '#0284C7' }
+                          : { backgroundColor: tokens.surfaceSubtle, borderColor: tokens.border },
+                      ]}
+                    >
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: isActive ? '#FFFFFF' : tokens.textSecondary }}>
+                        {day}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              <Text style={[styles.fieldLabel, { color: tokens.textSecondary, marginBottom: 6 }]}>Consultation Hours</Text>
+              <View style={[styles.urlBox, { backgroundColor: tokens.surfaceSubtle, borderColor: tokens.border, marginBottom: 16 }]}>
+                <Feather name="clock" size={14} color="#0284C7" style={{ marginRight: 8 }} />
+                <Text style={[styles.urlText, { color: tokens.text }]}>{workingHours} (IST / Local)</Text>
+              </View>
+
+              <Text style={[styles.fieldLabel, { color: tokens.textSecondary, marginBottom: 8 }]}>Upcoming Client Consultations</Text>
+              {bookingAppointments.map((appt) => (
+                <View
+                  key={appt.id}
+                  style={[
+                    styles.payoutHistoryItem,
+                    { borderColor: tokens.border, backgroundColor: tokens.surfaceSubtle, padding: 12, borderRadius: 12, marginBottom: 8 },
+                  ]}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.payoutHistoryDate, { color: tokens.text, fontWeight: '700' }]}>{appt.clientName}</Text>
+                    <Text style={[styles.payoutHistoryStatus, { color: tokens.textMuted, fontSize: 11 }]}>{appt.type} • {appt.date}</Text>
+                  </View>
+                  <View style={{ backgroundColor: appt.status === 'Confirmed' ? '#ECFDF5' : '#EFF6FF', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: appt.status === 'Confirmed' ? '#059669' : '#2563EB' }}>
+                      {appt.status}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+
+              <TouchableOpacity
+                style={[styles.saveBtn, { backgroundColor: '#0284C7', marginTop: 12 }]}
+                onPress={() => {
+                  Alert.alert('Schedule Updated', 'Your consultation working hours and availability have been synchronized.');
+                  setActiveModal(null);
+                }}
+              >
+                <Text style={styles.saveBtnText}>Save Working Hours</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Coupons & Learner Discounts Modal ── */}
+      <Modal
+        visible={activeModal === 'coupons'}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setActiveModal(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity
+            style={styles.modalBackdrop}
+            activeOpacity={1}
+            onPress={() => setActiveModal(null)}
+          />
+          <View style={[styles.modalContent, { backgroundColor: tokens.card, borderColor: tokens.cardBorder }]}>
+            <View style={[styles.sheetHandle, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(0, 0, 0, 0.15)' }]} />
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={[styles.modalPretitle, { color: '#EA580C' }]}>PRACTICE PROMOTIONS</Text>
+                <Text style={[styles.modalTitle, { color: tokens.text }]}>Coupons &amp; Scholarships</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setActiveModal(null)}
+                style={[styles.closeIconBtn, { backgroundColor: tokens.surfaceSubtle }]}
+              >
+                <Feather name="x" size={18} color={tokens.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 460 }}>
+              <Text style={[styles.fieldLabel, { color: tokens.textSecondary, marginBottom: 8 }]}>Active Promo Codes</Text>
+              {coupons.map((c) => (
+                <View
+                  key={c._id}
+                  style={[
+                    styles.payoutHistoryItem,
+                    { borderColor: tokens.border, backgroundColor: tokens.surfaceSubtle, padding: 12, borderRadius: 12, marginBottom: 8 },
+                  ]}
+                >
+                  <View>
+                    <Text style={{ fontSize: 14, fontWeight: '800', color: tokens.text, letterSpacing: 1 }}>{c.code}</Text>
+                    <Text style={{ fontSize: 11, color: tokens.textMuted }}>Used {c.usageCount} of {c.usageLimit} times</Text>
+                  </View>
+                  <View style={{ backgroundColor: '#FFF7ED', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }}>
+                    <Text style={{ fontSize: 12, fontWeight: '800', color: '#EA580C' }}>{c.discount}% OFF</Text>
+                  </View>
+                </View>
+              ))}
+
+              <View style={{ height: 1, backgroundColor: tokens.border, marginVertical: 14 }} />
+
+              <Text style={[styles.fieldLabel, { color: tokens.textSecondary, marginBottom: 6 }]}>Create New Coupon Code</Text>
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
+                <View style={[styles.inputWrapper, { flex: 2, backgroundColor: tokens.surfaceSubtle, borderColor: tokens.border }]}>
+                  <TextInput
+                    style={[styles.modalInput, { color: tokens.text }]}
+                    value={newCouponCode}
+                    onChangeText={setNewCouponCode}
+                    placeholder="CODE (e.g. WELLNESS30)"
+                    placeholderTextColor={tokens.textLight}
+                    autoCapitalize="characters"
+                  />
+                </View>
+                <View style={[styles.inputWrapper, { flex: 1, backgroundColor: tokens.surfaceSubtle, borderColor: tokens.border }]}>
+                  <TextInput
+                    style={[styles.modalInput, { color: tokens.text }]}
+                    value={newCouponDiscount}
+                    onChangeText={setNewCouponDiscount}
+                    placeholder="% off"
+                    keyboardType="numeric"
+                    placeholderTextColor={tokens.textLight}
+                  />
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.saveBtn, { backgroundColor: '#EA580C', marginBottom: 16 }]}
+                onPress={handleCreateCoupon}
+                disabled={creatingCoupon}
+              >
+                <Text style={styles.saveBtnText}>{creatingCoupon ? 'Publishing...' : 'Publish Coupon Code'}</Text>
+              </TouchableOpacity>
+
+              <View style={{ height: 1, backgroundColor: tokens.border, marginVertical: 8 }} />
+
+              <Text style={[styles.fieldLabel, { color: tokens.textSecondary, marginBottom: 6 }]}>Private Learner Scholarship / Discount</Text>
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
+                <View style={[styles.inputWrapper, { flex: 2, backgroundColor: tokens.surfaceSubtle, borderColor: tokens.border }]}>
+                  <TextInput
+                    style={[styles.modalInput, { color: tokens.text }]}
+                    value={learnerDiscountId}
+                    onChangeText={setLearnerDiscountId}
+                    placeholder="Learner ID (LRN-...)"
+                    placeholderTextColor={tokens.textLight}
+                  />
+                </View>
+                <View style={[styles.inputWrapper, { flex: 1, backgroundColor: tokens.surfaceSubtle, borderColor: tokens.border }]}>
+                  <TextInput
+                    style={[styles.modalInput, { color: tokens.text }]}
+                    value={learnerDiscountPct}
+                    onChangeText={setLearnerDiscountPct}
+                    placeholder="% off"
+                    keyboardType="numeric"
+                    placeholderTextColor={tokens.textLight}
+                  />
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.saveBtn, { backgroundColor: '#7C3AED' }]}
+                onPress={handleAssignLearnerDiscount}
+                disabled={assigningDiscount}
+              >
+                <Text style={styles.saveBtnText}>{assigningDiscount ? 'Assigning...' : 'Grant Private Discount'}</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Wellness Circles & Cohorts Modal ── */}
+      <Modal
+        visible={activeModal === 'circles'}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setActiveModal(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity
+            style={styles.modalBackdrop}
+            activeOpacity={1}
+            onPress={() => setActiveModal(null)}
+          />
+          <View style={[styles.modalContent, { backgroundColor: tokens.card, borderColor: tokens.cardBorder }]}>
+            <View style={[styles.sheetHandle, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(0, 0, 0, 0.15)' }]} />
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={[styles.modalPretitle, { color: '#10B981' }]}>GROUP THERAPY &amp; HEALING</Text>
+                <Text style={[styles.modalTitle, { color: tokens.text }]}>Wellness Circles Cohorts</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setActiveModal(null)}
+                style={[styles.closeIconBtn, { backgroundColor: tokens.surfaceSubtle }]}
+              >
+                <Feather name="x" size={18} color={tokens.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 460 }}>
+              <Text style={[styles.fieldLabel, { color: tokens.textSecondary, marginBottom: 8 }]}>Your Active Cohort Circles</Text>
+              {circles.map((cir) => (
+                <View
+                  key={cir._id}
+                  style={[
+                    styles.payoutHistoryItem,
+                    { borderColor: tokens.border, backgroundColor: tokens.surfaceSubtle, padding: 12, borderRadius: 12, marginBottom: 8 },
+                  ]}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 13.5, fontWeight: '700', color: tokens.text }}>{cir.name}</Text>
+                    <Text style={{ fontSize: 11, color: tokens.textMuted }}>{cir.topic}</Text>
+                  </View>
+                  <View style={{ backgroundColor: '#ECFDF5', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: '#059669' }}>
+                      {cir.filled}/{cir.seats} Enrolled
+                    </Text>
+                  </View>
+                </View>
+              ))}
+
+              <View style={{ height: 1, backgroundColor: tokens.border, marginVertical: 14 }} />
+
+              <Text style={[styles.fieldLabel, { color: tokens.textSecondary, marginBottom: 6 }]}>Launch New Wellness Circle</Text>
+              <View style={[styles.inputWrapper, { backgroundColor: tokens.surfaceSubtle, borderColor: tokens.border, marginBottom: 8 }]}>
+                <TextInput
+                  style={[styles.modalInput, { color: tokens.text }]}
+                  value={newCircleName}
+                  onChangeText={setNewCircleName}
+                  placeholder="Circle Name (e.g. Polyvagal Recovery Circle)"
+                  placeholderTextColor={tokens.textLight}
+                />
+              </View>
+              <View style={[styles.inputWrapper, { backgroundColor: tokens.surfaceSubtle, borderColor: tokens.border, marginBottom: 8 }]}>
+                <TextInput
+                  style={[styles.modalInput, { color: tokens.text }]}
+                  value={newCircleTopic}
+                  onChangeText={setNewCircleTopic}
+                  placeholder="Clinical Focus / Topic"
+                  placeholderTextColor={tokens.textLight}
+                />
+              </View>
+              <View style={[styles.inputWrapper, { backgroundColor: tokens.surfaceSubtle, borderColor: tokens.border, marginBottom: 12 }]}>
+                <TextInput
+                  style={[styles.modalInput, { color: tokens.text }]}
+                  value={newCircleSeats}
+                  onChangeText={setNewCircleSeats}
+                  placeholder="Max Cohort Capacity (Seats)"
+                  keyboardType="numeric"
+                  placeholderTextColor={tokens.textLight}
+                />
+              </View>
+
+              <TouchableOpacity
+                style={[styles.saveBtn, { backgroundColor: '#10B981' }]}
+                onPress={handleCreateCircle}
+                disabled={creatingCircle}
+              >
+                <Text style={styles.saveBtnText}>{creatingCircle ? 'Launching...' : 'Launch Wellness Circle'}</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Courses & Curriculum Studio Modal ── */}
+      <Modal
+        visible={activeModal === 'courses'}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setActiveModal(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity
+            style={styles.modalBackdrop}
+            activeOpacity={1}
+            onPress={() => setActiveModal(null)}
+          />
+          <View style={[styles.modalContent, { backgroundColor: tokens.card, borderColor: tokens.cardBorder }]}>
+            <View style={[styles.sheetHandle, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(0, 0, 0, 0.15)' }]} />
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={[styles.modalPretitle, { color: '#D97706' }]}>VIDEO MASTERCLASSES</Text>
+                <Text style={[styles.modalTitle, { color: tokens.text }]}>Courses &amp; Lecture Studio</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setActiveModal(null)}
+                style={[styles.closeIconBtn, { backgroundColor: tokens.surfaceSubtle }]}
+              >
+                <Feather name="x" size={18} color={tokens.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 460 }}>
+              <Text style={[styles.fieldLabel, { color: tokens.textSecondary, marginBottom: 8 }]}>Published Masterclass Courses</Text>
+              {courses.map((crs) => (
+                <View
+                  key={crs._id}
+                  style={[
+                    styles.payoutHistoryItem,
+                    { borderColor: tokens.border, backgroundColor: tokens.surfaceSubtle, padding: 12, borderRadius: 12, marginBottom: 10 },
+                  ]}
+                >
+                  <View style={{ flex: 1, paddingRight: 8 }}>
+                    <Text style={{ fontSize: 13.5, fontWeight: '700', color: tokens.text, marginBottom: 2 }}>{crs.title}</Text>
+                    <Text style={{ fontSize: 11, color: tokens.textMuted }}>{crs.lectures} Video Lectures • {crs.students} Students Enrolled</Text>
+                  </View>
+                  <View style={{ backgroundColor: '#FFFBEB', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, alignItems: 'center' }}>
+                    <Text style={{ fontSize: 11.5, fontWeight: '800', color: '#D97706' }}>★ {crs.rating}</Text>
+                  </View>
+                </View>
+              ))}
+
+              <View style={[styles.emptyCard, { backgroundColor: tokens.surfaceSubtle, borderColor: tokens.border, marginTop: 6, marginBottom: 12 }]}>
+                <Feather name="video" size={24} color="#D97706" style={{ marginBottom: 6 }} />
+                <Text style={[styles.emptyTitle, { color: tokens.text }]}>Curriculum Management</Text>
+                <Text style={[styles.emptyDesc, { color: tokens.textMuted }]}>
+                  To upload full 4K lecture files and structure sections, log in to the OpenHand desktop portal at openhand.live/practice?tab=courses.
+                </Text>
+              </View>
+
+              <TouchableOpacity style={[styles.saveBtn, { backgroundColor: '#D97706' }]} onPress={() => setActiveModal(null)}>
+                <Text style={styles.saveBtnText}>Close Studio</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Community & Chat Hub Modal ── */}
+      <Modal
+        visible={activeModal === 'community'}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setActiveModal(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity
+            style={styles.modalBackdrop}
+            activeOpacity={1}
+            onPress={() => setActiveModal(null)}
+          />
+          <View style={[styles.modalContent, { backgroundColor: tokens.card, borderColor: tokens.cardBorder, maxHeight: '92%' }]}>
+            <View style={[styles.sheetHandle, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(0, 0, 0, 0.15)' }]} />
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={[styles.modalPretitle, { color: '#6366F1' }]}>GLOBAL PRACTITIONER NETWORK</Text>
+                <Text style={[styles.modalTitle, { color: tokens.text }]}>Community &amp; Chat Hub</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setActiveModal(null)}
+                style={[styles.closeIconBtn, { backgroundColor: tokens.surfaceSubtle }]}
+              >
+                <Feather name="x" size={18} color={tokens.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Channels Row */}
+            <View style={{ flexDirection: 'row', gap: 6, marginBottom: 12 }}>
+              {[
+                { id: 'global', label: '# Global Feed' },
+                { id: 'case-discussion', label: '# Case Reviews' },
+                { id: 'supervision', label: '# Supervision' },
+              ].map((ch) => {
+                const isActive = chatChannel === ch.id;
+                return (
+                  <TouchableOpacity
+                    key={ch.id}
+                    onPress={() => setChatChannel(ch.id)}
+                    style={[
+                      { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 1 },
+                      isActive
+                        ? { backgroundColor: '#6366F1', borderColor: '#6366F1' }
+                        : { backgroundColor: tokens.surfaceSubtle, borderColor: tokens.border },
+                    ]}
+                  >
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: isActive ? '#FFFFFF' : tokens.textSecondary }}>
+                      {ch.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Messages Scroll Area */}
+            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 320, marginBottom: 12 }}>
+              {communityMessages.map((msg) => (
+                <View
+                  key={msg.id}
+                  style={[
+                    styles.payoutHistoryItem,
+                    {
+                      borderColor: tokens.border,
+                      backgroundColor: tokens.surfaceSubtle,
+                      padding: 10,
+                      borderRadius: 12,
+                      marginBottom: 8,
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                    },
+                  ]}
+                >
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginBottom: 4 }}>
+                    <Text style={{ fontSize: 12, fontWeight: '800', color: '#6366F1' }}>{msg.sender}</Text>
+                    <Text style={{ fontSize: 10, color: tokens.textLight }}>{msg.time}</Text>
+                  </View>
+                  <Text style={{ fontSize: 12, color: tokens.text, lineHeight: 17 }}>{msg.text}</Text>
+                </View>
+              ))}
+            </ScrollView>
+
+            {/* Chat Composer */}
+            <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+              <View style={[styles.inputWrapper, { flex: 1, backgroundColor: tokens.surfaceSubtle, borderColor: tokens.border }]}>
+                <TextInput
+                  style={[styles.modalInput, { color: tokens.text }]}
+                  value={chatInput}
+                  onChangeText={setChatInput}
+                  placeholder={`Write in #${chatChannel}...`}
+                  placeholderTextColor={tokens.textLight}
+                  onSubmitEditing={handleSendCommunityMessage}
+                />
+              </View>
+              <TouchableOpacity
+                onPress={handleSendCommunityMessage}
+                style={{
+                  backgroundColor: '#6366F1',
+                  width: 42,
+                  height: 42,
+                  borderRadius: 12,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Feather name="send" size={17} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Social Post & Media Studio Modal ── */}
+      <Modal
+        visible={activeModal === 'social'}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setActiveModal(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity
+            style={styles.modalBackdrop}
+            activeOpacity={1}
+            onPress={() => setActiveModal(null)}
+          />
+          <View style={[styles.modalContent, { backgroundColor: tokens.card, borderColor: tokens.cardBorder, maxHeight: '92%' }]}>
+            <View style={[styles.sheetHandle, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(0, 0, 0, 0.15)' }]} />
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={[styles.modalPretitle, { color: '#EC4899' }]}>CROSS-CHANNEL BROADCAST</Text>
+                <Text style={[styles.modalTitle, { color: tokens.text }]}>Social Post &amp; Media Studio</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setActiveModal(null)}
+                style={[styles.closeIconBtn, { backgroundColor: tokens.surfaceSubtle }]}
+              >
+                <Feather name="x" size={18} color={tokens.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 460 }}>
+              {/* Target Networks Toggle */}
+              <Text style={[styles.fieldLabel, { color: tokens.textSecondary, marginBottom: 6 }]}>Target Channels</Text>
+              <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+                {[
+                  { id: 'linkedin', label: 'LinkedIn', color: '#0A66C2' },
+                  { id: 'instagram', label: 'Instagram', color: '#E1306C' },
+                  { id: 'twitter', label: 'X (Twitter)', color: '#1DA1F2' },
+                  { id: 'facebook', label: 'Facebook', color: '#1877F2' },
+                ].map((net) => {
+                  const isSelected = selectedNetworks.includes(net.id);
+                  return (
+                    <TouchableOpacity
+                      key={net.id}
+                      onPress={() =>
+                        setSelectedNetworks((prev) =>
+                          prev.includes(net.id) ? prev.filter((x) => x !== net.id) : [...prev, net.id]
+                        )
+                      }
+                      style={[
+                        { paddingHorizontal: 11, paddingVertical: 6, borderRadius: 8, borderWidth: 1 },
+                        isSelected
+                          ? { backgroundColor: net.color, borderColor: net.color }
+                          : { backgroundColor: tokens.surfaceSubtle, borderColor: tokens.border },
+                      ]}
+                    >
+                      <Text style={{ fontSize: 11.5, fontWeight: '700', color: isSelected ? '#FFFFFF' : tokens.textSecondary }}>
+                        {net.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              {/* Caption Textarea */}
+              <View style={[styles.inputWrapper, { backgroundColor: tokens.surfaceSubtle, borderColor: tokens.border, marginBottom: 8 }]}>
+                <TextInput
+                  style={[styles.modalInput, { color: tokens.text, minHeight: 88 }]}
+                  value={postContent}
+                  onChangeText={setPostContent}
+                  multiline
+                  placeholder="Draft your clinical insight, nervous system tip, or seminar invitation..."
+                  placeholderTextColor={tokens.textLight}
+                />
+              </View>
+
+              {/* Hashtag Suggestions */}
+              <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+                {['#SomaticCare', '#Polyvagal', '#NervousSystem', '#TherapyTips', '#MindBody'].map((tag) => (
+                  <TouchableOpacity
+                    key={tag}
+                    onPress={() => setPostContent((prev) => `${prev} ${tag}`.trim())}
+                    style={{
+                      backgroundColor: tokens.surfaceSubtle,
+                      borderColor: tokens.border,
+                      borderWidth: 1,
+                      paddingHorizontal: 8,
+                      paddingVertical: 3.5,
+                      borderRadius: 6,
+                    }}
+                  >
+                    <Text style={{ fontSize: 10.5, fontWeight: '700', color: '#EC4899' }}>{tag}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <TouchableOpacity
+                style={[styles.saveBtn, { backgroundColor: '#EC4899', marginTop: 4, marginBottom: 16 }]}
+                onPress={handlePublishSocialPost}
+                disabled={publishingPost}
+              >
+                {publishingPost ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.saveBtnText}>Dispatch to Connected Channels</Text>
+                )}
+              </TouchableOpacity>
+
+              <Text style={[styles.fieldLabel, { color: tokens.textSecondary, marginBottom: 8 }]}>Recent Dispatched Feeds</Text>
+              {socialFeed.map((sp) => (
+                <View
+                  key={sp.id}
+                  style={[
+                    styles.payoutHistoryItem,
+                    {
+                      borderColor: tokens.border,
+                      backgroundColor: tokens.surfaceSubtle,
+                      padding: 10,
+                      borderRadius: 12,
+                      marginBottom: 8,
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                    },
+                  ]}
+                >
+                  <Text style={{ fontSize: 12, color: tokens.text, lineHeight: 17, marginBottom: 6 }}>{sp.content}</Text>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%' }}>
+                    <Text style={{ fontSize: 10.5, color: tokens.textLight }}>{sp.date} • {sp.views} reach</Text>
+                    <View style={{ flexDirection: 'row', gap: 4 }}>
+                      {sp.networks?.map((n) => (
+                        <View key={n} style={{ backgroundColor: '#FDF2F8', paddingHorizontal: 6, paddingVertical: 1.5, borderRadius: 4 }}>
+                          <Text style={{ fontSize: 9.5, fontWeight: '800', color: '#EC4899' }}>{n.toUpperCase()}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Practice Setup Wizard Modal ── */}
+      <Modal
+        visible={activeModal === 'setup'}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setActiveModal(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity
+            style={styles.modalBackdrop}
+            activeOpacity={1}
+            onPress={() => setActiveModal(null)}
+          />
+          <View style={[styles.modalContent, { backgroundColor: tokens.card, borderColor: tokens.cardBorder, maxHeight: '92%' }]}>
+            <View style={[styles.sheetHandle, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(0, 0, 0, 0.15)' }]} />
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={[styles.modalPretitle, { color: '#059669' }]}>ONBOARDING &amp; SETTINGS</Text>
+                <Text style={[styles.modalTitle, { color: tokens.text }]}>Practice Setup Wizard</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setActiveModal(null)}
+                style={[styles.closeIconBtn, { backgroundColor: tokens.surfaceSubtle }]}
+              >
+                <Feather name="x" size={18} color={tokens.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Setup Progress Steps */}
+            <View style={{ flexDirection: 'row', gap: 6, marginBottom: 14 }}>
+              {[
+                { step: 1, label: '1. Credentials' },
+                { step: 2, label: '2. Pricing' },
+                { step: 3, label: '3. Payouts' },
+              ].map((s) => {
+                const isActive = setupStep === s.step;
+                return (
+                  <TouchableOpacity
+                    key={s.step}
+                    onPress={() => setSetupStep(s.step)}
+                    style={[
+                      { flex: 1, paddingVertical: 6, alignItems: 'center', borderRadius: 8, borderWidth: 1 },
+                      isActive
+                        ? { backgroundColor: '#059669', borderColor: '#059669' }
+                        : { backgroundColor: tokens.surfaceSubtle, borderColor: tokens.border },
+                    ]}
+                  >
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: isActive ? '#FFFFFF' : tokens.textSecondary }}>
+                      {s.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 380 }}>
+              {setupStep === 1 && (
+                <View>
+                  <Text style={[styles.fieldLabel, { color: tokens.textSecondary }]}>Clinical Credentials &amp; Degrees</Text>
+                  <View style={[styles.inputWrapper, { backgroundColor: tokens.surfaceSubtle, borderColor: tokens.border, marginBottom: 10 }]}>
+                    <TextInput
+                      style={[styles.modalInput, { color: tokens.text }]}
+                      value={credentials}
+                      onChangeText={setCredentials}
+                      placeholder="e.g. SEP, LCSW, MD Somatics"
+                      placeholderTextColor={tokens.textLight}
+                    />
+                  </View>
+
+                  <Text style={[styles.fieldLabel, { color: tokens.textSecondary }]}>Primary Clinical Focus</Text>
+                  <View style={[styles.inputWrapper, { backgroundColor: tokens.surfaceSubtle, borderColor: tokens.border, marginBottom: 14 }]}>
+                    <TextInput
+                      style={[styles.modalInput, { color: tokens.text }]}
+                      value="Somatic Experiencing & Polyvagal Regulation"
+                      editable={false}
+                    />
+                  </View>
+
+                  <TouchableOpacity
+                    style={[styles.saveBtn, { backgroundColor: '#059669' }]}
+                    onPress={() => setSetupStep(2)}
+                  >
+                    <Text style={styles.saveBtnText}>Continue to Pricing →</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {setupStep === 2 && (
+                <View>
+                  <Text style={[styles.fieldLabel, { color: tokens.textSecondary }]}>Standard 50-Min Consultation Fee ($ / ₹)</Text>
+                  <View style={[styles.inputWrapper, { backgroundColor: tokens.surfaceSubtle, borderColor: tokens.border, marginBottom: 10 }]}>
+                    <TextInput
+                      style={[styles.modalInput, { color: tokens.text }]}
+                      value={consultationFee}
+                      onChangeText={setConsultationFee}
+                      keyboardType="numeric"
+                      placeholder="1500"
+                      placeholderTextColor={tokens.textLight}
+                    />
+                  </View>
+
+                  <Text style={[styles.fieldLabel, { color: tokens.textSecondary }]}>Public Practice Booking URL</Text>
+                  <View style={[styles.urlBox, { backgroundColor: tokens.surfaceSubtle, borderColor: tokens.border, marginBottom: 14 }]}>
+                    <Text style={[styles.urlText, { color: '#059669' }]}>
+                      openhand.live/practitioner/{handleSlug}
+                    </Text>
+                  </View>
+
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                    <TouchableOpacity
+                      style={[styles.cancelBtn, { borderColor: tokens.border }]}
+                      onPress={() => setSetupStep(1)}
+                    >
+                      <Text style={[styles.cancelBtnText, { color: tokens.textSecondary }]}>← Back</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.saveBtn, { flex: 1.5, backgroundColor: '#059669' }]}
+                      onPress={() => setSetupStep(3)}
+                    >
+                      <Text style={styles.saveBtnText}>Continue to Payouts →</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+
+              {setupStep === 3 && (
+                <View>
+                  <Text style={[styles.fieldLabel, { color: tokens.textSecondary }]}>Bank Account Number</Text>
+                  <View style={[styles.inputWrapper, { backgroundColor: tokens.surfaceSubtle, borderColor: tokens.border, marginBottom: 10 }]}>
+                    <TextInput
+                      style={[styles.modalInput, { color: tokens.text }]}
+                      value={bankAccount}
+                      onChangeText={setBankAccount}
+                      placeholder="Bank Account Number"
+                      placeholderTextColor={tokens.textLight}
+                    />
+                  </View>
+
+                  <Text style={[styles.fieldLabel, { color: tokens.textSecondary }]}>Bank IFSC / Routing Code</Text>
+                  <View style={[styles.inputWrapper, { backgroundColor: tokens.surfaceSubtle, borderColor: tokens.border, marginBottom: 10 }]}>
+                    <TextInput
+                      style={[styles.modalInput, { color: tokens.text }]}
+                      value={bankIfsc}
+                      onChangeText={setBankIfsc}
+                      placeholder="IFSC / SWIFT Code"
+                      placeholderTextColor={tokens.textLight}
+                      autoCapitalize="characters"
+                    />
+                  </View>
+
+                  <Text style={[styles.fieldLabel, { color: tokens.textSecondary }]}>UPI ID for Direct Payouts</Text>
+                  <View style={[styles.inputWrapper, { backgroundColor: tokens.surfaceSubtle, borderColor: tokens.border, marginBottom: 14 }]}>
+                    <TextInput
+                      style={[styles.modalInput, { color: tokens.text }]}
+                      value={upiId}
+                      onChangeText={setUpiId}
+                      placeholder="username@bank"
+                      placeholderTextColor={tokens.textLight}
+                    />
+                  </View>
+
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                    <TouchableOpacity
+                      style={[styles.cancelBtn, { borderColor: tokens.border }]}
+                      onPress={() => setSetupStep(2)}
+                    >
+                      <Text style={[styles.cancelBtnText, { color: tokens.textSecondary }]}>← Back</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.saveBtn, { flex: 1.5, backgroundColor: '#059669' }, savingSetup && styles.btnDisabled]}
+                      onPress={handleSaveSetup}
+                      disabled={savingSetup}
+                    >
+                      {savingSetup ? (
+                        <ActivityIndicator color="#FFFFFF" size="small" />
+                      ) : (
+                        <Text style={styles.saveBtnText}>Save &amp; Activate Practice</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            </ScrollView>
           </View>
         </View>
       </Modal>

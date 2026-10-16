@@ -218,15 +218,15 @@ exports.signup = async (req, res) => {
 // Login controller for authenticating users
 exports.login = async (req, res) => {
   try {
-    // Get email and password from request body
-    const { email, password, accountType, role, expectedAccountType } = req.body
+    // Get email, password, and optional otp from request body
+    const { email, password, otp, accountType, role, expectedAccountType } = req.body
 
-    // Check if email or password is missing
-    if (!email || !password) {
+    // Check if email or both password and otp are missing
+    if (!email || (!password && !otp)) {
       // Return 400 Bad Request status code with error message
       return res.status(400).json({
         success: false,
-        message: `Please Fill up All the Required Fields`,
+        message: `Please provide your email and password or OTP.`,
       })
     }
 
@@ -326,8 +326,26 @@ exports.login = async (req, res) => {
       await user.save()
     }
 
-    // Generate JWT token and Compare Password
-    if (await bcrypt.compare(password, user.password)) {
+    // Authenticate via OTP or Password
+    let isCredentialValid = false
+    if (otp) {
+      const validOtp = await OTP.findOneAndDelete({
+        email: cleanEmail,
+        otp: String(otp).trim(),
+        createdAt: { $gt: new Date(Date.now() - 5 * 60 * 1000) },
+      }).sort({ createdAt: -1 })
+      if (!validOtp) {
+        return res.status(400).json({
+          success: false,
+          message: "The OTP is invalid or has expired. Please request a new OTP.",
+        })
+      }
+      isCredentialValid = true
+    } else if (password) {
+      isCredentialValid = await bcrypt.compare(password, user.password)
+    }
+
+    if (isCredentialValid) {
       // Check if learner account has learnerId; auto-assign if missing
       const isLearner = user.accountType === "Learner" || user.accountType === "Client" || user.accountType === "Student"
       if (isLearner && !user.learnerId) {
@@ -638,7 +656,7 @@ exports.socialLogin = async (req, res) => {
 // Send OTP For Email Verification
 exports.sendotp = async (req, res) => {
   try {
-    const { email } = req.body
+    const { email, mode = "signup" } = req.body
 
     const cleanEmail = String(email || "").trim().toLowerCase()
 
@@ -654,13 +672,22 @@ exports.sendotp = async (req, res) => {
       email: { $regex: new RegExp("^" + cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "$", "i") },
     })
 
-    // If user found with provided email
-    if (checkUserPresent) {
-      // Return 400 Bad Request status code with descriptive message
-      return res.status(400).json({
-        success: false,
-        message: "This email is already registered. Each account requires a unique email address. Please sign in or use another email to register.",
-      })
+    if (mode === "login") {
+      // Login mode: user MUST exist
+      if (!checkUserPresent) {
+        return res.status(404).json({
+          success: false,
+          message: "No account found with this email. Please check your email or apply as a Practitioner.",
+        })
+      }
+    } else {
+      // Signup mode: email must NOT already be registered
+      if (checkUserPresent) {
+        return res.status(400).json({
+          success: false,
+          message: "This email is already registered. Each account requires a unique email address. Please sign in or use another email to register.",
+        })
+      }
     }
 
     let otp = otpGenerator.generate(6, {

@@ -22,6 +22,7 @@ export default function PractitionerTabNavigator() {
   const isIOS = Platform.OS === 'ios';
 
   // Safe area & platform spacing
+  const safeBottom = insets?.bottom || 0;
   const tabPaddingBottom = isWeb ? 16 : (safeBottom > 0 ? safeBottom + 4 : 10);
   const tabHeight = isWeb ? 84 : (isIOS ? 88 : 72 + safeBottom);
 

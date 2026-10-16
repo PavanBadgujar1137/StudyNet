@@ -40,8 +40,8 @@ export default function SignupScreen({ navigation }) {
       setErrorMessage('Please enter a valid practitioner email.');
       return;
     }
-    if (password.length < 6) {
-      setErrorMessage('Password must be at least 6 characters.');
+    if (password.length < 8) {
+      setErrorMessage('Password must be at least 8 characters long.');
       return;
     }
     if (password !== confirmPassword) {
@@ -52,7 +52,7 @@ export default function SignupScreen({ navigation }) {
     setErrorMessage('');
     setLoading(true);
 
-    const res = await sendOtp(email.trim());
+    const res = await sendOtp(email.trim(), 'signup');
     setLoading(false);
 
     if (res.success) {
