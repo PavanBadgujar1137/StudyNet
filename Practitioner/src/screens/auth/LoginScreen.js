@@ -17,7 +17,7 @@ import { useAppTheme } from '../../context/ThemeContext';
 
 export default function LoginScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const { login, enterDemoMode } = useAuth();
+  const { login } = useAuth();
   const { isDark, toggleTheme, tokens } = useAppTheme();
 
   const [email, setEmail] = useState('');
@@ -48,11 +48,6 @@ export default function LoginScreen({ navigation }) {
     }
   };
 
-  const handleQuickDemo = async () => {
-    setLoading(true);
-    await enterDemoMode();
-    setLoading(false);
-  };
 
   return (
     <KeyboardAvoidingView
@@ -273,25 +268,6 @@ export default function LoginScreen({ navigation }) {
               )}
             </TouchableOpacity>
 
-            {/* Divider */}
-            <View style={styles.dividerRow}>
-              <View style={[styles.dividerLine, { backgroundColor: tokens.border }]} />
-              <Text style={[styles.dividerText, { color: tokens.textMuted }]}>or preview instantly</Text>
-              <View style={[styles.dividerLine, { backgroundColor: tokens.border }]} />
-            </View>
-
-            {/* Quick Demo Preview Button */}
-            <TouchableOpacity
-              style={[styles.demoButton, isDark && styles.demoButtonDark]}
-              onPress={handleQuickDemo}
-              disabled={loading}
-              activeOpacity={0.85}
-            >
-              <Ionicons name="sparkles" size={15} color={isDark ? '#A78BFA' : '#7C3AED'} />
-              <Text style={[styles.demoButtonText, isDark && { color: '#C4B5FD' }]}>
-                Quick Preview Demo (Dr. Evelyn Vance)
-              </Text>
-            </TouchableOpacity>
 
             {/* Create Account Link */}
             <View style={styles.signupWrap}>

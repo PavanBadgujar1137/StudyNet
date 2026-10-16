@@ -82,6 +82,12 @@ export const SecureStoreService = {
     try {
       await store.deleteItemAsync(TOKEN_KEY);
       await store.deleteItemAsync(USER_KEY);
+      if (typeof localStorage !== 'undefined') {
+        try {
+          localStorage.removeItem(TOKEN_KEY);
+          localStorage.removeItem(USER_KEY);
+        } catch (_) {}
+      }
     } catch (e) {
       console.warn('SecureStore clearAll error:', e.message);
     }

@@ -199,10 +199,14 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await SecureStoreService.clearAll();
-      setToken(null);
-      setUser(null);
+      if (apiClient.defaults?.headers?.common) {
+        delete apiClient.defaults.headers.common['Authorization'];
+      }
     } catch (e) {
       console.warn('Logout error:', e.message);
+    } finally {
+      setToken(null);
+      setUser(null);
     }
   };
 
