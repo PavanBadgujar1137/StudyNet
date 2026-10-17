@@ -38,11 +38,22 @@
       "platformDomain": "openhand.live",
       "cloudfrontDomain": "d2ruooz1ktuxdd.cloudfront.net",
       "eas": {
-        "projectId": ""
+        "projectId": "b08728dd-674d-456c-80f3-f799f7b4aaaa"
       }
     },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/b08728dd-674d-456c-80f3-f799f7b4aaaa"
+    },
     "plugins": [
-      "expo-font"
-    ]
+      "expo-font",
+      "expo-updates"
+    ],
+    "owner": "rashid_khopatkar"
   }
 }

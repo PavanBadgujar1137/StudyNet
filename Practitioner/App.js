@@ -1,7 +1,9 @@
 import React from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Platform, useWindowDimensions } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Platform, useWindowDimensions, StatusBar as NativeStatusBar } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFonts } from 'expo-font';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import { ThemeProvider, useAppTheme } from './src/context/ThemeContext';
 import { AuthProvider } from './src/context/AuthContext';
 import RootNavigator from './src/navigation/RootNavigator';
@@ -39,8 +41,13 @@ class ErrorBoundary extends React.Component {
 
 function AppContent() {
   const { width } = useWindowDimensions();
-  const { isDark } = useAppTheme();
+  const { isDark, tokens } = useAppTheme();
+  const insets = useSafeAreaInsets();
   const isWebWide = Platform.OS === 'web' && width > 500;
+
+  // On native mobile devices, compute status bar safe inset so content begins cleanly below system icons
+  const androidStatusBar = Platform.OS === 'android' ? (NativeStatusBar.currentHeight || 0) : 0;
+  const topInset = Platform.OS === 'web' ? 0 : Math.max(insets?.top || 0, androidStatusBar);
 
   return (
     <>
@@ -48,7 +55,9 @@ function AppContent() {
       <View
         style={[
           styles.root,
+          { backgroundColor: tokens.backgroundSolid },
           isDark && styles.rootDark,
+          isDark && { backgroundColor: tokens.backgroundSolid },
           isWebWide && styles.webOuter,
         ]}
       >
@@ -64,8 +73,11 @@ function AppContent() {
         <View
           style={[
             styles.appContainer,
+            { backgroundColor: tokens.backgroundSolid, paddingTop: topInset },
             isDark && styles.appContainerDark,
+            isDark && { backgroundColor: tokens.backgroundSolid },
             isWebWide && styles.webFrame,
+            isWebWide && { paddingTop: 0 },
           ]}
         >
           {isWebWide && (
@@ -85,6 +97,15 @@ function AppContent() {
 }
 
 export default function App() {
+  const [fontsLoaded, fontError] = useFonts({
+    ...Ionicons.font,
+    ...Feather.font,
+  });
+
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
+
   return (
     <SafeAreaProvider>
       <ThemeProvider>
