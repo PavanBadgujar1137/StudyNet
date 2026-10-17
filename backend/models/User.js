@@ -154,6 +154,29 @@ const userSchema = new mongoose.Schema(
     deletionEffectiveDate: {
       type: Date,
     },
+    // Notification channel preferences (WhatsApp + Email)
+    notificationPreferences: {
+      circleChatEmail: {
+        type: Boolean,
+        default: true,
+      },
+      circleChatWhatsApp: {
+        type: Boolean,
+        default: true,
+      },
+      sessionEmail: {
+        type: Boolean,
+        default: true,
+      },
+      sessionWhatsApp: {
+        type: Boolean,
+        default: true,
+      },
+      courseUpdates: {
+        type: Boolean,
+        default: true,
+      },
+    },
   },
   { timestamps: true }
 )

@@ -30,6 +30,9 @@ export const settingsEndpoints = {
   UPDATE_PROFILE_API: BASE_URL + "/profile/updateProfile",
   CHANGE_PASSWORD_API: BASE_URL + "/auth/changepassword",
   DELETE_PROFILE_API: BASE_URL + "/profile/deleteProfile",
+  GET_NOTIFICATION_PREFERENCES_API: BASE_URL + "/profile/notification-preferences",
+  UPDATE_NOTIFICATION_PREFERENCES_API: BASE_URL + "/profile/notification-preferences",
+  SEND_TEST_NOTIFICATION_API: BASE_URL + "/profile/test-notification",
 }
 
 // LIVE CLASS ENDPOINTS (Phase 2)

@@ -33,16 +33,30 @@ const resolveLinkedInRedirectUri = (req) => {
   return `${frontendUrl.replace(/\/$/, "")}/social-callback`
 }
 
+// Helper to truncate text cleanly for Twitter's 280-character limit
+const formatTweetText = (caption, hasUrl = true) => {
+  if (!caption) return ""
+  const maxLen = hasUrl ? 245 : 275
+  if (caption.length <= maxLen) return caption
+  const truncated = caption.slice(0, maxLen)
+  const lastSpace = truncated.lastIndexOf(" ")
+  return (lastSpace > 180 ? truncated.slice(0, lastSpace) : truncated) + "..."
+}
+
 // Helper function to build web share intents
 const generateShareIntents = (caption, mediaUrl) => {
-  const encodedText = encodeURIComponent(caption || "")
   const domain = process.env.PUBLIC_DOMAIN || "https://openhand.live"
-  const encodedUrl = encodeURIComponent(mediaUrl || domain)
+  const shareTargetUrl = mediaUrl || domain
+  const encodedUrl = encodeURIComponent(shareTargetUrl)
+  const encodedText = encodeURIComponent(caption || "")
+  const tweetText = formatTweetText(caption, Boolean(shareTargetUrl))
+  const encodedTweet = encodeURIComponent(tweetText)
 
   return {
     instagram: "https://www.instagram.com/",
-    twitter: `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`,
-    linkedin: `https://www.linkedin.com/feed/?shareActive=true&text=${encodedText}%20${encodedUrl}`,
+    twitter: `https://twitter.com/intent/tweet?text=${encodedTweet}&url=${encodedUrl}`,
+    linkedin: `https://www.linkedin.com/feed/?shareActive=true&text=${encodedText}`,
+    linkedinShare: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
     facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedText}`,
     whatsapp: `https://api.whatsapp.com/send?text=${encodedText}%20${encodedUrl}`,
   }

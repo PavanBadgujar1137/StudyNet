@@ -12,6 +12,9 @@ const {
   getClientDashboardData,
   getPractitionerDashboardData,
   updatePractitionerProfileDetails,
+  getNotificationPreferences,
+  updateNotificationPreferences,
+  sendTestNotification,
 } = require("../controllers/profile")
 
 // ********************************************************************************************************
@@ -22,6 +25,10 @@ router.delete("/deleteProfile", auth, deleteAccount)
 router.put("/updateProfile", auth, updateProfile)
 router.put("/practitioner-details", auth, updatePractitionerProfileDetails)
 router.get("/getUserDetails", auth, getAllUserDetails)
+// Notification Preferences (WhatsApp + Email)
+router.get("/notification-preferences", auth, getNotificationPreferences)
+router.put("/notification-preferences", auth, updateNotificationPreferences)
+router.post("/test-notification", auth, sendTestNotification)
 // Get Enrolled Courses
 router.get("/getEnrolledCourses", auth, getEnrolledCourses)
 router.put("/updateDisplayPicture", auth, updateDisplayPicture)

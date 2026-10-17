@@ -10,6 +10,9 @@ const {
   UPDATE_PROFILE_API,
   CHANGE_PASSWORD_API,
   DELETE_PROFILE_API,
+  GET_NOTIFICATION_PREFERENCES_API,
+  UPDATE_NOTIFICATION_PREFERENCES_API,
+  SEND_TEST_NOTIFICATION_API,
 } = settingsEndpoints
 
 export function updateDisplayPicture(token, formData) {
@@ -130,6 +133,81 @@ export function deleteProfile(token, onSuccess) {
       toast.error(errorMsg, { id: toastId })
       throw error
     }
+  }
+}
+
+export async function getNotificationPreferences(token) {
+  try {
+    const response = await apiConnector(
+      "GET",
+      GET_NOTIFICATION_PREFERENCES_API,
+      null,
+      { Authorization: `Bearer ${token}` }
+    )
+    if (!response?.data?.success) {
+      throw new Error(response?.data?.message || "Could not fetch notification preferences")
+    }
+    return response.data.data
+  } catch (error) {
+    console.error("getNotificationPreferences error:", error)
+    return null
+  }
+}
+
+export function updateNotificationPreferences(token, data) {
+  return async (dispatch) => {
+    const toastId = toast.loading("Saving notification preferences...")
+    try {
+      const response = await apiConnector(
+        "PUT",
+        UPDATE_NOTIFICATION_PREFERENCES_API,
+        data,
+        { Authorization: `Bearer ${token}` }
+      )
+
+      if (!response?.data?.success) {
+        throw new Error(response?.data?.message || "Could not update notification preferences")
+      }
+
+      if (response.data.data) {
+        const userImage = (response.data.data.image && !response.data.data.image.includes('dicebear'))
+          ? response.data.data.image
+          : ''
+        dispatch(setUser({ ...response.data.data, image: userImage }))
+      }
+
+      toast.success("Notification preferences saved!", { id: toastId })
+      return response.data
+    } catch (error) {
+      console.error("updateNotificationPreferences error:", error)
+      const errorMsg = error?.response?.data?.message || error?.message || "Failed to save preferences"
+      toast.error(errorMsg, { id: toastId })
+      throw error
+    }
+  }
+}
+
+export async function sendTestNotification(token, channel = "all") {
+  const toastId = toast.loading(`Sending test ${channel} notification...`)
+  try {
+    const response = await apiConnector(
+      "POST",
+      SEND_TEST_NOTIFICATION_API,
+      { channel },
+      { Authorization: `Bearer ${token}` }
+    )
+
+    if (!response?.data?.success) {
+      throw new Error(response?.data?.message || "Test notification failed")
+    }
+
+    toast.success("Test notification dispatched! Check your device.", { id: toastId, duration: 4500 })
+    return response.data
+  } catch (error) {
+    console.error("sendTestNotification error:", error)
+    const errorMsg = error?.response?.data?.message || error?.message || "Could not send test notification"
+    toast.error(errorMsg, { id: toastId })
+    throw error
   }
 }
 

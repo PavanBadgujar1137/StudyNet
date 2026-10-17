@@ -641,13 +641,30 @@ exports.getPractitionerDashboard = async (req, res) => {
 exports.getPayoutsAndInvoices = async (req, res) => {
   try {
     const userId = req.user.id
-    const payouts = await Payout.find({ practitioner: userId }).sort({ createdAt: -1 })
-    const invoices = await Invoice.find({ practitioner: userId }).sort({ createdAt: -1 })
+    const [payouts, invoices, profile] = await Promise.all([
+      Payout.find({ practitioner: userId }).sort({ createdAt: -1 }).lean(),
+      Invoice.find({ practitioner: userId }).sort({ createdAt: -1 }).lean(),
+      PractitionerProfile.findOne({ user: userId }).lean(),
+    ])
+
+    const { hasValidBankDetails } = require("../services/autopayService")
+    const hasBank = hasValidBankDetails(profile)
 
     return res.status(200).json({
       success: true,
       payouts,
       invoices,
+      bankDetails: {
+        hasBankDetails: hasBank,
+        bankAccountName: profile?.bankAccountName || "",
+        bankAccountNumber: profile?.bankAccountNumber || "",
+        bankAccountNumberMasked: profile?.bankAccountNumber ? `•••• ${profile.bankAccountNumber.slice(-4)}` : (profile?.upiId || ""),
+        bankName: profile?.bankName || "",
+        bankIfscCode: profile?.bankIfscCode || "",
+        upiId: profile?.upiId || "",
+        payoutMethod: profile?.payoutMethod || "bank",
+        payoutCountry: profile?.payoutCountry || "India",
+      },
     })
   } catch (error) {
     return res.status(500).json({
@@ -824,6 +841,22 @@ exports.connectClientWithPractitioner = async (req, res) => {
     })
 
     // 3. Create Payout record crediting practitioner (Automated 72-Hour PayGlocal Direct Transfer)
+    const { hasValidBankDetails, notifyPendingBankDetails } = require("../services/autopayService")
+    const hasBank = hasValidBankDetails(profile)
+    const scheduledPayoutAt = new Date(Date.now() + 72 * 60 * 60 * 1000)
+
+    const bankSnapshot = profile ? {
+      accountHolderName: profile.bankAccountName || `${practUser.firstName} ${practUser.lastName}`.trim(),
+      accountNumberMasked: profile.bankAccountNumber ? `•••• ${profile.bankAccountNumber.slice(-4)}` : (profile.upiId || ""),
+      bankName: profile.bankName || (profile.upiId ? "UPI Virtual Payment Address" : "Registered Bank"),
+      ifsc: profile.bankIfscCode || "",
+      upiId: profile.upiId || "",
+      iban: profile.bankIban || "",
+      swift: profile.bankSwiftBic || "",
+      country: profile.payoutCountry || "India",
+      payoutMethod: profile.payoutMethod || (profile.upiId ? "upi" : "bank"),
+    } : {}
+
     const payout = await Payout.create({
       practitioner: practUser._id,
       amount: grossAmount,
@@ -832,14 +865,23 @@ exports.connectClientWithPractitioner = async (req, res) => {
       taxDeducted: taxDeducted,
       commissionDeducted: platformFee + taxDeducted,
       netAmount: netPayout,
-      status: "processing",
+      status: hasBank ? "processing" : "pending_bank_details",
+      failureReason: hasBank ? "" : "Practitioner bank account or UPI details missing",
       settlementWindowHours: 72,
-      settledAt: new Date(Date.now() + 72 * 60 * 60 * 1000), // Automated 72-hour payout
+      scheduledPayoutAt,
       payoutMethod: "payglocal_direct_transfer",
+      bankDetails: bankSnapshot,
       sourceType: "session",
       sourceId: booking._id.toString(),
+      sourceTitle: targetOffer?.title || "1:1 Counseling & Healing Session",
       bookingsCount: 1,
     })
+
+    if (!hasBank) {
+      notifyPendingBankDetails(practUser._id, netPayout, targetOffer?.title).catch((e) =>
+        console.warn("[Autopay] notifyPendingBankDetails warning:", e.message)
+      )
+    }
 
     // 4. Create Invoice record
     const invoiceNum = `OH-${Date.now().toString().slice(-6)}`
@@ -1090,9 +1132,30 @@ exports.updateBankDetails = async (req, res) => {
 
     await profile.save()
 
+    // Automatically trigger autopay for any pending payouts if past 72 hours, or update status from pending_bank_details to processing
+    try {
+      const { executeAutopayForPayout } = require("../services/autopayService")
+      const pendingPayouts = await Payout.find({
+        practitioner: userId,
+        status: "pending_bank_details",
+      })
+
+      for (const p of pendingPayouts) {
+        if (p.scheduledPayoutAt <= new Date() || p.createdAt <= new Date(Date.now() - 72 * 60 * 60 * 1000)) {
+          await executeAutopayForPayout(p._id, "autopay_scheduler")
+        } else {
+          p.status = "processing"
+          p.failureReason = ""
+          await p.save()
+        }
+      }
+    } catch (autoErr) {
+      console.warn("Error resolving pending payouts after bank update:", autoErr.message)
+    }
+
     return res.status(200).json({
       success: true,
-      message: "Bank & payout details updated successfully",
+      message: "Bank & payout details updated successfully. Pending 72-hour payouts synced.",
       bankDetails: {
         payoutCountry: profile.payoutCountry,
         payoutMethod: profile.payoutMethod,

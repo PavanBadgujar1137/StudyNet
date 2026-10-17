@@ -1464,3 +1464,65 @@ exports.setPractitionerOfTheMonthRank = async (req, res) => {
     return res.status(500).json({ success: false, message: error.message || "Failed to assign rank" })
   }
 }
+
+// ─── 72-Hour Autopay Payout Engine (Admin Control & Overview) ─────────────────
+exports.getAutopayOverview = async (req, res) => {
+  try {
+    const { getAutopayMetrics } = require("../services/autopayService")
+    const metrics = await getAutopayMetrics()
+    return res.status(200).json({
+      success: true,
+      metrics,
+    })
+  } catch (error) {
+    console.error("getAutopayOverview error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+exports.runAutopayBatch = async (req, res) => {
+  try {
+    const { processEligibleAutopays } = require("../services/autopayService")
+    const result = await processEligibleAutopays()
+    return res.status(200).json({
+      success: true,
+      message: `Autopay batch completed: ${result.settledCount} settled directly to practitioner bank accounts (₹${Number(result.totalSettledAmount || 0).toLocaleString("en-IN")}), ${result.pendingBankCount} pending bank info.`,
+      result,
+    })
+  } catch (error) {
+    console.error("runAutopayBatch error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+exports.disburseInstantPayout = async (req, res) => {
+  try {
+    const { payoutId } = req.body
+    if (!payoutId) {
+      return res.status(400).json({ success: false, message: "payoutId is required" })
+    }
+
+    const { executeAutopayForPayout } = require("../services/autopayService")
+    const result = await executeAutopayForPayout(payoutId, "instant_transfer")
+
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        message: result.reason === "missing_bank_details"
+          ? "Cannot disburse: Practitioner has not added bank, UPI, or IBAN details yet."
+          : `Payout disbursement failed: ${result.reason || result.error}`,
+      })
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `Direct payout of ₹${Number(result.payout.netAmount).toLocaleString("en-IN")} successfully disbursed to practitioner bank account (UTR: ${result.utr})`,
+      payout: result.payout,
+      utr: result.utr,
+    })
+  } catch (error) {
+    console.error("disburseInstantPayout error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+

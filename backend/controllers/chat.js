@@ -187,6 +187,21 @@ exports.sendPractitionerGroupMessage = async (req, res) => {
       .populate("sender", "firstName lastName image accountType")
       .lean()
 
+    // Dispatch instant WhatsApp + Email notifications to circle members & facilitator
+    try {
+      const { sendCircleChatMessageNotification } = require("../services/notificationService")
+      sendCircleChatMessageNotification({
+        circleIdOrTarget: practitionerId,
+        senderId,
+        messageContent: content,
+        attachments: parsedAttachments,
+      }).catch((notifErr) => {
+        console.warn("[ChatController] Circle notification trigger warning:", notifErr.message)
+      })
+    } catch (notifImportErr) {
+      console.warn("[ChatController] Failed to import notificationService:", notifImportErr.message)
+    }
+
     return res.status(201).json({
       success: true,
       data: populatedMessage,

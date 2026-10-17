@@ -75,6 +75,9 @@ exports.updateProfile = async (req, res) => {
     } else if (contactNumber) {
       updateUserData.whatsappNumber = contactNumber.replace(/\s+/g, "")
     }
+    if (req.body.notificationPreferences && typeof req.body.notificationPreferences === "object") {
+      updateUserData.notificationPreferences = req.body.notificationPreferences
+    }
 
     await User.findByIdAndUpdate(id, updateUserData, { new: true })
 
@@ -663,6 +666,17 @@ exports.getPractitionerDashboardData = async (req, res) => {
         circles,
         payouts,
         invoices,
+        bankDetails: {
+          hasBankDetails: Boolean(profile?.bankAccountNumber || profile?.upiId || profile?.bankIban),
+          bankAccountName: profile?.bankAccountName || "",
+          bankAccountNumber: profile?.bankAccountNumber || "",
+          bankAccountNumberMasked: profile?.bankAccountNumber ? `•••• ${profile.bankAccountNumber.slice(-4)}` : (profile?.upiId || ""),
+          bankName: profile?.bankName || "",
+          bankIfscCode: profile?.bankIfscCode || "",
+          upiId: profile?.upiId || "",
+          payoutMethod: profile?.payoutMethod || "bank",
+          payoutCountry: profile?.payoutCountry || "India",
+        },
         clients: dynamicClients,
         pendingNotes,
         reviews: practitionerReviews,
@@ -725,4 +739,137 @@ exports.updatePractitionerProfileDetails = async (req, res) => {
     return res.status(500).json({ success: false, message: error.message })
   }
 }
+
+// Get Notification Preferences
+exports.getNotificationPreferences = async (req, res) => {
+  try {
+    const userId = req.user.id
+    const user = await User.findById(userId).populate("additionalDetails").lean()
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" })
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        notificationPreferences: user.notificationPreferences || {
+          circleChatWhatsApp: true,
+          circleChatEmail: true,
+          sessionWhatsApp: true,
+          sessionEmail: true,
+          courseUpdates: true,
+        },
+        whatsappNumber: user.whatsappNumber || user.contactNumber || user.additionalDetails?.contactNumber || "",
+        email: user.email,
+      },
+    })
+  } catch (error) {
+    console.error("getNotificationPreferences error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// Update Notification Preferences (Circle Chat WhatsApp & Email, Session Reminders, etc.)
+exports.updateNotificationPreferences = async (req, res) => {
+  try {
+    const userId = req.user.id
+    const { notificationPreferences, whatsappNumber } = req.body
+
+    const user = await User.findById(userId)
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" })
+    }
+
+    if (notificationPreferences && typeof notificationPreferences === "object") {
+      user.notificationPreferences = {
+        ...((user.notificationPreferences && user.notificationPreferences.toObject)
+          ? user.notificationPreferences.toObject()
+          : user.notificationPreferences || {}),
+        ...notificationPreferences,
+      }
+    }
+
+    if (whatsappNumber !== undefined) {
+      user.whatsappNumber = String(whatsappNumber).trim()
+    }
+
+    await user.save()
+
+    const updatedUser = await User.findById(userId)
+      .populate("additionalDetails")
+      .lean()
+
+    return res.status(200).json({
+      success: true,
+      message: "Notification preferences updated successfully!",
+      data: updatedUser,
+    })
+  } catch (error) {
+    console.error("updateNotificationPreferences error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// Send test notification (WhatsApp / Email)
+exports.sendTestNotification = async (req, res) => {
+  try {
+    const userId = req.user.id
+    const { channel = "all" } = req.body // "all" | "whatsapp" | "email"
+
+    const user = await User.findById(userId).populate("additionalDetails")
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" })
+    }
+
+    const { sendWhatsAppMessage } = require("../utils/whatsappSender")
+    const mailSender = require("../utils/mailSender")
+
+    let phone = user.whatsappNumber || user.contactNumber || user.additionalDetails?.contactNumber
+    let email = user.email
+
+    let results = { email: null, whatsapp: null }
+
+    if ((channel === "all" || channel === "whatsapp") && phone) {
+      try {
+        const waRes = await sendWhatsAppMessage(
+          phone,
+          `🌿 *OpenHand — Test Notification*\n\nHello ${user.firstName || "Member"}! 🎉 Your WhatsApp notification channel is successfully connected and verified.\n\nYou will receive instant alerts for Circle discussions, scheduled sessions, and learning updates.\n\nOpenHand Support Team`
+        )
+        results.whatsapp = waRes?.success ? "sent" : (waRes?.disabled ? "disabled" : "failed")
+      } catch (e) {
+        results.whatsapp = "error: " + e.message
+      }
+    }
+
+    if ((channel === "all" || channel === "email") && email) {
+      try {
+        await mailSender(
+          email,
+          "🔔 OpenHand — Test Notification Alert",
+          `<div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 24px; border: 1px solid #E2E8F0; border-radius: 12px; background: #fff;">
+            <h2 style="color: #0F172A; margin-top: 0;">Open<span style="color: #2563EB;">Hand</span> Alert Verification</h2>
+            <p style="color: #475569; font-size: 15px;">Hello <strong>${user.firstName || "Member"}</strong>,</p>
+            <p style="color: #475569; font-size: 14px; line-height: 1.6;">Your email notifications for OpenHand are active and verified. You will receive updates on Circle discussions, session reminders, and video lecture additions.</p>
+            <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 12px; color: #166534; font-size: 13px;">
+              ✅ Test notification delivered successfully.
+            </div>
+          </div>`
+        )
+        results.email = "sent"
+      } catch (e) {
+        results.email = "error: " + e.message
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Test notifications dispatched!",
+      results,
+    })
+  } catch (error) {
+    console.error("sendTestNotification error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
 
