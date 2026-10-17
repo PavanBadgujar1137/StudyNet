@@ -11,14 +11,21 @@ import {
   Alert,
   RefreshControl,
   Platform,
+  StatusBar as NativeStatusBar,
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import apiClient from '../../api/apiClient';
 import { ENDPOINTS } from '../../api/endpoints';
 import { useAppTheme } from '../../context/ThemeContext';
 
 export default function LiveRoomTabScreen() {
   const { isDark, tokens } = useAppTheme();
+  const insets = useSafeAreaInsets();
+  // Reliable status-bar-aware top inset for Android & iOS
+  const topInset = Platform.OS === 'web'
+    ? 0
+    : Math.max(insets?.top || 0, Platform.OS === 'android' ? (NativeStatusBar.currentHeight || 0) : 0);
 
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -182,7 +189,7 @@ export default function LiveRoomTabScreen() {
   return (
     <View style={[styles.container, { backgroundColor: tokens.backgroundSolid }]}>
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingTop: topInset + 8 }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -539,7 +546,6 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 18,
-    paddingTop: Platform.OS === 'ios' ? 12 : 16,
     paddingBottom: 40,
   },
   headerRow: {

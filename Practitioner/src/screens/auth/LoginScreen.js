@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StatusBar as NativeStatusBar,
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,6 +20,10 @@ export default function LoginScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const { login } = useAuth();
   const { isDark, toggleTheme, tokens } = useAppTheme();
+  // Reliable status-bar-aware top inset for Android & iOS
+  const topInset = Platform.OS === 'web'
+    ? 0
+    : Math.max(insets?.top || 0, Platform.OS === 'android' ? (NativeStatusBar.currentHeight || 0) : 0);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -67,7 +72,7 @@ export default function LoginScreen({ navigation }) {
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingTop: 16, paddingBottom: Math.max(insets?.bottom || 0, 24) },
+          { paddingTop: topInset + 8, paddingBottom: Math.max(insets?.bottom || 0, 24) },
         ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}

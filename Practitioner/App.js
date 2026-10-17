@@ -1,7 +1,7 @@
 import React from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Platform, useWindowDimensions, StatusBar as NativeStatusBar } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Platform, useWindowDimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { ThemeProvider, useAppTheme } from './src/context/ThemeContext';
@@ -42,12 +42,7 @@ class ErrorBoundary extends React.Component {
 function AppContent() {
   const { width } = useWindowDimensions();
   const { isDark, tokens } = useAppTheme();
-  const insets = useSafeAreaInsets();
   const isWebWide = Platform.OS === 'web' && width > 500;
-
-  // On native mobile devices, compute status bar safe inset so content begins cleanly below system icons
-  const androidStatusBar = Platform.OS === 'android' ? (NativeStatusBar.currentHeight || 0) : 0;
-  const topInset = Platform.OS === 'web' ? 0 : Math.max(insets?.top || 0, androidStatusBar);
 
   return (
     <>
@@ -71,9 +66,9 @@ function AppContent() {
         )}
 
         <View
-          style={[
+        style={[
             styles.appContainer,
-            { backgroundColor: tokens.backgroundSolid, paddingTop: topInset },
+            { backgroundColor: tokens.backgroundSolid },
             isDark && styles.appContainerDark,
             isDark && { backgroundColor: tokens.backgroundSolid },
             isWebWide && styles.webFrame,
