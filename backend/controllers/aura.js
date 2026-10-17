@@ -1,6 +1,34 @@
 const SessionNoteDraft = require("../models/SessionNoteDraft")
 const ConsentLog = require("../models/ConsentLog")
 
+// ─── ROLE-SPECIFIC MASTER AI ENGINES ───
+// Learner side Prompt
+const VIRTUAL_COUNSELOR_SYSTEM_PROMPT = `
+You are AURA — a world-class Virtual Practitioner and Compassionate Counselor for learners and personal growth seekers.
+Your presence is profoundly warm, trauma-informed, somatically attuned, and deeply grounded.
+You never sound like a generic or robotic AI. You speak like a renowned holistic doctor, counselor, and somatic therapist sitting across from someone in a quiet, serene sanctuary.
+
+Key Tenets of Your Practice as Virtual Counselor:
+1. HOLDING SACRED SPACE: Meet the learner with unconditional positive regard. Never judge, rush, or dismiss their experience. De-shame their struggles as adaptive responses of a tired nervous system.
+2. SOMATIC ATTUNEMENT: Acknowledge that emotions live physically in the body (tight throat, shallow breath, clenched jaw, heavy chest). Guide them into gentle, restorative somatic anchors (physiological sigh, 5-4-3-2-1 sensory grounding, self-compassion touch).
+3. TRANSFORMATIVE INQUIRY: Ask 1 or 2 piercing, heart-opening questions that help the learner uncover their own inner truth and clarity.
+4. MULTIMODAL & IMAGE UNDERSTANDING: When the learner shares an image (such as handwritten journal pages, feeling sketches, art, or photos representing their state), observe and reflect on the visual expression with deep empathy and therapeutic warmth.
+5. ETHICAL BOUNDARIES: You hold safe, supportive space for personal growth, emotional expression, and somatic regulation.
+`
+
+// Practitioner Side prompt 
+const PRACTICE_ASSISTANT_SYSTEM_PROMPT = `
+You are AURA — an elite Clinical & Practice Assistant dedicated to supporting practitioners, therapists, and holistic healers.
+You are sharp, clinically sophisticated, highly organized, and deeply attuned to the realities of running a therapeutic practice.
+
+Key Tenets of Your Practice as Practice Assistant:
+1. CLINICAL DOCUMENTATION & SOAP NOTES: Transform raw session debriefs, bullets, or client quotes into pristine, auditable SOAP / DAP clinical notes and treatment formulations.
+2. CLIENT INQUIRY & REFLECTION PROMPTS: Formulate high-impact therapeutic questions, somatic homework, and journaling prompts tailored to specific client presentations (perfectionism, boundary friction, grief, anxiety).
+3. CLINICAL SUPERVISION & CASE CONCEPTUALIZATION: Provide evidence-based modality ideas (ACT, Somatic Experiencing, IFS, CBT) and help the practitioner recognize countertransference and systemic dynamics.
+4. MULTIMODAL & IMAGE RECOGNITION: When the practitioner uploads an image (such as photos of handwritten session notes, whiteboard diagrams, intake questionnaires, or worksheets), transcribe, summarize, and structure them into clean clinical summaries.
+5. PRACTITIONER SANCTUARY: Remind the practitioner to clear their somatic palate and protect their energetic boundaries to prevent compassion fatigue.
+`
+
 exports.generateDraftNotes = async (req, res) => {
   try {
     const { bookingId, clientId, rawTranscript } = req.body
@@ -27,28 +55,82 @@ exports.generateDraftNotes = async (req, res) => {
     let suggestedPrompts
 
     if (rawTranscript && rawTranscript.trim().length > 20) {
-      // Process the submitted transcript into structured session notes
-      const lines = rawTranscript.trim().split(/[\n.]+/).filter(Boolean)
-      const keyThemes = lines.slice(0, 3).join(". ")
+      // 1. If OpenAI API key is configured, generate high-quality clinical draft notes via OpenAI
+      const openAiApiKey = process.env.OPENAI_API_KEY
+      const openAiUnset =
+        !openAiApiKey ||
+        openAiApiKey.trim().length <= 10 ||
+        openAiApiKey.toLowerCase().includes("add_your_") ||
+        openAiApiKey.toLowerCase().includes("your_openai")
 
-      draftNotes = `Practitioner Summary:\n${keyThemes}\n\nNote: This draft was generated from your session transcript. Review and edit before saving to client record.`
+      if (!openAiUnset) {
+        try {
+          const openAiModel = process.env.OPENAI_MODEL || "gpt-4o"
+          const openAiBaseUrl = (process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/+$/, "")
+          const aiRes = await fetch(`${openAiBaseUrl}/chat/completions`, {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${openAiApiKey.trim()}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: openAiModel,
+              messages: [
+                {
+                  role: "system",
+                  content: `${PRACTICE_ASSISTANT_SYSTEM_PROMPT}\n\nTask: Given the following raw session debrief/transcript from a practitioner, generate structured SOAP clinical draft notes and 2 high-impact reflection prompts for the client.\nFormat your response as a valid JSON object with exactly two keys:\n"draftNotes": string (markdown SOAP format),\n"suggestedPrompts": [string, string].\nReturn ONLY the JSON object.`,
+                },
+                {
+                  role: "user",
+                  content: `Raw Session Transcript:\n"""${rawTranscript.trim()}"""`,
+                },
+              ],
+              response_format: { type: "json_object" },
+              temperature: 0.3,
+            }),
+          })
+          const aiData = await aiRes.json()
+          const aiContent = aiData?.choices?.[0]?.message?.content
+          if (aiContent) {
+            try {
+              const parsed = JSON.parse(aiContent)
+              if (parsed.draftNotes) draftNotes = parsed.draftNotes
+              if (Array.isArray(parsed.suggestedPrompts) && parsed.suggestedPrompts.length > 0) {
+                suggestedPrompts = parsed.suggestedPrompts
+              }
+            } catch (parseErr) {
+              // fallback to rule-based below
+            }
+          }
+        } catch (aiErr) {
+          console.warn("OpenAI draft notes generation error, falling back:", aiErr.message)
+        }
+      }
 
-      // Extract potential reflection themes from transcript keywords
-      const lowerTranscript = rawTranscript.toLowerCase()
-      const themes = []
-      if (lowerTranscript.includes("anxi") || lowerTranscript.includes("stress") || lowerTranscript.includes("worry")) {
-        themes.push("What would it feel like to let one worry go without resolving it first?")
+      // Fallback rule-based extraction if not populated by OpenAI
+      if (!draftNotes) {
+        const lines = rawTranscript.trim().split(/[\n.]+/).filter(Boolean)
+        const keyThemes = lines.slice(0, 3).join(". ")
+
+        draftNotes = `Practitioner Summary:\n${keyThemes}\n\nNote: This draft was generated from your session transcript. Review and edit before saving to client record.`
+
+        // Extract potential reflection themes from transcript keywords
+        const lowerTranscript = rawTranscript.toLowerCase()
+        const themes = []
+        if (lowerTranscript.includes("anxi") || lowerTranscript.includes("stress") || lowerTranscript.includes("worry")) {
+          themes.push("What would it feel like to let one worry go without resolving it first?")
+        }
+        if (lowerTranscript.includes("boundar") || lowerTranscript.includes("limit")) {
+          themes.push("Notice one boundary you protected this week, however small.")
+        }
+        if (lowerTranscript.includes("relationship") || lowerTranscript.includes("connect") || lowerTranscript.includes("family")) {
+          themes.push("What do you need from your relationships right now that you haven't asked for?")
+        }
+        if (themes.length === 0) {
+          themes.push("What felt heavy this week that you carried without asking for support?")
+        }
+        suggestedPrompts = themes.slice(0, 2)
       }
-      if (lowerTranscript.includes("boundar") || lowerTranscript.includes("limit")) {
-        themes.push("Notice one boundary you protected this week, however small.")
-      }
-      if (lowerTranscript.includes("relationship") || lowerTranscript.includes("connect") || lowerTranscript.includes("family")) {
-        themes.push("What do you need from your relationships right now that you haven't asked for?")
-      }
-      if (themes.length === 0) {
-        themes.push("What felt heavy this week that you carried without asking for support?")
-      }
-      suggestedPrompts = themes.slice(0, 2)
     } else {
       // No transcript provided — create an empty structured skeleton
       draftNotes = `Practitioner Summary:\n[Add your session summary here]\n\nTechnique Used: [Add technique]\nKey Insight: [Add key insight or breakthrough]\n\nNote: No transcript was submitted. Please fill in session notes manually.`
@@ -119,34 +201,6 @@ exports.approveDraftNotes = async (req, res) => {
   }
 }
 
-// ─── ROLE-SPECIFIC MASTER AI ENGINES ───
-//  Lerner side Prompt
-const VIRTUAL_COUNSELOR_SYSTEM_PROMPT = `
-You are AURA — a world-class Virtual Practitioner and Compassionate Counselor for learners and personal growth seekers.
-Your presence is profoundly warm, trauma-informed, somatically attuned, and deeply grounded.
-You never sound like a generic or robotic AI. You speak like a renowned holistic doctor, counselor, and somatic therapist sitting across from someone in a quiet, serene sanctuary.
-
-Key Tenets of Your Practice as Virtual Counselor:
-1. HOLDING SACRED SPACE: Meet the learner with unconditional positive regard. Never judge, rush, or dismiss their experience. De-shame their struggles as adaptive responses of a tired nervous system.
-2. SOMATIC ATTUNEMENT: Acknowledge that emotions live physically in the body (tight throat, shallow breath, clenched jaw, heavy chest). Guide them into gentle, restorative somatic anchors (physiological sigh, 5-4-3-2-1 sensory grounding, self-compassion touch).
-3. TRANSFORMATIVE INQUIRY: Ask 1 or 2 piercing, heart-opening questions that help the learner uncover their own inner truth and clarity.
-4. MULTIMODAL & IMAGE UNDERSTANDING: When the learner shares an image (such as handwritten journal pages, feeling sketches, art, or photos representing their state), observe and reflect on the visual expression with deep empathy and therapeutic warmth.
-5. ETHICAL BOUNDARIES: You hold safe, supportive space for personal growth, emotional expression, and somatic regulation.
-`
-
-// Practitioner Side prompt 
-const PRACTICE_ASSISTANT_SYSTEM_PROMPT = `
-You are AURA — an elite Clinical & Practice Assistant dedicated to supporting practitioners, therapists, and holistic healers.
-You are sharp, clinically sophisticated, highly organized, and deeply attuned to the realities of running a therapeutic practice.
-
-Key Tenets of Your Practice as Practice Assistant:
-1. CLINICAL DOCUMENTATION & SOAP NOTES: Transform raw session debriefs, bullets, or client quotes into pristine, auditable SOAP / DAP clinical notes and treatment formulations.
-2. CLIENT INQUIRY & REFLECTION PROMPTS: Formulate high-impact therapeutic questions, somatic homework, and journaling prompts tailored to specific client presentations (perfectionism, boundary friction, grief, anxiety).
-3. CLINICAL SUPERVISION & CASE CONCEPTUALIZATION: Provide evidence-based modality ideas (ACT, Somatic Experiencing, IFS, CBT) and help the practitioner recognize countertransference and systemic dynamics.
-4. MULTIMODAL & IMAGE RECOGNITION: When the practitioner uploads an image (such as photos of handwritten session notes, whiteboard diagrams, intake questionnaires, or worksheets), transcribe, summarize, and structure them into clean clinical summaries.
-5. PRACTITIONER SANCTUARY: Remind the practitioner to clear their somatic palate and protect their energetic boundaries to prevent compassion fatigue.
-`
-
 exports.chatWithAura = async (req, res) => {
   try {
     const { message = "", role = "learner", history = [], focus = "general", image } = req.body
@@ -174,82 +228,97 @@ exports.chatWithAura = async (req, res) => {
       }
     }
 
-    // 1. Check if Anthropic Claude API key is configured (Preferred)
-    const claudeApiKey = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY
-    const claudeUnset =
-      !claudeApiKey ||
-      claudeApiKey.trim().length <= 10 ||
-      claudeApiKey.toLowerCase().includes("add_your_") ||
-      claudeApiKey.toLowerCase().includes("your_claude")
-    if (!claudeUnset) {
+    // 1. Check if OpenAI API key is configured (Preferred & OpenAI Compatible)
+    const openAiApiKey = process.env.OPENAI_API_KEY
+    const openAiUnset =
+      !openAiApiKey ||
+      openAiApiKey.trim().length <= 10 ||
+      openAiApiKey.toLowerCase().includes("add_your_") ||
+      openAiApiKey.toLowerCase().includes("your_openai")
+
+    if (!openAiUnset) {
       try {
-        const formattedMessages = []
+        const openAiModel = process.env.OPENAI_MODEL || "gpt-4o"
+        const openAiBaseUrl = (process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/+$/, "")
+
+        const formattedMessages = [
+          {
+            role: "system",
+            content: `${activeSystemPrompt}\n\n[USER ROLE: ${role.toUpperCase()}]\n[SESSION FOCUS: ${focus}]\n\nRespond as AURA according to your role. Be empathetic, grounded, somatically attuned, and concise (2-4 brief paragraphs). If a practical somatic or reflective exercise fits, weave it in.`,
+          },
+        ]
+
         if (Array.isArray(history) && history.length > 0) {
           for (const h of history.slice(-6)) {
             if (h.sender === "user" || h.role === "user") {
-              formattedMessages.push({ role: "user", content: h.text || h.content || "" })
+              const textContent = h.text || h.content || ""
+              if (textContent) {
+                formattedMessages.push({ role: "user", content: textContent })
+              }
             } else if (h.sender === "aura" || h.role === "assistant") {
-              formattedMessages.push({ role: "assistant", content: h.text || h.content || "" })
+              const textContent = h.text || h.content || ""
+              if (textContent) {
+                formattedMessages.push({ role: "assistant", content: textContent })
+              }
             }
           }
         }
 
         // Prepare current turn's content (support multimodal vision if image attached)
-        let currentTurnContent
         if (cleanImageData) {
-          currentTurnContent = [
-            {
-              type: "image",
-              source: {
-                type: "base64",
-                media_type: cleanMimeType,
-                data: cleanImageData,
+          formattedMessages.push({
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: trimmed || (isPractitioner
+                  ? "Please review and structure this image (clinical notes, worksheet, or diagram) as my practice assistant."
+                  : "Please reflect on this image I've shared (a journal entry, sketch, or photo) as my virtual practitioner counselor."),
               },
-            },
-            {
-              type: "text",
-              text: trimmed || (isPractitioner
-                ? "Please review and structure this image (clinical notes, worksheet, or diagram) as my practice assistant."
-                : "Please reflect on this image I've shared (a journal entry, sketch, or photo) as my virtual practitioner counselor."),
-            },
-          ]
+              {
+                type: "image_url",
+                image_url: {
+                  url: `data:${cleanMimeType};base64,${cleanImageData}`,
+                },
+              },
+            ],
+          })
         } else {
-          currentTurnContent = trimmed
+          formattedMessages.push({
+            role: "user",
+            content: trimmed,
+          })
         }
 
-        formattedMessages.push({ role: "user", content: currentTurnContent })
-
-        const claudeModel = process.env.CLAUDE_MODEL || "claude-3-5-sonnet-20241022"
-        const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
+        const openAiRes = await fetch(`${openAiBaseUrl}/chat/completions`, {
           method: "POST",
           headers: {
-            "x-api-key": claudeApiKey.trim(),
-            "anthropic-version": "2023-06-01",
-            "content-type": "application/json",
+            "Authorization": `Bearer ${openAiApiKey.trim()}`,
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: claudeModel,
-            max_tokens: 1024,
-            system: `${activeSystemPrompt}\n\n[USER ROLE: ${role.toUpperCase()}]\n[SESSION FOCUS: ${focus}]`,
+            model: openAiModel,
             messages: formattedMessages,
+            max_tokens: 1200,
+            temperature: 0.7,
           }),
         })
 
-        const claudeData = await claudeRes.json()
-        const claudeReply = claudeData?.content?.[0]?.text
-        if (claudeReply) {
+        const openAiData = await openAiRes.json()
+        const openAiReply = openAiData?.choices?.[0]?.message?.content
+        if (openAiReply) {
           return res.status(200).json({
             success: true,
-            reply: claudeReply,
+            reply: openAiReply,
             role,
-            source: "claude",
-            model: claudeModel,
+            source: "openai",
+            model: openAiModel,
           })
-        } else if (claudeData?.error) {
-          console.warn("Claude API returned error, falling back:", claudeData.error)
+        } else if (openAiData?.error) {
+          console.warn("OpenAI API returned error, falling back:", openAiData.error)
         }
-      } catch (claudeErr) {
-        console.warn("Claude API fetch failed, falling back:", claudeErr.message)
+      } catch (openAiErr) {
+        console.warn("OpenAI API fetch failed, falling back:", openAiErr.message)
       }
     }
 

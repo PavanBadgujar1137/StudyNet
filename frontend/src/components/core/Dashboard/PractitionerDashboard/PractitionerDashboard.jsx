@@ -54,9 +54,10 @@ export function PractitionerDashboard() {
 
   const getActiveSection = () => {
     const tabParam = searchParams.get('tab')
+    if (tabParam === 'notifications' || tabParam === 'notification') return 'profile'
     if (tabParam) return tabParam
     const path = decodeURIComponent(location.pathname.toLowerCase())
-    if (path.includes('profile') || path.includes('settings')) return 'profile'
+    if (path.includes('profile') || path.includes('settings') || path.includes('notification')) return 'profile'
     if (path.includes('aura') || path.includes('assistant')) return 'aura'
     if (path.includes('coupon')) return 'coupons'
     if (path.includes('community') || path.includes('chat')) return 'community'

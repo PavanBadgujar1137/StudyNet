@@ -4,6 +4,7 @@ const User = require("../models/User")
 const Course = require("../models/Course")
 const CourseVideo = require("../models/CourseVideo")
 const ClientConnection = require("../models/ClientConnection")
+const CircleCohort = require("../models/CircleCohort")
 const mailSender = require("../utils/mailSender")
 const { sendWhatsAppMessage } = require("../utils/whatsappSender")
 const {
@@ -13,6 +14,7 @@ const {
   sessionReminder2MinEmail,
   courseNewVideoEmail,
 } = require("../mail/templates/sessionNotifications")
+const { circleChatMessageEmail } = require("../mail/templates/circleChatMessageEmail")
 
 const FRONTEND_URL = process.env.FRONTEND_URL || "https://openhand.live"
 
@@ -745,6 +747,190 @@ Happy Learning,
   }
 }
 
+// In-memory cooldown cache to prevent notification spamming (2-minute window per recipient per circle)
+const circleNotificationCooldown = new Map() // key: `${recipientId}_${circleId}`, value: timestamp
+const CIRCLE_NOTIFICATION_COOLDOWN_MS = 2 * 60 * 1000 // 2 minutes
+
+/**
+ * 7. CIRCLE CHAT MESSAGE ACTIVITY NOTIFICATION (WhatsApp + Email)
+ * Dispatches notifications to all members and facilitator of a Circle when someone posts a message,
+ * driving traction and peer accountability.
+ */
+async function sendCircleChatMessageNotification({
+  circleIdOrTarget,
+  senderId,
+  messageContent = "",
+  attachments = [],
+}) {
+  try {
+    if (!circleIdOrTarget || !senderId) return
+
+    // 1. Resolve CircleCohort
+    let cohort = null
+    try {
+      cohort = await CircleCohort.findById(circleIdOrTarget)
+        .populate("members", "firstName lastName email contactNumber whatsappNumber notificationPreferences additionalDetails")
+        .populate("practitioner", "firstName lastName email contactNumber whatsappNumber notificationPreferences additionalDetails")
+    } catch {
+      // not a valid ObjectId or query failure
+    }
+
+    if (!cohort) {
+      cohort = await CircleCohort.findOne({ practitioner: circleIdOrTarget })
+        .populate("members", "firstName lastName email contactNumber whatsappNumber notificationPreferences additionalDetails")
+        .populate("practitioner", "firstName lastName email contactNumber whatsappNumber notificationPreferences additionalDetails")
+    }
+
+    if (!cohort) {
+      console.warn(`[NotificationService] Circle cohort not found for target: ${circleIdOrTarget}`)
+      return
+    }
+
+    // 2. Resolve Sender
+    const sender = await User.findById(senderId).select("firstName lastName email accountType image")
+    const senderName = sender ? `${sender.firstName || "A member"} ${sender.lastName || ""}`.trim() : "A Circle Member"
+    const senderAccountType = sender?.accountType || "Member"
+
+    // 3. Assemble unique recipients (all members + practitioner), excluding sender
+    const candidateMap = new Map()
+
+    if (cohort.practitioner && String(cohort.practitioner._id || cohort.practitioner) !== String(senderId)) {
+      candidateMap.set(String(cohort.practitioner._id || cohort.practitioner), cohort.practitioner)
+    }
+
+    if (Array.isArray(cohort.members)) {
+      cohort.members.forEach((m) => {
+        const mId = String(m._id || m)
+        if (mId !== String(senderId) && !candidateMap.has(mId)) {
+          candidateMap.set(mId, m)
+        }
+      })
+    }
+
+    const recipients = Array.from(candidateMap.values())
+    if (recipients.length === 0) {
+      console.log(`[NotificationService] No other members to notify for circle "${cohort.name}"`)
+      return
+    }
+
+    const circleName = cohort.name || "Peer Growth Circle"
+    const circleTopic = cohort.topic || ""
+    const chatUrl = `${FRONTEND_URL}/dashboard?tab=community&circleId=${cohort._id}`
+    const settingsUrl = `${FRONTEND_URL}/dashboard?tab=profile&subTab=notifications`
+
+    const trimmedContent = (messageContent || "").trim()
+    const attachmentsCount = Array.isArray(attachments) ? attachments.length : 0
+
+    // Text snippet for preview
+    let snippet = trimmedContent
+    if (!snippet && attachmentsCount > 0) {
+      snippet = `Shared ${attachmentsCount} file/media attachment(s)`
+    }
+    const truncatedSnippet = snippet.length > 180 ? snippet.slice(0, 177) + "..." : snippet
+
+    const now = Date.now()
+
+    console.log(
+      `[NotificationService] 👥 Dispatching Circle chat alert for "${circleName}" from ${senderName} to ${recipients.length} member(s)`
+    )
+
+    const dispatchPromises = recipients.map(async (recipient) => {
+      const recipientId = String(recipient._id || recipient)
+
+      // Fallback: If recipient was not fully populated, fetch user
+      let fullRecipient = recipient
+      if (!fullRecipient.email && !fullRecipient.whatsappNumber && !fullRecipient.contactNumber) {
+        try {
+          const fetched = await User.findById(recipientId)
+            .select("firstName lastName email contactNumber whatsappNumber notificationPreferences additionalDetails")
+            .populate("additionalDetails")
+          if (fetched) fullRecipient = fetched
+        } catch {}
+      }
+
+      const recipientName = `${fullRecipient.firstName || "Member"} ${fullRecipient.lastName || ""}`.trim()
+
+      // Check 2-minute cooldown
+      const cooldownKey = `${recipientId}_${cohort._id}`
+      const lastSent = circleNotificationCooldown.get(cooldownKey)
+      if (lastSent && now - lastSent < CIRCLE_NOTIFICATION_COOLDOWN_MS) {
+        console.log(
+          `[NotificationService] Skipping notification for ${recipientName} (cooldown active: ${Math.round((now - lastSent) / 1000)}s ago)`
+        )
+        return
+      }
+
+      // Check user preferences (defaults to true if null/undefined)
+      const prefs = fullRecipient.notificationPreferences || {}
+      const allowWhatsApp = prefs.circleChatWhatsApp !== false
+      const allowEmail = prefs.circleChatEmail !== false
+
+      let notifiedAny = false
+
+      // A. WhatsApp Notification
+      if (allowWhatsApp) {
+        const phone = resolveUserPhone(fullRecipient)
+        if (phone) {
+          const waText = `🌿 *OpenHand — New Message in Your Circle!*
+
+Hi *${recipientName}*,
+*${senderName}* just posted in *${circleName}*:
+
+💬 "${truncatedSnippet}"
+${attachmentsCount > 0 && trimmedContent ? `📎 +${attachmentsCount} attachment(s)\n` : ""}
+👉 *Join the conversation & reply now:*
+🔗 ${chatUrl}
+
+_OpenHand Peer Support Circles_`
+
+          try {
+            await sendWhatsAppMessage(phone, waText)
+            notifiedAny = true
+          } catch (waErr) {
+            console.warn(`[NotificationService] WhatsApp circle alert failed for ${phone}:`, waErr.message)
+          }
+        }
+      }
+
+      // B. Email Notification
+      if (allowEmail && fullRecipient.email) {
+        try {
+          const emailHtml = circleChatMessageEmail({
+            recipientName,
+            senderName,
+            senderAccountType,
+            circleName,
+            circleTopic,
+            messageContent: trimmedContent,
+            attachmentsCount,
+            chatUrl,
+            settingsUrl,
+          })
+
+          const subjectSnippet = truncatedSnippet.length > 50 ? truncatedSnippet.slice(0, 47) + "..." : truncatedSnippet
+          await mailSender(
+            fullRecipient.email,
+            `💬 ${senderName} in "${circleName}": ${subjectSnippet || "New message"}`,
+            emailHtml
+          )
+          notifiedAny = true
+        } catch (mailErr) {
+          console.warn(`[NotificationService] Email circle alert failed for ${fullRecipient.email}:`, mailErr.message)
+        }
+      }
+
+      if (notifiedAny) {
+        circleNotificationCooldown.set(cooldownKey, now)
+      }
+    })
+
+    await Promise.allSettled(dispatchPromises)
+    console.log(`[NotificationService] ✅ Circle notifications dispatched successfully for "${circleName}"`)
+  } catch (err) {
+    console.error("[NotificationService] Error sending circle chat notification:", err.message)
+  }
+}
+
 module.exports = {
   sendSessionPurchaseNotification,
   sendSessionReminder1Hour,
@@ -752,4 +938,5 @@ module.exports = {
   sendSessionReminder2Min,
   sendCoursePurchaseNotification,
   sendCourseNewVideoNotification,
+  sendCircleChatMessageNotification,
 }
