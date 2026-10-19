@@ -5,6 +5,7 @@ import {
   FiMessageSquare,
   FiShield,
   FiPlusCircle,
+  FiBell,
 } from 'react-icons/fi'
 import { apiConnector } from '../../../../services/apiConnector'
 import toast from 'react-hot-toast'
@@ -81,7 +82,7 @@ export function MyCircle({ setActiveTab, clientName = 'Student', practitionerNam
   return (
     <div id="circle" style={{ width: '100%' }}>
       {/* Header */}
-      <div className="hd" style={{ marginBottom: '24px' }}>
+      <div className="hd" style={{ marginBottom: '20px' }}>
         <div className="k">My Circles</div>
         <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#0F172A' }}>
           Peer Support &amp; Practitioner Growth Circles
@@ -89,6 +90,67 @@ export function MyCircle({ setActiveTab, clientName = 'Student', practitionerNam
         <p style={{ color: '#64748B', fontSize: '14px' }}>
           Join small Circles led by verified OpenHand practitioners. Connected Circle chats automatically sync to your Community Hub.
         </p>
+      </div>
+
+      {/* Circle Traction & Notification Engine Banner */}
+      <div
+        style={{
+          background: 'linear-gradient(135deg, #EFF6FF 0%, #EEF2FF 100%)',
+          border: '1px solid #BFDBFE',
+          borderRadius: '14px',
+          padding: '14px 18px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '12px',
+          marginBottom: '24px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <span
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '8px',
+              background: '#2563EB',
+              color: '#FFF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '15px',
+              flexShrink: 0,
+            }}
+          >
+            <FiBell />
+          </span>
+          <div>
+            <div style={{ fontSize: '13.5px', fontWeight: 800, color: '#1E3A8A' }}>
+              Instant WhatsApp &amp; Email Notifications Active
+            </div>
+            <div style={{ fontSize: '12px', color: '#3B82F6' }}>
+              Whenever someone chats in your enrolled Circle, all peers receive prompt alerts so discussions stay active.
+            </div>
+          </div>
+        </div>
+
+        <button
+          onClick={() => {
+            if (setActiveTab) setActiveTab('profile')
+          }}
+          style={{
+            background: '#FFFFFF',
+            border: '1px solid #93C5FD',
+            borderRadius: '8px',
+            padding: '6px 12px',
+            fontSize: '11.5px',
+            fontWeight: 700,
+            color: '#1D4ED8',
+            cursor: 'pointer',
+          }}
+        >
+          Manage Alerts →
+        </button>
       </div>
 
       {/* Dynamic Circles List Grid */}

@@ -9,7 +9,7 @@ import {
   FiShield, FiBookOpen, FiBell, FiUser, FiTrash2, FiAlertTriangle,
   FiVideo, FiDownload, FiPlay, FiClock,
   FiTag, FiPlus, FiEdit2, FiToggleLeft, FiToggleRight, FiSliders, FiCopy, FiStar,
-  FiBriefcase
+  FiBriefcase, FiZap
 } from 'react-icons/fi'
 import CareerApplicationsTab from '../../components/core/Admin/CareerApplicationsTab'
 import ScheduledCallsTab from '../../components/core/Admin/ScheduledCallsTab'
@@ -1744,9 +1744,334 @@ function PractitionersTab() {
   )
 }
 
+// ─── 72-Hour Practitioner Autopay Tab ─────────────────────────────────────────
+function AutopayTab() {
+  const { token } = useSelector(s => s.auth)
+  const [metrics, setMetrics] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [activeFilter, setActiveFilter] = useState('all') // 'all' | 'processing' | 'pending_bank_details' | 'settled'
+  const [runningBatch, setRunningBatch] = useState(false)
+  const [disbursingId, setDisbursingId] = useState(null)
+  const [copiedUtr, setCopiedUtr] = useState('')
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await apiConnector('GET', '/api/v1/admin/autopay/overview', null, { Authorization: `Bearer ${token}` })
+      if (res?.data?.success) {
+        setMetrics(res.data.metrics)
+      }
+    } catch (e) {
+      toast.error('Failed to load autopay metrics')
+    }
+    setLoading(false)
+  }, [token])
+
+  useEffect(() => { load() }, [load])
+
+  const handleRunBatchNow = async () => {
+    setRunningBatch(true)
+    const toastId = toast.loading('Running 72-Hour Autopay Batch...')
+    try {
+      const res = await apiConnector('POST', '/api/v1/admin/autopay/run-batch', {}, { Authorization: `Bearer ${token}` })
+      if (res?.data?.success) {
+        toast.success(res.data.message || 'Autopay batch completed successfully!', { id: toastId })
+        load()
+      } else {
+        toast.error(res?.data?.message || 'Autopay batch failed', { id: toastId })
+      }
+    } catch (e) {
+      toast.error(e?.response?.data?.message || 'Error running autopay batch', { id: toastId })
+    } finally {
+      setRunningBatch(false)
+    }
+  }
+
+  const handleInstantDisburse = async (payoutId) => {
+    setDisbursingId(payoutId)
+    const toastId = toast.loading('Disbursing payout directly to practitioner bank...')
+    try {
+      const res = await apiConnector('POST', '/api/v1/admin/autopay/disburse-instant', { payoutId }, { Authorization: `Bearer ${token}` })
+      if (res?.data?.success) {
+        toast.success(res.data.message || 'Direct payout disbursed!', { id: toastId })
+        load()
+      } else {
+        toast.error(res?.data?.message || 'Disbursement failed', { id: toastId })
+      }
+    } catch (e) {
+      toast.error(e?.response?.data?.message || 'Error disbursing payout', { id: toastId })
+    } finally {
+      setDisbursingId(null)
+    }
+  }
+
+  const handleCopy = (utr) => {
+    if (!utr) return
+    navigator.clipboard.writeText(utr)
+    setCopiedUtr(utr)
+    toast.success('UTR copied to clipboard!')
+    setTimeout(() => setCopiedUtr(''), 2000)
+  }
+
+  const allPayouts = metrics?.allPayouts || []
+  const filteredPayouts = allPayouts.filter(p => {
+    if (activeFilter === 'processing') return p.status === 'processing'
+    if (activeFilter === 'pending_bank_details') return p.status === 'pending_bank_details'
+    if (activeFilter === 'settled') return p.status === 'settled'
+    return true
+  })
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* Top Banner & Control */}
+      <div style={{ background: 'linear-gradient(135deg, #064E3B 0%, #065F46 100%)', borderRadius: 16, padding: '24px 28px', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, boxShadow: '0 6px 20px rgba(6,78,59,0.2)' }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+            <span style={{ background: 'rgba(255,255,255,0.2)', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 800, letterSpacing: 0.5 }}>
+              ⚡ 72-HOUR AUTOPAY ENGINE
+            </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#A7F3D0', fontWeight: 600 }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#34D399' }} /> Background Worker Active (Every 10m)
+            </span>
+          </div>
+          <h2 style={{ margin: '4px 0 0', fontSize: 20, fontWeight: 800, color: '#ECFDF5' }}>
+            Automated Practitioner Bank Disbursement Queue
+          </h2>
+          <p style={{ margin: '4px 0 0', fontSize: 13, color: '#D1FAE5', maxWidth: 650 }}>
+            All course sales &amp; session booking fees collected in the central bank account are automatically settled directly to practitioner bank accounts within 72 hours.
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <button
+            onClick={load}
+            disabled={loading}
+            style={{ padding: '10px 14px', background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.25)', borderRadius: 10, color: '#FFFFFF', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+          >
+            <FiRefreshCw className={loading ? 'animate-spin' : ''} /> Refresh
+          </button>
+          <button
+            onClick={handleRunBatchNow}
+            disabled={runningBatch}
+            style={{ padding: '10px 18px', background: '#10B981', border: 'none', borderRadius: 10, color: '#064E3B', fontSize: 13, fontWeight: 800, cursor: runningBatch ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 4px 14px rgba(0,0,0,0.2)' }}
+          >
+            <FiZap /> {runningBatch ? 'Processing Autopay...' : 'Run Autopay Batch Now'}
+          </button>
+        </div>
+      </div>
+
+      {/* KPI Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
+        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 16, padding: '20px 24px', boxShadow: '0 1px 4px rgba(0,0,0,0.02)' }}>
+          <div style={{ color: '#047857', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', marginBottom: 6 }}>Total Settled to Bank</div>
+          <div style={{ color: '#0F172A', fontSize: 26, fontWeight: 900 }}>{fmt(metrics?.settledAmount)}</div>
+          <div style={{ color: '#10B981', fontSize: 12, marginTop: 4, fontWeight: 600 }}>{metrics?.settledCount || 0} direct payouts settled</div>
+        </div>
+
+        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 16, padding: '20px 24px', boxShadow: '0 1px 4px rgba(0,0,0,0.02)' }}>
+          <div style={{ color: '#B45309', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', marginBottom: 6 }}>In 72h Escrow Hold</div>
+          <div style={{ color: '#0F172A', fontSize: 26, fontWeight: 900 }}>{fmt(metrics?.escrowAmount)}</div>
+          <div style={{ color: '#D97706', fontSize: 12, marginTop: 4, fontWeight: 600 }}>{metrics?.escrowCount || 0} payouts maturing to bank</div>
+        </div>
+
+        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 16, padding: '20px 24px', boxShadow: '0 1px 4px rgba(0,0,0,0.02)' }}>
+          <div style={{ color: '#1D4ED8', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', marginBottom: 6 }}>Maturing in &lt; 24h</div>
+          <div style={{ color: '#0F172A', fontSize: 26, fontWeight: 900 }}>{fmt(metrics?.maturingNext24hAmount)}</div>
+          <div style={{ color: '#3B82F6', fontSize: 12, marginTop: 4, fontWeight: 600 }}>{metrics?.maturingNext24hCount || 0} ready for automated transfer</div>
+        </div>
+
+        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 16, padding: '20px 24px', boxShadow: '0 1px 4px rgba(0,0,0,0.02)' }}>
+          <div style={{ color: '#DC2626', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', marginBottom: 6 }}>Awaiting Bank Details</div>
+          <div style={{ color: '#0F172A', fontSize: 26, fontWeight: 900 }}>{fmt(metrics?.pendingBankAmount)}</div>
+          <div style={{ color: '#EF4444', fontSize: 12, marginTop: 4, fontWeight: 600 }}>{metrics?.pendingBankCount || 0} practitioners missing bank info</div>
+        </div>
+      </div>
+
+      {/* Filter Tabs */}
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        {[
+          { id: 'all', label: `All Payouts (${allPayouts.length})` },
+          { id: 'processing', label: `⏳ In 72h Hold (${metrics?.escrowCount || 0})` },
+          { id: 'pending_bank_details', label: `⚠️ Needs Bank Info (${metrics?.pendingBankCount || 0})` },
+          { id: 'settled', label: `✅ Settled via Autopay (${metrics?.settledCount || 0})` },
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveFilter(tab.id)}
+            style={{
+              padding: '8px 16px',
+              borderRadius: 10,
+              border: activeFilter === tab.id ? '2px solid #059669' : '1px solid #CBD5E1',
+              background: activeFilter === tab.id ? '#ECFDF5' : '#FFFFFF',
+              color: activeFilter === tab.id ? '#065F46' : '#64748B',
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Payouts Table */}
+      <div style={{ background: '#FFFFFF', borderRadius: 16, border: '1px solid #E2E8F0', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.03)' }}>
+        <DataTable
+          loading={loading}
+          emptyMessage="No payout records matching this filter"
+          columns={[
+            {
+              key: 'createdAt',
+              label: 'Learner Paid At',
+              render: r => fmtDateTime(r.createdAt),
+            },
+            {
+              key: 'practitioner',
+              label: 'Practitioner',
+              render: r => (
+                <div>
+                  <div style={{ color: '#0F172A', fontWeight: 700 }}>
+                    {r.practitioner?.firstName} {r.practitioner?.lastName}
+                  </div>
+                  <div style={{ color: '#64748B', fontSize: 11 }}>{r.practitioner?.email}</div>
+                </div>
+              ),
+            },
+            {
+              key: 'sourceTitle',
+              label: 'Course / Session Source',
+              render: r => (
+                <div>
+                  <div style={{ color: '#0F172A', fontWeight: 600 }}>{r.sourceTitle || r.sourceType}</div>
+                  <div style={{ color: '#64748B', fontSize: 11, textTransform: 'capitalize' }}>Type: {r.sourceType?.replace(/_/g, ' ')}</div>
+                </div>
+              ),
+            },
+            {
+              key: 'grossAmount',
+              label: 'Gross Paid',
+              render: r => fmt(r.grossAmount || r.amount),
+            },
+            {
+              key: 'deductions',
+              label: 'Fee & GST',
+              render: r => {
+                const fee = (r.platformFeeDeducted || r.commissionDeducted || 0) + (r.taxDeducted || 0)
+                return fee > 0 ? <span style={{ color: '#DC2626', fontWeight: 600 }}>-{fmt(fee)}</span> : <span style={{ color: '#94A3B8' }}>₹0</span>
+              },
+            },
+            {
+              key: 'netAmount',
+              label: 'Net Payout',
+              render: r => <span style={{ color: '#059669', fontWeight: 800, fontSize: 14 }}>{fmt(r.netAmount)}</span>,
+            },
+            {
+              key: 'bankDetails',
+              label: 'Destination Bank',
+              render: r => {
+                const dest = r.bankDetails?.bankName && r.bankDetails?.accountNumberMasked
+                  ? `${r.bankDetails.bankName} (${r.bankDetails.accountNumberMasked})`
+                  : r.bankDetails?.upiId
+                  ? `UPI: ${r.bankDetails.upiId}`
+                  : 'Missing Bank Account'
+                return (
+                  <div style={{ fontSize: 12 }}>
+                    <div style={{ color: '#334155', fontWeight: 600 }}>{dest}</div>
+                    {r.bankDetails?.ifsc && (
+                      <div style={{ color: '#64748B', fontSize: 11, fontFamily: 'monospace' }}>IFSC: {r.bankDetails.ifsc}</div>
+                    )}
+                  </div>
+                )
+              },
+            },
+            {
+              key: 'status',
+              label: '72h Autopay Status',
+              render: r => {
+                if (r.status === 'settled') {
+                  return (
+                    <div>
+                      <span style={{ padding: '3px 8px', borderRadius: 12, fontSize: 11, fontWeight: 800, background: '#DCFCE7', color: '#15803D' }}>
+                        ✓ DEPOSITED
+                      </span>
+                      {r.payoutUtrNumber && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                          <span style={{ fontFamily: 'monospace', fontSize: 10.5, color: '#334155', background: '#F1F5F9', padding: '1px 4px', borderRadius: 4 }}>
+                            {r.payoutUtrNumber}
+                          </span>
+                          <button onClick={() => handleCopy(r.payoutUtrNumber)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: copiedUtr === r.payoutUtrNumber ? '#10B981' : '#64748B' }}>
+                            <FiCopy size={11} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )
+                }
+                if (r.status === 'pending_bank_details') {
+                  return (
+                    <span style={{ padding: '3px 8px', borderRadius: 12, fontSize: 11, fontWeight: 800, background: '#FEE2E2', color: '#B91C1C' }}>
+                      ⚠️ NEEDS BANK DETAILS
+                    </span>
+                  )
+                }
+                const diffMs = new Date(r.scheduledPayoutAt || (new Date(r.createdAt).getTime() + 72 * 3600 * 1000)).getTime() - Date.now()
+                const hoursLeft = Math.max(0, Math.floor(diffMs / (3600 * 1000)))
+                const minsLeft = Math.max(0, Math.floor((diffMs % (3600 * 1000)) / (60 * 1000)))
+                return (
+                  <div>
+                    <span style={{ padding: '3px 8px', borderRadius: 12, fontSize: 11, fontWeight: 800, background: '#FEF3C7', color: '#B45309' }}>
+                      ⏳ 72H ESCROW
+                    </span>
+                    <div style={{ fontSize: 11, color: '#B45309', fontWeight: 600, marginTop: 3 }}>
+                      {diffMs <= 0 ? 'Disbursing now' : `${hoursLeft}h ${minsLeft}m remaining`}
+                    </div>
+                  </div>
+                )
+              },
+            },
+            {
+              key: 'action',
+              label: 'Action',
+              render: r => {
+                if (r.status === 'settled') {
+                  return <span style={{ color: '#10B981', fontSize: 12, fontWeight: 600 }}>Settled</span>
+                }
+                return (
+                  <button
+                    onClick={() => handleInstantDisburse(r._id)}
+                    disabled={disbursingId === r._id}
+                    style={{
+                      padding: '6px 12px',
+                      background: 'linear-gradient(135deg, #059669, #047857)',
+                      border: 'none',
+                      borderRadius: 8,
+                      color: '#FFFFFF',
+                      fontSize: 11,
+                      fontWeight: 800,
+                      cursor: disbursingId === r._id ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      boxShadow: '0 2px 6px rgba(4,120,87,0.25)',
+                    }}
+                  >
+                    <FiZap size={11} /> {disbursingId === r._id ? 'Disbursing...' : 'Disburse Now'}
+                  </button>
+                )
+              },
+            },
+          ]}
+          data={filteredPayouts}
+        />
+      </div>
+    </div>
+  )
+}
+
 // ─── Payments Tab ─────────────────────────────────────────────────────────────
 function PaymentsTab() {
   const { token } = useSelector(s => s.auth)
+  const [activeSubView, setActiveSubView] = useState('autopay') // 'autopay' | 'ledger'
   const [payments, setPayments] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState({ type: '', search: '' })
@@ -1766,61 +2091,109 @@ function PaymentsTab() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#FFFFFF', border: '1.5px solid #E2E8F0', borderRadius: 12, padding: '8px 14px', flex: 1, minWidth: 200 }}>
-          <FiSearch color="#94A3B8" />
-          <input value={filter.search} onChange={e => setFilter(f => ({ ...f, search: e.target.value }))} placeholder="Search payments..."
-            style={{ background: 'none', border: 'none', outline: 'none', color: '#0F172A', fontSize: 14, width: '100%' }} />
-        </div>
-        <select value={filter.type} onChange={e => setFilter(f => ({ ...f, type: e.target.value }))}
-          style={{ background: '#FFFFFF', border: '1.5px solid #E2E8F0', borderRadius: 12, padding: '10px 14px', color: '#0F172A', fontSize: 14, cursor: 'pointer' }}>
-          <option value="">All Types</option>
-          <option value="subscription">Subscription</option>
-          <option value="offer_booking">Offer Booking (Session/Circle)</option>
-          <option value="paid_course">Paid Course Purchase</option>
-          <option value="org_booking">Org Booking</option>
-        </select>
-        <button onClick={load} style={{ background: '#FFFFFF', border: '1.5px solid #E2E8F0', borderRadius: 12, padding: '10px 16px', color: '#64748B', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600, fontSize: 13 }}>
-          <FiRefreshCw /> Refresh
+      {/* Sub-view switcher */}
+      <div style={{ display: 'flex', gap: 10, background: '#E2E8F0', padding: 4, borderRadius: 12, width: 'fit-content' }}>
+        <button
+          onClick={() => setActiveSubView('autopay')}
+          style={{
+            padding: '8px 18px',
+            borderRadius: 10,
+            border: 'none',
+            background: activeSubView === 'autopay' ? '#FFFFFF' : 'transparent',
+            color: activeSubView === 'autopay' ? '#065F46' : '#64748B',
+            fontWeight: 800,
+            fontSize: 13,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            boxShadow: activeSubView === 'autopay' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
+          }}
+        >
+          <FiZap /> 72-Hour Practitioner Autopay Engine
+        </button>
+        <button
+          onClick={() => setActiveSubView('ledger')}
+          style={{
+            padding: '8px 18px',
+            borderRadius: 10,
+            border: 'none',
+            background: activeSubView === 'ledger' ? '#FFFFFF' : 'transparent',
+            color: activeSubView === 'ledger' ? '#0F172A' : '#64748B',
+            fontWeight: 800,
+            fontSize: 13,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            boxShadow: activeSubView === 'ledger' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
+          }}
+        >
+          <FiDollarSign /> Learner Payments Inflow Ledger
         </button>
       </div>
-      <div style={{ color: '#64748B', fontSize: 13 }}>{total} total payments</div>
-      <div style={{ background: '#FFFFFF', borderRadius: 16, border: '1px solid #E2E8F0', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.03)' }}>
-        <DataTable
-          loading={loading}
-          columns={[
-            { key: 'createdAt', label: 'Date', render: r => fmtDate(r.createdAt) },
-            { key: 'clientName', label: 'Learner', render: r => (
-              <div>
-                <div style={{ color: '#0F172A', fontWeight: 600 }}>{r.clientName || `${r.client?.firstName} ${r.client?.lastName}`}</div>
-                <div style={{ color: '#64748B', fontSize: 11 }}>{r.client?.email}</div>
-              </div>
-            )},
-            { key: 'paymentType', label: 'Type', render: r => (
-              <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600,
-                background: r.paymentType === 'subscription' ? '#EFF6FF' : '#F5F3FF',
-                color: r.paymentType === 'subscription' ? '#3B82F6' : '#8B5CF6' }}>
-                {r.paymentType?.replace(/_/g, ' ')}
-              </span>
-            )},
-            { key: 'description', label: 'Description', wrap: true },
-            { key: 'practitionerName', label: 'Practitioner', render: r => r.practitionerName || r.practitioner ? `${r.practitioner?.firstName || ''} ${r.practitioner?.lastName || ''}`.trim() || '—' : '—' },
-            { key: 'amount', label: 'Amount Received', render: r => <span style={{ color: '#10B981', fontWeight: 700 }}>{fmt(r.amount)}</span> },
-            { key: 'amountOwedToPractitioner', label: 'Owed to Practitioner', render: r => r.amountOwedToPractitioner > 0 ? <span style={{ color: '#D97706', fontWeight: 600 }}>{fmt(r.amountOwedToPractitioner)}</span> : <span style={{ color: '#94A3B8' }}>—</span> },
-            { key: 'practitionerSalaryPaid', label: 'Payout Paid', render: r => r.practitionerSalaryPaid
-              ? <span style={{ color: '#10B981', display: 'flex', alignItems: 'center', gap: 4 }}><FiCheck /> Paid</span>
-              : r.amountOwedToPractitioner > 0 ? <span style={{ color: '#D97706' }}>Pending</span> : <span style={{ color: '#94A3B8' }}>N/A</span>
-            },
-            { key: 'status', label: 'Status', render: r => <StatusBadge status={r.status} /> },
-            { key: 'paymentGateway', label: 'Gateway Ref', render: r => (
-              <span style={{ fontSize: 11, fontFamily: 'monospace', color: '#64748B' }}>
-                {r.payglocalPaymentId || r.payglocalOrderId || r.paymentGateway || 'PayGlocal'}
-              </span>
-            )},
-          ]}
-          data={payments}
-        />
-      </div>
+
+      {activeSubView === 'autopay' ? (
+        <AutopayTab />
+      ) : (
+        <>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#FFFFFF', border: '1.5px solid #E2E8F0', borderRadius: 12, padding: '8px 14px', flex: 1, minWidth: 200 }}>
+              <FiSearch color="#94A3B8" />
+              <input value={filter.search} onChange={e => setFilter(f => ({ ...f, search: e.target.value }))} placeholder="Search payments..."
+                style={{ background: 'none', border: 'none', outline: 'none', color: '#0F172A', fontSize: 14, width: '100%' }} />
+            </div>
+            <select value={filter.type} onChange={e => setFilter(f => ({ ...f, type: e.target.value }))}
+              style={{ background: '#FFFFFF', border: '1.5px solid #E2E8F0', borderRadius: 12, padding: '10px 14px', color: '#0F172A', fontSize: 14, cursor: 'pointer' }}>
+              <option value="">All Types</option>
+              <option value="subscription">Subscription</option>
+              <option value="offer_booking">Offer Booking (Session/Circle)</option>
+              <option value="paid_course">Paid Course Purchase</option>
+              <option value="org_booking">Org Booking</option>
+            </select>
+            <button onClick={load} style={{ background: '#FFFFFF', border: '1.5px solid #E2E8F0', borderRadius: 12, padding: '10px 16px', color: '#64748B', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600, fontSize: 13 }}>
+              <FiRefreshCw /> Refresh
+            </button>
+          </div>
+          <div style={{ color: '#64748B', fontSize: 13 }}>{total} total payments</div>
+          <div style={{ background: '#FFFFFF', borderRadius: 16, border: '1px solid #E2E8F0', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.03)' }}>
+            <DataTable
+              loading={loading}
+              columns={[
+                { key: 'createdAt', label: 'Date', render: r => fmtDate(r.createdAt) },
+                { key: 'clientName', label: 'Learner', render: r => (
+                  <div>
+                    <div style={{ color: '#0F172A', fontWeight: 600 }}>{r.clientName || `${r.client?.firstName} ${r.client?.lastName}`}</div>
+                    <div style={{ color: '#64748B', fontSize: 11 }}>{r.client?.email}</div>
+                  </div>
+                )},
+                { key: 'paymentType', label: 'Type', render: r => (
+                  <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600,
+                    background: r.paymentType === 'subscription' ? '#EFF6FF' : '#F5F3FF',
+                    color: r.paymentType === 'subscription' ? '#3B82F6' : '#8B5CF6' }}>
+                    {r.paymentType?.replace(/_/g, ' ')}
+                  </span>
+                )},
+                { key: 'description', label: 'Description', wrap: true },
+                { key: 'practitionerName', label: 'Practitioner', render: r => r.practitionerName || r.practitioner ? `${r.practitioner?.firstName || ''} ${r.practitioner?.lastName || ''}`.trim() || '—' : '—' },
+                { key: 'amount', label: 'Amount Received', render: r => <span style={{ color: '#10B981', fontWeight: 700 }}>{fmt(r.amount)}</span> },
+                { key: 'amountOwedToPractitioner', label: 'Owed to Practitioner', render: r => r.amountOwedToPractitioner > 0 ? <span style={{ color: '#D97706', fontWeight: 600 }}>{fmt(r.amountOwedToPractitioner)}</span> : <span style={{ color: '#94A3B8' }}>—</span> },
+                { key: 'practitionerSalaryPaid', label: 'Payout Paid', render: r => r.practitionerSalaryPaid
+                  ? <span style={{ color: '#10B981', display: 'flex', alignItems: 'center', gap: 4 }}><FiCheck /> Paid</span>
+                  : r.amountOwedToPractitioner > 0 ? <span style={{ color: '#D97706' }}>Pending</span> : <span style={{ color: '#94A3B8' }}>N/A</span>
+                },
+                { key: 'status', label: 'Status', render: r => <StatusBadge status={r.status} /> },
+                { key: 'paymentGateway', label: 'Gateway Ref', render: r => (
+                  <span style={{ fontSize: 11, fontFamily: 'monospace', color: '#64748B' }}>
+                    {r.payglocalPaymentId || r.payglocalOrderId || r.paymentGateway || 'PayGlocal'}
+                  </span>
+                )},
+              ]}
+              data={payments}
+            />
+          </div>
+        </>
+      )}
     </div>
   )
 }
@@ -3454,6 +3827,7 @@ const TABS = [
   { id: 'courses', label: 'Courses & Plans', icon: <FiBookOpen /> },
   { id: 'practitioners', label: 'Practitioners', icon: <FiUser /> },
   { id: 'scheduled_calls', label: '📞 Onboarding & Calls', icon: <FiCalendar /> },
+  { id: 'autopay', label: '⚡ 72h Autopay', icon: <FiZap /> },
   { id: 'payments', label: 'All Payments', icon: <FiDollarSign /> },
   { id: 'subscriptions', label: 'Subscriptions', icon: <FiCreditCard /> },
   { id: 'bookings', label: 'Bookings', icon: <FiCalendar /> },
@@ -3585,6 +3959,7 @@ export default function AdminApp() {
           {activeTab === 'courses' && <CoursesTab />}
           {activeTab === 'practitioners' && <PractitionersTab />}
           {activeTab === 'scheduled_calls' && <ScheduledCallsTab />}
+          {activeTab === 'autopay' && <AutopayTab />}
           {activeTab === 'payments' && <PaymentsTab />}
           {activeTab === 'subscriptions' && <SubscriptionsTab />}
           {activeTab === 'bookings' && <BookingsTab />}

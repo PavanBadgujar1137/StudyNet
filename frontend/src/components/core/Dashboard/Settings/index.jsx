@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react"
 import { useSelector, useDispatch } from "react-redux"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import { 
   FiUser, 
   FiCamera, 
@@ -12,7 +12,8 @@ import {
   FiCopy,
   FiCheck,
   FiTag,
-  FiShare2
+  FiShare2,
+  FiBell
 } from "react-icons/fi"
 import toast from "react-hot-toast"
 import ChangeProfilePicture from "./ChangeProfilePicture"
@@ -20,14 +21,20 @@ import DeleteAccount from "./DeleteAccount"
 import EditProfile from "./EditProfile"
 import UpdatePassword from "./UpdatePassword"
 import MySubscription from "./MySubscription"
+import NotificationSettings from "./NotificationSettings"
 import { getUserDetails } from "../../../../services/operations/profileAPI"
 
 export default function Settings() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { user } = useSelector((state) => state.profile)
   const { token } = useSelector((state) => state.auth)
-  const [activeSubTab, setActiveSubTab] = useState("profile")
+
+  const initialTab =
+    searchParams.get("subTab") ||
+    (searchParams.get("tab") === "notifications" ? "notifications" : "profile")
+  const [activeSubTab, setActiveSubTab] = useState(initialTab)
   const [copiedId, setCopiedId] = useState(false)
   const hasFetchedRef = useRef(false)
 
@@ -260,6 +267,29 @@ export default function Settings() {
           </button>
 
           <button
+            onClick={() => setActiveSubTab("notifications")}
+            style={{
+              background: activeSubTab === "notifications" ? "rgba(255, 255, 255, 0.1)" : "transparent",
+              color: activeSubTab === "notifications" ? "#818CF8" : "#94A3B8",
+              borderBottom: activeSubTab === "notifications" ? "3px solid #818CF8" : "3px solid transparent",
+              padding: "14px 18px",
+              fontWeight: 700,
+              fontSize: "13px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              borderTop: "none",
+              borderLeft: "none",
+              borderRight: "none",
+              whiteSpace: "nowrap",
+              transition: "all 0.15s ease"
+            }}
+          >
+            <FiBell style={{ fontSize: '15px', color: '#38BDF8' }} /> Notifications &amp; Alerts
+          </button>
+
+          <button
             onClick={() => setActiveSubTab("subscription")}
             style={{
               background: activeSubTab === "subscription" ? "rgba(255, 255, 255, 0.1)" : "transparent",
@@ -334,6 +364,7 @@ export default function Settings() {
       <div>
         {activeSubTab === "profile" && <EditProfile />}
         {activeSubTab === "picture" && <ChangeProfilePicture />}
+        {activeSubTab === "notifications" && <NotificationSettings />}
         {activeSubTab === "subscription" && <MySubscription />}
         {activeSubTab === "security" && <UpdatePassword />}
         {activeSubTab === "danger" && <DeleteAccount />}

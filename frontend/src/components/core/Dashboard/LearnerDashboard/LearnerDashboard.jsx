@@ -38,9 +38,10 @@ export function LearnerDashboard() {
 
   const getActiveTab = () => {
     const tabParam = searchParams.get('tab')
+    if (tabParam === 'notifications' || tabParam === 'notification') return 'profile'
     if (tabParam) return tabParam
     const path = decodeURIComponent(location.pathname.toLowerCase())
-    if (path.includes('profile') || path.includes('settings')) return 'profile'
+    if (path.includes('profile') || path.includes('settings') || path.includes('notification')) return 'profile'
     if (path.includes('courses')) return 'courses'
     if (path.includes('checkin')) return 'checkin'
     if (path.includes('practitioner')) return 'practitioners'

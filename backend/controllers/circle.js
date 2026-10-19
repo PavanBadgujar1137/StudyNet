@@ -247,6 +247,21 @@ exports.postToFeed = async (req, res) => {
 
     await cohort.save()
 
+    // Trigger Circle notifications (WhatsApp + Email)
+    try {
+      const { sendCircleChatMessageNotification } = require("../services/notificationService")
+      sendCircleChatMessageNotification({
+        circleIdOrTarget: cohortId,
+        senderId: userId,
+        messageContent: isAnnouncement ? `📢 [Announcement]: ${content}` : content,
+        attachments: [],
+      }).catch((err) => {
+        console.warn("[CircleController] Feed post notification warning:", err.message)
+      })
+    } catch (err) {
+      console.warn("[CircleController] Failed to trigger feed post notification:", err.message)
+    }
+
     return res.status(201).json({
       success: true,
       message: "Post added to cohort feed",

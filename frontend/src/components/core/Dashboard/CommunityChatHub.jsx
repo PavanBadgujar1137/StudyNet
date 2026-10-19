@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react"
 import { useSelector } from "react-redux"
+import { useSearchParams } from "react-router-dom"
 import {
   FiGlobe,
   FiUsers,
@@ -16,6 +17,7 @@ import {
   FiMusic,
   FiMaximize2,
   FiArchive,
+  FiBell,
 } from "react-icons/fi"
 import {
   fetchGlobalMessages,
@@ -58,8 +60,10 @@ const getFileCategory = (mimetype = "", filename = "") => {
 export default function CommunityChatHub({ defaultPractitionerId = null }) {
   const { token } = useSelector((state) => state.auth)
   const { user } = useSelector((state) => state.profile)
+  const [searchParams] = useSearchParams()
 
-  const [activeTab, setActiveTab] = useState("global") // "global" | "circle" | "direct"
+  const circleIdFromUrl = searchParams.get("circleId") || searchParams.get("cohortId")
+  const [activeTab, setActiveTab] = useState(circleIdFromUrl ? "circle" : "global") // "global" | "circle" | "direct"
   const [messages, setMessages] = useState([])
   const [inputText, setInputText] = useState("")
   // eslint-disable-next-line no-unused-vars
@@ -134,14 +138,22 @@ export default function CommunityChatHub({ defaultPractitionerId = null }) {
         }
 
         setUserCircles(filtered)
-        if (filtered.length > 0 && !selectedCircle) {
+        if (circleIdFromUrl) {
+          const matched = allCircles.find((c) => String(c._id) === String(circleIdFromUrl))
+          if (matched) {
+            setSelectedCircle(matched)
+            setActiveTab("circle")
+          } else if (filtered.length > 0 && !selectedCircle) {
+            setSelectedCircle(filtered[0])
+          }
+        } else if (filtered.length > 0 && !selectedCircle) {
           setSelectedCircle(filtered[0])
         }
       }
     } catch (err) {
       console.error("Error loading user circles in chat:", err)
     }
-  }, [isPractitioner, user?._id, selectedCircle])
+  }, [isPractitioner, user?._id, selectedCircle, circleIdFromUrl])
 
   // Load message timeline depending on active tab
   const loadMessages = useCallback(async () => {
@@ -768,7 +780,26 @@ export default function CommunityChatHub({ defaultPractitionerId = null }) {
             <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 800, color: "#0F172A", display: "flex", alignItems: "center", gap: "6px" }}>
               {activeTab === "global" && <>🌐 # Openhand lounge</>}
               {activeTab === "circle" && (
-                <>👥 {selectedCircle ? selectedCircle.name : "Practitioner Circle"}</>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                  <span>👥 {selectedCircle ? selectedCircle.name : "Practitioner Circle"}</span>
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      background: "#DCFCE7",
+                      color: "#166534",
+                      border: "1px solid #BBF7D0",
+                      padding: "2px 8px",
+                      borderRadius: "12px",
+                      fontSize: "11px",
+                      fontWeight: 700,
+                    }}
+                    title="All members receive instant WhatsApp & Email alerts when anyone chats here to ensure active momentum."
+                  >
+                    <FiBell size={11} /> WhatsApp &amp; Email Alerts Active
+                  </span>
+                </div>
               )}
               {activeTab === "direct" && (
                 <>💬 1:1 Direct Chat: {selectedContact ? `${selectedContact.firstName} ${selectedContact.lastName || ""}` : "Select Contact"}</>

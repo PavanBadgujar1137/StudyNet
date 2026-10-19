@@ -13,6 +13,7 @@ const mongoose = require("mongoose")
 const { paymentSuccessEmail } = require("../mail/templates/paymentSuccessEmail")
 const PractitionerAvailability = require("../models/PractitionerAvailability")
 const { google } = require("googleapis")
+const { hasValidBankDetails, notifyPendingBankDetails } = require("../services/autopayService")
 
 const addGoogleCalendarEvent = async (booking, clientUser, practitionerUser) => {
   try {
@@ -963,8 +964,24 @@ exports.verifyCourseOrder = async (req, res) => {
       status: "received",
     })
 
-    // Schedule 72-hour automated payout to practitioner
+    // Schedule 72-hour automated payout to practitioner's bank account
     if (netSalary > 0) {
+      const practProfile = await PractitionerProfile.findOne({ user: practitionerId })
+      const hasBank = hasValidBankDetails(practProfile)
+      const scheduledPayoutAt = new Date(Date.now() + 72 * 60 * 60 * 1000)
+
+      const bankSnapshot = practProfile ? {
+        accountHolderName: practProfile.bankAccountName || (course.practitioner ? `${course.practitioner.firstName} ${course.practitioner.lastName}`.trim() : ""),
+        accountNumberMasked: practProfile.bankAccountNumber ? `•••• ${practProfile.bankAccountNumber.slice(-4)}` : (practProfile.upiId || ""),
+        bankName: practProfile.bankName || (practProfile.upiId ? "UPI Virtual Payment Address" : "Registered Bank"),
+        ifsc: practProfile.bankIfscCode || "",
+        upiId: practProfile.upiId || "",
+        iban: practProfile.bankIban || "",
+        swift: practProfile.bankSwiftBic || "",
+        country: practProfile.payoutCountry || "India",
+        payoutMethod: practProfile.payoutMethod || (practProfile.upiId ? "upi" : "bank"),
+      } : {}
+
       await Payout.create({
         practitioner: practitionerId,
         amount: finalAmount,
@@ -973,14 +990,23 @@ exports.verifyCourseOrder = async (req, res) => {
         taxDeducted: taxDeducted,
         commissionDeducted: platformFee + taxDeducted,
         netAmount: netSalary,
-        status: "processing",
+        status: hasBank ? "processing" : "pending_bank_details",
+        failureReason: hasBank ? "" : "Practitioner bank account or UPI details missing",
         settlementWindowHours: 72,
-        settledAt: new Date(Date.now() + 72 * 60 * 60 * 1000),
+        scheduledPayoutAt,
         payoutMethod: "payglocal_direct_transfer",
+        bankDetails: bankSnapshot,
         sourceType: "course",
         sourceId: course._id.toString(),
+        sourceTitle: course.title,
         bookingsCount: 1,
       })
+
+      if (!hasBank) {
+        notifyPendingBankDetails(practitionerId, netSalary, course.title).catch((e) =>
+          console.warn("[Autopay] notifyPendingBankDetails warning:", e.message)
+        )
+      }
     }
 
     // Multi-Channel Course Purchase Notification (WhatsApp + Email)
@@ -1271,6 +1297,22 @@ async function _createInvoiceAndAdminLog({
     const finalNet = practitionerPortion > 0 ? Math.min(practitionerPortion, calculatedNet) : calculatedNet
 
     if (finalNet > 0) {
+      const practProfile = await PractitionerProfile.findOne({ user: practitionerId })
+      const hasBank = hasValidBankDetails(practProfile)
+      const scheduledPayoutAt = new Date(Date.now() + 72 * 60 * 60 * 1000)
+
+      const bankSnapshot = practProfile ? {
+        accountHolderName: practProfile.bankAccountName || (practitionerUser ? `${practitionerUser.firstName} ${practitionerUser.lastName}`.trim() : ""),
+        accountNumberMasked: practProfile.bankAccountNumber ? `•••• ${practProfile.bankAccountNumber.slice(-4)}` : (practProfile.upiId || ""),
+        bankName: practProfile.bankName || (practProfile.upiId ? "UPI Virtual Payment Address" : "Registered Bank"),
+        ifsc: practProfile.bankIfscCode || "",
+        upiId: practProfile.upiId || "",
+        iban: practProfile.bankIban || "",
+        swift: practProfile.bankSwiftBic || "",
+        country: practProfile.payoutCountry || "India",
+        payoutMethod: practProfile.payoutMethod || (practProfile.upiId ? "upi" : "bank"),
+      } : {}
+
       await Payout.create({
         practitioner: practitionerId,
         amount: grossAmount,
@@ -1279,14 +1321,23 @@ async function _createInvoiceAndAdminLog({
         taxDeducted: taxDeducted,
         commissionDeducted: platformFee + taxDeducted,
         netAmount: finalNet,
-        status: "processing",
+        status: hasBank ? "processing" : "pending_bank_details",
+        failureReason: hasBank ? "" : "Practitioner bank account or UPI details missing",
         settlementWindowHours: 72,
-        settledAt: new Date(Date.now() + 72 * 60 * 60 * 1000), // Scheduled in 72 hours
+        scheduledPayoutAt,
         payoutMethod: "payglocal_direct_transfer",
+        bankDetails: bankSnapshot,
         sourceType: "offer_booking",
         sourceId: booking._id.toString(),
+        sourceTitle: offer?.title || "1:1 Session / Offer Booking",
         bookingsCount: 1,
       })
+
+      if (!hasBank) {
+        notifyPendingBankDetails(practitionerId, finalNet, offer?.title).catch((e) =>
+          console.warn("[Autopay] notifyPendingBankDetails warning:", e.message)
+        )
+      }
     }
   } catch (err) {
     console.error("_createInvoiceAndAdminLog error:", err)

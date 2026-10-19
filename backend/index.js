@@ -219,6 +219,14 @@ server.listen(PORT, () => {
   } catch (meetSchedErr) {
     console.error("Failed to start meeting reminder scheduler:", meetSchedErr.message)
   }
+
+  // Start Automated 72-Hour Practitioner Bank Autopay Scheduler (Runs every 10 mins)
+  try {
+    const { startAutopayScheduler } = require("./services/autopayScheduler")
+    startAutopayScheduler()
+  } catch (autopayErr) {
+    console.error("Failed to start 72-hour autopay scheduler:", autopayErr.message)
+  }
 })
 
 // Configure HTTP timeouts for large video uploads (up to 20GB)

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useSelector } from 'react-redux'
-import { FiPlus, FiX, FiUsers, FiMessageSquare, FiEdit2, FiTrash2, FiAlertTriangle } from 'react-icons/fi'
+import { FiPlus, FiX, FiUsers, FiMessageSquare, FiEdit2, FiTrash2, FiAlertTriangle, FiBell } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import { apiConnector } from '../../../../services/apiConnector'
 
@@ -189,6 +189,67 @@ export function Circles({ telemetryData, onUpdate, setActiveSection }) {
           }}
         >
           <FiPlus size={18} /> Open a new circle
+        </button>
+      </div>
+
+      {/* Circle Traction & Automated Notifications Engine Callout */}
+      <div
+        style={{
+          background: 'linear-gradient(135deg, #EFF6FF 0%, #F5F3FF 100%)',
+          border: '1px solid #BFDBFE',
+          borderRadius: '16px',
+          padding: '16px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '14px',
+          marginBottom: '20px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <span
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '10px',
+              background: '#2563EB',
+              color: '#FFF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '18px',
+              flexShrink: 0,
+            }}
+          >
+            <FiBell />
+          </span>
+          <div>
+            <div style={{ fontSize: '14px', fontWeight: 800, color: '#1E3A8A' }}>
+              Automated Circle Activity Notifications Active (WhatsApp + Email)
+            </div>
+            <div style={{ fontSize: '12.5px', color: '#3B82F6', marginTop: '2px' }}>
+              Whenever any member chats in your Circle, OpenHand automatically dispatches instant WhatsApp and Email notifications to all participants to maintain high momentum and traction.
+            </div>
+          </div>
+        </div>
+
+        <button
+          onClick={() => {
+            if (setActiveSection) setActiveSection('profile')
+          }}
+          style={{
+            background: '#FFFFFF',
+            border: '1px solid #93C5FD',
+            borderRadius: '8px',
+            padding: '7px 14px',
+            fontSize: '12px',
+            fontWeight: 700,
+            color: '#1D4ED8',
+            cursor: 'pointer',
+          }}
+        >
+          Notification Settings →
         </button>
       </div>
 

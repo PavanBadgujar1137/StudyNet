@@ -303,8 +303,8 @@ export default function AuraChat({ role = 'learner' }) {
           sender: 'aura',
           text: res.data.reply,
           practicalExercise: res.data.practicalExercise,
-          source: res.data.source || 'aura',
-          model: 'AURA',
+          source: res.data.source || 'openai',
+          model: res.data.model || 'OpenAI',
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         }
         setMessages((prev) => [...prev, botMsg])
@@ -473,6 +473,23 @@ export default function AuraChat({ role = 'learner' }) {
               <h2 style={{ fontSize: '18px', fontWeight: 800, margin: 0, letterSpacing: '-0.01em', color: '#FFFFFF' }}>
                 AURA
               </h2>
+              <span
+                style={{
+                  background: 'rgba(255, 255, 255, 0.16)',
+                  border: '1px solid rgba(255, 255, 255, 0.28)',
+                  color: '#FFFFFF',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  padding: '2px 9px',
+                  borderRadius: '999px',
+                  letterSpacing: '0.02em',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+              >
+                <span>✦</span> OpenAI
+              </span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px' }}>
               <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#34D399', display: 'inline-block' }} />
