@@ -519,7 +519,7 @@ export function PractitionerDashboard() {
                 />
               )}
               {activeSection === 'aura' && (
-                <AuraChat role="practitioner" />
+                <AuraChat role="practitioner" practitionerName={practitionerName} />
               )}
               {activeSection === 'coupons' && (
                 <PractitionerCoupons />

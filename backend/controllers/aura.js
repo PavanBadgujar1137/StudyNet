@@ -232,7 +232,7 @@ exports.approveDraftNotes = async (req, res) => {
 
 exports.chatWithAura = async (req, res) => {
   try {
-    const { message = "", role = "learner", history = [], focus = "general", image } = req.body
+    const { message = "", role = "learner", history = [], focus = "general", image, userName, practitionerName } = req.body
     const trimmed = (message || "").trim()
 
     // Validate that either text message or image is provided
@@ -245,6 +245,50 @@ exports.chatWithAura = async (req, res) => {
 
     const isPractitioner = role === "practitioner"
     const activeSystemPrompt = isPractitioner ? PRACTICE_ASSISTANT_SYSTEM_PROMPT : VIRTUAL_COUNSELOR_SYSTEM_PROMPT
+
+    // Resolve accurate user / practitioner display name
+    let resolvedName = (practitionerName || userName || "").trim()
+
+    // If name is missing or generic and request has authenticated user, look up their profile from DB
+    if ((!resolvedName || resolvedName.toLowerCase() === "practitioner" || resolvedName.toLowerCase() === "colleague" || resolvedName.toLowerCase() === "friend") && req.user?.id) {
+      try {
+        const User = require("../models/User")
+        const dbUser = await User.findById(req.user.id).select("firstName lastName title accountType").lean()
+        if (dbUser) {
+          const rawTitle = (dbUser.title || "").trim()
+          let first = (dbUser.firstName || "").trim()
+          let last = (dbUser.lastName || "").trim()
+
+          const prefixRegex = /^(dr\.?|prof\.?|mr\.?|ms\.?|mrs\.?|mx\.?)\s+/i
+          let finalTitle = rawTitle
+          const match = first.match(prefixRegex)
+          if (match) {
+            if (!finalTitle) finalTitle = match[0].trim()
+            first = first.replace(prefixRegex, "").trim()
+          }
+          if (prefixRegex.test(last)) {
+            last = last.replace(prefixRegex, "").trim()
+          }
+
+          const baseName = `${first} ${last}`.trim() || first
+          if (finalTitle && finalTitle.toLowerCase() !== "none" && finalTitle.toLowerCase() !== "select title") {
+            let formattedTitle = finalTitle.endsWith(".") ? finalTitle : `${finalTitle}.`
+            formattedTitle = formattedTitle.charAt(0).toUpperCase() + formattedTitle.slice(1)
+            resolvedName = baseName.toLowerCase().startsWith(formattedTitle.toLowerCase())
+              ? baseName
+              : `${formattedTitle} ${baseName}`.trim()
+          } else {
+            resolvedName = baseName
+          }
+        }
+      } catch (dbErr) {
+        console.warn("Could not fetch user name for AURA:", dbErr.message)
+      }
+    }
+
+    if (!resolvedName || resolvedName.toLowerCase() === "practitioner") {
+      resolvedName = isPractitioner ? "Colleague" : "Friend"
+    }
 
     // Clean base64 image data if present
     let cleanImageData = null
@@ -274,6 +318,15 @@ exports.chatWithAura = async (req, res) => {
           ? `CLINICAL FOCUS: ${focus}. Emphasize diagnostic accuracy, auditable documentation standards, evidence-based modality selection, and clear therapeutic formulations.`
           : `PERSONAL GROWTH FOCUS: ${focus}. Emphasize compassionate somatic grounding, nervous system regulation, cognitive reframing, and actionable self-inquiry.`
 
+        const nameDirective = isPractitioner
+          ? `USER IDENTITY & MANDATORY ADDRESSING RULES:
+- PRACTITIONER NAME: "${resolvedName}"
+- MANDATORY ADDRESSING RULE: You are interacting directly with ${resolvedName}. ALWAYS address them by their proper name/title ("${resolvedName}").
+- STRICT PROHIBITION: NEVER use the generic placeholder "Practitioner" as a name or greeting (e.g., NEVER say "Hello, Practitioner" or "Welcome, Practitioner"). Always address them as "Hello, ${resolvedName}", "Greetings, ${resolvedName}", etc.`
+          : `USER IDENTITY & MANDATORY ADDRESSING RULES:
+- USER NAME: "${resolvedName}"
+- MANDATORY ADDRESSING RULE: Always address the user warmly by their name ("${resolvedName}").`
+
         const formattedMessages = [
           {
             role: "system",
@@ -282,6 +335,7 @@ exports.chatWithAura = async (req, res) => {
 =======================================================
 OPERATIONAL RUNTIME INSTRUCTIONS:
 - USER ROLE: ${role.toUpperCase()}
+${nameDirective}
 - FOCUS AREA: ${focus}
 - ${focusDirectives}
 - DIRECT ACCURACY FIRST: Answer the user's explicit question, query, or situation with razor-sharp factual, conceptual, or clinical precision right in the first 2 sentences.
@@ -380,8 +434,12 @@ OPERATIONAL RUNTIME INSTRUCTIONS:
             },
           })
         }
+        const geminiNameRule = isPractitioner
+          ? `PRACTITIONER NAME: "${resolvedName}". Address the practitioner directly by their name: "${resolvedName}". STRICT RULE: NEVER say "Hello, Practitioner" or address them generically as "Practitioner".`
+          : `USER NAME: "${resolvedName}". Address the user warmly by their name: "${resolvedName}".`
+
         parts.push({
-          text: `${activeSystemPrompt}\n\n[USER ROLE: ${role.toUpperCase()}]\n[SESSION FOCUS: ${focus}]\n\nUser Message: "${trimmed || 'Shared an image for reflection'}"\n\nRespond as AURA according to your role. Be empathetic, grounded, and concise (2-4 brief paragraphs). If a practical exercise fits, weave it in.`,
+          text: `${activeSystemPrompt}\n\n[USER ROLE: ${role.toUpperCase()}]\n${geminiNameRule}\n[SESSION FOCUS: ${focus}]\n\nUser Message: "${trimmed || 'Shared an image for reflection'}"\n\nRespond as AURA according to your role. Be empathetic, grounded, and concise (2-4 brief paragraphs). If a practical exercise fits, weave it in.`,
         })
 
         const response = await fetch(
@@ -506,9 +564,9 @@ OPERATIONAL RUNTIME INSTRUCTIONS:
       } else if (lower.includes("prompt") || lower.includes("homework") || lower.includes("reflection")) {
         reply = `Here are 4 high-impact reflection prompts prepared by your practice assistant to assign to your client:\n\n1. *"Notice the exact moment this week where you felt an impulse to apologize for simply existing or having a need. What felt dangerous about taking up space?"*\n2. *"When your body felt tense or contracted recently, what boundary was being quietly compromised?"*\n3. *"What is an unwritten rule you learned in childhood about what you must do to earn love or approval that you are ready to retire?"*\n4. *"Imagine your wisest, most compassionate future self standing behind you right now with a hand on your shoulder. What permission are they giving you?"*\n\n💡 *Assistant Note: These prompts work exceptionally well when assigned right after a high-emotion 1:1 session while the insight is still fresh.*`
       } else if (lower.includes("burnout") || lower.includes("countertransference") || lower.includes("fatigue") || lower.includes("holding space")) {
-        reply = `Colleague, as your practice assistant, I want to gently check in on your own wellbeing. Holding space for deep human pain is profound work, but it takes an invisible somatic toll on your own nervous system.\n\n**A Practice Assistant Check-In for You:**\n• Where are you absorbing your clients' urgency as your own?\n• Are you working harder than the client during the session? (A classic marker of over-functioning empathy).\n• Have you cleared your somatic palate between sessions, or are you carrying client energy into your evening?\n\nTake a deep, deliberate exhale. Ground your pelvis and feet into the earth. You are the instrument through which healing occurs — keep your instrument tuned and rested.`
+        reply = `${resolvedName}, as your practice assistant, I want to gently check in on your own wellbeing. Holding space for deep human pain is profound work, but it takes an invisible somatic toll on your own nervous system.\n\n**A Practice Assistant Check-In for You:**\n• Where are you absorbing your clients' urgency as your own?\n• Are you working harder than the client during the session? (A classic marker of over-functioning empathy).\n• Have you cleared your somatic palate between sessions, or are you carrying client energy into your evening?\n\nTake a deep, deliberate exhale. Ground your pelvis and feet into the earth. You are the instrument through which healing occurs — keep your instrument tuned and rested.`
       } else {
-        reply = `Greetings. As your dedicated Practice Assistant, I am ready to support your daily clinical and administrative workflow:\n\n• **SOAP & Session Synthesis:** Converting raw session debriefs into pristine, auditable clinical notes.\n• **Client Reflection Prompts:** Generating tailored therapeutic questions and journaling exercises for your clients.\n• **Case Structuring & Modalities:** Conceptualizing cases with ACT, Somatic Experiencing, IFS, and CBT frameworks.\n• **Image & Artifact Processing:** Upload handwritten notes or whiteboard sketches for instant transcription.\n• **Practitioner Sustainability:** Managing capacity, preventing burnout, and supporting your professional practice.\n\nWhat would you like assistance with today?`
+        reply = `Greetings, ${resolvedName}. As your dedicated Practice Assistant, I am ready to support your daily clinical and administrative workflow:\n\n• **SOAP & Session Synthesis:** Converting raw session debriefs into pristine, auditable clinical notes.\n• **Client Reflection Prompts:** Generating tailored therapeutic questions and journaling exercises for your clients.\n• **Case Structuring & Modalities:** Conceptualizing cases with ACT, Somatic Experiencing, IFS, and CBT frameworks.\n• **Image & Artifact Processing:** Upload handwritten notes or whiteboard sketches for instant transcription.\n• **Practitioner Sustainability:** Managing capacity, preventing burnout, and supporting your professional practice.\n\nWhat would you like assistance with today?`
       }
     }
 
