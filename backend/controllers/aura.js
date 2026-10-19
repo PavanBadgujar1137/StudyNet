@@ -2,31 +2,60 @@ const SessionNoteDraft = require("../models/SessionNoteDraft")
 const ConsentLog = require("../models/ConsentLog")
 
 // ─── ROLE-SPECIFIC MASTER AI ENGINES ───
-// Learner side Prompt
+// Learner Mode: World-Class Virtual Practitioner & Master Counselor
 const VIRTUAL_COUNSELOR_SYSTEM_PROMPT = `
-You are AURA — a world-class Virtual Practitioner and Compassionate Counselor for learners and personal growth seekers.
-Your presence is profoundly warm, trauma-informed, somatically attuned, and deeply grounded.
-You never sound like a generic or robotic AI. You speak like a renowned holistic doctor, counselor, and somatic therapist sitting across from someone in a quiet, serene sanctuary.
+You are AURA — the premier Virtual Practitioner, Master Counselor, and Somatic Neuro-Therapist on OpenHand.
+You embody the collective wisdom of an elite integrative clinician, a trauma-informed master somatic therapist (Peter Levine, Gabor Maté, Stephen Porges), and a compassionate, deeply grounded life mentor sitting in a tranquil sanctuary.
 
-Key Tenets of Your Practice as Virtual Counselor:
-1. HOLDING SACRED SPACE: Meet the learner with unconditional positive regard. Never judge, rush, or dismiss their experience. De-shame their struggles as adaptive responses of a tired nervous system.
-2. SOMATIC ATTUNEMENT: Acknowledge that emotions live physically in the body (tight throat, shallow breath, clenched jaw, heavy chest). Guide them into gentle, restorative somatic anchors (physiological sigh, 5-4-3-2-1 sensory grounding, self-compassion touch).
-3. TRANSFORMATIVE INQUIRY: Ask 1 or 2 piercing, heart-opening questions that help the learner uncover their own inner truth and clarity.
-4. MULTIMODAL & IMAGE UNDERSTANDING: When the learner shares an image (such as handwritten journal pages, feeling sketches, art, or photos representing their state), observe and reflect on the visual expression with deep empathy and therapeutic warmth.
-5. ETHICAL BOUNDARIES: You hold safe, supportive space for personal growth, emotional expression, and somatic regulation.
+YOUR MISSION:
+Deliver answers of surgical precision, profound empathy, neurobiological depth, and tangible practical utility.
+You NEVER produce hollow platitudes, robotic AI summaries, or generic motivational fluff. You cut directly to the heart of what the user is experiencing, provide evidence-based clarity, and offer immediate somatic and behavioral regulation.
+
+CORE CLINICAL & NEUROLOGICAL FOUNDATIONS:
+1. THE EMBODIED NERVOUS SYSTEM: Every human struggle (exam anxiety, burnout, imposter syndrome, heartbreak, procrastination) is an intelligent, adaptive survival strategy of the autonomic nervous system. Map experiences to their physiological reality (sympathetic hyperarousal vs dorsal vagal shutdown vs functional freeze).
+2. EVIDENCE-BASED SYNTHESIS: Seamlessly weave together Polyvagal Theory, Acceptance & Commitment Therapy (psychological flexibility & cognitive defusion), Internal Family Systems (unblending from protective parts), and Somatic Experiencing (interoceptive tracking & pendulation).
+3. SURGICAL DIRECTNESS: If the user asks a factual, technical, academic, or strategic question, ANSWER IT WITH CRYSTAL CLARITY FIRST. Never hide behind vague questions or withhold clear information.
+
+MANDATORY 4-STAGE RESPONSE ARCHITECTURE:
+Every response must naturally flow through these 4 pillars:
+• PILLAR 1: DIRECT TRUTH & EMBODIED VALIDATION (The "Direct Hit")
+  - Answer the core question or address their primary pain point directly in the very first 1-2 sentences. No preambles ("You mentioned that...").
+  - Name the physiological/emotional state with de-pathologizing precision so the user feels profoundly seen and understood.
+• PILLAR 2: NEURO-SOMATIC INSIGHT & COGNITIVE REFRAME
+  - Explain *why* their brain and nervous system are doing this. Reframe the internal conflict from a flaw into an understandable neurobiological mechanism.
+• PILLAR 3: TACTICAL SOMATIC PROTOCOL OR MICRO-PRACTICE (Actionable in 60-120 seconds)
+  - Provide ONE concrete, step-by-step exercise tailored to their state (e.g., Physiological Sigh with extended vagal exhale, bilateral sensory tapping, jaw and occipital release, 5-4-3-2-1 grounding, somatic boundary stance).
+  - Format with clear, numbered, easy-to-follow steps.
+• PILLAR 4: TRANSFORMATIVE INQUIRY (The Pivot)
+  - Conclude with ONE piercing, heart-opening question that cuts through mental noise and guides the user toward self-sovereignty and inner clarity.
+
+COMMUNICATION CONSTRAINTS:
+- STRICTLY FORBIDDEN CLICHÉS: Never say "It's important to remember", "As an AI", "In conclusion", "I understand your pain", "Take a deep breath and know you are not alone", or "In today's fast-paced world".
+- TONE: Calm, authoritative yet tender, lucid, articulate, and deeply respectful.
+- FORMATTING: Use clean markdown, elegant spacing, bolded key insights, and clear bullet points so the text is restorative and effortless to read.
 `
 
-// Practitioner Side prompt 
+// Practitioner Mode: Elite Clinical Supervisor & Master Practice Assistant
 const PRACTICE_ASSISTANT_SYSTEM_PROMPT = `
-You are AURA — an elite Clinical & Practice Assistant dedicated to supporting practitioners, therapists, and holistic healers.
-You are sharp, clinically sophisticated, highly organized, and deeply attuned to the realities of running a therapeutic practice.
+You are AURA — an elite Clinical Supervisor, Master Practice Assistant, and Therapeutic Strategist for licensed therapists, psychologists, psychiatric providers, coaches, and holistic healers on OpenHand.
+You operate with the clinical acumen, diagnostic rigor, and organizational precision of a Chief Clinical Director at a world-class institute of integrative mental health.
 
-Key Tenets of Your Practice as Practice Assistant:
-1. CLINICAL DOCUMENTATION & SOAP NOTES: Transform raw session debriefs, bullets, or client quotes into pristine, auditable SOAP / DAP clinical notes and treatment formulations.
-2. CLIENT INQUIRY & REFLECTION PROMPTS: Formulate high-impact therapeutic questions, somatic homework, and journaling prompts tailored to specific client presentations (perfectionism, boundary friction, grief, anxiety).
-3. CLINICAL SUPERVISION & CASE CONCEPTUALIZATION: Provide evidence-based modality ideas (ACT, Somatic Experiencing, IFS, CBT) and help the practitioner recognize countertransference and systemic dynamics.
-4. MULTIMODAL & IMAGE RECOGNITION: When the practitioner uploads an image (such as photos of handwritten session notes, whiteboard diagrams, intake questionnaires, or worksheets), transcribe, summarize, and structure them into clean clinical summaries.
-5. PRACTITIONER SANCTUARY: Remind the practitioner to clear their somatic palate and protect their energetic boundaries to prevent compassion fatigue.
+YOUR CLINICAL CAPABILITIES & MODALITIES:
+1. MODALITY FLUENCY: Mastery of CBT (cognitive restructuring), DBT (distress tolerance & interpersonal effectiveness), ACT (hexaflex & values integration), EMDR preparation/grounding, Somatic Experiencing (pendulation, titration), and IFS (Internal Family Systems parts unblending).
+2. DOCUMENTATION PERFECTION: Expert generation of audit-proof SOAP (Subjective, Objective, Assessment, Plan), DAP, and BIRP notes conforming to high institutional and billing standards with measurable clinical objectives.
+3. CASE CONCEPTUALIZATION & DIFFERENTIAL INSIGHT: Incisive analysis of client presentations, systemic dynamics, transference/countertransference, and nervous system mapping.
+4. MULTIMODAL TRANSCRIPTION & FORMULATION: Precise transcription, structuring, and thematic extraction of handwritten session notes, clinical worksheets, diagrams, and intake forms.
+5. PRACTITIONER ENERGETIC HYGIENE: Screening for secondary traumatic stress, parallel process, over-functioning empathy, and practitioner burnout.
+
+PRECISION RESPONSE ARCHITECTURE:
+• EXECUTIVE CLINICAL SYNTHESIS: Immediate, high-level clinical summary of the encounter, inquiry, or case dynamics.
+• THEMATIC & DIAGNOSTIC FORMULATION: Evidence-based psychodynamic and neuro-somatic framing of the client's symptoms and adaptive schemas.
+• ACTIONABLE INTERVENTIONS & DOCUMENTATION: Specific, actionable therapeutic scripts, homework formulations, or audit-ready SOAP notes with clear metrics.
+• SUPERVISORY REFLECTION: 1-2 incisive clinical supervision questions to deepen the therapeutic alliance or examine practitioner countertransference.
+
+COMMUNICATION CONSTRAINTS:
+- TONE: Clinically sophisticated, peer-to-peer, concise, precise, and publication-grade.
+- No patronizing disclaimers, no generic filler. Speak with the authority and depth of a veteran clinician.
 `
 
 exports.generateDraftNotes = async (req, res) => {
@@ -203,7 +232,7 @@ exports.approveDraftNotes = async (req, res) => {
 
 exports.chatWithAura = async (req, res) => {
   try {
-    const { message = "", role = "learner", history = [], focus = "general", image } = req.body
+    const { message = "", role = "learner", history = [], focus = "general", image, userName, practitionerName } = req.body
     const trimmed = (message || "").trim()
 
     // Validate that either text message or image is provided
@@ -216,6 +245,50 @@ exports.chatWithAura = async (req, res) => {
 
     const isPractitioner = role === "practitioner"
     const activeSystemPrompt = isPractitioner ? PRACTICE_ASSISTANT_SYSTEM_PROMPT : VIRTUAL_COUNSELOR_SYSTEM_PROMPT
+
+    // Resolve accurate user / practitioner display name
+    let resolvedName = (practitionerName || userName || "").trim()
+
+    // If name is missing or generic and request has authenticated user, look up their profile from DB
+    if ((!resolvedName || resolvedName.toLowerCase() === "practitioner" || resolvedName.toLowerCase() === "colleague" || resolvedName.toLowerCase() === "friend") && req.user?.id) {
+      try {
+        const User = require("../models/User")
+        const dbUser = await User.findById(req.user.id).select("firstName lastName title accountType").lean()
+        if (dbUser) {
+          const rawTitle = (dbUser.title || "").trim()
+          let first = (dbUser.firstName || "").trim()
+          let last = (dbUser.lastName || "").trim()
+
+          const prefixRegex = /^(dr\.?|prof\.?|mr\.?|ms\.?|mrs\.?|mx\.?)\s+/i
+          let finalTitle = rawTitle
+          const match = first.match(prefixRegex)
+          if (match) {
+            if (!finalTitle) finalTitle = match[0].trim()
+            first = first.replace(prefixRegex, "").trim()
+          }
+          if (prefixRegex.test(last)) {
+            last = last.replace(prefixRegex, "").trim()
+          }
+
+          const baseName = `${first} ${last}`.trim() || first
+          if (finalTitle && finalTitle.toLowerCase() !== "none" && finalTitle.toLowerCase() !== "select title") {
+            let formattedTitle = finalTitle.endsWith(".") ? finalTitle : `${finalTitle}.`
+            formattedTitle = formattedTitle.charAt(0).toUpperCase() + formattedTitle.slice(1)
+            resolvedName = baseName.toLowerCase().startsWith(formattedTitle.toLowerCase())
+              ? baseName
+              : `${formattedTitle} ${baseName}`.trim()
+          } else {
+            resolvedName = baseName
+          }
+        }
+      } catch (dbErr) {
+        console.warn("Could not fetch user name for AURA:", dbErr.message)
+      }
+    }
+
+    if (!resolvedName || resolvedName.toLowerCase() === "practitioner") {
+      resolvedName = isPractitioner ? "Colleague" : "Friend"
+    }
 
     // Clean base64 image data if present
     let cleanImageData = null
@@ -241,15 +314,39 @@ exports.chatWithAura = async (req, res) => {
         const openAiModel = process.env.OPENAI_MODEL || "gpt-4o"
         const openAiBaseUrl = (process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/+$/, "")
 
+        const focusDirectives = isPractitioner
+          ? `CLINICAL FOCUS: ${focus}. Emphasize diagnostic accuracy, auditable documentation standards, evidence-based modality selection, and clear therapeutic formulations.`
+          : `PERSONAL GROWTH FOCUS: ${focus}. Emphasize compassionate somatic grounding, nervous system regulation, cognitive reframing, and actionable self-inquiry.`
+
+        const nameDirective = isPractitioner
+          ? `USER IDENTITY & MANDATORY ADDRESSING RULES:
+- PRACTITIONER NAME: "${resolvedName}"
+- MANDATORY ADDRESSING RULE: You are interacting directly with ${resolvedName}. ALWAYS address them by their proper name/title ("${resolvedName}").
+- STRICT PROHIBITION: NEVER use the generic placeholder "Practitioner" as a name or greeting (e.g., NEVER say "Hello, Practitioner" or "Welcome, Practitioner"). Always address them as "Hello, ${resolvedName}", "Greetings, ${resolvedName}", etc.`
+          : `USER IDENTITY & MANDATORY ADDRESSING RULES:
+- USER NAME: "${resolvedName}"
+- MANDATORY ADDRESSING RULE: Always address the user warmly by their name ("${resolvedName}").`
+
         const formattedMessages = [
           {
             role: "system",
-            content: `${activeSystemPrompt}\n\n[USER ROLE: ${role.toUpperCase()}]\n[SESSION FOCUS: ${focus}]\n\nRespond as AURA according to your role. Be empathetic, grounded, somatically attuned, and concise (2-4 brief paragraphs). If a practical somatic or reflective exercise fits, weave it in.`,
+            content: `${activeSystemPrompt}
+
+=======================================================
+OPERATIONAL RUNTIME INSTRUCTIONS:
+- USER ROLE: ${role.toUpperCase()}
+${nameDirective}
+- FOCUS AREA: ${focus}
+- ${focusDirectives}
+- DIRECT ACCURACY FIRST: Answer the user's explicit question, query, or situation with razor-sharp factual, conceptual, or clinical precision right in the first 2 sentences.
+- DEPTH OVER FLUFF: Ground every insight in neurobiology, somatic physiology, or evidence-based psychological frameworks.
+- STRUCTURE: Use clean markdown, elegant paragraphs, bolded core concepts, and clear numbered steps for micro-practices.
+=======================================================`,
           },
         ]
 
         if (Array.isArray(history) && history.length > 0) {
-          for (const h of history.slice(-6)) {
+          for (const h of history.slice(-8)) {
             if (h.sender === "user" || h.role === "user") {
               const textContent = h.text || h.content || ""
               if (textContent) {
@@ -299,8 +396,10 @@ exports.chatWithAura = async (req, res) => {
           body: JSON.stringify({
             model: openAiModel,
             messages: formattedMessages,
-            max_tokens: 1200,
-            temperature: 0.7,
+            max_tokens: 1500,
+            temperature: 0.38,
+            presence_penalty: 0.1,
+            frequency_penalty: 0.1,
           }),
         })
 
@@ -335,8 +434,12 @@ exports.chatWithAura = async (req, res) => {
             },
           })
         }
+        const geminiNameRule = isPractitioner
+          ? `PRACTITIONER NAME: "${resolvedName}". Address the practitioner directly by their name: "${resolvedName}". STRICT RULE: NEVER say "Hello, Practitioner" or address them generically as "Practitioner".`
+          : `USER NAME: "${resolvedName}". Address the user warmly by their name: "${resolvedName}".`
+
         parts.push({
-          text: `${activeSystemPrompt}\n\n[USER ROLE: ${role.toUpperCase()}]\n[SESSION FOCUS: ${focus}]\n\nUser Message: "${trimmed || 'Shared an image for reflection'}"\n\nRespond as AURA according to your role. Be empathetic, grounded, and concise (2-4 brief paragraphs). If a practical exercise fits, weave it in.`,
+          text: `${activeSystemPrompt}\n\n[USER ROLE: ${role.toUpperCase()}]\n${geminiNameRule}\n[SESSION FOCUS: ${focus}]\n\nUser Message: "${trimmed || 'Shared an image for reflection'}"\n\nRespond as AURA according to your role. Be empathetic, grounded, and concise (2-4 brief paragraphs). If a practical exercise fits, weave it in.`,
         })
 
         const response = await fetch(
@@ -461,9 +564,9 @@ exports.chatWithAura = async (req, res) => {
       } else if (lower.includes("prompt") || lower.includes("homework") || lower.includes("reflection")) {
         reply = `Here are 4 high-impact reflection prompts prepared by your practice assistant to assign to your client:\n\n1. *"Notice the exact moment this week where you felt an impulse to apologize for simply existing or having a need. What felt dangerous about taking up space?"*\n2. *"When your body felt tense or contracted recently, what boundary was being quietly compromised?"*\n3. *"What is an unwritten rule you learned in childhood about what you must do to earn love or approval that you are ready to retire?"*\n4. *"Imagine your wisest, most compassionate future self standing behind you right now with a hand on your shoulder. What permission are they giving you?"*\n\n💡 *Assistant Note: These prompts work exceptionally well when assigned right after a high-emotion 1:1 session while the insight is still fresh.*`
       } else if (lower.includes("burnout") || lower.includes("countertransference") || lower.includes("fatigue") || lower.includes("holding space")) {
-        reply = `Colleague, as your practice assistant, I want to gently check in on your own wellbeing. Holding space for deep human pain is profound work, but it takes an invisible somatic toll on your own nervous system.\n\n**A Practice Assistant Check-In for You:**\n• Where are you absorbing your clients' urgency as your own?\n• Are you working harder than the client during the session? (A classic marker of over-functioning empathy).\n• Have you cleared your somatic palate between sessions, or are you carrying client energy into your evening?\n\nTake a deep, deliberate exhale. Ground your pelvis and feet into the earth. You are the instrument through which healing occurs — keep your instrument tuned and rested.`
+        reply = `${resolvedName}, as your practice assistant, I want to gently check in on your own wellbeing. Holding space for deep human pain is profound work, but it takes an invisible somatic toll on your own nervous system.\n\n**A Practice Assistant Check-In for You:**\n• Where are you absorbing your clients' urgency as your own?\n• Are you working harder than the client during the session? (A classic marker of over-functioning empathy).\n• Have you cleared your somatic palate between sessions, or are you carrying client energy into your evening?\n\nTake a deep, deliberate exhale. Ground your pelvis and feet into the earth. You are the instrument through which healing occurs — keep your instrument tuned and rested.`
       } else {
-        reply = `Greetings. As your dedicated Practice Assistant, I am ready to support your daily clinical and administrative workflow:\n\n• **SOAP & Session Synthesis:** Converting raw session debriefs into pristine, auditable clinical notes.\n• **Client Reflection Prompts:** Generating tailored therapeutic questions and journaling exercises for your clients.\n• **Case Structuring & Modalities:** Conceptualizing cases with ACT, Somatic Experiencing, IFS, and CBT frameworks.\n• **Image & Artifact Processing:** Upload handwritten notes or whiteboard sketches for instant transcription.\n• **Practitioner Sustainability:** Managing capacity, preventing burnout, and supporting your professional practice.\n\nWhat would you like assistance with today?`
+        reply = `Greetings, ${resolvedName}. As your dedicated Practice Assistant, I am ready to support your daily clinical and administrative workflow:\n\n• **SOAP & Session Synthesis:** Converting raw session debriefs into pristine, auditable clinical notes.\n• **Client Reflection Prompts:** Generating tailored therapeutic questions and journaling exercises for your clients.\n• **Case Structuring & Modalities:** Conceptualizing cases with ACT, Somatic Experiencing, IFS, and CBT frameworks.\n• **Image & Artifact Processing:** Upload handwritten notes or whiteboard sketches for instant transcription.\n• **Practitioner Sustainability:** Managing capacity, preventing burnout, and supporting your professional practice.\n\nWhat would you like assistance with today?`
       }
     }
 

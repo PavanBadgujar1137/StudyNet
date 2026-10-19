@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useSelector } from 'react-redux'
 import ReactMarkdown from 'react-markdown'
 import {
@@ -12,14 +12,21 @@ import {
   FiPaperclip,
 } from 'react-icons/fi'
 import { apiConnector } from '../../../services/apiConnector'
+import { formatPractitionerName } from '../../../utils/formatName'
 import toast from 'react-hot-toast'
 
-export default function AuraChat({ role = 'learner' }) {
+export default function AuraChat({ role = 'learner', practitionerName: propPractitionerName }) {
   const { token } = useSelector((state) => state.auth)
   const { user } = useSelector((state) => state.profile)
 
   const isLearner = role === 'learner'
-  const userName = user?.firstName || (isLearner ? 'Friend' : 'Colleague')
+  const practitionerName =
+    propPractitionerName ||
+    formatPractitionerName(
+      user,
+      user?.firstName ? `${user.firstName}${user.lastName ? ' ' + user.lastName : ''}` : 'Practitioner'
+    )
+  const userName = isLearner ? (user?.firstName || 'Friend') : practitionerName
 
   // Theme Constants
   const theme = {
@@ -45,7 +52,7 @@ export default function AuraChat({ role = 'learner' }) {
   const [isResetModalOpen, setIsResetModalOpen] = useState(false)
 
   // Initial Welcome Messages
-  const getInitialMessages = () => {
+  const getInitialMessages = useCallback(() => {
     if (isLearner) {
       return [
         {
@@ -60,14 +67,26 @@ export default function AuraChat({ role = 'learner' }) {
         {
           id: 'welcome',
           sender: 'aura',
-          text: `Welcome colleague, **${userName}**. ⚡\n\nI am **AURA** — your dedicated Clinical & Practice Assistant. I am ready to support your daily clinical and administrative workflow:\n\n- **SOAP & DAP Note Synthesis:** Turning session debriefs into pristine, auditable clinical records.\n- **Case Conceptualization:** Integrating ACT, Somatic Experiencing, and IFS frameworks.\n- **Client Reflection Prompts:** Generating tailored therapeutic inquiries and homework.\n- **Document Processing:** Upload handwritten notes or whiteboard sketches for instant transcription.\n\nWhat clinical narrative or practice workflow shall we explore together?`,
+          text: `Welcome, **${practitionerName}**. ⚡\n\nI am **AURA** — your dedicated Clinical & Practice Assistant. I am ready to support your daily clinical and administrative workflow:\n\n- **SOAP & DAP Note Synthesis:** Turning session debriefs into pristine, auditable clinical records.\n- **Case Conceptualization:** Integrating ACT, Somatic Experiencing, and IFS frameworks.\n- **Client Reflection Prompts:** Generating tailored therapeutic inquiries and homework.\n- **Document Processing:** Upload handwritten notes or whiteboard sketches for instant transcription.\n\nWhat clinical narrative or practice workflow shall we explore together?`,
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         },
       ]
     }
-  }
+  }, [isLearner, userName, practitionerName])
 
   const [messages, setMessages] = useState(getInitialMessages)
+
+  // Re-sync initial welcome message as soon as user profile / practitionerName loads
+  useEffect(() => {
+    if (user || propPractitionerName) {
+      setMessages((prev) => {
+        if (prev.length === 1 && prev[0].id === 'welcome') {
+          return getInitialMessages()
+        }
+        return prev
+      })
+    }
+  }, [user, propPractitionerName, getInitialMessages])
   const [inputMessage, setInputMessage] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [copiedIndex, setCopiedIndex] = useState(null)
@@ -281,6 +300,8 @@ export default function AuraChat({ role = 'learner' }) {
         role: isLearner ? 'learner' : 'practitioner',
         focus: selectedFocus,
         history: messages.slice(-6),
+        userName: isLearner ? userName : undefined,
+        practitionerName: !isLearner ? practitionerName : undefined,
       }
 
       if (currentImage) {
@@ -351,7 +372,7 @@ export default function AuraChat({ role = 'learner' }) {
       } else if (lower.includes('soap') || lower.includes('note') || lower.includes('summary')) {
         reply = `Here is your clinical session synthesis structured by your practice assistant for documentation excellence:\n\n### 📋 Clinical Encounter & Thematic Formulation\n\n**1. Subjective & Affective Presentation:**\nClient presented with situational anxiety and psychomotor restlessness related to interpersonal conflict and workload boundary erosion. Affect was congruent with reported distress; insight demonstrated high readiness for change.\n\n**2. Somatic & Psychological Formulations:**\n- **Primary Vagal State:** Sympathetic activation with chronic hypervigilance around perceived expectations.\n- **Key Cognitive Schema:** 'If I do not absorb everyone's demands, I am inherently unsafe / unvalued.'\n\n**3. Interventions Applied & Therapeutic Modalities:**\n- **Somatic Experiencing:** Guided interoceptive tracking of chest constriction, facilitating a restorative physiological sigh.\n- **ACT Defusion:** Separated identity from the perceived urgency of external demands.\n\n**4. Clinical Treatment Plan & Continuity:**\n- Client assigned 1 daily evening self-compassion check-in in the OpenHand journal.\n- Next 1:1 session scheduled for 7 days to evaluate boundary enforcement in high-friction environments.`
       } else {
-        reply = `Greetings colleague. As your dedicated Practice Assistant, I am ready to support your daily clinical and administrative workflow:\n\n- **SOAP & Session Synthesis:** Converting raw session debriefs into pristine, auditable clinical records.\n- **Client Reflection Prompts:** Generating tailored therapeutic questions and journaling exercises for your clients.\n- **Case Structuring & Modalities:** Conceptualizing cases with ACT, Somatic Experiencing, IFS, and CBT frameworks.\n- **Image & Artifact Processing:** Upload handwritten notes or whiteboard sketches for instant transcription.\n- **Practitioner Sustainability:** Managing capacity, preventing burnout, and supporting your professional practice.\n\nWhat would you like assistance with today?`
+        reply = `Greetings, ${practitionerName}. As your dedicated Practice Assistant, I am ready to support your daily clinical and administrative workflow:\n\n- **SOAP & Session Synthesis:** Converting raw session debriefs into pristine, auditable clinical records.\n- **Client Reflection Prompts:** Generating tailored therapeutic questions and journaling exercises for your clients.\n- **Case Structuring & Modalities:** Conceptualizing cases with ACT, Somatic Experiencing, IFS, and CBT frameworks.\n- **Image & Artifact Processing:** Upload handwritten notes or whiteboard sketches for instant transcription.\n- **Practitioner Sustainability:** Managing capacity, preventing burnout, and supporting your professional practice.\n\nWhat would you like assistance with today?`
       }
     }
 
