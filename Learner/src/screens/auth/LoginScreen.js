@@ -10,10 +10,14 @@ import {
   Platform,
   ScrollView,
   Image,
+  StatusBar,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
+
+const PURPLE = '#7138F4';
+const INK = '#111943';
 
 export default function LoginScreen({ navigation }) {
   const { login } = useAuth();
@@ -30,61 +34,73 @@ export default function LoginScreen({ navigation }) {
     }
     setErrorMessage('');
     setLoading(true);
-
-    const result = await login(email.trim(), password);
-    setLoading(false);
-
-    if (!result.success) {
-      setErrorMessage(result.error || 'Invalid email or password.');
+    try {
+      const result = await login(email.trim(), password);
+      if (!result?.success) setErrorMessage(result?.error || 'Invalid email or password.');
+    } catch (error) {
+      setErrorMessage('Unable to sign in right now. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <LinearGradient
-      colors={['#EAE9FC', '#F0EFFF', '#F6F7FE', '#FFFFFF']}
-      style={styles.gradientContainer}
+      colors={['#F0EDFF', '#F8F7FF', '#FFFFFF']}
+      locations={[0, 0.58, 1]}
+      style={styles.screen}
     >
+      <StatusBar barStyle="dark-content" backgroundColor="#F0EDFF" />
+      <View pointerEvents="none" style={styles.orbTop} />
+      <View pointerEvents="none" style={styles.orbLeft} />
+      <View pointerEvents="none" style={styles.orbRight} />
+
       <KeyboardAvoidingView
+        style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.container}
       >
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Top Brand Header */}
-          <View style={styles.brandRow}>
-            <LinearGradient
-              colors={['#7C3AED', '#6366F1']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.logoBox}
-            >
-              <Ionicons name="infinite" size={24} color="#FFFFFF" />
-            </LinearGradient>
-            <View style={{ marginLeft: 10 }}>
-              <Text style={styles.brandName}>OpenHand</Text>
-              <Text style={styles.brandSubtitle}>Your Learning Wellbeing Companion</Text>
+          <View style={styles.brandBlock}>
+            <View style={styles.brandRow}>
+              <LinearGradient
+                colors={['#823DFF', '#5428E9']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.logo}
+              >
+                <Ionicons name="infinite" size={35} color="#FFFFFF" />
+              </LinearGradient>
+              <View style={styles.brandTextWrap}>
+                <Text style={styles.brandName}>
+                  Open<Text style={styles.brandNameAccent}>Hand</Text>
+                </Text>
+                <Text style={styles.brandTagline}>Your Learning Wellbeing Companion</Text>
+              </View>
             </View>
-          </View>
 
-          {/* 100% Free Access Badge */}
-          <View style={styles.badgeRow}>
             <View style={styles.freeBadge}>
-              <Ionicons name="sparkles" size={11} color="#0D9488" />
+              <Ionicons name="sparkles" size={15} color="#079B79" />
               <Text style={styles.freeBadgeText}>100% Free Access</Text>
             </View>
+
+            <Text style={styles.heading}>Welcome back</Text>
+            <Text style={styles.subtitle}>
+              Sign in to continue your personalized{'\n'}wellbeing &amp; learning journey.
+            </Text>
           </View>
 
-          {/* Welcome Titles */}
-          <Text style={styles.title}>Welcome back</Text>
-          <Text style={styles.subtitle}>
-            Sign in to continue your personalized{'\n'}wellbeing &amp; learning journey.
-          </Text>
-
-          {/* 3D Character Illustration */}
-          <View style={styles.illustrationWrap}>
+          <View style={styles.heroWrap}>
+            <View style={styles.heroGlow} />
+            <View style={styles.floatHeart}>
+              <Ionicons name="heart" size={20} color="#8B5CF6" />
+            </View>
+            <View style={styles.floatBook}>
+              <Ionicons name="book" size={23} color="#6D5AE8" />
+            </View>
             <Image
               source={require('../../assets/hd_hero_screen1.png')}
               style={styles.heroImage}
@@ -92,48 +108,46 @@ export default function LoginScreen({ navigation }) {
             />
           </View>
 
-          {/* Main Card */}
           <View style={styles.card}>
-            {/* Learner Pill Selector */}
+            {/* Learner Pill */}
             <View style={styles.roleTrack}>
               <LinearGradient
-                colors={['#7C3AED', '#6366F1']}
+                colors={['#9B55FF', '#592AF0']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={styles.learnerPill}
+                style={styles.roleActiveGradient}
               >
-                <Ionicons name="school" size={15} color="#FFFFFF" />
-                <Text style={styles.learnerPillText}>Learner</Text>
+                <Ionicons name="school" size={17} color="#FFFFFF" />
+                <Text style={styles.roleActiveText}>Learner</Text>
               </LinearGradient>
             </View>
 
-            {/* Error Banner */}
             {errorMessage ? (
               <View style={styles.errorBox}>
-                <Ionicons name="alert-circle" size={18} color="#DC2626" />
+                <Ionicons name="alert-circle-outline" size={18} color="#DC2626" />
                 <Text style={styles.errorText}>{errorMessage}</Text>
               </View>
             ) : null}
 
-            {/* Email Field */}
             <View style={styles.fieldGroup}>
               <Text style={styles.label}>Email Address</Text>
               <View style={styles.inputWrap}>
-                <Ionicons name="mail-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
+                <Ionicons name="mail-outline" size={21} color="#65749B" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   value={email}
                   onChangeText={setEmail}
                   placeholder="name@example.com"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor="#8D9ABC"
                   autoCapitalize="none"
                   keyboardType="email-address"
                   autoCorrect={false}
+                  textContentType="emailAddress"
+                  returnKeyType="next"
                 />
               </View>
             </View>
 
-            {/* Password Field */}
             <View style={styles.fieldGroup}>
               <View style={styles.passwordLabelRow}>
                 <Text style={styles.label}>Password</Text>
@@ -142,38 +156,32 @@ export default function LoginScreen({ navigation }) {
                 </TouchableOpacity>
               </View>
               <View style={styles.inputWrap}>
-                <Ionicons name="lock-closed-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
+                <Ionicons name="lock-closed-outline" size={21} color="#65749B" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   value={password}
                   onChangeText={setPassword}
                   placeholder="••••••••"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor="#8D9ABC"
                   secureTextEntry={!showPassword}
+                  textContentType="password"
+                  returnKeyType="done"
+                  onSubmitEditing={handleLogin}
                 />
                 <TouchableOpacity
                   onPress={() => setShowPassword(!showPassword)}
-                  style={styles.eyeBtn}
+                  style={styles.eyeButton}
                   activeOpacity={0.7}
+                  accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
                 >
-                  <Ionicons
-                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                    size={20}
-                    color="#94A3B8"
-                  />
+                  <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={22} color="#65749B" />
                 </TouchableOpacity>
               </View>
             </View>
 
-            {/* Primary Sign In Button */}
-            <TouchableOpacity
-              onPress={handleLogin}
-              disabled={loading}
-              activeOpacity={0.88}
-              style={{ marginTop: 8 }}
-            >
+            <TouchableOpacity onPress={handleLogin} disabled={loading} activeOpacity={0.88} style={styles.submitWrap}>
               <LinearGradient
-                colors={['#7C3AED', '#4F46E5']}
+                colors={['#8D43FF', '#642EF3', '#4E2BE8']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={[styles.loginButton, loading && styles.buttonDisabled]}
@@ -181,12 +189,14 @@ export default function LoginScreen({ navigation }) {
                 {loading ? (
                   <ActivityIndicator color="#FFFFFF" size="small" />
                 ) : (
-                  <Text style={styles.loginButtonText}>Sign In as Learner →</Text>
+                  <>
+                    <Text style={styles.loginButtonText}>Sign In as Learner</Text>
+                    <Ionicons name="arrow-forward" size={22} color="#FFFFFF" />
+                  </>
                 )}
               </LinearGradient>
             </TouchableOpacity>
 
-            {/* Create Account Link */}
             <View style={styles.signupWrap}>
               <Text style={styles.signupText}>New to OpenHand? </Text>
               <TouchableOpacity onPress={() => navigation.navigate('Signup')} activeOpacity={0.7}>
@@ -201,227 +211,197 @@ export default function LoginScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  gradientContainer: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-  },
+  flex: { flex: 1 },
+  screen: { flex: 1, overflow: 'hidden' },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 52 : 36,
-    paddingBottom: 32,
     alignItems: 'center',
+    paddingHorizontal: 22,
+    paddingTop: Platform.OS === 'ios' ? 48 : 30,
+    paddingBottom: 28,
   },
-  brandRow: {
-    flexDirection: 'row',
+  orbTop: {
+    position: 'absolute',
+    width: 270,
+    height: 270,
+    borderRadius: 135,
+    top: -165,
+    left: -100,
+    backgroundColor: 'rgba(194, 173, 255, 0.18)',
+  },
+  orbLeft: {
+    position: 'absolute',
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    top: 260,
+    left: -145,
+    backgroundColor: 'rgba(196, 181, 253, 0.17)',
+  },
+  orbRight: {
+    position: 'absolute',
+    width: 260,
+    height: 260,
+    borderRadius: 130,
+    top: 80,
+    right: -165,
+    backgroundColor: 'rgba(210, 201, 255, 0.22)',
+  },
+  brandBlock: { width: '100%', alignItems: 'center', zIndex: 2 },
+  brandRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 17 },
+  logo: {
+    width: 58,
+    height: 58,
+    borderRadius: 19,
     alignItems: 'center',
-    marginBottom: 12,
-    width: '100%',
     justifyContent: 'center',
+    shadowColor: '#6935F0',
+    shadowOffset: { width: 0, height: 7 },
+    shadowOpacity: 0.28,
+    shadowRadius: 13,
+    elevation: 7,
   },
-  logoBox: {
-    width: 38,
-    height: 38,
-    borderRadius: 11,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#7C3AED',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  brandName: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#1E1B4B',
-    letterSpacing: -0.4,
-  },
-  brandSubtitle: {
-    fontSize: 10.5,
-    color: '#64748B',
-    letterSpacing: 0.2,
-  },
-  badgeRow: {
-    marginBottom: 8,
-  },
+  brandTextWrap: { marginLeft: 12 },
+  brandName: { fontSize: 30, lineHeight: 34, fontWeight: '900', color: INK, letterSpacing: -1.1 },
+  brandNameAccent: { color: '#7138F4' },
+  brandTagline: { fontSize: 10.5, color: '#6E789D', marginTop: 1, letterSpacing: 0.05 },
   freeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    backgroundColor: '#E6FBF5',
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 20,
+    gap: 7,
+    backgroundColor: '#DDFBF0',
+    borderColor: '#B8F2DE',
     borderWidth: 1,
-    borderColor: '#99F6E4',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 24,
+    marginBottom: 19,
   },
-  freeBadgeText: {
-    color: '#0D9488',
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.2,
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: '#1E1B4B',
-    textAlign: 'center',
-    letterSpacing: -0.5,
-  },
-  subtitle: {
-    fontSize: 12.5,
-    color: '#64748B',
-    textAlign: 'center',
-    marginTop: 4,
-    paddingHorizontal: 12,
-    lineHeight: 18,
-  },
-  illustrationWrap: {
-    width: '100%',
+  freeBadgeText: { fontSize: 13, fontWeight: '800', color: '#078567', letterSpacing: 0.1 },
+  heading: { fontSize: 34, lineHeight: 40, fontWeight: '900', color: INK, textAlign: 'center', letterSpacing: -1.2 },
+  subtitle: { marginTop: 7, color: '#68759B', fontSize: 14, lineHeight: 21, textAlign: 'center', letterSpacing: 0.05 },
+  heroWrap: { width: '100%', height: 168, alignItems: 'center', justifyContent: 'center', marginTop: 2, marginBottom: -8 },
+  heroGlow: { position: 'absolute', width: 190, height: 145, borderRadius: 95, backgroundColor: 'rgba(191, 170, 255, 0.25)' },
+  heroImage: { width: 240, height: 170, zIndex: 1 },
+  floatHeart: {
+    position: 'absolute',
+    left: '18%',
+    top: 34,
+    width: 43,
+    height: 43,
+    borderRadius: 16,
+    backgroundColor: '#F0E8FF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 6,
-    marginBottom: 10,
+    zIndex: 2,
+    shadowColor: '#8B5CF6',
+    shadowOpacity: 0.13,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  heroImage: {
-    width: 210,
-    height: 125,
+  floatBook: {
+    position: 'absolute',
+    right: '17%',
+    top: 54,
+    width: 43,
+    height: 43,
+    borderRadius: 16,
+    backgroundColor: '#E8F1FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+    shadowColor: '#8B5CF6',
+    shadowOpacity: 0.13,
+    shadowRadius: 8,
+    elevation: 2,
   },
   card: {
     width: '100%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 20,
+    maxWidth: 470,
+    backgroundColor: 'rgba(255,255,255,0.96)',
+    borderRadius: 29,
+    paddingHorizontal: 20,
+    paddingTop: 17,
+    paddingBottom: 21,
     borderWidth: 1,
-    borderColor: '#EEF2F6',
-    shadowColor: '#7C3AED',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 20,
-    elevation: 4,
+    borderColor: '#E9E7FA',
+    shadowColor: '#5D48B8',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.10,
+    shadowRadius: 24,
+    elevation: 6,
   },
   roleTrack: {
-    backgroundColor: '#F1F5F9',
-    borderRadius: 22,
-    padding: 3,
-    alignItems: 'center',
-    marginBottom: 16,
     alignSelf: 'center',
+    backgroundColor: '#F5F2FF',
+    borderRadius: 23,
+    padding: 4,
+    marginBottom: 19,
+    borderWidth: 1,
+    borderColor: '#EEE8FF',
   },
-  learnerPill: {
+  roleActiveGradient: {
+    paddingHorizontal: 28,
+    minHeight: 40,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 22,
-    paddingVertical: 7,
-    borderRadius: 18,
-    shadowColor: '#7C3AED',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
+    justifyContent: 'center',
+    gap: 7,
+    borderRadius: 20,
+    shadowColor: '#7138F4',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.22,
+    shadowRadius: 7,
     elevation: 3,
   },
-  learnerPillText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '700',
-  },
+  roleActiveText: { color: '#FFFFFF', fontSize: 13.5, fontWeight: '800' },
   errorBox: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
     backgroundColor: '#FEF2F2',
     borderColor: '#FECACA',
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 13,
     paddingHorizontal: 12,
     paddingVertical: 10,
     marginBottom: 14,
-    gap: 8,
   },
-  errorText: {
-    color: '#DC2626',
-    fontSize: 12,
-    fontWeight: '600',
-    flex: 1,
-  },
-  fieldGroup: {
-    marginBottom: 14,
-  },
-  label: {
-    fontSize: 12.5,
-    fontWeight: '700',
-    color: '#1E1B4B',
-    marginBottom: 6,
-  },
-  passwordLabelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  forgotLink: {
-    fontSize: 12,
-    color: '#7C3AED',
-    fontWeight: '700',
-  },
+  errorText: { color: '#B91C1C', fontSize: 12, fontWeight: '600', flex: 1 },
+  fieldGroup: { marginBottom: 15 },
+  label: { fontSize: 13, fontWeight: '800', color: '#20274E', marginBottom: 8, letterSpacing: 0.05 },
+  passwordLabelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  forgotLink: { fontSize: 12, color: '#6B35EF', fontWeight: '800' },
   inputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8F9FF',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 14,
+    borderColor: '#DDE3F5',
+    borderRadius: 16,
     paddingHorizontal: 14,
-    height: 48,
+    height: 54,
   },
-  inputIcon: {
-    marginRight: 10,
-  },
-  input: {
-    flex: 1,
-    height: '100%',
-    fontSize: 13.5,
-    color: '#1E1B4B',
-  },
-  eyeBtn: {
-    padding: 6,
-  },
+  inputIcon: { marginRight: 11 },
+  input: { flex: 1, height: '100%', fontSize: 14, color: INK, paddingVertical: 0 },
+  eyeButton: { padding: 7, marginRight: -4 },
+  submitWrap: { marginTop: 3 },
   loginButton: {
-    borderRadius: 14,
-    height: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#7C3AED',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 3,
-  },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-  loginButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14.5,
-    fontWeight: '700',
-    letterSpacing: 0.2,
-  },
-  signupWrap: {
+    minHeight: 55,
+    borderRadius: 17,
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 14,
+    justifyContent: 'center',
+    gap: 12,
+    shadowColor: '#6532EF',
+    shadowOffset: { width: 0, height: 7 },
+    shadowOpacity: 0.29,
+    shadowRadius: 12,
+    elevation: 5,
   },
-  signupText: {
-    fontSize: 12.5,
-    color: '#64748B',
-  },
-  signupLink: {
-    fontSize: 12.5,
-    color: '#7C3AED',
-    fontWeight: '800',
-  },
+  buttonDisabled: { opacity: 0.72 },
+  loginButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '800', letterSpacing: 0.05 },
+  signupWrap: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 18 },
+  signupText: { fontSize: 12.5, color: '#68749A' },
+  signupLink: { fontSize: 12.5, color: '#6532ED', fontWeight: '900' },
 });
