@@ -35,6 +35,12 @@ export const colors = {
   dangerLight: '#FEE2E2',
   dangerText: '#B91C1C',
   shadowColor: 'rgba(37, 59, 120, 0.08)',
+
+  // AURA Chatbot & Wellness Accent Tokens
+  accent: '#0D9488',
+  accentLight: '#E6FBF5',
+  accentDark: '#0F766E',
+  accentBorder: '#99F6E4',
 };
 
 export default colors;

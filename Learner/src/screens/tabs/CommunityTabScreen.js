@@ -12,6 +12,7 @@ import {
   Platform,
   Alert,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
@@ -28,8 +29,10 @@ const CHANNELS = [
 ];
 
 export default function CommunityTabScreen({ navigation, route }) {
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { isDark } = useAppTheme();
+  const topPadding = Platform.OS === 'web' ? 14 : Math.max(insets.top, 24) + 6;
   const [activeChannel, setActiveChannel] = useState(
     route?.params?.initialChannel || 'circles'
   );
@@ -226,7 +229,7 @@ export default function CommunityTabScreen({ navigation, route }) {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         {/* ── Channel Switcher ── */}
-        <View style={[styles.channelBar, isDark && { backgroundColor: 'rgba(13, 21, 44, 0.75)', borderBottomColor: 'rgba(255, 255, 255, 0.1)' }]}>
+        <View style={[styles.channelBar, { paddingTop: topPadding }, isDark && { backgroundColor: 'rgba(13, 21, 44, 0.75)', borderBottomColor: 'rgba(255, 255, 255, 0.1)' }]}>
           {CHANNELS.map((ch) => {
             const isActive = activeChannel === ch.key;
             return (

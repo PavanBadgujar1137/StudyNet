@@ -11,6 +11,7 @@ import {
   Linking,
   Alert,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import apiClient from '../../api/apiClient';
@@ -37,8 +38,10 @@ function getCategoryColor(catName = '') {
 }
 
 export default function CoursesTabScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { isDark } = useAppTheme();
+  const topPadding = Platform.OS === 'web' ? 14 : Math.max(insets.top, 24) + 6;
   const [courses, setCourses] = useState([]);
   const [enrolledCourses, setEnrolledCourses] = useState([]);
   const [upcomingClasses, setUpcomingClasses] = useState([]);
@@ -126,7 +129,7 @@ export default function CoursesTabScreen({ navigation }) {
       style={{ flex: 1 }}
     >
       {/* ── Tab Switcher ── */}
-      <View style={[styles.tabBar, isDark && { backgroundColor: 'rgba(13, 21, 44, 0.75)', borderBottomColor: 'rgba(255, 255, 255, 0.1)' }]}>
+      <View style={[styles.tabBar, { paddingTop: topPadding }, isDark && { backgroundColor: 'rgba(13, 21, 44, 0.75)', borderBottomColor: 'rgba(255, 255, 255, 0.1)' }]}>
         <TouchableOpacity
           style={[styles.tabBtn, activeTab === 'catalog' && styles.tabBtnActive]}
           onPress={() => setActiveTab('catalog')}

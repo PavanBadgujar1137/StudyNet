@@ -10,6 +10,7 @@ import {
   TextInput,
   ActivityIndicator,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../context/AuthContext';
 import { useAppTheme } from '../../context/ThemeContext';
@@ -24,8 +25,10 @@ const MENU_ITEMS = [
 ];
 
 export default function ProfileTabScreen() {
+  const insets = useSafeAreaInsets();
   const { user, logout, updateUserData } = useAuth();
   const { isDark, toggleTheme } = useAppTheme();
+  const topPadding = Platform.OS === 'web' ? 24 : Math.max(insets.top, 24) + 12;
 
   const [editMode, setEditMode] = useState(false);
   const [firstName, setFirstName] = useState(user?.firstName || '');
@@ -141,7 +144,7 @@ export default function ProfileTabScreen() {
       }
       style={{ flex: 1 }}
     >
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.content}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={[styles.content, { paddingTop: topPadding }]}>
         {/* ── Profile Hero Card ── */}
         <View style={[styles.profileCard, isDark && { backgroundColor: 'rgba(14, 23, 46, 0.85)', borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
           {/* Avatar */}

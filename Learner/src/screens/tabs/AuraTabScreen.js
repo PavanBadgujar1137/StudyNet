@@ -9,8 +9,11 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  StatusBar,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { useAppTheme } from '../../context/ThemeContext';
 import apiClient from '../../api/apiClient';
@@ -24,10 +27,13 @@ const AURA_WELCOME = (name) =>
   `Welcome into this space, ${name}. 🌿\n\nI am AURA — your Virtual Counselor. In this space, there is nothing you have to prove or carry alone.\n\nWhether your nervous system feels stretched or you need clarity, I am here to hold space with compassionate guidance.\n\nHow is your body and spirit feeling right in this moment?`;
 
 export default function AuraTabScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { isDark } = useAppTheme();
   const userName = user?.firstName || 'Friend';
   const scrollRef = useRef(null);
+
+  const topPadding = Platform.OS === 'web' ? 14 : Math.max(insets.top, Platform.OS === 'android' ? (StatusBar.currentHeight || 28) : 44) + 8;
 
   const [messages, setMessages] = useState([
     {
@@ -93,6 +99,8 @@ export default function AuraTabScreen({ navigation }) {
     }
   };
 
+  const hasInput = inputText.trim().length > 0;
+
   return (
     <LinearGradient
       colors={
@@ -102,36 +110,65 @@ export default function AuraTabScreen({ navigation }) {
       }
       style={{ flex: 1 }}
     >
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor="transparent"
+        translucent
+      />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        {/* ── Header ── */}
-        <View style={[styles.header, isDark && { backgroundColor: 'rgba(13, 21, 44, 0.75)', borderBottomColor: 'rgba(255, 255, 255, 0.1)' }]}>
-          <View style={[styles.auraAvatar, isDark && { backgroundColor: 'rgba(56, 189, 248, 0.15)', borderColor: 'rgba(56, 189, 248, 0.3)' }]}>
+        {/* ── Header with Safe Area Notch/Cutout Spacing ── */}
+        <View
+          style={[
+            styles.header,
+            { paddingTop: topPadding },
+            isDark && {
+              backgroundColor: 'rgba(13, 21, 44, 0.85)',
+              borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+            },
+          ]}
+        >
+          <View
+            style={[
+              styles.auraAvatar,
+              isDark && {
+                backgroundColor: 'rgba(56, 189, 248, 0.15)',
+                borderColor: 'rgba(56, 189, 248, 0.3)',
+              },
+            ]}
+          >
             <Text style={styles.auraAvatarText}>🌿</Text>
           </View>
           <View style={styles.headerInfo}>
-            <Text style={[styles.headerTitle, isDark && { color: '#FFFFFF' }]}>AURA Counselor</Text>
+            <Text style={[styles.headerTitle, isDark && { color: '#FFFFFF' }]}>
+              AURA Counselor
+            </Text>
             <View style={styles.onlinePill}>
-              <View style={[styles.onlineDot, isDark && { backgroundColor: '#38BDF8' }]} />
-              <Text style={[styles.onlineText, isDark && { color: '#38BDF8' }]}>Active — Somatic Grounding</Text>
+              <View
+                style={[
+                  styles.onlineDot,
+                  isDark && { backgroundColor: '#38BDF8' },
+                ]}
+              />
+              <Text
+                style={[
+                  styles.onlineText,
+                  isDark && { color: '#38BDF8' },
+                ]}
+              >
+                Active — Somatic Grounding
+              </Text>
             </View>
           </View>
           <TouchableOpacity
             onPress={() => navigation?.navigate('Profile')}
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: 17,
-              backgroundColor: isDark ? '#1E64EB' : '#2563EB',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+            style={styles.profileAvatar}
             activeOpacity={0.8}
           >
-            <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '700' }}>
+            <Text style={styles.profileAvatarText}>
               {`${user?.firstName?.[0] || 'L'}${user?.lastName?.[0] || ''}`.toUpperCase()}
             </Text>
           </TouchableOpacity>
@@ -139,10 +176,32 @@ export default function AuraTabScreen({ navigation }) {
 
         {/* ── Disclaimer Banner ── */}
         {showDisclaimer && (
-          <View style={[styles.disclaimer, isDark && { backgroundColor: 'rgba(245, 158, 11, 0.15)', borderBottomColor: 'rgba(245, 158, 11, 0.3)' }]}>
-            <Text style={[styles.disclaimerText, isDark && { color: '#FCD34D' }]}>ⓘ {DISCLAIMER}</Text>
+          <View
+            style={[
+              styles.disclaimer,
+              isDark && {
+                backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                borderBottomColor: 'rgba(245, 158, 11, 0.3)',
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.disclaimerText,
+                isDark && { color: '#FCD34D' },
+              ]}
+            >
+              ⓘ {DISCLAIMER}
+            </Text>
             <TouchableOpacity onPress={() => setShowDisclaimer(false)}>
-              <Text style={[styles.disclaimerDismiss, isDark && { color: '#FBBF24' }]}>Dismiss</Text>
+              <Text
+                style={[
+                  styles.disclaimerDismiss,
+                  isDark && { color: '#FBBF24' },
+                ]}
+              >
+                Dismiss
+              </Text>
             </TouchableOpacity>
           </View>
         )}
@@ -164,7 +223,12 @@ export default function AuraTabScreen({ navigation }) {
                 ]}
               >
                 {isAura && (
-                  <View style={[styles.miniAvatarWrap, isDark && { backgroundColor: 'rgba(56, 189, 248, 0.15)' }]}>
+                  <View
+                    style={[
+                      styles.miniAvatarWrap,
+                      isDark && { backgroundColor: 'rgba(56, 189, 248, 0.15)' },
+                    ]}
+                  >
                     <Text style={styles.miniAvatar}>🌿</Text>
                   </View>
                 )}
@@ -172,15 +236,33 @@ export default function AuraTabScreen({ navigation }) {
                   style={[
                     styles.bubble,
                     isAura
-                      ? [styles.bubbleAura, isDark && { backgroundColor: 'rgba(14, 23, 46, 0.85)', borderColor: 'rgba(255, 255, 255, 0.1)' }]
+                      ? [
+                          styles.bubbleAura,
+                          isDark && {
+                            backgroundColor: 'rgba(14, 23, 46, 0.85)',
+                            borderColor: 'rgba(255, 255, 255, 0.1)',
+                          },
+                        ]
                       : styles.bubbleUser,
                     { maxWidth: '82%' },
                   ]}
                 >
-                  <Text style={isAura ? [styles.textAura, isDark && { color: '#F1F5F9' }] : styles.textUser}>
+                  <Text
+                    style={
+                      isAura
+                        ? [styles.textAura, isDark && { color: '#F1F5F9' }]
+                        : styles.textUser
+                    }
+                  >
                     {m.text}
                   </Text>
-                  <Text style={isAura ? [styles.timeAura, isDark && { color: '#64748B' }] : styles.timeUser}>
+                  <Text
+                    style={
+                      isAura
+                        ? [styles.timeAura, isDark && { color: '#64748B' }]
+                        : styles.timeUser
+                    }
+                  >
                     {m.time}
                   </Text>
                 </View>
@@ -191,62 +273,129 @@ export default function AuraTabScreen({ navigation }) {
           {/* Typing indicator */}
           {isTyping && (
             <View style={[styles.bubbleWrap, styles.bubbleWrapAura]}>
-              <View style={[styles.miniAvatarWrap, isDark && { backgroundColor: 'rgba(56, 189, 248, 0.15)' }]}>
+              <View
+                style={[
+                  styles.miniAvatarWrap,
+                  isDark && { backgroundColor: 'rgba(56, 189, 248, 0.15)' },
+                ]}
+              >
                 <Text style={styles.miniAvatar}>🌿</Text>
               </View>
-              <View style={[styles.bubble, styles.bubbleAura, isDark && { backgroundColor: 'rgba(14, 23, 46, 0.85)', borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
-                <ActivityIndicator size="small" color={isDark ? '#38BDF8' : theme.colors.accent} />
+              <View
+                style={[
+                  styles.bubble,
+                  styles.bubbleAura,
+                  isDark && {
+                    backgroundColor: 'rgba(14, 23, 46, 0.85)',
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                  },
+                ]}
+              >
+                <ActivityIndicator
+                  size="small"
+                  color={isDark ? '#38BDF8' : '#0D9488'}
+                />
               </View>
             </View>
           )}
         </ScrollView>
 
         {/* ── Quick Prompts ── */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={[styles.quickPromptBar, isDark && { backgroundColor: 'rgba(13, 21, 44, 0.75)', borderTopColor: 'rgba(255, 255, 255, 0.1)' }]}
-          contentContainerStyle={styles.quickPromptContent}
+        <View
+          style={[
+            styles.quickPromptSection,
+            isDark && {
+              backgroundColor: 'rgba(13, 21, 44, 0.85)',
+              borderTopColor: 'rgba(255, 255, 255, 0.08)',
+            },
+          ]}
         >
-          {[
-            'I feel overwhelmed',
-            'Help me breathe',
-            'I need grounding',
-            'I feel disconnected',
-            'Talk me through it',
-          ].map((prompt) => (
-            <TouchableOpacity
-              key={prompt}
-              style={[styles.quickPromptChip, isDark && { backgroundColor: 'rgba(56, 189, 248, 0.15)', borderColor: 'rgba(56, 189, 248, 0.3)' }]}
-              onPress={() => {
-                setInputText(prompt);
-              }}
-            >
-              <Text style={[styles.quickPromptText, isDark && { color: '#38BDF8' }]}>{prompt}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.quickPromptContent}
+          >
+            {[
+              'I feel overwhelmed',
+              'Help me breathe',
+              'I need grounding',
+              'I feel disconnected',
+              'Talk me through it',
+            ].map((prompt) => (
+              <TouchableOpacity
+                key={prompt}
+                style={[
+                  styles.quickPromptChip,
+                  isDark && styles.quickPromptChipDark,
+                ]}
+                onPress={() => {
+                  setInputText(prompt);
+                }}
+                activeOpacity={0.7}
+              >
+                <Text
+                  style={[
+                    styles.quickPromptText,
+                    isDark && styles.quickPromptTextDark,
+                  ]}
+                >
+                  {prompt}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
 
         {/* ── Input Bar ── */}
-        <View style={[styles.inputContainer, isDark && { backgroundColor: 'rgba(13, 21, 44, 0.85)', borderTopColor: 'rgba(255, 255, 255, 0.1)' }]}>
-          <TextInput
-            style={[styles.input, isDark && { backgroundColor: 'rgba(255, 255, 255, 0.05)', color: '#FFFFFF' }]}
-            value={inputText}
-            onChangeText={setInputText}
-            placeholder="Share what is on your mind…"
-            placeholderTextColor={isDark ? '#64748B' : theme.colors.textLight}
-            multiline
-            maxLength={800}
-            returnKeyType="send"
-            blurOnSubmit={false}
-            onSubmitEditing={handleSend}
-          />
-          <TouchableOpacity
-            style={[styles.sendButton, (!inputText.trim() || isTyping) && styles.sendDisabled]}
-            onPress={handleSend}
-            disabled={!inputText.trim() || isTyping}
+        <View
+          style={[
+            styles.inputContainer,
+            isDark && {
+              backgroundColor: 'rgba(13, 21, 44, 0.95)',
+              borderTopColor: 'rgba(255, 255, 255, 0.1)',
+            },
+          ]}
+        >
+          <View
+            style={[
+              styles.inputWrapper,
+              isDark && {
+                backgroundColor: 'rgba(255, 255, 255, 0.07)',
+                borderColor: 'rgba(255, 255, 255, 0.12)',
+              },
+            ]}
           >
-            <Text style={styles.sendButtonText}>Send</Text>
+            <TextInput
+              style={[
+                styles.input,
+                isDark && { color: '#FFFFFF' },
+              ]}
+              value={inputText}
+              onChangeText={setInputText}
+              placeholder="Share what is on your mind…"
+              placeholderTextColor={isDark ? '#64748B' : '#94A3B8'}
+              multiline
+              maxLength={800}
+              returnKeyType="send"
+              blurOnSubmit={false}
+              onSubmitEditing={handleSend}
+            />
+          </View>
+          <TouchableOpacity
+            style={[
+              styles.sendButton,
+              isDark && styles.sendButtonDark,
+              (!hasInput || isTyping) && (isDark ? styles.sendDisabledDark : styles.sendDisabled),
+            ]}
+            onPress={handleSend}
+            disabled={!hasInput || isTyping}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name="arrow-up"
+              size={20}
+              color={!hasInput || isTyping ? (isDark ? '#475569' : '#94A3B8') : '#FFFFFF'}
+            />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -263,78 +412,95 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: theme.spacing.base,
-    backgroundColor: theme.colors.card,
+    paddingHorizontal: 16,
+    paddingBottom: 14,
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-    gap: theme.spacing.md,
+    borderBottomColor: '#E2E8F0',
+    gap: 12,
   },
   auraAvatar: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: theme.colors.accentLight,
+    backgroundColor: '#E6FBF5',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: theme.colors.accentBorder,
+    borderColor: '#99F6E4',
   },
   auraAvatarText: { fontSize: 22 },
   headerInfo: { flex: 1 },
   headerTitle: {
-    fontSize: theme.typography.base,
-    fontWeight: theme.typography.bold,
-    color: theme.colors.text,
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#0F172A',
+    letterSpacing: -0.2,
   },
   onlinePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: 6,
     marginTop: 2,
   },
   onlineDot: {
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: theme.colors.accent,
+    backgroundColor: '#10B981',
   },
   onlineText: {
-    fontSize: theme.typography.xs,
-    color: theme.colors.accentDark,
-    fontWeight: theme.typography.medium,
+    fontSize: 11,
+    color: '#059669',
+    fontWeight: '600',
   },
+  profileAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#2563EB',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  profileAvatarText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+
   // ── Disclaimer ──
   disclaimer: {
     backgroundColor: '#FEF3C7',
     borderBottomWidth: 1,
     borderBottomColor: '#FDE68A',
-    paddingHorizontal: theme.spacing.base,
-    paddingVertical: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
+    gap: 10,
   },
   disclaimerText: {
     flex: 1,
     fontSize: 11,
     color: '#92400E',
-    lineHeight: 15,
+    lineHeight: 16,
   },
   disclaimerDismiss: {
     fontSize: 11,
     color: '#B45309',
     fontWeight: '700',
   },
+
   // ── Messages ──
   messageList: {
-    padding: theme.spacing.base,
-    paddingBottom: 8,
-    gap: theme.spacing.sm,
+    padding: 16,
+    paddingBottom: 16,
+    gap: 12,
   },
   bubbleWrap: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: 6,
+    gap: 8,
   },
   bubbleWrapAura: {
     justifyContent: 'flex-start',
@@ -346,107 +512,155 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: theme.colors.accentLight,
+    backgroundColor: '#E6FBF5',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#99F6E4',
   },
   miniAvatar: { fontSize: 14 },
   bubble: {
-    borderRadius: theme.spacing.borderRadiusLg,
-    padding: theme.spacing.md,
-    paddingBottom: 8,
+    borderRadius: 18,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   bubbleAura: {
-    backgroundColor: theme.colors.card,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: '#E2E8F0',
     borderBottomLeftRadius: 4,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
   },
   bubbleUser: {
-    backgroundColor: theme.colors.blue,
+    backgroundColor: '#2563EB',
     borderBottomRightRadius: 4,
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
   },
   textAura: {
-    fontSize: theme.typography.sm,
-    color: theme.colors.text,
-    lineHeight: 20,
+    fontSize: 14,
+    color: '#1E293B',
+    lineHeight: 21,
   },
   textUser: {
-    fontSize: theme.typography.sm,
-    color: '#FFF',
-    lineHeight: 20,
+    fontSize: 14,
+    color: '#FFFFFF',
+    lineHeight: 21,
   },
   timeAura: {
     fontSize: 10,
-    color: theme.colors.textLight,
-    marginTop: 4,
+    color: '#94A3B8',
+    marginTop: 6,
     alignSelf: 'flex-end',
   },
   timeUser: {
     fontSize: 10,
-    color: 'rgba(255,255,255,0.65)',
-    marginTop: 4,
+    color: 'rgba(255, 255, 255, 0.75)',
+    marginTop: 6,
     alignSelf: 'flex-end',
   },
+
   // ── Quick Prompts ──
-  quickPromptBar: {
-    maxHeight: 44,
-    backgroundColor: theme.colors.card,
+  quickPromptSection: {
+    backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
+    borderTopColor: '#E2E8F0',
+    paddingVertical: 10,
   },
   quickPromptContent: {
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: 8,
+    paddingHorizontal: 14,
     gap: 8,
     alignItems: 'center',
   },
   quickPromptChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    backgroundColor: theme.colors.accentLight,
-    borderRadius: theme.spacing.borderRadiusPill,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    backgroundColor: '#EFF6FF',
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: theme.colors.accentBorder,
+    borderColor: '#BFDBFE',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quickPromptChipDark: {
+    backgroundColor: 'rgba(56, 189, 248, 0.12)',
+    borderColor: 'rgba(56, 189, 248, 0.28)',
   },
   quickPromptText: {
-    fontSize: theme.typography.xs,
-    color: theme.colors.accentDark,
+    fontSize: 12,
     fontWeight: '600',
+    color: '#1D4ED8',
+    includeFontPadding: false,
   },
+  quickPromptTextDark: {
+    color: '#38BDF8',
+  },
+
   // ── Input Bar ──
   inputContainer: {
     flexDirection: 'row',
-    padding: theme.spacing.sm,
-    backgroundColor: theme.colors.card,
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingTop: 8,
+    paddingBottom: Platform.OS === 'ios' ? 14 : 10,
+    backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
-    alignItems: 'flex-end',
-    gap: theme.spacing.sm,
+    borderTopColor: '#E2E8F0',
+    gap: 10,
+  },
+  inputWrapper: {
+    flex: 1,
+    minHeight: 44,
+    maxHeight: 110,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 16,
+    paddingVertical: Platform.OS === 'ios' ? 8 : 4,
+    justifyContent: 'center',
   },
   input: {
-    flex: 1,
-    backgroundColor: theme.colors.surfaceSubtle,
-    borderRadius: theme.spacing.borderRadiusPill,
-    paddingHorizontal: theme.spacing.base,
-    paddingTop: 10,
-    paddingBottom: 10,
-    fontSize: theme.typography.sm,
-    color: theme.colors.text,
-    maxHeight: 100,
+    fontSize: 14,
+    color: '#0F172A',
+    lineHeight: 20,
+    textAlignVertical: 'center',
+    padding: 0,
+    margin: 0,
   },
   sendButton: {
-    backgroundColor: theme.colors.accent,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: theme.spacing.borderRadiusPill,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#2563EB',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  sendButtonDark: {
+    backgroundColor: '#0284C7',
+    shadowColor: '#0284C7',
   },
   sendDisabled: {
-    opacity: 0.45,
+    backgroundColor: '#E2E8F0',
+    shadowOpacity: 0,
+    elevation: 0,
   },
-  sendButtonText: {
-    color: '#FFF',
-    fontSize: theme.typography.sm,
-    fontWeight: theme.typography.bold,
+  sendDisabledDark: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    shadowOpacity: 0,
+    elevation: 0,
   },
 });
+

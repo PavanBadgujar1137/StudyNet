@@ -11,6 +11,7 @@ import {
   Alert,
   Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import apiClient from '../../api/apiClient';
@@ -28,8 +29,10 @@ const MOODS = [
 ];
 
 export default function CheckInTabScreen() {
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { isDark } = useAppTheme();
+  const topPadding = Platform.OS === 'web' ? 14 : Math.max(insets.top, 24) + 6;
   const [activeSubTab, setActiveSubTab] = useState('checkin'); // 'checkin' | 'reflections'
 
   // ── Check-in State ──
@@ -172,7 +175,7 @@ export default function CheckInTabScreen() {
       style={{ flex: 1 }}
     >
       {/* ── Sub-tab Switcher: Daily Check-in | Reflections Journal ── */}
-      <View style={[styles.tabBar, isDark && { backgroundColor: 'rgba(13, 21, 44, 0.75)', borderBottomColor: 'rgba(255, 255, 255, 0.1)' }]}>
+      <View style={[styles.tabBar, { paddingTop: topPadding }, isDark && { backgroundColor: 'rgba(13, 21, 44, 0.75)', borderBottomColor: 'rgba(255, 255, 255, 0.1)' }]}>
         <TouchableOpacity
           style={[styles.tabBtn, activeSubTab === 'checkin' && styles.tabBtnActive]}
           onPress={() => setActiveSubTab('checkin')}
