@@ -211,33 +211,6 @@ export default function LoginScreen({ navigation }) {
               </TouchableOpacity>
             </View>
 
-            {/* or Divider */}
-            <View style={styles.dividerRow}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>or</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
-            {/* Social Logins */}
-            <View style={styles.socialRow}>
-              <TouchableOpacity
-                style={styles.socialBtn}
-                onPress={() => handleSocialLogin('Google')}
-                activeOpacity={0.75}
-              >
-                <Ionicons name="logo-google" size={17} color="#EA4335" />
-                <Text style={styles.socialBtnText}>Google</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.socialBtn}
-                onPress={() => handleSocialLogin('Apple')}
-                activeOpacity={0.75}
-              >
-                <Ionicons name="logo-apple" size={18} color="#0F172A" />
-                <Text style={styles.socialBtnText}>Apple</Text>
-              </TouchableOpacity>
-            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
