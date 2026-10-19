@@ -12,8 +12,10 @@ import {
   ActivityIndicator,
   Platform,
   Animated,
+  StatusBar as NativeStatusBar,
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 import { useAppTheme } from '../../context/ThemeContext';
 import apiClient from '../../api/apiClient';
@@ -22,6 +24,11 @@ import { ENDPOINTS } from '../../api/endpoints';
 export default function MoreTabScreen() {
   const { user, logout, updateUserData } = useAuth();
   const { isDark, toggleTheme, tokens } = useAppTheme();
+  const insets = useSafeAreaInsets();
+  // Reliable status-bar-aware top inset for Android & iOS
+  const topInset = Platform.OS === 'web'
+    ? 0
+    : Math.max(insets?.top || 0, Platform.OS === 'android' ? (NativeStatusBar.currentHeight || 0) : 0);
 
   // Modal State: 'profile' | 'growth' | 'payouts' | 'offers' | null
   const [activeModal, setActiveModal] = useState(null);
@@ -624,7 +631,7 @@ export default function MoreTabScreen() {
   return (
     <View style={[styles.container, { backgroundColor: tokens.backgroundSolid }]}>
       <Animated.ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingTop: topInset + 8 }]}
         showsVerticalScrollIndicator={false}
         style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}
       >
@@ -2136,7 +2143,6 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'ios' ? 12 : 16,
     paddingBottom: 40,
   },
   profileCard: {

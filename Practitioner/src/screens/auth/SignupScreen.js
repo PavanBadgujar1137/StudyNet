@@ -10,14 +10,21 @@ import {
   Platform,
   ScrollView,
   Alert,
+  StatusBar as NativeStatusBar,
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 import { useAppTheme } from '../../context/ThemeContext';
 
 export default function SignupScreen({ navigation }) {
   const { signup, sendOtp } = useAuth();
   const { isDark, tokens } = useAppTheme();
+  const insets = useSafeAreaInsets();
+  // Reliable status-bar-aware top inset for Android & iOS
+  const topInset = Platform.OS === 'web'
+    ? 0
+    : Math.max(insets?.top || 0, Platform.OS === 'android' ? (NativeStatusBar.currentHeight || 0) : 0);
 
   const [step, setStep] = useState(1); // 1: Info, 2: OTP
   const [firstName, setFirstName] = useState('');
@@ -94,7 +101,7 @@ export default function SignupScreen({ navigation }) {
       style={[styles.container, { backgroundColor: tokens.backgroundSolid }]}
     >
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: topInset + 8 }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -328,7 +335,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 22,
-    paddingTop: Platform.OS === 'ios' ? 44 : 24,
     paddingBottom: 36,
     justifyContent: 'center',
   },

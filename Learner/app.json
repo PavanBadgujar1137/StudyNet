@@ -38,8 +38,17 @@
       "platformDomain": "openhand.live",
       "cloudfrontDomain": "d2ruooz1ktuxdd.cloudfront.net",
       "eas": {
-        "projectId": "ccd2d7b9-31a9-42be-83c1-76d334632421"
+        "projectId": "86186001-bcb9-4bc0-9157-24f5e41a24a8"
       }
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/86186001-bcb9-4bc0-9157-24f5e41a24a8"
     },
     "plugins": [
       [
@@ -50,8 +59,8 @@
             "./node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf"
           ]
         }
-      ]
-    ],
-    "owner": "aryan3025"
+      ],
+      "expo-updates"
+    ]
   }
 }

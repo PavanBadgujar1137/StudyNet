@@ -10,8 +10,10 @@ import {
   Platform,
   ActivityIndicator,
   Alert,
+  StatusBar as NativeStatusBar,
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 import { useAppTheme } from '../../context/ThemeContext';
 import apiClient from '../../api/apiClient';
@@ -29,6 +31,11 @@ export default function AuraTabScreen() {
   const { isDark, tokens } = useAppTheme();
   const userName = user?.firstName || 'Dr. Evelyn';
   const scrollViewRef = useRef(null);
+  const insets = useSafeAreaInsets();
+  // Reliable status-bar-aware top inset for Android & iOS
+  const topInset = Platform.OS === 'web'
+    ? 0
+    : Math.max(insets?.top || 0, Platform.OS === 'android' ? (NativeStatusBar.currentHeight || 0) : 0);
 
   const getInitialMessages = () => [
     {
@@ -125,7 +132,7 @@ export default function AuraTabScreen() {
       style={[styles.container, { backgroundColor: tokens.backgroundSolid }]}
     >
       {/* ── Copilot Header Bar ── */}
-      <View style={[styles.header, { backgroundColor: tokens.card, borderBottomColor: tokens.cardBorder }]}>
+      <View style={[styles.header, { backgroundColor: tokens.card, borderBottomColor: tokens.cardBorder, paddingTop: topInset + 8 }]}>
         <View style={styles.headerLeft}>
           <View style={[styles.auraAvatar, isDark && styles.auraAvatarDark]}>
             <Ionicons name="flash" size={18} color="#FFFFFF" />
@@ -351,7 +358,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 18,
-    paddingTop: Platform.OS === 'ios' ? 12 : 16,
     paddingBottom: 14,
     borderBottomWidth: 1,
   },

@@ -10,8 +10,10 @@ import {
   Alert,
   Platform,
   Modal,
+  StatusBar as NativeStatusBar,
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 import { useAppTheme } from '../../context/ThemeContext';
 import apiClient from '../../api/apiClient';
@@ -20,6 +22,11 @@ import { ENDPOINTS } from '../../api/endpoints';
 export default function OverviewTabScreen({ navigation }) {
   const { user } = useAuth();
   const { isDark, toggleTheme, tokens } = useAppTheme();
+  const insets = useSafeAreaInsets();
+  // Reliable status-bar-aware top inset for Android & iOS
+  const topInset = Platform.OS === 'web'
+    ? 0
+    : Math.max(insets?.top || 0, Platform.OS === 'android' ? (NativeStatusBar.currentHeight || 0) : 0);
 
   const [telemetry, setTelemetry] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -139,7 +146,7 @@ export default function OverviewTabScreen({ navigation }) {
       <ScrollView
         contentContainerStyle={[
           styles.content,
-          { paddingTop: Platform.OS === 'web' ? 34 : 16 },
+          { paddingTop: Platform.OS === 'web' ? 34 : topInset + 8 },
         ]}
         showsVerticalScrollIndicator={false}
         refreshControl={

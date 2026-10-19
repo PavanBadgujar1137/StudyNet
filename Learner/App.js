@@ -89,5 +89,3 @@ const styles = StyleSheet.create({
     borderColor: '#1E293B',
   },
 });
-
-

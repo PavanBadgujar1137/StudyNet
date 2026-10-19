@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StatusBar as NativeStatusBar,
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,58 +18,19 @@ import { useAppTheme } from '../../context/ThemeContext';
 
 export default function LoginScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const { login, sendOtp } = useAuth();
+  const { login } = useAuth();
   const { isDark, toggleTheme, tokens } = useAppTheme();
-
-  // Mode: 'password' | 'otp'
-  const [authMode, setAuthMode] = useState('password');
+  // Reliable status-bar-aware top inset for Android & iOS
+  const topInset = Platform.OS === 'web'
+    ? 0
+    : Math.max(insets?.top || 0, Platform.OS === 'android' ? (NativeStatusBar.currentHeight || 0) : 0);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [otp, setOtp] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [otpSending, setOtpSending] = useState(false);
-  const [otpSent, setOtpSent] = useState(false);
-  const [cooldown, setCooldown] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-
-  // Resend OTP countdown timer
-  useEffect(() => {
-    let timer = null;
-    if (cooldown > 0) {
-      timer = setInterval(() => {
-        setCooldown((prev) => (prev > 0 ? prev - 1 : 0));
-      }, 1000);
-    }
-    return () => {
-      if (timer) clearInterval(timer);
-    };
-  }, [cooldown]);
-
-  const handleSendOtp = async () => {
-    const trimmedEmail = email.trim();
-    if (!trimmedEmail || !trimmedEmail.includes('@')) {
-      setErrorMessage('Please enter a valid practitioner email address.');
-      return;
-    }
-
-    setErrorMessage('');
-    setSuccessMessage('');
-    setOtpSending(true);
-
-    const res = await sendOtp(trimmedEmail, 'login');
-    setOtpSending(false);
-
-    if (res.success) {
-      setOtpSent(true);
-      setCooldown(60);
-      setSuccessMessage(`A 6-digit security code has been sent to ${trimmedEmail}.`);
-    } else {
-      setErrorMessage(res.error || 'Failed to dispatch verification OTP. Please verify your email.');
-    }
-  };
 
   const handleLogin = async () => {
     const trimmedEmail = email.trim();
@@ -77,24 +39,6 @@ export default function LoginScreen({ navigation }) {
       return;
     }
 
-    if (authMode === 'otp') {
-      if (!otp.trim()) {
-        setErrorMessage('Please enter the 6-digit OTP sent to your email.');
-        return;
-      }
-      setErrorMessage('');
-      setLoading(true);
-
-      const result = await login(trimmedEmail, null, otp.trim());
-      setLoading(false);
-
-      if (!result.success) {
-        setErrorMessage(result.error || 'Invalid or expired OTP code. Please try again.');
-      }
-      return;
-    }
-
-    // Password login
     if (!password) {
       setErrorMessage('Please enter your password.');
       return;
@@ -128,7 +72,7 @@ export default function LoginScreen({ navigation }) {
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingTop: Math.max(insets.top, 20), paddingBottom: Math.max(insets.bottom, 24) },
+          { paddingTop: topInset + 8, paddingBottom: Math.max(insets?.bottom || 0, 24) },
         ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -221,69 +165,6 @@ export default function LoginScreen({ navigation }) {
             Manage client sessions, utilize AI Co-Pilot notes, and monitor practice earnings.
           </Text>
 
-          {/* Auth Method Switcher Tabs: Password vs OTP */}
-          <View style={[styles.authTabContainer, { backgroundColor: isDark ? '#0F172A' : '#F1F5F9' }]}>
-            <TouchableOpacity
-              style={[
-                styles.authTabBtn,
-                authMode === 'password' && [styles.authTabBtnActive, { backgroundColor: tokens.card }],
-              ]}
-              onPress={() => {
-                setAuthMode('password');
-                setErrorMessage('');
-                setSuccessMessage('');
-              }}
-              activeOpacity={0.8}
-            >
-              <Feather
-                name="lock"
-                size={13}
-                color={authMode === 'password' ? (isDark ? '#C4B5FD' : '#7C3AED') : tokens.textMuted}
-                style={{ marginRight: 6 }}
-              />
-              <Text
-                style={[
-                  styles.authTabBtnText,
-                  authMode === 'password'
-                    ? [styles.authTabBtnTextActive, { color: isDark ? '#C4B5FD' : '#7C3AED' }]
-                    : { color: tokens.textMuted },
-                ]}
-              >
-                Password
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.authTabBtn,
-                authMode === 'otp' && [styles.authTabBtnActive, { backgroundColor: tokens.card }],
-              ]}
-              onPress={() => {
-                setAuthMode('otp');
-                setErrorMessage('');
-                setSuccessMessage('');
-              }}
-              activeOpacity={0.8}
-            >
-              <Ionicons
-                name="mail-unread-outline"
-                size={14}
-                color={authMode === 'otp' ? (isDark ? '#C4B5FD' : '#7C3AED') : tokens.textMuted}
-                style={{ marginRight: 6 }}
-              />
-              <Text
-                style={[
-                  styles.authTabBtnText,
-                  authMode === 'otp'
-                    ? [styles.authTabBtnTextActive, { color: isDark ? '#C4B5FD' : '#7C3AED' }]
-                    : { color: tokens.textMuted },
-                ]}
-              >
-                OTP Verification
-              </Text>
-            </TouchableOpacity>
-          </View>
-
           {/* Form Fields */}
           <View style={styles.formContainer}>
             {/* Email Field */}
@@ -315,152 +196,75 @@ export default function LoginScreen({ navigation }) {
               </View>
             </View>
 
-            {/* PASSWORD MODE: Password Field */}
-            {authMode === 'password' && (
-              <View style={styles.fieldGroup}>
-                <View style={styles.passwordHeaderRow}>
-                  <Text style={[styles.fieldLabel, { color: tokens.textSecondary, marginBottom: 0 }]}>
-                    Password <Text style={styles.asterisk}>*</Text>
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => navigation.navigate('ForgotPassword')}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={[styles.forgotText, { color: isDark ? '#A78BFA' : '#7C3AED' }]}>
-                      Forgot password?
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-
-                <View
-                  style={[
-                    styles.inputWrapper,
-                    { backgroundColor: tokens.surfaceSubtle, borderColor: tokens.border, marginTop: 6 },
-                  ]}
+            {/* Password Field */}
+            <View style={styles.fieldGroup}>
+              <View style={styles.passwordHeaderRow}>
+                <Text style={[styles.fieldLabel, { color: tokens.textSecondary, marginBottom: 0 }]}>
+                  Password <Text style={styles.asterisk}>*</Text>
+                </Text>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('ForgotPassword')}
+                  activeOpacity={0.7}
                 >
-                  <Feather name="lock" size={16} color={tokens.textMuted} style={styles.inputLeadingIcon} />
-                  <TextInput
-                    style={[styles.textInput, { color: tokens.text }]}
-                    value={password}
-                    onChangeText={(val) => {
-                      setPassword(val);
-                      if (errorMessage) setErrorMessage('');
-                    }}
-                    placeholder="••••••••"
-                    placeholderTextColor={tokens.textLight}
-                    secureTextEntry={!showPassword}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                  />
-                  <TouchableOpacity
-                    style={styles.eyeIconButton}
-                    onPress={() => setShowPassword(!showPassword)}
-                    activeOpacity={0.7}
-                  >
-                    <Feather
-                      name={showPassword ? 'eye-off' : 'eye'}
-                      size={18}
-                      color={tokens.textMuted}
-                    />
-                  </TouchableOpacity>
-                </View>
+                  <Text style={[styles.forgotText, { color: isDark ? '#A78BFA' : '#7C3AED' }]}>
+                    Forgot password?
+                  </Text>
+                </TouchableOpacity>
               </View>
-            )}
 
-            {/* OTP MODE: OTP Request & Input Fields */}
-            {authMode === 'otp' && (
-              <>
-                {!otpSent ? (
-                  <TouchableOpacity
-                    style={[styles.sendOtpBtn, otpSending && styles.submitButtonDisabled]}
-                    onPress={handleSendOtp}
-                    disabled={otpSending}
-                    activeOpacity={0.88}
-                  >
-                    {otpSending ? (
-                      <View style={styles.loadingRow}>
-                        <ActivityIndicator size="small" color="#FFFFFF" style={{ marginRight: 8 }} />
-                        <Text style={styles.sendOtpBtnText}>Sending Security Code...</Text>
-                      </View>
-                    ) : (
-                      <View style={styles.buttonInner}>
-                        <Ionicons name="paper-plane-outline" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
-                        <Text style={styles.sendOtpBtnText}>Send Login OTP</Text>
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                ) : (
-                  <View style={styles.fieldGroup}>
-                    <View style={styles.passwordHeaderRow}>
-                      <Text style={[styles.fieldLabel, { color: tokens.textSecondary, marginBottom: 0 }]}>
-                        Enter 6-Digit OTP <Text style={styles.asterisk}>*</Text>
-                      </Text>
-                      <TouchableOpacity
-                        onPress={handleSendOtp}
-                        disabled={cooldown > 0 || otpSending}
-                        activeOpacity={0.7}
-                      >
-                        <Text
-                          style={[
-                            styles.forgotText,
-                            { color: cooldown > 0 ? tokens.textMuted : (isDark ? '#A78BFA' : '#7C3AED') },
-                          ]}
-                        >
-                          {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend Code'}
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-
-                    <View
-                      style={[
-                        styles.inputWrapper,
-                        { backgroundColor: tokens.surfaceSubtle, borderColor: tokens.border, marginTop: 6 },
-                      ]}
-                    >
-                      <Feather name="shield" size={16} color={tokens.textMuted} style={styles.inputLeadingIcon} />
-                      <TextInput
-                        style={[styles.textInput, { color: tokens.text, letterSpacing: 4, fontWeight: '700' }]}
-                        value={otp}
-                        onChangeText={(val) => {
-                          setOtp(val);
-                          if (errorMessage) setErrorMessage('');
-                        }}
-                        placeholder="123456"
-                        placeholderTextColor={tokens.textLight}
-                        keyboardType="number-pad"
-                        maxLength={6}
-                        autoCapitalize="none"
-                        autoCorrect={false}
-                      />
-                    </View>
-                  </View>
-                )}
-              </>
-            )}
+              <View
+                style={[
+                  styles.inputWrapper,
+                  { backgroundColor: tokens.surfaceSubtle, borderColor: tokens.border, marginTop: 6 },
+                ]}
+              >
+                <Feather name="lock" size={16} color={tokens.textMuted} style={styles.inputLeadingIcon} />
+                <TextInput
+                  style={[styles.textInput, { color: tokens.text }]}
+                  value={password}
+                  onChangeText={(val) => {
+                    setPassword(val);
+                    if (errorMessage) setErrorMessage('');
+                  }}
+                  placeholder="••••••••"
+                  placeholderTextColor={tokens.textLight}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                <TouchableOpacity
+                  style={styles.eyeIconButton}
+                  onPress={() => setShowPassword(!showPassword)}
+                  activeOpacity={0.7}
+                >
+                  <Feather
+                    name={showPassword ? 'eye-off' : 'eye'}
+                    size={18}
+                    color={tokens.textMuted}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
 
             {/* Submit Button */}
-            {(authMode === 'password' || otpSent) && (
-              <TouchableOpacity
-                style={[styles.submitButton, loading && styles.submitButtonDisabled]}
-                onPress={handleLogin}
-                disabled={loading}
-                activeOpacity={0.88}
-              >
-                {loading ? (
-                  <View style={styles.loadingRow}>
-                    <ActivityIndicator size="small" color="#FFFFFF" style={{ marginRight: 8 }} />
-                    <Text style={styles.submitButtonText}>Authenticating...</Text>
-                  </View>
-                ) : (
-                  <View style={styles.buttonInner}>
-                    <Text style={styles.submitButtonText}>
-                      {authMode === 'otp' ? 'Verify OTP & Sign In' : 'Sign In as Practitioner'}
-                    </Text>
-                    <Feather name="arrow-right" size={16} color="#FFFFFF" style={{ marginLeft: 6 }} />
-                  </View>
-                )}
-              </TouchableOpacity>
-            )}
+            <TouchableOpacity
+              style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+              onPress={handleLogin}
+              disabled={loading}
+              activeOpacity={0.88}
+            >
+              {loading ? (
+                <View style={styles.loadingRow}>
+                  <ActivityIndicator size="small" color="#FFFFFF" style={{ marginRight: 8 }} />
+                  <Text style={styles.submitButtonText}>Authenticating...</Text>
+                </View>
+              ) : (
+                <View style={styles.buttonInner}>
+                  <Text style={styles.submitButtonText}>Sign In as Practitioner</Text>
+                  <Feather name="arrow-right" size={16} color="#FFFFFF" style={{ marginLeft: 6 }} />
+                </View>
+              )}
+            </TouchableOpacity>
 
             {/* Create Account Link */}
             <View style={styles.signupWrap}>
@@ -665,53 +469,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 8,
     flex: 1,
-  },
-  authTabContainer: {
-    flexDirection: 'row',
-    borderRadius: 14,
-    padding: 4,
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  authTabBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    borderRadius: 10,
-  },
-  authTabBtnActive: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  authTabBtnText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  authTabBtnTextActive: {
-    fontWeight: '700',
-  },
-  sendOtpBtn: {
-    backgroundColor: '#7C3AED',
-    paddingVertical: 14,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 8,
-    shadowColor: '#7C3AED',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  sendOtpBtnText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
   },
   card: {
     borderRadius: 26,
