@@ -13,6 +13,23 @@ function AppContent() {
   const { isDark } = useAppTheme();
   const isWebWide = Platform.OS === 'web' && width > 480;
 
+  React.useEffect(() => {
+    async function checkUpdates() {
+      if (Platform.OS === 'web' || __DEV__) return;
+      try {
+        const Updates = require('expo-updates');
+        const update = await Updates.checkForUpdateAsync();
+        if (update.isAvailable) {
+          await Updates.fetchUpdateAsync();
+          await Updates.reloadAsync();
+        }
+      } catch (e) {
+        // Silently continue if offline or error checking
+      }
+    }
+    checkUpdates();
+  }, []);
+
   return (
     <>
       <StatusBar style={isDark ? 'light' : 'dark'} />

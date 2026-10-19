@@ -12,7 +12,7 @@ import {
   Modal,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, Feather } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { useAppTheme } from '../../context/ThemeContext';
 import apiClient from '../../api/apiClient';
@@ -24,9 +24,13 @@ export default function JourneyTabScreen({ navigation }) {
   const { user } = useAuth();
   const { isDark, toggleTheme } = useAppTheme();
 
+  // Active view: 'dashboard' (Screen 2) | 'roadmap' (Screen 3) | 'milestones' (Screen 4)
+  const [subView, setSubView] = useState('dashboard');
+
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [showNotificationsModal, setShowNotificationsModal] = useState(false);
 
   const fetchDashboard = useCallback(async () => {
     try {
@@ -51,20 +55,6 @@ export default function JourneyTabScreen({ navigation }) {
     fetchDashboard();
   };
 
-  const [copiedId, setCopiedId] = useState(false);
-  const handleCopyLearnerId = () => {
-    const idToCopy = user?.learnerId || 'LRN-250573';
-    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-      navigator.clipboard.writeText(idToCopy);
-      setCopiedId(true);
-      setTimeout(() => setCopiedId(false), 2500);
-    }
-    Alert.alert(
-      'Learner ID Copied! ✓',
-      `Your unique ID is: ${idToCopy}\n\nCopied to clipboard. Share this ID with your practitioner guide to claim scholarships and personalized course access.`
-    );
-  };
-
   const clientName = user?.firstName || 'Aryan';
   const checkInCount = dashboardData?.checkInCount || 0;
   const streak = dashboardData?.streak || 0;
@@ -77,7 +67,11 @@ export default function JourneyTabScreen({ navigation }) {
     checkIns.some((c) => new Date(c.createdAt).toDateString() === new Date().toDateString()) ||
     dashboardData?.hasCheckedInToday;
 
-  const [showNotificationsModal, setShowNotificationsModal] = useState(false);
+  const todayDateFormatted = new Date().toLocaleDateString('en-GB', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
 
   const notifications = [
     {
@@ -95,21 +89,6 @@ export default function JourneyTabScreen({ navigation }) {
         navigation.navigate('CheckIn');
       },
     },
-    ...(dashboardData?.upcomingClasses && dashboardData.upcomingClasses.length > 0
-      ? dashboardData.upcomingClasses.map((cls, idx) => ({
-          id: `notif_class_${cls._id || idx}`,
-          title: 'Live Interactive Session',
-          body: `"${cls.title || 'Live Class'}" scheduled for ${new Date(cls.scheduledStart).toLocaleDateString([], { month: 'short', day: 'numeric' })}.`,
-          icon: 'videocam',
-          iconColor: '#3B82F6',
-          unread: true,
-          actionText: 'View Class →',
-          onPress: () => {
-            setShowNotificationsModal(false);
-            navigation.navigate('Courses');
-          },
-        }))
-      : []),
     {
       id: 'notif_scholarship',
       title: 'Free Learner Tier Active',
@@ -117,71 +96,325 @@ export default function JourneyTabScreen({ navigation }) {
       icon: 'sparkles',
       iconColor: '#8B5CF6',
       unread: false,
-      actionText: 'Copy ID',
-      onPress: () => {
-        handleCopyLearnerId();
-      },
+      actionText: 'Close',
+      onPress: () => setShowNotificationsModal(false),
     },
-    ...(joinedCircles && joinedCircles.length > 0
-      ? [
-          {
-            id: 'notif_circle',
-            title: 'Peer Growth Circle',
-            body: `You are connected to ${joinedCircles.length} active circle(s). Chat with peers and your guide in the Community tab.`,
-            icon: 'people',
-            iconColor: '#06B6D4',
-            unread: false,
-            actionText: 'Open Circles →',
-            onPress: () => {
-              setShowNotificationsModal(false);
-              navigation.navigate('Community');
-            },
-          },
-        ]
-      : []),
   ];
 
   const unreadNotificationsCount = notifications.filter((n) => n.unread).length;
 
-  const todayDateFormatted = new Date().toLocaleDateString('en-GB', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  });
+  // ─────────────────────────────────────────────────────────────
+  // ── SUBVIEW: SCREEN 3 - MY JOURNEY ROADMAP ───────────────────
+  // ─────────────────────────────────────────────────────────────
+  if (subView === 'roadmap') {
+    return (
+      <LinearGradient
+        colors={isDark ? ['#090D1A', '#0D1126', '#141933'] : ['#F6F7FD', '#EEF2FF', '#FFFFFF']}
+        style={styles.gradientContainer}
+      >
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={styles.subviewContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header with back button */}
+          <View style={styles.subviewHeader}>
+            <TouchableOpacity
+              style={[styles.backNavBtn, isDark && styles.backNavBtnDark]}
+              onPress={() => setSubView('dashboard')}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="chevron-back" size={22} color={isDark ? '#FFFFFF' : '#1E1B4B'} />
+            </TouchableOpacity>
+            <Text style={[styles.subviewHeaderTitle, isDark && styles.textWhite]}>My Journey</Text>
+            <View style={{ width: 40 }} />
+          </View>
 
+          {/* Roadmap Mountain Banner / Title */}
+          <View style={styles.roadmapHeroSection}>
+            <Text style={[styles.roadmapHeroTitle, isDark && styles.textWhite]}>
+              My Journey{'\n'}Roadmap
+            </Text>
+            <Text style={[styles.roadmapHeroSubtitle, isDark && styles.textMutedDark]}>
+              Personalized milestones — kept private to you and your guide.
+            </Text>
+            <Image
+              source={
+                isDark
+                  ? require('../../assets/roadmap_dark.png')
+                  : require('../../assets/roadmap_climber.png')
+              }
+              style={styles.mountainIllustration}
+              resizeMode="contain"
+            />
+          </View>
+
+          {/* Stepper Milestones Card */}
+          <View style={[styles.stepperCard, isDark && styles.cardDark]}>
+            {/* Step 1: Account Initialized */}
+            <View style={styles.stepperRow}>
+              <View style={styles.stepIndicatorCol}>
+                <View style={styles.stepCircleCompleted}>
+                  <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                </View>
+                <View style={[styles.stepConnectorLine, isDark && styles.connectorLineDark]} />
+              </View>
+              <View style={styles.stepContentCol}>
+                <View style={styles.stepTitleBadgeRow}>
+                  <Text style={[styles.stepTitleText, isDark && styles.textWhite]}>
+                    Account Initialized
+                  </Text>
+                  <View style={styles.completedBadge}>
+                    <Text style={styles.completedBadgeText}>Completed</Text>
+                  </View>
+                </View>
+                <Text style={[styles.stepDescText, isDark && styles.textMutedDark]}>
+                  Connected with OpenHand learning ecosystem &amp; course library.
+                </Text>
+              </View>
+            </View>
+
+            {/* Step 2: Daily Check-in Rhythm */}
+            <View style={styles.stepperRow}>
+              <View style={styles.stepIndicatorCol}>
+                <View style={styles.stepCircleAction}>
+                  <Text style={styles.stepNumberTextAction}>2</Text>
+                </View>
+                <View style={[styles.stepConnectorLine, isDark && styles.connectorLineDark]} />
+              </View>
+              <View style={styles.stepContentCol}>
+                <View style={styles.stepTitleBadgeRow}>
+                  <Text style={[styles.stepTitleText, isDark && styles.textWhite]}>
+                    Daily Check-in Rhythm
+                  </Text>
+                  <View style={styles.actionBadge}>
+                    <Text style={styles.actionBadgeText}>Action</Text>
+                  </View>
+                </View>
+                <Text style={[styles.stepDescText, isDark && styles.textMutedDark]}>
+                  Log your first daily check-in to track your mood and sleep rhythm.
+                </Text>
+              </View>
+            </View>
+
+            {/* Step 3: Live Interactive Sessions */}
+            <View style={styles.stepperRow}>
+              <View style={styles.stepIndicatorCol}>
+                <View style={styles.stepCircleLearning}>
+                  <Text style={styles.stepNumberTextLearning}>3</Text>
+                </View>
+                <View style={[styles.stepConnectorLine, isDark && styles.connectorLineDark]} />
+              </View>
+              <View style={styles.stepContentCol}>
+                <View style={styles.stepTitleBadgeRow}>
+                  <Text style={[styles.stepTitleText, isDark && styles.textWhite]}>
+                    Live Interactive Sessions
+                  </Text>
+                  <View style={styles.learningBadge}>
+                    <Text style={styles.learningBadgeText}>Live Learning</Text>
+                  </View>
+                </View>
+                <Text style={[styles.stepDescText, isDark && styles.textMutedDark]}>
+                  You have 3 live interactive session(s) scheduled.
+                </Text>
+              </View>
+            </View>
+
+            {/* Step 4: Peer Support & Growth Circles */}
+            <View style={styles.stepperRow}>
+              <View style={styles.stepIndicatorCol}>
+                <View style={styles.stepCircleUpcoming}>
+                  <Text style={styles.stepNumberTextUpcoming}>4</Text>
+                </View>
+              </View>
+              <View style={styles.stepContentCol}>
+                <View style={styles.stepTitleBadgeRow}>
+                  <Text style={[styles.stepTitleText, isDark && styles.textWhite]}>
+                    Peer Support &amp; Growth Circles
+                  </Text>
+                  <View style={styles.upcomingBadge}>
+                    <Text style={styles.upcomingBadgeText}>Upcoming</Text>
+                  </View>
+                </View>
+                <Text style={[styles.stepDescText, isDark && styles.textMutedDark]}>
+                  Join Circles to share reflections, track milestones, and learn alongside peers.
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Bottom CTA Button */}
+          <TouchableOpacity
+            style={{ marginTop: 20 }}
+            onPress={() => navigation.navigate('Community')}
+            activeOpacity={0.88}
+          >
+            <LinearGradient
+              colors={['#7C3AED', '#4F46E5']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.primaryCtaBtn}
+            >
+              <Text style={styles.primaryCtaBtnText}>Explore &amp; Join Circles →</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </ScrollView>
+      </LinearGradient>
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // ── SUBVIEW: SCREEN 4 - MILESTONES YOU'VE REACHED ─────────────
+  // ─────────────────────────────────────────────────────────────
+  if (subView === 'milestones') {
+    return (
+      <LinearGradient
+        colors={isDark ? ['#090D1A', '#0D1126', '#141933'] : ['#F6F7FD', '#EEF2FF', '#FFFFFF']}
+        style={styles.gradientContainer}
+      >
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={styles.subviewContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header with back button */}
+          <View style={styles.subviewHeader}>
+            <TouchableOpacity
+              style={[styles.backNavBtn, isDark && styles.backNavBtnDark]}
+              onPress={() => setSubView('dashboard')}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="chevron-back" size={22} color={isDark ? '#FFFFFF' : '#1E1B4B'} />
+            </TouchableOpacity>
+            <Text style={[styles.subviewHeaderTitle, isDark && styles.textWhite]}>My Journey</Text>
+            <View style={{ width: 40 }} />
+          </View>
+
+          {/* Title & Subtitle */}
+          <Text style={[styles.milestonesScreenTitle, isDark && styles.textWhite]}>
+            Milestones you've reached
+          </Text>
+          <Text style={[styles.milestonesScreenSubtitle, isDark && styles.textMutedDark]}>
+            These milestones are private by default.{'\n'}If you ever want to share one, that's your choice.
+          </Text>
+
+          {/* 2x2 Milestones Grid */}
+          <View style={styles.milestonesGrid2x2}>
+            {/* Card 1: Joined platform (Active Gradient Card) */}
+            <LinearGradient
+              colors={['#7C3AED', '#4F46E5']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.milestoneGridCardActive}
+            >
+              <View style={styles.diamondBoxActive}>
+                <Ionicons name="diamond" size={18} color="#FFFFFF" />
+              </View>
+              <Text style={styles.milestoneGridTitleActive}>Joined platform</Text>
+              <Text style={styles.milestoneGridSubtitleActive}>12 Oct</Text>
+            </LinearGradient>
+
+            {/* Card 2: First check-in */}
+            <View style={[styles.milestoneGridCard, isDark && styles.cardDark]}>
+              <View style={styles.diamondBoxInactive}>
+                <Ionicons name="diamond-outline" size={18} color={isDark ? '#94A3B8' : '#64748B'} />
+              </View>
+              <Text style={[styles.milestoneGridTitle, isDark && styles.textWhite]}>
+                First check-in
+              </Text>
+              <Text style={[styles.milestoneGridSubtitle, isDark && styles.textMutedDark]}>
+                {checkInCount > 0 ? 'Completed' : 'Not yet'}
+              </Text>
+            </View>
+
+            {/* Card 3: First live session */}
+            <View style={[styles.milestoneGridCard, isDark && styles.cardDark]}>
+              <View style={styles.diamondBoxInactive}>
+                <Ionicons name="diamond-outline" size={18} color={isDark ? '#94A3B8' : '#64748B'} />
+              </View>
+              <Text style={[styles.milestoneGridTitle, isDark && styles.textWhite]}>
+                First live session
+              </Text>
+              <Text style={[styles.milestoneGridSubtitle, isDark && styles.textMutedDark]}>
+                Not yet
+              </Text>
+            </View>
+
+            {/* Card 4: Joined a circle */}
+            <View style={[styles.milestoneGridCard, isDark && styles.cardDark]}>
+              <View style={styles.diamondBoxInactive}>
+                <Ionicons name="diamond-outline" size={18} color={isDark ? '#94A3B8' : '#64748B'} />
+              </View>
+              <Text style={[styles.milestoneGridTitle, isDark && styles.textWhite]}>
+                Joined a circle
+              </Text>
+              <Text style={[styles.milestoneGridSubtitle, isDark && styles.textMutedDark]}>
+                {joinedCircles.length > 0 ? 'Completed' : 'Not yet'}
+              </Text>
+            </View>
+          </View>
+
+          {/* Your Progress Card */}
+          <View style={[styles.progressCard, isDark && styles.cardDark]}>
+            <View style={styles.progressHeaderRow}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Ionicons name="bar-chart" size={18} color="#7C3AED" />
+                <Text style={[styles.progressTitle, isDark && styles.textWhite]}>Your Progress</Text>
+              </View>
+              <Text style={[styles.progressCountText, isDark && styles.textWhite]}>1 of 4</Text>
+            </View>
+
+            <View style={styles.progressBarTrack}>
+              <LinearGradient
+                colors={['#7C3AED', '#4F46E5']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={[styles.progressBarFill, { width: '25%' }]}
+              />
+            </View>
+            <Text style={styles.progressPercentageText}>25%</Text>
+          </View>
+
+          {/* Quote Card */}
+          <View style={[styles.quoteCard, isDark && styles.cardDark]}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.quoteMark}>“</Text>
+              <Text style={[styles.quoteText, isDark && styles.textWhite]}>
+                Every small step counts in your journey.
+              </Text>
+            </View>
+            <View style={styles.leafIconBox}>
+              <Ionicons name="leaf" size={32} color="#0D9488" />
+            </View>
+          </View>
+        </ScrollView>
+      </LinearGradient>
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // ── SCREEN 2: MAIN DASHBOARD ("MY JOURNEY") ──────────────────
+  // ─────────────────────────────────────────────────────────────
   return (
     <LinearGradient
-      colors={
-        isDark
-          ? ['#040817', '#08112C', '#0E1D45', '#080E24']
-          : ['#DCEEFF', '#E8F2FF', '#F4F0FF', '#FFFFFF']
-      }
+      colors={isDark ? ['#090D1A', '#0D1126', '#141933'] : ['#F6F7FD', '#EEF2FF', '#FFFFFF']}
       style={styles.gradientContainer}
     >
-      {/* ── Ambient Floating Watercolor Blobs for Bright Mode ── */}
-      {!isDark && (
-        <>
-          <View style={styles.ambientBlobTopRight} />
-          <View style={styles.ambientBlobCenter} />
-          <View style={styles.ambientBlobLeft} />
-        </>
-      )}
-
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
-        {/* ── Top App Bar (With Visible Dark/Bright Mode Toggle) ── */}
+        {/* Top App Bar */}
         <View style={styles.topBar}>
           <View>
-            <Text style={[styles.brandTitle, isDark && styles.textMutedDark]}>OpenHand</Text>
-            <Text style={[styles.brandSubtitle, isDark && styles.textWhite]}>My Journey</Text>
+            <Text style={[styles.brandTitle, isDark && styles.textWhite]}>OpenHand</Text>
+            <Text style={[styles.brandSubtitle, isDark && styles.textMutedDark]}>My Journey</Text>
           </View>
 
           <View style={styles.topBarActions}>
-            {/* Theme Toggle Button (Light / Dark) */}
+            {/* Theme Toggle Pill (Dark / Light) */}
             <TouchableOpacity
               style={[styles.themePillBtn, isDark && styles.themePillBtnDark]}
               onPress={toggleTheme}
@@ -190,13 +423,14 @@ export default function JourneyTabScreen({ navigation }) {
               <Ionicons
                 name={isDark ? 'sunny' : 'moon'}
                 size={14}
-                color={isDark ? '#FBBF24' : '#1E64EB'}
+                color={isDark ? '#FBBF24' : '#7C3AED'}
               />
               <Text style={[styles.themePillText, isDark && styles.themePillTextDark]}>
                 {isDark ? 'Light' : 'Dark'}
               </Text>
             </TouchableOpacity>
 
+            {/* Notifications Button with Dot */}
             <TouchableOpacity
               style={[styles.iconBtn, isDark && styles.iconBtnDark]}
               onPress={() => setShowNotificationsModal(true)}
@@ -205,54 +439,43 @@ export default function JourneyTabScreen({ navigation }) {
               <Ionicons
                 name="notifications-outline"
                 size={20}
-                color={isDark ? '#FFFFFF' : '#0F172A'}
+                color={isDark ? '#FFFFFF' : '#1E1B4B'}
               />
-              {unreadNotificationsCount > 0 && (
-                <View style={styles.unreadBadgeDot} />
-              )}
+              {unreadNotificationsCount > 0 && <View style={styles.unreadBadgeDot} />}
             </TouchableOpacity>
 
+            {/* Avatar Pill with Initials */}
             <TouchableOpacity
               style={styles.avatarBtn}
               onPress={() => navigation.navigate('Profile')}
               activeOpacity={0.8}
             >
-              <Text style={styles.avatarText}>{initials}</Text>
+              <LinearGradient
+                colors={['#7C3AED', '#4F46E5']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.avatarGradient}
+              >
+                <Text style={styles.avatarText}>{initials}</Text>
+              </LinearGradient>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* ── Badges Row (100% Free Access & LRN-250573) ── */}
-        <View style={styles.badgesRow}>
-          <View style={[styles.freeBadge, isDark && styles.freeBadgeDark]}>
-            <Text style={[styles.freeBadgeText, isDark && styles.freeBadgeTextDark]}>
-              100% Free Access
-            </Text>
+        {/* 100% Free Access Badge */}
+        <View style={styles.badgeRow}>
+          <View style={styles.freeBadge}>
+            <Ionicons name="sparkles" size={12} color="#0D9488" />
+            <Text style={styles.freeBadgeText}>100% Free Access</Text>
           </View>
-          <TouchableOpacity
-            style={[styles.lrnBadge, isDark && styles.lrnBadgeDark]}
-            onPress={handleCopyLearnerId}
-            activeOpacity={0.8}
-          >
-            <Ionicons
-              name="document-text-outline"
-              size={13}
-              color={isDark ? '#60A5FA' : '#1E64EB'}
-            />
-            <Text style={[styles.lrnBadgeText, isDark && styles.lrnBadgeTextDark]}>
-              {learnerId}
-            </Text>
-          </TouchableOpacity>
         </View>
 
-        {/* ── Welcome Hero Section (Serif Heading + Transparent Illustration) ── */}
+        {/* Welcome Hero Section with Illustration */}
         <View style={styles.heroSection}>
           <View style={styles.heroTextWrap}>
-            <Text style={[styles.welcomeTitle, isDark && styles.welcomeTitleDark]}>
+            <Text style={[styles.welcomeTitle, isDark && styles.textWhite]}>
               Welcome back,{'\n'}
-              <Text style={styles.welcomeName}>
-                {clientName} 👋
-              </Text>
+              <Text style={styles.welcomeName}>{clientName} 👋</Text>
             </Text>
             <Text style={[styles.welcomeSubtitle, isDark && styles.textMutedDark]}>
               Your private learning journey, supported by OpenHand guides and peer circles.
@@ -265,220 +488,129 @@ export default function JourneyTabScreen({ navigation }) {
                   ? require('../../assets/hero_dark.png')
                   : require('../../assets/hero_learner.png')
               }
-              style={[styles.heroImage, isDark && styles.heroImageDark]}
+              style={styles.heroImage}
+              resizeMode="contain"
             />
           </View>
         </View>
 
-        {/* ── Key Metrics Card (Streak, Check-ins, Circles) ── */}
-        <View style={[styles.metricsCard, isDark && styles.cardDark]}>
-          <View style={styles.metricItem}>
-            <View style={styles.metricIconBox}>
-              <Ionicons name="flame" size={22} color="#F97316" />
-            </View>
-            <Text style={[styles.metricValue, isDark && styles.textWhite]}>{streak}</Text>
+        {/* 3 Key Metrics Cards Row */}
+        <View style={styles.metricsRow}>
+          <View style={[styles.metricCard, isDark && styles.cardDark]}>
+            <Ionicons name="flame" size={20} color="#F97316" />
+            <Text style={[styles.metricNumber, isDark && styles.textWhite]}>{streak}</Text>
             <Text style={[styles.metricLabel, isDark && styles.textMutedDark]}>Day Streak</Text>
           </View>
 
-          <View style={[styles.metricDivider, isDark && styles.metricDividerDark]} />
-
-          <View style={styles.metricItem}>
-            <View style={styles.metricIconBox}>
-              <Ionicons name="disc" size={22} color={isDark ? '#38BDF8' : '#1E64EB'} />
-            </View>
-            <Text style={[styles.metricValue, isDark && styles.textWhite]}>{checkInCount}</Text>
+          <View style={[styles.metricCard, isDark && styles.cardDark]}>
+            <Ionicons name="disc" size={20} color="#7C3AED" />
+            <Text style={[styles.metricNumber, isDark && styles.textWhite]}>{checkInCount}</Text>
             <Text style={[styles.metricLabel, isDark && styles.textMutedDark]}>Check-ins</Text>
           </View>
 
-          <View style={[styles.metricDivider, isDark && styles.metricDividerDark]} />
-
-          <View style={styles.metricItem}>
-            <View style={styles.metricIconBox}>
-              <Ionicons name="people" size={22} color={isDark ? '#C084FC' : '#9333EA'} />
-            </View>
-            <Text style={[styles.metricValue, isDark && styles.textWhite]}>
+          <View style={[styles.metricCard, isDark && styles.cardDark]}>
+            <Ionicons name="people" size={20} color="#6366F1" />
+            <Text style={[styles.metricNumber, isDark && styles.textWhite]}>
               {joinedCircles.length}
             </Text>
             <Text style={[styles.metricLabel, isDark && styles.textMutedDark]}>Circles</Text>
           </View>
         </View>
 
-        {/* ── 4 Quick Actions Grid (Daily Check-in, AURA, Courses, Growth Circles) ── */}
+        {/* 4 Quick Action Tiles Row */}
         <View style={styles.quickGrid}>
           {/* Tile 1: Daily Check-In */}
           <TouchableOpacity
-            style={[styles.quickCard, isDark && styles.quickCardDarkDaily]}
+            style={[styles.quickCard, isDark && styles.cardDark]}
             onPress={() => navigation.navigate('CheckIn')}
             activeOpacity={0.8}
           >
-            <View
-              style={[
-                styles.quickIconWrap,
-                { backgroundColor: isDark ? 'transparent' : '#EFF6FF' },
-              ]}
-            >
-              <Ionicons
-                name="checkbox"
-                size={22}
-                color={isDark ? '#3B82F6' : '#1E64EB'}
-              />
+            <View style={[styles.quickIconBox, { backgroundColor: '#EFF6FF' }]}>
+              <Ionicons name="calendar" size={20} color="#3B82F6" />
             </View>
-            <View style={styles.quickCardLabelRow}>
-              <Text style={[styles.quickCardLabel, isDark && styles.textWhite]}>
-                Daily{'\n'}Check-In
-              </Text>
-              {isDark && (
-                <Ionicons name="chevron-forward" size={13} color="#60A5FA" style={styles.chevronIcon} />
-              )}
-            </View>
+            <Text style={[styles.quickCardLabel, isDark && styles.textWhite]}>
+              Daily{'\n'}Check-In
+            </Text>
           </TouchableOpacity>
 
           {/* Tile 2: AURA Counselor */}
           <TouchableOpacity
-            style={[styles.quickCard, isDark && styles.quickCardDarkAura]}
+            style={[styles.quickCard, isDark && styles.cardDark]}
             onPress={() => navigation.navigate('Aura')}
             activeOpacity={0.8}
           >
-            <View
-              style={[
-                styles.quickIconWrap,
-                { backgroundColor: isDark ? 'transparent' : '#E6FBF5' },
-              ]}
-            >
-              <Ionicons
-                name="sparkles"
-                size={21}
-                color={isDark ? '#14B8A6' : '#0D9488'}
-              />
+            <View style={[styles.quickIconBox, { backgroundColor: '#F3E8FF' }]}>
+              <Ionicons name="sparkles" size={20} color="#8B5CF6" />
             </View>
-            <View style={styles.quickCardLabelRow}>
-              <Text style={[styles.quickCardLabel, isDark && styles.textWhite]}>
-                AURA{'\n'}Counselor
-              </Text>
-              {isDark && (
-                <Ionicons name="chevron-forward" size={13} color="#2DD4BF" style={styles.chevronIcon} />
-              )}
-            </View>
+            <Text style={[styles.quickCardLabel, isDark && styles.textWhite]}>
+              AURA{'\n'}Counselor
+            </Text>
           </TouchableOpacity>
 
           {/* Tile 3: Courses Library */}
           <TouchableOpacity
-            style={[styles.quickCard, isDark && styles.quickCardDarkCourses]}
+            style={[styles.quickCard, isDark && styles.cardDark]}
             onPress={() => navigation.navigate('Courses')}
             activeOpacity={0.8}
           >
-            <View
-              style={[
-                styles.quickIconWrap,
-                { backgroundColor: isDark ? 'transparent' : '#FFF7ED' },
-              ]}
-            >
-              <Ionicons
-                name="book"
-                size={21}
-                color={isDark ? '#F59E0B' : '#EA580C'}
-              />
+            <View style={[styles.quickIconBox, { backgroundColor: '#FFF7ED' }]}>
+              <Ionicons name="book" size={20} color="#F97316" />
             </View>
-            <View style={styles.quickCardLabelRow}>
-              <Text style={[styles.quickCardLabel, isDark && styles.textWhite]}>
-                Courses{'\n'}Library
-              </Text>
-              {isDark && (
-                <Ionicons name="chevron-forward" size={13} color="#FBBF24" style={styles.chevronIcon} />
-              )}
-            </View>
+            <Text style={[styles.quickCardLabel, isDark && styles.textWhite]}>
+              Courses{'\n'}Library
+            </Text>
           </TouchableOpacity>
 
           {/* Tile 4: Growth Circles */}
           <TouchableOpacity
-            style={[styles.quickCard, isDark && styles.quickCardDarkCircles]}
+            style={[styles.quickCard, isDark && styles.cardDark]}
             onPress={() => navigation.navigate('Community')}
             activeOpacity={0.8}
           >
-            <View
-              style={[
-                styles.quickIconWrap,
-                { backgroundColor: isDark ? 'transparent' : '#FAF5FF' },
-              ]}
-            >
-              <Ionicons
-                name="people"
-                size={23}
-                color={isDark ? '#A855F7' : '#9333EA'}
-              />
+            <View style={[styles.quickIconBox, { backgroundColor: '#F5F3FF' }]}>
+              <Ionicons name="people" size={20} color="#A855F7" />
             </View>
-            <View style={styles.quickCardLabelRow}>
-              <Text style={[styles.quickCardLabel, isDark && styles.textWhite]}>
-                Growth{'\n'}Circles
-              </Text>
-              {isDark && (
-                <Ionicons name="chevron-forward" size={13} color="#C084FC" style={styles.chevronIcon} />
-              )}
-            </View>
+            <Text style={[styles.quickCardLabel, isDark && styles.textWhite]}>
+              Growth{'\n'}Circles
+            </Text>
           </TouchableOpacity>
         </View>
 
-        {/* ── Weekly Wellbeing Rhythm Card ── */}
+        {/* Weekly Wellbeing Rhythm Card */}
         <View style={[styles.rhythmCard, isDark && styles.cardDark]}>
           <View style={styles.rhythmHeader}>
             <Text style={[styles.rhythmTitle, isDark && styles.textWhite]}>
               Weekly Wellbeing Rhythm
             </Text>
             <TouchableOpacity onPress={() => navigation.navigate('CheckIn')}>
-              <Text style={[styles.rhythmLink, isDark && styles.rhythmLinkDark]}>
-                Full Rhythm →
-              </Text>
+              <Text style={styles.rhythmLink}>Full Rhythm →</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.rhythmTimeline}>
-            {/* Timeline Connecting Line */}
-            <View
-              style={[
-                styles.rhythmLine,
-                isDark && { backgroundColor: 'rgba(255, 255, 255, 0.15)' },
-              ]}
-            />
+            <View style={[styles.rhythmLine, isDark && { backgroundColor: 'rgba(255, 255, 255, 0.15)' }]} />
 
             <View style={styles.rhythmDaysRow}>
               {DAYS_OF_WEEK.map((day, idx) => {
-                const isActive = idx === 0; // Monday active in mockup
+                const isActive = idx === 0;
                 return (
                   <View key={day} style={styles.dayCol}>
                     <Text
                       style={[
                         styles.dayName,
                         isDark && styles.dayNameDark,
-                        isActive && (isDark ? styles.dayNameActiveDark : styles.dayNameActive),
+                        isActive && styles.dayNameActive,
                       ]}
                     >
                       {day}
                     </Text>
                     {isActive ? (
-                      <View
-                        style={[
-                          styles.activeHalo,
-                          isDark && { backgroundColor: 'rgba(56, 189, 248, 0.25)' },
-                        ]}
-                      >
-                        <View
-                          style={[
-                            styles.activeDot,
-                            isDark && { backgroundColor: '#38BDF8' },
-                          ]}
-                        />
+                      <View style={styles.activeHalo}>
+                        <View style={styles.activeDot} />
                       </View>
                     ) : (
                       <View style={styles.inactiveHalo}>
-                        <View
-                          style={[
-                            styles.inactiveDot,
-                            isDark && {
-                              backgroundColor: 'rgba(255, 255, 255, 0.35)',
-                              borderColor: 'transparent',
-                            },
-                          ]}
-                        />
+                        <View style={[styles.inactiveDot, isDark && { backgroundColor: 'rgba(255, 255, 255, 0.35)' }]} />
                       </View>
                     )}
                   </View>
@@ -486,296 +618,94 @@ export default function JourneyTabScreen({ navigation }) {
               })}
             </View>
           </View>
-
-          {/* Dark mode decorative mountain wave silhouette */}
-          {isDark && (
-            <LinearGradient
-              colors={['transparent', 'rgba(124, 58, 237, 0.15)', 'rgba(37, 99, 235, 0.25)']}
-              style={styles.rhythmGlowWave}
-            />
-          )}
         </View>
 
-        {/* ── Today's Check-In Banner Card ── */}
+        {/* Today's Check-In Banner */}
         <View style={[styles.todayCard, isDark && styles.cardDark]}>
-          <View
-            style={[
-              styles.todayIconWrap,
-              isDark && {
-                backgroundColor: 'rgba(245, 158, 11, 0.15)',
-                borderColor: 'rgba(245, 158, 11, 0.3)',
-                borderWidth: 1,
-              },
-            ]}
-          >
-            <Ionicons
-              name={isDark ? 'sunny' : 'calendar'}
-              size={24}
-              color={isDark ? '#F59E0B' : '#1E64EB'}
-            />
+          <View style={[styles.todayIconWrap, { backgroundColor: '#EFF6FF' }]}>
+            <Ionicons name="calendar" size={22} color="#3B82F6" />
           </View>
           <View style={styles.todayInfo}>
-            <Text style={[styles.todayTitle, isDark && styles.textWhite]}>
-              Today's Check-In
-            </Text>
+            <Text style={[styles.todayTitle, isDark && styles.textWhite]}>Today's Check-In</Text>
             <Text style={[styles.todayDate, isDark && styles.textMutedDark]}>
               {todayDateFormatted}
             </Text>
           </View>
           <TouchableOpacity
-            style={[
-              styles.logNowBtn,
-              hasCheckedInToday && styles.logNowBtnDone,
-              isDark && styles.logNowBtnDark,
-            ]}
             onPress={() => navigation.navigate('CheckIn')}
-            activeOpacity={0.8}
+            activeOpacity={0.88}
           >
-            <Text style={styles.logNowBtnText}>
-              {hasCheckedInToday ? 'View Check-In ✓' : 'Log Now →'}
-            </Text>
+            <LinearGradient
+              colors={['#7C3AED', '#4F46E5']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.logNowBtn}
+            >
+              <Text style={styles.logNowBtnText}>
+                {hasCheckedInToday ? 'View Check-In ✓' : 'Log Now →'}
+              </Text>
+            </LinearGradient>
           </TouchableOpacity>
         </View>
 
-        {/* ── MY JOURNEY ROADMAP (Adaptive Climber Illustration) ── */}
-        <View style={styles.roadmapHeader}>
-          <Text style={[styles.roadmapTitle, isDark && styles.roadmapTitleDark]}>
-            MY JOURNEY ROADMAP
-          </Text>
-          <Text style={[styles.roadmapSubtitle, isDark && styles.textMutedDark]}>
-            Personalized milestones — kept private to you and your guide.
-          </Text>
-        </View>
-
-        <View style={[styles.roadmapCard, isDark && styles.cardDark]}>
-          {/* Timeline items on left */}
-          <View style={styles.stepsColumn}>
-            {/* Step 1 */}
-            <View style={styles.stepItem}>
-              <View style={styles.stepIndicatorCol}>
-                <View style={styles.checkCircleDone}>
-                  <Ionicons name="checkmark" size={16} color="#FFFFFF" />
-                </View>
-                <View
-                  style={[
-                    styles.verticalStepLine,
-                    isDark && { backgroundColor: 'rgba(16, 185, 129, 0.35)' },
-                  ]}
-                />
-              </View>
-              <View style={styles.stepContent}>
-                <Text style={[styles.stepTitle, isDark && styles.textWhite]}>
-                  Account Initialized
-                </Text>
-                <Text style={[styles.stepDesc, isDark && styles.textMutedDark]}>
-                  Connected with OpenHand learning ecosystem &amp; course library.
-                </Text>
-              </View>
-            </View>
-
-            {/* Step 2 */}
-            <View style={styles.stepItem}>
-              <View style={styles.stepIndicatorCol}>
-                <View
-                  style={[
-                    styles.stepCircleActive,
-                    isDark && {
-                      backgroundColor: 'transparent',
-                      borderColor: '#38BDF8',
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.stepNumberActive,
-                      isDark && { color: '#38BDF8' },
-                    ]}
-                  >
-                    2
-                  </Text>
-                </View>
-                <View
-                  style={[
-                    styles.verticalStepLine,
-                    isDark && { backgroundColor: 'rgba(56, 189, 248, 0.3)' },
-                  ]}
-                />
-              </View>
-              <View style={styles.stepContent}>
-                <View style={styles.stepTitleRow}>
-                  <Text style={[styles.stepTitle, isDark && styles.textWhite]}>
-                    Daily Check-in Rhythm
-                  </Text>
-                  <View style={[styles.stepTag, isDark && styles.stepTagDark]}>
-                    <Text style={[styles.stepTagText, isDark && styles.stepTagTextDark]}>
-                      {checkInCount > 0 ? `${checkInCount} Logged` : 'Action'}
-                    </Text>
-                  </View>
-                </View>
-                <Text style={[styles.stepDesc, isDark && styles.textMutedDark]}>
-                  {checkInCount > 0
-                    ? `You have logged ${checkInCount} check-ins so far. Keep up the rhythm!`
-                    : 'Log your first daily check-in to track your mood and sleep rhythm.'}
-                </Text>
-              </View>
-            </View>
-
-            {/* Step 3 */}
-            <View style={styles.stepItem}>
-              <View style={styles.stepIndicatorCol}>
-                <View
-                  style={[
-                    styles.stepCircleActive,
-                    { borderColor: isDark ? '#A855F7' : '#7C3AED' },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.stepNumberActive,
-                      { color: isDark ? '#C084FC' : '#7C3AED' },
-                    ]}
-                  >
-                    3
-                  </Text>
-                </View>
-                <View
-                  style={[
-                    styles.verticalStepLine,
-                    isDark && { backgroundColor: 'rgba(168, 85, 247, 0.3)' },
-                  ]}
-                />
-              </View>
-              <View style={styles.stepContent}>
-                <View style={styles.stepTitleRow}>
-                  <Text style={[styles.stepTitle, isDark && styles.textWhite]}>
-                    Live Interactive Sessions
-                  </Text>
-                  <View style={[styles.stepTag, { backgroundColor: isDark ? 'rgba(124, 58, 237, 0.25)' : '#FAF5FF', borderColor: '#E9D5FF' }]}>
-                    <Text style={[styles.stepTagText, { color: isDark ? '#C084FC' : '#7C3AED' }]}>
-                      Live Learning
-                    </Text>
-                  </View>
-                </View>
-                <Text style={[styles.stepDesc, isDark && styles.textMutedDark]}>
-                  {dashboardData?.upcomingClasses?.length
-                    ? `You have ${dashboardData.upcomingClasses.length} live interactive session(s) scheduled.`
-                    : 'Enroll in courses or sessions to join live interactive sessions with your instructor.'}
-                </Text>
-              </View>
-            </View>
-
-            {/* Step 4 */}
-            <View style={styles.stepItem}>
-              <View style={styles.stepIndicatorCol}>
-                <View
-                  style={[
-                    styles.stepCircleActive,
-                    { borderColor: isDark ? '#2DD4BF' : '#0D9488' },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.stepNumberActive,
-                      { color: isDark ? '#2DD4BF' : '#0D9488' },
-                    ]}
-                  >
-                    4
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.stepContent}>
-                <View style={styles.stepTitleRow}>
-                  <Text style={[styles.stepTitle, isDark && styles.textWhite]}>
-                    Peer Support &amp; Growth Circles
-                  </Text>
-                  <View style={[styles.stepTag, { backgroundColor: isDark ? 'rgba(13, 148, 136, 0.25)' : '#ECFDF5', borderColor: '#A7F3D0' }]}>
-                    <Text style={[styles.stepTagText, { color: isDark ? '#2DD4BF' : '#0D9488' }]}>
-                      {joinedCircles.length > 0 ? `${joinedCircles.length} Joined` : 'Ongoing'}
-                    </Text>
-                  </View>
-                </View>
-                <Text style={[styles.stepDesc, isDark && styles.textMutedDark]}>
-                  Join Circles to share reflections, track milestones, and learn alongside peers.
-                </Text>
-                <TouchableOpacity
-                  style={[styles.stepActionBtn, isDark && styles.stepActionBtnDark]}
-                  onPress={() => navigation.navigate('Community')}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.stepActionBtnText}>Explore &amp; Join Circles →</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+        {/* Small Check-In Affirmation Card */}
+        <View style={styles.affirmationCard}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.affirmationText}>
+              A small check-in today, a brighter tomorrow. 💜
+            </Text>
           </View>
-
-          {/* Stepping Stones Milestone Roadmap on right */}
-          <View style={styles.climberColumn}>
-            <Image
-              source={
-                isDark
-                  ? require('../../assets/roadmap_dark.png')
-                  : require('../../assets/roadmap_climber.png')
-              }
-              style={[styles.climberImage, isDark && styles.climberImageDark]}
-            />
+          <View style={styles.avatarSmallIllustration}>
+            <Ionicons name="headset" size={28} color="#7C3AED" />
           </View>
         </View>
 
-        {/* ── Milestones You've Reached Section ── */}
-        <View style={styles.milestonesSection}>
-          <Text style={[styles.milestonesHeaderTitle, isDark && styles.textWhite]}>
-            Milestones you've reached
-          </Text>
-
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.milestonesScrollRow}>
-            {/* Milestone 1: Joined platform */}
-            <View style={[styles.milestoneCard, styles.milestoneCardActive]}>
-              <Text style={styles.milestoneDiamondActive}>◆</Text>
-              <Text style={styles.milestoneTitleActive}>Joined platform</Text>
-              <Text style={styles.milestoneDateActive}>12 Oct</Text>
+        {/* Navigation Action to Screen 3 (Roadmap) */}
+        <TouchableOpacity
+          style={[styles.navActionCard, isDark && styles.cardDark]}
+          onPress={() => setSubView('roadmap')}
+          activeOpacity={0.85}
+        >
+          <View style={styles.navActionLeft}>
+            <View style={[styles.navIconBox, { backgroundColor: '#EDE9FE' }]}>
+              <Ionicons name="map" size={20} color="#7C3AED" />
             </View>
-
-            {/* Milestone 2: First check-in */}
-            <View style={[styles.milestoneCard, isDark && styles.milestoneCardDark]}>
-              <Text style={[styles.milestoneDiamond, isDark && styles.textMutedDark]}>
-                {checkInCount > 0 ? '◆' : '◇'}
+            <View>
+              <Text style={[styles.navActionTitle, isDark && styles.textWhite]}>
+                My Journey Roadmap
               </Text>
-              <Text style={[styles.milestoneTitle, isDark && styles.textWhite]}>First check-in</Text>
-              <Text style={[styles.milestoneDate, isDark && styles.textMutedDark]}>
-                {checkInCount > 0 ? 'Achieved' : 'Not yet'}
+              <Text style={[styles.navActionSubtitle, isDark && styles.textMutedDark]}>
+                View 4 personalized learning milestones
               </Text>
             </View>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color="#7C3AED" />
+        </TouchableOpacity>
 
-            {/* Milestone 3: Check-in(s) logged */}
-            <View style={[styles.milestoneCard, isDark && styles.milestoneCardDark]}>
-              <Text style={[styles.milestoneDiamond, isDark && styles.textMutedDark]}>
-                {checkInCount >= 5 ? '◆' : '◇'}
-              </Text>
-              <Text style={[styles.milestoneTitle, isDark && styles.textWhite]}>
-                {checkInCount} check-in(s) logged
-              </Text>
-              <Text style={[styles.milestoneDate, isDark && styles.textMutedDark]}>In progress</Text>
+        {/* Navigation Action to Screen 4 (Milestones) */}
+        <TouchableOpacity
+          style={[styles.navActionCard, isDark && styles.cardDark]}
+          onPress={() => setSubView('milestones')}
+          activeOpacity={0.85}
+        >
+          <View style={styles.navActionLeft}>
+            <View style={[styles.navIconBox, { backgroundColor: '#E6FBF5' }]}>
+              <Ionicons name="trophy" size={20} color="#0D9488" />
             </View>
-
-            {/* Milestone 4: Joined a circle */}
-            <View style={[styles.milestoneCard, isDark && styles.milestoneCardDark]}>
-              <Text style={[styles.milestoneDiamond, isDark && styles.textMutedDark]}>
-                {joinedCircles.length > 0 ? '◆' : '◇'}
+            <View>
+              <Text style={[styles.navActionTitle, isDark && styles.textWhite]}>
+                Milestones you've reached
               </Text>
-              <Text style={[styles.milestoneTitle, isDark && styles.textWhite]}>Joined a circle</Text>
-              <Text style={[styles.milestoneDate, isDark && styles.textMutedDark]}>
-                {joinedCircles.length > 0 ? 'Achieved' : 'Not yet'}
+              <Text style={[styles.navActionSubtitle, isDark && styles.textMutedDark]}>
+                Track badges, platform join date &amp; progress
               </Text>
             </View>
-          </ScrollView>
-
-          <Text style={[styles.milestonesFootnote, isDark && styles.textMutedDark]}>
-            Milestones are private by default. If you ever want to share one, that's your choice.
-          </Text>
-        </View>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color="#0D9488" />
+        </TouchableOpacity>
       </ScrollView>
 
-      {/* ── Notifications Center Modal ── */}
+      {/* Notifications Center Modal */}
       <Modal
         visible={showNotificationsModal}
         transparent
@@ -789,79 +719,37 @@ export default function JourneyTabScreen({ navigation }) {
         >
           <TouchableOpacity
             activeOpacity={1}
-            style={[
-              styles.notifModalCard,
-              isDark && styles.notifModalCardDark,
-            ]}
+            style={[styles.notifModalCard, isDark && styles.cardDark]}
           >
-            {/* Modal Header */}
-            <View style={[styles.notifModalHeader, isDark && styles.notifModalHeaderDark]}>
+            <View style={styles.notifModalHeader}>
               <View style={styles.notifTitleRow}>
-                <Ionicons name="notifications" size={20} color={isDark ? '#38BDF8' : '#2563EB'} />
+                <Ionicons name="notifications" size={20} color="#7C3AED" />
                 <Text style={[styles.notifModalTitle, isDark && styles.textWhite]}>
                   Notifications
                 </Text>
-                {unreadNotificationsCount > 0 && (
-                  <View style={styles.notifCountPill}>
-                    <Text style={styles.notifCountPillText}>{unreadNotificationsCount} new</Text>
-                  </View>
-                )}
               </View>
-              <TouchableOpacity
-                onPress={() => setShowNotificationsModal(false)}
-                style={styles.notifCloseBtn}
-                activeOpacity={0.7}
-              >
+              <TouchableOpacity onPress={() => setShowNotificationsModal(false)}>
                 <Ionicons name="close" size={20} color={isDark ? '#94A3B8' : '#64748B'} />
               </TouchableOpacity>
             </View>
 
-            {/* Notification List */}
-            <ScrollView style={styles.notifList} showsVerticalScrollIndicator={false}>
+            <ScrollView style={{ maxHeight: 320 }}>
               {notifications.map((item) => (
-                <TouchableOpacity
-                  key={item.id}
-                  style={[
-                    styles.notifItem,
-                    isDark && styles.notifItemDark,
-                    item.unread && (isDark ? styles.notifItemUnreadDark : styles.notifItemUnreadLight),
-                  ]}
-                  onPress={item.onPress}
-                  activeOpacity={0.8}
-                >
-                  <View style={[styles.notifIconWrap, { backgroundColor: `${item.iconColor}20` }]}>
-                    <Ionicons name={item.icon} size={20} color={item.iconColor} />
+                <View key={item.id} style={styles.notifItem}>
+                  <View style={[styles.notifIconWrap, { backgroundColor: '#F3E8FF' }]}>
+                    <Ionicons name={item.icon} size={18} color={item.iconColor} />
                   </View>
-                  <View style={styles.notifContent}>
-                    <View style={styles.notifItemTopRow}>
-                      <Text style={[styles.notifItemTitle, isDark && styles.textWhite]}>
-                        {item.title}
-                      </Text>
-                      {item.unread && <View style={styles.notifItemDot} />}
-                    </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.notifItemTitle, isDark && styles.textWhite]}>
+                      {item.title}
+                    </Text>
                     <Text style={[styles.notifItemBody, isDark && styles.textMutedDark]}>
                       {item.body}
                     </Text>
-                    {item.actionText && (
-                      <Text style={[styles.notifActionLink, isDark && { color: '#38BDF8' }]}>
-                        {item.actionText}
-                      </Text>
-                    )}
                   </View>
-                </TouchableOpacity>
+                </View>
               ))}
             </ScrollView>
-
-            {/* Modal Footer */}
-            <View style={[styles.notifModalFooter, isDark && styles.notifModalFooterDark]}>
-              <TouchableOpacity
-                style={[styles.notifDoneBtn, isDark && styles.notifDoneBtnDark]}
-                onPress={() => setShowNotificationsModal(false)}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.notifDoneBtnText}>Dismiss</Text>
-              </TouchableOpacity>
-            </View>
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
@@ -869,52 +757,22 @@ export default function JourneyTabScreen({ navigation }) {
   );
 }
 
-const serifFont = Platform.OS === 'web' ? 'Georgia, "Playfair Display", "Times New Roman", serif' : (Platform.OS === 'ios' ? 'Georgia' : 'serif');
-
 const styles = StyleSheet.create({
   gradientContainer: {
     flex: 1,
-    position: 'relative',
-    overflow: 'hidden',
   },
   container: {
     flex: 1,
   },
   content: {
-    paddingHorizontal: 18,
-    paddingTop: Platform.OS === 'ios' ? 52 : 28,
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 52 : 36,
     paddingBottom: 40,
   },
-  /* ── Ambient Fluid Blobs for Bright Mode ── */
-  ambientBlobTopRight: {
-    position: 'absolute',
-    top: -20,
-    right: -30,
-    width: 230,
-    height: 230,
-    borderRadius: 115,
-    backgroundColor: 'rgba(186, 230, 253, 0.4)',
-    pointerEvents: 'none',
-  },
-  ambientBlobCenter: {
-    position: 'absolute',
-    top: 140,
-    right: 20,
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: 'rgba(237, 233, 254, 0.45)',
-    pointerEvents: 'none',
-  },
-  ambientBlobLeft: {
-    position: 'absolute',
-    top: 300,
-    left: -40,
-    width: 170,
-    height: 170,
-    borderRadius: 85,
-    backgroundColor: 'rgba(219, 234, 254, 0.35)',
-    pointerEvents: 'none',
+  subviewContent: {
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 52 : 36,
+    paddingBottom: 40,
   },
   textWhite: {
     color: '#FFFFFF',
@@ -922,22 +780,27 @@ const styles = StyleSheet.create({
   textMutedDark: {
     color: '#94A3B8',
   },
+  cardDark: {
+    backgroundColor: '#141933',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+
+  // ── Top Bar ──
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 14,
+    marginBottom: 12,
   },
   brandTitle: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '800',
-    color: '#0F172A',
-    letterSpacing: -0.5,
+    color: '#1E1B4B',
+    letterSpacing: -0.4,
   },
   brandSubtitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#0F172A',
+    fontSize: 12,
+    color: '#64748B',
     marginTop: 1,
   },
   topBarActions: {
@@ -948,106 +811,89 @@ const styles = StyleSheet.create({
   themePillBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: '#E2E8F0',
+    borderRadius: 20,
     paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 18,
+    paddingVertical: 5,
+    gap: 4,
   },
   themePillBtnDark: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderColor: 'rgba(255, 255, 255, 0.18)',
+    backgroundColor: '#141933',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   themePillText: {
-    fontSize: 11.5,
-    fontWeight: '800',
-    color: '#1E64EB',
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#1E1B4B',
   },
   themePillTextDark: {
-    color: '#FBBF24',
+    color: '#FFFFFF',
   },
   iconBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(226, 232, 240, 0.8)',
   },
   iconBtnDark: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: '#141933',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  unreadBadgeDot: {
+    position: 'absolute',
+    top: 7,
+    right: 8,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#7C3AED',
   },
   avatarBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#1E64EB',
+    overflow: 'hidden',
+  },
+  avatarGradient: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#1E64EB',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 3,
   },
   avatarText: {
     color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '800',
   },
-  badgesRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
+
+  // ── 100% Free Access Badge ──
+  badgeRow: {
+    marginBottom: 10,
   },
   freeBadge: {
-    backgroundColor: '#DCFCE7',
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 14,
-  },
-  freeBadgeDark: {
-    backgroundColor: 'rgba(6, 78, 59, 0.8)',
-    borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.25)',
-  },
-  freeBadgeText: {
-    color: '#15803D',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  freeBadgeTextDark: {
-    color: '#34D399',
-  },
-  lrnBadge: {
+    alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EFF6FF',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 14,
+    gap: 6,
+    backgroundColor: '#E6FBF5',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#DBEAFE',
-    gap: 4,
+    borderColor: '#99F6E4',
   },
-  lrnBadgeDark: {
-    backgroundColor: 'rgba(30, 58, 138, 0.5)',
-    borderColor: 'rgba(59, 130, 246, 0.35)',
-  },
-  lrnBadgeText: {
-    color: '#1E64EB',
+  freeBadgeText: {
+    color: '#0D9488',
     fontSize: 11,
     fontWeight: '700',
   },
-  lrnBadgeTextDark: {
-    color: '#60A5FA',
-  },
+
+  // ── Welcome Hero Section ──
   heroSection: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1055,196 +901,146 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   heroTextWrap: {
-    flex: 1.15,
+    flex: 1,
+    paddingRight: 10,
   },
   welcomeTitle: {
-    fontSize: 28,
-    fontFamily: serifFont,
+    fontSize: 24,
     fontWeight: '800',
-    color: '#0F172A',
-    lineHeight: 34,
-    letterSpacing: -0.3,
-  },
-  welcomeTitleDark: {
-    color: '#FFFFFF',
-    fontFamily: undefined,
+    color: '#1E1B4B',
+    lineHeight: 30,
+    letterSpacing: -0.4,
   },
   welcomeName: {
-    fontWeight: '800',
+    color: '#1E1B4B',
   },
   welcomeSubtitle: {
-    fontSize: 12,
+    fontSize: 12.5,
     color: '#64748B',
-    lineHeight: 18,
-    marginTop: 8,
+    marginTop: 6,
+    lineHeight: 17,
   },
   heroImageWrap: {
-    flex: 0.85,
-    alignItems: 'flex-end',
+    width: 120,
+    height: 100,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   heroImage: {
-    width: 155,
-    height: 155,
-    resizeMode: 'contain',
+    width: 120,
+    height: 100,
   },
-  heroImageDark: {
-    borderRadius: 16,
-    width: 130,
-    height: 130,
-  },
-  metricsCard: {
+
+  // ── 3 Metrics Cards Row ──
+  metricsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 10,
+    marginBottom: 16,
+  },
+  metricCard: {
+    flex: 1,
     backgroundColor: '#FFFFFF',
-    borderRadius: 22,
+    borderRadius: 18,
     paddingVertical: 14,
-    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(226, 232, 240, 0.7)',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.04,
+    borderColor: '#EEF2F6',
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
     shadowRadius: 10,
     elevation: 2,
-    marginBottom: 14,
   },
-  cardDark: {
-    backgroundColor: 'rgba(13, 21, 44, 0.75)',
-    borderColor: 'rgba(255, 255, 255, 0.09)',
-    shadowColor: '#000000',
-    shadowOpacity: 0.4,
-  },
-  metricItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  metricIconBox: {
-    marginBottom: 2,
-  },
-  metricValue: {
-    fontSize: 19,
+  metricNumber: {
+    fontSize: 18,
     fontWeight: '800',
-    color: '#0F172A',
+    color: '#1E1B4B',
+    marginTop: 4,
   },
   metricLabel: {
-    fontSize: 10,
+    fontSize: 11,
     color: '#64748B',
-    fontWeight: '500',
-    marginTop: 1,
+    marginTop: 2,
   },
-  metricDivider: {
-    width: 1,
-    height: 32,
-    backgroundColor: '#F1F5F9',
-  },
-  metricDividerDark: {
-    backgroundColor: 'rgba(255, 255, 255, 0.09)',
-  },
+
+  // ── 4 Quick Actions Grid ──
   quickGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 8,
-    marginBottom: 14,
+    gap: 10,
+    marginBottom: 16,
   },
   quickCard: {
     flex: 1,
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
-    paddingVertical: 12,
-    paddingHorizontal: 6,
+    paddingVertical: 14,
+    paddingHorizontal: 4,
     alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(226, 232, 240, 0.7)',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 8,
-    elevation: 1,
+    borderColor: '#EEF2F6',
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
   },
-  quickCardDarkDaily: {
-    backgroundColor: 'rgba(12, 30, 74, 0.85)',
-    borderColor: 'rgba(59, 130, 246, 0.35)',
-  },
-  quickCardDarkAura: {
-    backgroundColor: 'rgba(5, 46, 43, 0.85)',
-    borderColor: 'rgba(20, 184, 166, 0.35)',
-  },
-  quickCardDarkCourses: {
-    backgroundColor: 'rgba(59, 26, 8, 0.85)',
-    borderColor: 'rgba(245, 158, 11, 0.35)',
-  },
-  quickCardDarkCircles: {
-    backgroundColor: 'rgba(48, 13, 82, 0.85)',
-    borderColor: 'rgba(168, 85, 247, 0.35)',
-  },
-  quickIconWrap: {
-    width: 42,
-    height: 42,
+  quickIconBox: {
+    width: 38,
+    height: 38,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 6,
   },
-  quickCardLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   quickCardLabel: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '700',
-    color: '#0F172A',
+    color: '#1E1B4B',
     textAlign: 'center',
-    lineHeight: 13,
+    lineHeight: 14,
   },
-  chevronIcon: {
-    marginLeft: 2,
-    marginTop: 6,
-  },
+
+  // ── Weekly Wellbeing Rhythm Card ──
   rhythmCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 22,
-    padding: 16,
+    padding: 18,
     borderWidth: 1,
-    borderColor: 'rgba(226, 232, 240, 0.7)',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
+    borderColor: '#EEF2F6',
+    marginBottom: 14,
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
     shadowRadius: 10,
     elevation: 2,
-    marginBottom: 14,
-    overflow: 'hidden',
   },
   rhythmHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 14,
+    marginBottom: 16,
   },
   rhythmTitle: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#0F172A',
+    color: '#1E1B4B',
   },
   rhythmLink: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#1E64EB',
-  },
-  rhythmLinkDark: {
-    color: '#38BDF8',
+    color: '#7C3AED',
   },
   rhythmTimeline: {
     position: 'relative',
     paddingVertical: 4,
-    zIndex: 2,
   },
   rhythmLine: {
     position: 'absolute',
-    top: 36,
-    left: 20,
-    right: 20,
+    top: 26,
+    left: 12,
+    right: 12,
     height: 2,
     backgroundColor: '#E2E8F0',
   },
@@ -1254,167 +1050,232 @@ const styles = StyleSheet.create({
   },
   dayCol: {
     alignItems: 'center',
-    gap: 8,
   },
   dayName: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '600',
     color: '#64748B',
+    marginBottom: 8,
   },
   dayNameDark: {
     color: '#94A3B8',
   },
   dayNameActive: {
-    color: '#1E64EB',
-    fontWeight: '800',
-  },
-  dayNameActiveDark: {
-    color: '#38BDF8',
+    color: '#7C3AED',
     fontWeight: '800',
   },
   activeHalo: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: '#DBEAFE',
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: 'rgba(124, 58, 237, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   activeDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: '#1E64EB',
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#7C3AED',
   },
   inactiveHalo: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: 'transparent',
+    width: 18,
+    height: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
   inactiveDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#BFDBFE',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#CBD5E1',
   },
-  rhythmGlowWave: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 35,
-    zIndex: 1,
-  },
+
+  // ── Today's Check-In Banner ──
   todayCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 14,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    padding: 14,
     borderWidth: 1,
-    borderColor: 'rgba(226, 232, 240, 0.7)',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
+    borderColor: '#EEF2F6',
+    marginBottom: 14,
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
     shadowRadius: 10,
     elevation: 2,
-    marginBottom: 18,
-    gap: 12,
   },
   todayIconWrap: {
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: '#EFF6FF',
     alignItems: 'center',
     justifyContent: 'center',
   },
   todayInfo: {
     flex: 1,
+    marginLeft: 12,
   },
   todayTitle: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#0F172A',
+    color: '#1E1B4B',
   },
   todayDate: {
-    fontSize: 11,
+    fontSize: 11.5,
     color: '#64748B',
     marginTop: 2,
   },
   logNowBtn: {
-    backgroundColor: '#1E64EB',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    shadowColor: '#1E64EB',
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 14,
+    shadowColor: '#7C3AED',
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 3,
   },
-  logNowBtnDark: {
-    backgroundColor: '#2563EB',
-    shadowColor: '#38BDF8',
-    shadowOpacity: 0.45,
-  },
-  logNowBtnDone: {
-    backgroundColor: '#059669',
-    shadowColor: '#059669',
-  },
   logNowBtnText: {
     color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '800',
+    fontSize: 12.5,
+    fontWeight: '700',
   },
-  roadmapHeader: {
+
+  // ── Affirmation Card ──
+  affirmationCard: {
+    backgroundColor: '#F5F3FF',
+    borderRadius: 20,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#EDE9FE',
+    marginBottom: 14,
+  },
+  affirmationText: {
+    color: '#6D28D9',
+    fontSize: 12.5,
+    fontWeight: '700',
+    lineHeight: 18,
+  },
+  avatarSmallIllustration: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#EDE9FE',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // ── Nav Action Cards (Roadmap / Milestones) ──
+  navActionCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#EEF2F6',
     marginBottom: 10,
   },
-  roadmapTitle: {
-    fontSize: 11,
+  navActionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  navIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  navActionTitle: {
+    fontSize: 13.5,
     fontWeight: '800',
-    color: '#1E64EB',
-    letterSpacing: 1.2,
-    marginBottom: 3,
+    color: '#1E1B4B',
   },
-  roadmapTitleDark: {
-    color: '#60A5FA',
-  },
-  roadmapSubtitle: {
+  navActionSubtitle: {
     fontSize: 11,
     color: '#64748B',
+    marginTop: 2,
   },
-  roadmapCard: {
+
+  // ── Subview Common Header ──
+  subviewHeader: {
     flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  backNavBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(226, 232, 240, 0.7)',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    elevation: 2,
-    overflow: 'hidden',
+    borderColor: '#EEF2F6',
   },
-  stepsColumn: {
-    flex: 1.15,
+  backNavBtnDark: {
+    backgroundColor: '#141933',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
-  stepItem: {
+  subviewHeaderTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1E1B4B',
+  },
+
+  // ── Screen 3: Roadmap Styles ──
+  roadmapHeroSection: {
+    marginBottom: 20,
+  },
+  roadmapHeroTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: '#1E1B4B',
+    lineHeight: 32,
+    letterSpacing: -0.4,
+  },
+  roadmapHeroSubtitle: {
+    fontSize: 13,
+    color: '#64748B',
+    marginTop: 6,
+    lineHeight: 18,
+  },
+  mountainIllustration: {
+    width: '100%',
+    height: 120,
+    marginTop: 8,
+  },
+  stepperCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#EEF2F6',
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    elevation: 3,
+  },
+  stepperRow: {
     flexDirection: 'row',
-    gap: 10,
+    marginBottom: 16,
   },
   stepIndicatorCol: {
     alignItems: 'center',
-    width: 28,
+    width: 32,
+    marginRight: 12,
   },
-  checkCircleDone: {
+  stepCircleCompleted: {
     width: 26,
     height: 26,
     borderRadius: 13,
@@ -1422,225 +1283,321 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  verticalStepLine: {
-    width: 2,
-    height: 48,
-    backgroundColor: '#A7F3D0',
-    marginVertical: 4,
-  },
-  stepCircleActive: {
+  stepCircleAction: {
     width: 26,
     height: 26,
     borderRadius: 13,
     borderWidth: 2,
-    borderColor: '#1E64EB',
-    backgroundColor: '#FFFFFF',
+    borderColor: '#3B82F6',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#EFF6FF',
   },
-  stepNumberActive: {
+  stepNumberTextAction: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#1E64EB',
+    color: '#3B82F6',
   },
-  stepContent: {
-    flex: 1,
-    paddingBottom: 12,
+  stepCircleLearning: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 2,
+    borderColor: '#8B5CF6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F3E8FF',
   },
-  stepTitle: {
-    fontSize: 13,
+  stepNumberTextLearning: {
+    fontSize: 12,
     fontWeight: '800',
-    color: '#0F172A',
-    marginBottom: 3,
+    color: '#8B5CF6',
   },
-  stepDesc: {
-    fontSize: 10.5,
-    color: '#64748B',
-    lineHeight: 15,
+  stepCircleUpcoming: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 2,
+    borderColor: '#0D9488',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#E6FBF5',
   },
-  climberColumn: {
-    flex: 0.85,
-    alignItems: 'flex-end',
-    justifyContent: 'flex-end',
+  stepNumberTextUpcoming: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#0D9488',
   },
-  climberImage: {
-    width: 130,
-    height: 150,
-    resizeMode: 'contain',
+  stepConnectorLine: {
+    width: 2,
+    flex: 1,
+    backgroundColor: '#E2E8F0',
+    marginVertical: 4,
   },
-  climberImageDark: {
-    borderRadius: 14,
-    width: 125,
-    height: 145,
+  connectorLineDark: {
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
   },
-  stepTitleRow: {
+  stepContentCol: {
+    flex: 1,
+  },
+  stepTitleBadgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 3,
-    gap: 8,
+    marginBottom: 4,
   },
-  stepTag: {
-    backgroundColor: '#EFF6FF',
-    borderWidth: 1,
-    borderColor: '#DBEAFE',
-    borderRadius: 12,
+  stepTitleText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#1E1B4B',
+  },
+  completedBadge: {
+    backgroundColor: '#E6FBF5',
     paddingHorizontal: 8,
     paddingVertical: 2,
-  },
-  stepTagDark: {
-    backgroundColor: 'rgba(56, 189, 248, 0.15)',
-    borderColor: 'rgba(56, 189, 248, 0.3)',
-  },
-  stepTagText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#1E64EB',
-  },
-  stepTagTextDark: {
-    color: '#38BDF8',
-  },
-  stepActionBtn: {
-    backgroundColor: '#1E64EB',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
     borderRadius: 10,
-    alignSelf: 'flex-start',
-    marginTop: 8,
   },
-  stepActionBtnDark: {
-    backgroundColor: '#2563EB',
-  },
-  stepActionBtnText: {
-    color: '#FFFFFF',
-    fontSize: 11,
+  completedBadgeText: {
+    color: '#0D9488',
+    fontSize: 10.5,
     fontWeight: '700',
   },
-  milestonesSection: {
-    marginTop: 18,
-    marginBottom: 24,
+  actionBadge: {
+    backgroundColor: '#F3E8FF',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
   },
-  milestonesHeaderTitle: {
-    fontSize: 16,
+  actionBadgeText: {
+    color: '#8B5CF6',
+    fontSize: 10.5,
+    fontWeight: '700',
+  },
+  learningBadge: {
+    backgroundColor: '#EDE9FE',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  learningBadgeText: {
+    color: '#7C3AED',
+    fontSize: 10.5,
+    fontWeight: '700',
+  },
+  upcomingBadge: {
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  upcomingBadgeText: {
+    color: '#3B82F6',
+    fontSize: 10.5,
+    fontWeight: '700',
+  },
+  stepDescText: {
+    fontSize: 12,
+    color: '#64748B',
+    lineHeight: 17,
+  },
+  primaryCtaBtn: {
+    borderRadius: 18,
+    height: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  primaryCtaBtnText: {
+    color: '#FFFFFF',
+    fontSize: 15,
     fontWeight: '800',
-    color: '#0F172A',
+  },
+
+  // ── Screen 4: Milestones Styles ──
+  milestonesScreenTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: '#1E1B4B',
+    letterSpacing: -0.5,
+    marginBottom: 6,
+  },
+  milestonesScreenSubtitle: {
+    fontSize: 13,
+    color: '#64748B',
+    lineHeight: 18,
+    marginBottom: 20,
+  },
+  milestonesGrid2x2: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 16,
+  },
+  milestoneGridCardActive: {
+    width: '48%',
+    borderRadius: 20,
+    padding: 16,
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  diamondBoxActive: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  milestoneGridTitleActive: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  milestoneGridSubtitleActive: {
+    color: 'rgba(255, 255, 255, 0.85)',
+    fontSize: 11.5,
+    marginTop: 4,
+  },
+  milestoneGridCard: {
+    width: '48%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#EEF2F6',
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  diamondBoxInactive: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: '#F8FAFC',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  milestoneGridTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#1E1B4B',
+  },
+  milestoneGridSubtitle: {
+    fontSize: 11.5,
+    color: '#94A3B8',
+    marginTop: 4,
+  },
+  progressCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: '#EEF2F6',
+    marginBottom: 14,
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  progressHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 12,
   },
-  milestonesScrollRow: {
-    gap: 10,
-    paddingBottom: 4,
+  progressTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#1E1B4B',
   },
-  milestoneCard: {
-    width: 130,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(226, 232, 240, 0.8)',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 8,
-    elevation: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 100,
-  },
-  milestoneCardActive: {
-    backgroundColor: '#2563EB',
-    borderColor: '#1D4ED8',
-  },
-  milestoneCardDark: {
-    backgroundColor: 'rgba(13, 21, 44, 0.75)',
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  milestoneDiamond: {
-    fontSize: 18,
-    color: '#94A3B8',
-    marginBottom: 4,
-  },
-  milestoneDiamondActive: {
-    fontSize: 18,
-    color: '#FFFFFF',
-    marginBottom: 4,
-  },
-  milestoneTitle: {
-    fontSize: 12,
+  progressCountText: {
+    fontSize: 13,
     fontWeight: '700',
-    color: '#0F172A',
-    textAlign: 'center',
+    color: '#1E1B4B',
   },
-  milestoneTitleActive: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    textAlign: 'center',
-  },
-  milestoneDate: {
-    fontSize: 10,
-    color: '#64748B',
-    marginTop: 4,
-  },
-  milestoneDateActive: {
-    fontSize: 10,
-    color: 'rgba(255, 255, 255, 0.85)',
-    marginTop: 4,
-  },
-  milestonesFootnote: {
-    fontSize: 11,
-    color: '#64748B',
-    marginTop: 10,
-    lineHeight: 16,
-  },
-  unreadBadgeDot: {
-    position: 'absolute',
-    top: 6,
-    right: 6,
-    width: 8,
+  progressBarTrack: {
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#EF4444',
-    borderWidth: 1.5,
-    borderColor: '#FFFFFF',
+    backgroundColor: '#F1F5F9',
+    overflow: 'hidden',
   },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  progressPercentageText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#7C3AED',
+    textAlign: 'right',
+    marginTop: 6,
+  },
+  quoteCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#EEF2F6',
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  quoteMark: {
+    fontSize: 28,
+    color: '#7C3AED',
+    fontWeight: '900',
+    lineHeight: 28,
+  },
+  quoteText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#1E1B4B',
+    lineHeight: 19,
+  },
+  leafIconBox: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // ── Modal Styles ──
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(5, 8, 20, 0.65)',
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
     justifyContent: 'center',
-    alignItems: 'center',
     padding: 20,
   },
   notifModalCard: {
-    width: '100%',
-    maxWidth: 420,
-    maxHeight: '80%',
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
-    overflow: 'hidden',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
-    elevation: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(226, 232, 240, 0.8)',
-  },
-  notifModalCardDark: {
-    backgroundColor: '#0D152C',
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    shadowOpacity: 0.5,
+    padding: 20,
+    maxHeight: '80%',
   },
   notifModalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    marginBottom: 16,
+    paddingBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-  },
-  notifModalHeaderDark: {
-    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+    borderBottomColor: '#EEF2F6',
   },
   notifTitleRow: {
     flexDirection: 'row',
@@ -1648,116 +1605,31 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   notifModalTitle: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '800',
-    color: '#0F172A',
-  },
-  notifCountPill: {
-    backgroundColor: 'rgba(239, 68, 68, 0.12)',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 12,
-  },
-  notifCountPillText: {
-    color: '#EF4444',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  notifCloseBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(148, 163, 184, 0.12)',
-  },
-  notifList: {
-    padding: 16,
+    color: '#1E1B4B',
   },
   notifItem: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
     gap: 12,
-    padding: 14,
-    borderRadius: 16,
-    marginBottom: 10,
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  notifItemDark: {
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  notifItemUnreadLight: {
-    backgroundColor: '#EFF6FF',
-    borderColor: '#BFDBFE',
-  },
-  notifItemUnreadDark: {
-    backgroundColor: 'rgba(56, 189, 248, 0.08)',
-    borderColor: 'rgba(56, 189, 248, 0.25)',
+    marginBottom: 14,
   },
   notifIconWrap: {
-    width: 38,
-    height: 38,
+    width: 36,
+    height: 36,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 2,
-  },
-  notifContent: {
-    flex: 1,
-  },
-  notifItemTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
   },
   notifItemTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#0F172A',
-  },
-  notifItemDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#2563EB',
-  },
-  notifItemBody: {
-    fontSize: 12,
-    color: '#64748B',
-    lineHeight: 17,
-    marginBottom: 6,
-  },
-  notifActionLink: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#2563EB',
-  },
-  notifModalFooter: {
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
-    alignItems: 'flex-end',
-  },
-  notifModalFooterDark: {
-    borderTopColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  notifDoneBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 12,
-    backgroundColor: '#F1F5F9',
-  },
-  notifDoneBtnDark: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  notifDoneBtnText: {
     fontSize: 13,
     fontWeight: '700',
+    color: '#1E1B4B',
+  },
+  notifItemBody: {
+    fontSize: 11.5,
     color: '#64748B',
+    marginTop: 2,
+    lineHeight: 16,
   },
 });

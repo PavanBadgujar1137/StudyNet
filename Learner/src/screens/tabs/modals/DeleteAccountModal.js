@@ -69,7 +69,7 @@ export default function DeleteAccountModal({ visible, onClose, isDark, user, onL
   };
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+    <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose} statusBarTranslucent={false}>
       <View style={[styles.container, isDark ? styles.containerDark : styles.containerLight]}>
         {/* Header Bar */}
         <View style={[styles.header, { paddingTop: topPadding }, isDark ? styles.headerDark : styles.headerLight]}>
@@ -94,9 +94,13 @@ export default function DeleteAccountModal({ visible, onClose, isDark, user, onL
 
         {/* Scrollable Content */}
         <ScrollView
-          style={{ flex: 1 }}
+          style={styles.scrollView}
           contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding + 60 }]}
-          showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator={true}
+          nestedScrollEnabled={true}
+          scrollEnabled={true}
+          bounces={true}
+          alwaysBounceVertical={true}
         >
           {/* Warning Banner */}
           <View style={styles.warningCard}>
@@ -191,6 +195,8 @@ export default function DeleteAccountModal({ visible, onClose, isDark, user, onL
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    height: '100%',
+    width: '100%',
   },
   containerLight: {
     backgroundColor: '#F8FAFC',
@@ -256,8 +262,13 @@ const styles = StyleSheet.create({
   closeBtnDark: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
+  scrollView: {
+    flex: 1,
+    flexGrow: 1,
+  },
   scrollContent: {
     padding: 18,
+    flexGrow: 1,
   },
   warningCard: {
     flexDirection: 'row',

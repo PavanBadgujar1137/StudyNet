@@ -295,7 +295,7 @@ export default function ProfileTabScreen({ navigation }) {
           >
             <View>
               <Text style={[styles.rowLabel, isDark && { color: '#94A3B8' }]}>Access Tier</Text>
-              <Text style={{ fontSize: 11, color: isDark ? '#38BDF8' : '#2563EB', marginTop: 1 }}>
+              <Text style={{ fontSize: 11, color: isDark ? '#C084FC' : '#7C3AED', marginTop: 1 }}>
                 Tap to view plan details ›
               </Text>
             </View>
@@ -386,8 +386,8 @@ export default function ProfileTabScreen({ navigation }) {
             onPress={toggleTheme}
             activeOpacity={0.7}
           >
-            <View style={[styles.menuIconBox, { backgroundColor: isDark ? 'rgba(56, 189, 248, 0.15)' : '#EFF6FF' }]}>
-              <Ionicons name={isDark ? 'sunny' : 'moon'} size={18} color={isDark ? '#38BDF8' : '#2563EB'} />
+            <View style={[styles.menuIconBox, { backgroundColor: isDark ? 'rgba(124, 58, 237, 0.15)' : '#F5F3FF' }]}>
+              <Ionicons name={isDark ? 'sunny' : 'moon'} size={18} color={isDark ? '#C084FC' : '#7C3AED'} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[styles.menuLabel, isDark && { color: '#FFFFFF' }]}>Theme Appearance</Text>
@@ -397,13 +397,13 @@ export default function ProfileTabScreen({ navigation }) {
             </View>
             <View
               style={{
-                backgroundColor: isDark ? 'rgba(56, 189, 248, 0.2)' : 'rgba(30, 100, 235, 0.1)',
+                backgroundColor: isDark ? 'rgba(124, 58, 237, 0.2)' : 'rgba(124, 58, 237, 0.1)',
                 paddingHorizontal: 10,
                 paddingVertical: 4,
                 borderRadius: 12,
               }}
             >
-              <Text style={{ fontSize: 11, fontWeight: '700', color: isDark ? '#38BDF8' : '#1E64EB' }}>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: isDark ? '#C084FC' : '#7C3AED' }}>
                 {isDark ? 'Dark' : 'Bright'}
               </Text>
             </View>

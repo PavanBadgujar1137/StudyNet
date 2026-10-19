@@ -11,9 +11,9 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
-import { theme } from '../../theme';
 
 export default function SignupScreen({ navigation }) {
   const { signup, sendOtp } = useAuth();
@@ -102,394 +102,449 @@ export default function SignupScreen({ navigation }) {
       contactNumber,
       otp,
     });
-
     setLoading(false);
 
     if (!res.success) {
-      setErrorMessage(res.error);
+      setErrorMessage(res.error || 'Failed to complete registration.');
     }
-    // If successful, AuthContext updates isAuthenticated, which immediately transitions to LearnerTabNavigator
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.container}
+    <LinearGradient
+      colors={['#F3F4FE', '#EDEFFD', '#F8FAFF', '#FFFFFF']}
+      style={styles.gradientContainer}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-        {/* Back button */}
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
-        </TouchableOpacity>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.container}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Back button */}
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => (step === 2 ? setStep(1) : navigation.goBack())}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="arrow-back" size={22} color="#1E1B4B" />
+          </TouchableOpacity>
 
-        {/* Brand Header */}
-        <View style={styles.header}>
-          <View style={styles.brandIcon}>
-            <Ionicons name="sparkles" size={26} color="#FFF" />
-          </View>
-          <Text style={styles.title}>Join OpenHand</Text>
-          <Text style={styles.subtitle}>
-            Create your private learner account for personalized guidance and wisdom courses.
-          </Text>
-        </View>
+          {/* Brand Header */}
+          <View style={styles.header}>
+            <LinearGradient
+              colors={['#7C3AED', '#6366F1']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.logoBox}
+            >
+              <Ionicons name="infinite" size={24} color="#FFFFFF" />
+            </LinearGradient>
+            <Text style={styles.brandName}>OpenHand</Text>
 
-        {/* Error Alert */}
-        {errorMessage ? (
-          <View style={styles.errorBox}>
-            <Ionicons name="alert-circle" size={18} color={theme.colors.dangerText} />
-            <Text style={styles.errorText}>{errorMessage}</Text>
-          </View>
-        ) : null}
+            <View style={styles.freeBadge}>
+              <Ionicons name="sparkles" size={12} color="#0D9488" />
+              <Text style={styles.freeBadgeText}>100% Free Lifetime Access</Text>
+            </View>
 
-        {/* Form Card */}
-        <View style={styles.card}>
-          {step === 1 ? (
-            <>
-              <View style={styles.row}>
-                <View style={[styles.fieldGroup, { flex: 1, marginRight: 8 }]}>
-                  <Text style={styles.label}>First Name</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={firstName}
-                    onChangeText={setFirstName}
-                    placeholder="Jane"
-                    placeholderTextColor={theme.colors.textLight}
-                  />
-                </View>
-                <View style={[styles.fieldGroup, { flex: 1, marginLeft: 8 }]}>
-                  <Text style={styles.label}>Last Name</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={lastName}
-                    onChangeText={setLastName}
-                    placeholder="Doe"
-                    placeholderTextColor={theme.colors.textLight}
-                  />
-                </View>
-              </View>
-
-              <View style={styles.fieldGroup}>
-                <Text style={styles.label}>Email Address</Text>
-                <TextInput
-                  style={styles.input}
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="jane@example.com"
-                  placeholderTextColor={theme.colors.textLight}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  autoCorrect={false}
-                />
-              </View>
-
-              <View style={styles.fieldGroup}>
-                <Text style={styles.label}>Phone Number (Optional)</Text>
-                <TextInput
-                  style={styles.input}
-                  value={contactNumber}
-                  onChangeText={setContactNumber}
-                  placeholder="+91 98765 43210"
-                  placeholderTextColor={theme.colors.textLight}
-                  keyboardType="phone-pad"
-                />
-              </View>
-
-              <View style={styles.fieldGroup}>
-                <Text style={styles.label}>Password (Min 8 chars)</Text>
-                <View style={styles.passwordWrap}>
-                  <TextInput
-                    style={styles.passwordInput}
-                    value={password}
-                    onChangeText={setPassword}
-                    placeholder="••••••••"
-                    placeholderTextColor={theme.colors.textLight}
-                    secureTextEntry={!showPassword}
-                  />
-                  <TouchableOpacity
-                    onPress={() => setShowPassword(!showPassword)}
-                    style={styles.eyeBtn}
-                  >
-                    <Ionicons
-                      name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                      size={20}
-                      color={theme.colors.textMuted}
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              <View style={styles.fieldGroup}>
-                <Text style={styles.label}>Confirm Password</Text>
-                <TextInput
-                  style={styles.input}
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  placeholder="••••••••"
-                  placeholderTextColor={theme.colors.textLight}
-                  secureTextEntry={!showPassword}
-                />
-              </View>
-
-              <TouchableOpacity
-                style={[styles.primaryButton, loading && styles.buttonDisabled]}
-                onPress={handleSendOtp}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color={theme.colors.textWhite} />
-                ) : (
-                  <Text style={styles.primaryButtonText}>Continue to Verification →</Text>
-                )}
-              </TouchableOpacity>
-            </>
-          ) : (
-            <>
-              {/* Step 2: OTP Verification */}
-              <View style={styles.otpHeader}>
-                <Ionicons name="mail-open-outline" size={40} color={theme.colors.blue} />
-                <Text style={styles.otpInstruction}>
-                  Enter the verification code sent to{'\n'}
-                  <Text style={{ fontWeight: '700', color: theme.colors.text }}>{email}</Text>
-                </Text>
-              </View>
-
-              <View style={styles.fieldGroup}>
-                <Text style={styles.label}>6-Digit Verification Code</Text>
-                <TextInput
-                  style={[styles.input, styles.otpInput]}
-                  value={otp}
-                  onChangeText={setOtp}
-                  placeholder="123456"
-                  placeholderTextColor={theme.colors.textLight}
-                  keyboardType="number-pad"
-                  maxLength={6}
-                  autoFocus
-                />
-              </View>
-
-              <TouchableOpacity
-                style={[styles.primaryButton, loading && styles.buttonDisabled]}
-                onPress={handleRegister}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color={theme.colors.textWhite} />
-                ) : (
-                  <Text style={styles.primaryButtonText}>Complete Registration</Text>
-                )}
-              </TouchableOpacity>
-
-              <View style={styles.resendRow}>
-                {countdown > 0 ? (
-                  <Text style={styles.resendText}>Resend code in {countdown}s</Text>
-                ) : (
-                  <TouchableOpacity onPress={handleSendOtp} disabled={loading}>
-                    <Text style={styles.resendLink}>Resend Verification Code</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-
-              <TouchableOpacity style={styles.editInfoBtn} onPress={() => setStep(1)}>
-                <Text style={styles.editInfoText}>← Edit Registration Details</Text>
-              </TouchableOpacity>
-            </>
-          )}
-        </View>
-
-        {/* Switch to login */}
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            Already have an account?{' '}
-            <Text style={styles.footerLink} onPress={() => navigation.navigate('Login')}>
-              Sign In
+            <Text style={styles.title}>
+              {step === 1 ? 'Create Learner Account' : 'Verify Email Address'}
             </Text>
-          </Text>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+            <Text style={styles.subtitle}>
+              {step === 1
+                ? 'Join OpenHand to connect with verified wellness guides & peer circles.'
+                : `We sent a 6-digit verification code to ${email}`}
+            </Text>
+          </View>
+
+          {/* Error Alert */}
+          {errorMessage ? (
+            <View style={styles.errorBox}>
+              <Ionicons name="alert-circle" size={18} color="#DC2626" />
+              <Text style={styles.errorText}>{errorMessage}</Text>
+            </View>
+          ) : null}
+
+          {/* Form Card */}
+          <View style={styles.card}>
+            {step === 1 ? (
+              <>
+                <View style={styles.row}>
+                  <View style={[styles.fieldGroup, { flex: 1, marginRight: 6 }]}>
+                    <Text style={styles.label}>First Name</Text>
+                    <View style={styles.inputWrap}>
+                      <TextInput
+                        style={styles.input}
+                        value={firstName}
+                        onChangeText={setFirstName}
+                        placeholder="Jane"
+                        placeholderTextColor="#94A3B8"
+                      />
+                    </View>
+                  </View>
+                  <View style={[styles.fieldGroup, { flex: 1, marginLeft: 6 }]}>
+                    <Text style={styles.label}>Last Name</Text>
+                    <View style={styles.inputWrap}>
+                      <TextInput
+                        style={styles.input}
+                        value={lastName}
+                        onChangeText={setLastName}
+                        placeholder="Doe"
+                        placeholderTextColor="#94A3B8"
+                      />
+                    </View>
+                  </View>
+                </View>
+
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.label}>Email Address</Text>
+                  <View style={styles.inputWrap}>
+                    <Ionicons name="mail-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      value={email}
+                      onChangeText={setEmail}
+                      placeholder="jane@example.com"
+                      placeholderTextColor="#94A3B8"
+                      autoCapitalize="none"
+                      keyboardType="email-address"
+                      autoCorrect={false}
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.label}>Phone Number (Optional)</Text>
+                  <View style={styles.inputWrap}>
+                    <Ionicons name="call-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      value={contactNumber}
+                      onChangeText={setContactNumber}
+                      placeholder="+91 98765 43210"
+                      placeholderTextColor="#94A3B8"
+                      keyboardType="phone-pad"
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.label}>Password (Min 8 characters)</Text>
+                  <View style={styles.inputWrap}>
+                    <Ionicons name="lock-closed-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      value={password}
+                      onChangeText={setPassword}
+                      placeholder="••••••••"
+                      placeholderTextColor="#94A3B8"
+                      secureTextEntry={!showPassword}
+                    />
+                    <TouchableOpacity
+                      onPress={() => setShowPassword(!showPassword)}
+                      style={styles.eyeBtn}
+                    >
+                      <Ionicons
+                        name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                        size={20}
+                        color="#94A3B8"
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.label}>Confirm Password</Text>
+                  <View style={styles.inputWrap}>
+                    <Ionicons name="lock-closed-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      value={confirmPassword}
+                      onChangeText={setConfirmPassword}
+                      placeholder="••••••••"
+                      placeholderTextColor="#94A3B8"
+                      secureTextEntry={!showPassword}
+                    />
+                  </View>
+                </View>
+
+                <TouchableOpacity
+                  onPress={handleSendOtp}
+                  disabled={loading}
+                  activeOpacity={0.88}
+                  style={{ marginTop: 6 }}
+                >
+                  <LinearGradient
+                    colors={['#7C3AED', '#4F46E5']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={[styles.primaryButton, loading && styles.buttonDisabled]}
+                  >
+                    {loading ? (
+                      <ActivityIndicator color="#FFFFFF" size="small" />
+                    ) : (
+                      <Text style={styles.primaryButtonText}>Continue to Verification →</Text>
+                    )}
+                  </LinearGradient>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.label}>Enter 6-Digit Code</Text>
+                  <View style={styles.inputWrap}>
+                    <Ionicons name="key-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
+                    <TextInput
+                      style={[styles.input, { letterSpacing: 4, fontWeight: '700' }]}
+                      value={otp}
+                      onChangeText={setOtp}
+                      placeholder="123456"
+                      placeholderTextColor="#94A3B8"
+                      keyboardType="number-pad"
+                      maxLength={6}
+                    />
+                  </View>
+                </View>
+
+                <TouchableOpacity
+                  onPress={handleRegister}
+                  disabled={loading}
+                  activeOpacity={0.88}
+                  style={{ marginTop: 6 }}
+                >
+                  <LinearGradient
+                    colors={['#7C3AED', '#4F46E5']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={[styles.primaryButton, loading && styles.buttonDisabled]}
+                  >
+                    {loading ? (
+                      <ActivityIndicator color="#FFFFFF" size="small" />
+                    ) : (
+                      <Text style={styles.primaryButtonText}>Complete Free Registration ✓</Text>
+                    )}
+                  </LinearGradient>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.resendBtn}
+                  onPress={handleSendOtp}
+                  disabled={countdown > 0}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.resendText, countdown > 0 && { color: '#94A3B8' }]}>
+                    {countdown > 0 ? `Resend code in ${countdown}s` : 'Resend Verification Code'}
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
+
+            {/* Link to Login */}
+            <View style={styles.loginWrap}>
+              <Text style={styles.loginText}>Already have an account? </Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Login')} activeOpacity={0.7}>
+                <Text style={styles.loginLink}>Sign In</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  gradientContainer: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
   },
   scrollContent: {
     flexGrow: 1,
-    padding: theme.spacing.xl,
-    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 52 : 36,
+    paddingBottom: 36,
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: theme.colors.card,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: theme.spacing.base,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#EEF2F6',
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
   },
   header: {
     alignItems: 'center',
-    marginBottom: theme.spacing.xl,
+    marginBottom: 20,
   },
-  brandIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: theme.spacing.borderRadiusMd,
-    backgroundColor: theme.colors.blue,
+  logoBox: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: theme.spacing.md,
+    marginBottom: 8,
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  brandName: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#1E1B4B',
+    letterSpacing: -0.4,
+  },
+  freeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#E6FBF5',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#99F6E4',
+    marginVertical: 10,
+  },
+  freeBadgeText: {
+    color: '#0D9488',
+    fontSize: 11,
+    fontWeight: '700',
   },
   title: {
-    fontSize: theme.typography.xxl,
-    fontWeight: theme.typography.heavy,
-    color: theme.colors.text,
+    fontSize: 26,
+    fontWeight: '800',
+    color: '#1E1B4B',
     textAlign: 'center',
+    letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: theme.typography.sm,
-    color: theme.colors.textMuted,
+    fontSize: 13,
+    color: '#64748B',
     textAlign: 'center',
-    marginTop: theme.spacing.xs,
-    paddingHorizontal: theme.spacing.md,
+    marginTop: 6,
+    paddingHorizontal: 16,
     lineHeight: 18,
   },
   errorBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.colors.dangerLight,
-    borderColor: theme.colors.danger,
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECACA',
     borderWidth: 1,
-    borderRadius: theme.spacing.borderRadiusSm,
-    padding: theme.spacing.md,
-    marginBottom: theme.spacing.base,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 14,
     gap: 8,
   },
   errorText: {
-    color: theme.colors.dangerText,
-    fontSize: theme.typography.sm,
-    fontWeight: theme.typography.medium,
+    color: '#DC2626',
+    fontSize: 12,
+    fontWeight: '600',
     flex: 1,
   },
   card: {
-    backgroundColor: theme.colors.card,
-    borderRadius: theme.spacing.borderRadiusLg,
-    padding: theme.spacing.xl,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 20,
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    shadowColor: theme.colors.shadowColor,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 3,
+    borderColor: '#EEF2F6',
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    elevation: 4,
   },
   row: {
     flexDirection: 'row',
   },
   fieldGroup: {
-    marginBottom: theme.spacing.base,
+    marginBottom: 14,
   },
   label: {
-    fontSize: theme.typography.sm,
-    fontWeight: theme.typography.semiBold,
-    color: theme.colors.textSecondary,
-    marginBottom: theme.spacing.xs,
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#1E1B4B',
+    marginBottom: 6,
   },
-  input: {
-    backgroundColor: theme.colors.surfaceSubtle,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.spacing.borderRadiusSm,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: 12,
-    fontSize: theme.typography.base,
-    color: theme.colors.text,
-  },
-  passwordWrap: {
+  inputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.colors.surfaceSubtle,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.spacing.borderRadiusSm,
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    height: 48,
   },
-  passwordInput: {
+  inputIcon: {
+    marginRight: 10,
+  },
+  input: {
     flex: 1,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: 12,
-    fontSize: theme.typography.base,
-    color: theme.colors.text,
+    height: '100%',
+    fontSize: 13.5,
+    color: '#1E1B4B',
   },
   eyeBtn: {
-    paddingHorizontal: 12,
+    padding: 6,
   },
   primaryButton: {
-    backgroundColor: theme.colors.blue,
-    borderRadius: theme.spacing.borderRadiusSm,
-    paddingVertical: 14,
+    borderRadius: 16,
+    height: 48,
     alignItems: 'center',
-    marginTop: theme.spacing.sm,
+    justifyContent: 'center',
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 3,
   },
   buttonDisabled: {
     opacity: 0.7,
   },
   primaryButtonText: {
-    color: theme.colors.textWhite,
-    fontSize: theme.typography.base,
-    fontWeight: theme.typography.bold,
+    color: '#FFFFFF',
+    fontSize: 14.5,
+    fontWeight: '800',
+    letterSpacing: 0.2,
   },
-  otpHeader: {
-    alignItems: 'center',
-    marginBottom: theme.spacing.lg,
-  },
-  otpInstruction: {
-    textAlign: 'center',
-    fontSize: theme.typography.sm,
-    color: theme.colors.textSecondary,
-    marginTop: 8,
-    lineHeight: 20,
-  },
-  otpInput: {
-    fontSize: 24,
-    fontWeight: '700',
-    textAlign: 'center',
-    letterSpacing: 8,
-  },
-  resendRow: {
-    marginTop: theme.spacing.md,
+  resendBtn: {
+    marginTop: 14,
     alignItems: 'center',
   },
   resendText: {
-    fontSize: theme.typography.xs,
-    color: theme.colors.textMuted,
-  },
-  resendLink: {
-    fontSize: theme.typography.xs,
+    fontSize: 13,
+    color: '#7C3AED',
     fontWeight: '700',
-    color: theme.colors.blue,
   },
-  editInfoBtn: {
-    marginTop: theme.spacing.md,
+  loginWrap: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 16,
   },
-  editInfoText: {
-    fontSize: theme.typography.xs,
-    color: theme.colors.textMuted,
+  loginText: {
+    fontSize: 12.5,
+    color: '#64748B',
   },
-  footer: {
-    marginTop: theme.spacing.xl,
-    alignItems: 'center',
-  },
-  footerText: {
-    fontSize: theme.typography.sm,
-    color: theme.colors.textMuted,
-  },
-  footerLink: {
-    color: theme.colors.blue,
-    fontWeight: theme.typography.bold,
+  loginLink: {
+    fontSize: 12.5,
+    color: '#7C3AED',
+    fontWeight: '800',
   },
 });
