@@ -25,6 +25,8 @@ export const ENDPOINTS = {
     DELETE_DISPLAY_PICTURE: `${BASE_URL}/profile/deleteDisplayPicture`,
     DELETE_ACCOUNT: `${BASE_URL}/profile/deleteProfile`,
     GET_ENROLLED_COURSES: `${BASE_URL}/profile/getEnrolledCourses`,
+    NOTIFICATION_PREFERENCES: `${BASE_URL}/profile/notification-preferences`,
+    SEND_TEST_NOTIFICATION: `${BASE_URL}/profile/test-notification`,
   },
 
   // Learner Dashboard Specific
