@@ -10,16 +10,13 @@ import {
   Platform,
   ScrollView,
   Image,
-  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
-import { colors } from '../../theme/colors';
 
 export default function LoginScreen({ navigation }) {
   const { login } = useAuth();
-  const [role, setRole] = useState('learner'); // 'learner' | 'practitioner'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -42,23 +39,9 @@ export default function LoginScreen({ navigation }) {
     }
   };
 
-  const handleSocialLogin = (provider) => {
-    Alert.alert(
-      `${provider} Sign-In`,
-      `Secure authentication via ${provider} is ready for OpenHand live production.`
-    );
-  };
-
-  const handlePractitionerTab = () => {
-    Alert.alert(
-      'OpenHand Guide App',
-      'For practitioners and clinical coaches, please access the OpenHand Guide Portal at openhand.live or the OpenHand Guide mobile app.'
-    );
-  };
-
   return (
     <LinearGradient
-      colors={['#F3F4FE', '#EDEFFD', '#F8FAFF', '#FFFFFF']}
+      colors={['#EAE9FC', '#F0EFFF', '#F6F7FE', '#FFFFFF']}
       style={styles.gradientContainer}
     >
       <KeyboardAvoidingView
@@ -86,10 +69,10 @@ export default function LoginScreen({ navigation }) {
             </View>
           </View>
 
-          {/* 100% Free Access Chip */}
+          {/* 100% Free Access Badge */}
           <View style={styles.badgeRow}>
             <View style={styles.freeBadge}>
-              <Ionicons name="sparkles" size={12} color="#0D9488" />
+              <Ionicons name="sparkles" size={11} color="#0D9488" />
               <Text style={styles.freeBadgeText}>100% Free Access</Text>
             </View>
           </View>
@@ -97,13 +80,13 @@ export default function LoginScreen({ navigation }) {
           {/* Welcome Titles */}
           <Text style={styles.title}>Welcome back</Text>
           <Text style={styles.subtitle}>
-            Sign in to continue your personalized wellbeing &amp; learning journey.
+            Sign in to continue your personalized{'\n'}wellbeing &amp; learning journey.
           </Text>
 
           {/* 3D Character Illustration */}
           <View style={styles.illustrationWrap}>
             <Image
-              source={require('../../assets/hero_learner.png')}
+              source={require('../../assets/hd_hero_screen1.png')}
               style={styles.heroImage}
               resizeMode="contain"
             />
@@ -111,8 +94,8 @@ export default function LoginScreen({ navigation }) {
 
           {/* Main Card */}
           <View style={styles.card}>
-            {/* Learner Portal Badge */}
-            <View style={styles.learnerBadgeWrap}>
+            {/* Learner Pill Selector */}
+            <View style={styles.roleTrack}>
               <LinearGradient
                 colors={['#7C3AED', '#6366F1']}
                 start={{ x: 0, y: 0 }}
@@ -120,7 +103,7 @@ export default function LoginScreen({ navigation }) {
                 style={styles.learnerPill}
               >
                 <Ionicons name="school" size={15} color="#FFFFFF" />
-                <Text style={styles.learnerPillText}>Learner Portal</Text>
+                <Text style={styles.learnerPillText}>Learner</Text>
               </LinearGradient>
             </View>
 
@@ -154,7 +137,7 @@ export default function LoginScreen({ navigation }) {
             <View style={styles.fieldGroup}>
               <View style={styles.passwordLabelRow}>
                 <Text style={styles.label}>Password</Text>
-                <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
+                <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')} activeOpacity={0.7}>
                   <Text style={styles.forgotLink}>Forgot password?</Text>
                 </TouchableOpacity>
               </View>
@@ -187,7 +170,7 @@ export default function LoginScreen({ navigation }) {
               onPress={handleLogin}
               disabled={loading}
               activeOpacity={0.88}
-              style={{ marginTop: 6 }}
+              style={{ marginTop: 8 }}
             >
               <LinearGradient
                 colors={['#7C3AED', '#4F46E5']}
@@ -210,7 +193,6 @@ export default function LoginScreen({ navigation }) {
                 <Text style={styles.signupLink}>Create Account</Text>
               </TouchableOpacity>
             </View>
-
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -235,14 +217,14 @@ const styles = StyleSheet.create({
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 14,
+    marginBottom: 12,
     width: '100%',
     justifyContent: 'center',
   },
   logoBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: 38,
+    height: 38,
+    borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#7C3AED',
@@ -263,12 +245,12 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   badgeRow: {
-    marginBottom: 10,
+    marginBottom: 8,
   },
   freeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
     backgroundColor: '#E6FBF5',
     paddingHorizontal: 12,
     paddingVertical: 5,
@@ -283,29 +265,30 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   title: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: '800',
     color: '#1E1B4B',
     textAlign: 'center',
-    letterSpacing: -0.6,
+    letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 13,
+    fontSize: 12.5,
     color: '#64748B',
     textAlign: 'center',
-    marginTop: 6,
-    paddingHorizontal: 16,
+    marginTop: 4,
+    paddingHorizontal: 12,
     lineHeight: 18,
   },
   illustrationWrap: {
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 10,
+    marginTop: 6,
+    marginBottom: 10,
   },
   heroImage: {
-    width: 220,
-    height: 120,
+    width: 210,
+    height: 125,
   },
   card: {
     width: '100%',
@@ -320,17 +303,21 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     elevation: 4,
   },
-  learnerBadgeWrap: {
+  roleTrack: {
+    backgroundColor: '#F1F5F9',
+    borderRadius: 22,
+    padding: 3,
     alignItems: 'center',
     marginBottom: 16,
+    alignSelf: 'center',
   },
   learnerPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 16,
+    paddingHorizontal: 22,
     paddingVertical: 7,
-    borderRadius: 20,
+    borderRadius: 18,
     shadowColor: '#7C3AED',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
@@ -339,7 +326,7 @@ const styles = StyleSheet.create({
   },
   learnerPillText: {
     color: '#FFFFFF',
-    fontSize: 12.5,
+    fontSize: 13,
     fontWeight: '700',
   },
   errorBox: {
@@ -403,7 +390,7 @@ const styles = StyleSheet.create({
     padding: 6,
   },
   loginButton: {
-    borderRadius: 16,
+    borderRadius: 14,
     height: 48,
     alignItems: 'center',
     justifyContent: 'center',
@@ -419,7 +406,7 @@ const styles = StyleSheet.create({
   loginButtonText: {
     color: '#FFFFFF',
     fontSize: 14.5,
-    fontWeight: '800',
+    fontWeight: '700',
     letterSpacing: 0.2,
   },
   signupWrap: {
@@ -436,55 +423,5 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
     color: '#7C3AED',
     fontWeight: '800',
-  },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 14,
-    gap: 10,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#EEF2F6',
-  },
-  dividerText: {
-    fontSize: 11,
-    color: '#94A3B8',
-    fontWeight: '600',
-  },
-  socialRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  socialBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 14,
-    height: 44,
-    gap: 8,
-  },
-  socialBtnText: {
-    color: '#1E1B4B',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  footer: {
-    marginTop: 18,
-    alignItems: 'center',
-  },
-  footerText: {
-    fontSize: 11,
-    color: '#64748B',
-    textAlign: 'center',
-  },
-  footerLink: {
-    color: '#7C3AED',
-    fontWeight: '700',
   },
 });

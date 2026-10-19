@@ -132,19 +132,21 @@ export default function JourneyTabScreen({ navigation }) {
 
           {/* Roadmap Mountain Banner / Title */}
           <View style={styles.roadmapHeroSection}>
-            <Text style={[styles.roadmapHeroTitle, isDark && styles.textWhite]}>
-              My Journey{'\n'}Roadmap
-            </Text>
-            <Text style={[styles.roadmapHeroSubtitle, isDark && styles.textMutedDark]}>
-              Personalized milestones — kept private to you and your guide.
-            </Text>
+            <View style={{ flex: 1, paddingRight: 8 }}>
+              <Text style={[styles.roadmapHeroTitle, isDark && styles.textWhite]}>
+                My Journey{'\n'}Roadmap
+              </Text>
+              <Text style={[styles.roadmapHeroSubtitle, isDark && styles.textMutedDark]}>
+                Personalized milestones – kept private to you and your guide.
+              </Text>
+            </View>
             <Image
               source={
                 isDark
                   ? require('../../assets/roadmap_dark.png')
-                  : require('../../assets/roadmap_climber.png')
+                  : require('../../assets/hd_mountain_summit.png')
               }
-              style={styles.mountainIllustration}
+              style={{ width: 110, height: 100 }}
               resizeMode="contain"
             />
           </View>
@@ -377,15 +379,17 @@ export default function JourneyTabScreen({ navigation }) {
 
           {/* Quote Card */}
           <View style={[styles.quoteCard, isDark && styles.cardDark]}>
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, paddingRight: 8 }}>
               <Text style={styles.quoteMark}>“</Text>
               <Text style={[styles.quoteText, isDark && styles.textWhite]}>
                 Every small step counts in your journey.
               </Text>
             </View>
-            <View style={styles.leafIconBox}>
-              <Ionicons name="leaf" size={32} color="#0D9488" />
-            </View>
+            <Image
+              source={require('../../assets/hd_leaf_sprig.png')}
+              style={{ width: 55, height: 65 }}
+              resizeMode="contain"
+            />
           </View>
         </ScrollView>
       </LinearGradient>
@@ -462,6 +466,40 @@ export default function JourneyTabScreen({ navigation }) {
           </View>
         </View>
 
+        {/* Journey Subview Switcher Pills */}
+        <View style={[styles.subviewTabsRow, isDark && styles.subviewTabsRowDark]}>
+          <TouchableOpacity
+            style={[styles.subviewTabBtn, subView === 'dashboard' && styles.subviewTabBtnActive]}
+            onPress={() => setSubView('dashboard')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="home" size={13} color={subView === 'dashboard' ? '#FFFFFF' : (isDark ? '#94A3B8' : '#64748B')} />
+            <Text style={[styles.subviewTabText, subView === 'dashboard' && styles.subviewTabTextActive, isDark && subView !== 'dashboard' && styles.textMutedDark]}>
+              Overview
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.subviewTabBtn, subView === 'roadmap' && styles.subviewTabBtnActive]}
+            onPress={() => setSubView('roadmap')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="map" size={13} color={subView === 'roadmap' ? '#FFFFFF' : (isDark ? '#94A3B8' : '#64748B')} />
+            <Text style={[styles.subviewTabText, subView === 'roadmap' && styles.subviewTabTextActive, isDark && subView !== 'roadmap' && styles.textMutedDark]}>
+              Roadmap
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.subviewTabBtn, subView === 'milestones' && styles.subviewTabBtnActive]}
+            onPress={() => setSubView('milestones')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="trophy" size={13} color={subView === 'milestones' ? '#FFFFFF' : (isDark ? '#94A3B8' : '#64748B')} />
+            <Text style={[styles.subviewTabText, subView === 'milestones' && styles.subviewTabTextActive, isDark && subView !== 'milestones' && styles.textMutedDark]}>
+              Milestones
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         {/* 100% Free Access Badge */}
         <View style={styles.badgeRow}>
           <View style={styles.freeBadge}>
@@ -486,9 +524,9 @@ export default function JourneyTabScreen({ navigation }) {
               source={
                 isDark
                   ? require('../../assets/hero_dark.png')
-                  : require('../../assets/hero_learner.png')
+                  : require('../../assets/hd_hero_desk.png')
               }
-              style={styles.heroImage}
+              style={{ width: 105, height: 105 }}
               resizeMode="contain"
             />
           </View>
@@ -650,14 +688,16 @@ export default function JourneyTabScreen({ navigation }) {
 
         {/* Small Check-In Affirmation Card */}
         <View style={styles.affirmationCard}>
-          <View style={{ flex: 1 }}>
+          <View style={{ flex: 1, paddingRight: 8 }}>
             <Text style={styles.affirmationText}>
               A small check-in today, a brighter tomorrow. 💜
             </Text>
           </View>
-          <View style={styles.avatarSmallIllustration}>
-            <Ionicons name="headset" size={28} color="#7C3AED" />
-          </View>
+          <Image
+            source={require('../../assets/hd_avatar_headphones.png')}
+            style={{ width: 52, height: 48, borderRadius: 24 }}
+            resizeMode="contain"
+          />
         </View>
 
         {/* Navigation Action to Screen 3 (Roadmap) */}
@@ -868,6 +908,45 @@ const styles = StyleSheet.create({
   avatarText: {
     color: '#FFFFFF',
     fontSize: 13,
+    fontWeight: '800',
+  },
+
+  // ── Journey Subview Switcher Pills ──
+  subviewTabsRow: {
+    flexDirection: 'row',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 20,
+    padding: 3,
+    marginBottom: 14,
+    gap: 4,
+  },
+  subviewTabsRowDark: {
+    backgroundColor: '#141933',
+  },
+  subviewTabBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    paddingVertical: 7,
+    borderRadius: 16,
+  },
+  subviewTabBtnActive: {
+    backgroundColor: '#7C3AED',
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  subviewTabText: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  subviewTabTextActive: {
+    color: '#FFFFFF',
     fontWeight: '800',
   },
 

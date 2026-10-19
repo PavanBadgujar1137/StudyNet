@@ -28,7 +28,7 @@ export default function LearnerTabNavigator({ navigation }) {
         width: 34,
         height: 34,
         borderRadius: 17,
-        backgroundColor: isDark ? '#1E64EB' : '#2563EB',
+        backgroundColor: isDark ? '#6D28D9' : '#7C3AED',
         alignItems: 'center',
         justifyContent: 'center',
         shadowColor: '#000',
