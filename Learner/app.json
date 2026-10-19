@@ -38,9 +38,10 @@
       "platformDomain": "openhand.live",
       "cloudfrontDomain": "d2ruooz1ktuxdd.cloudfront.net",
       "eas": {
-        "projectId": "86186001-bcb9-4bc0-9157-24f5e41a24a8"
+        "projectId": "ccd2d7b9-31a9-42be-83c1-76d334632421"
       }
     },
+    "owner": "aryan3025",
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -48,7 +49,7 @@
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/86186001-bcb9-4bc0-9157-24f5e41a24a8"
+      "url": "https://u.expo.dev/ccd2d7b9-31a9-42be-83c1-76d334632421"
     },
     "plugins": [
       [
