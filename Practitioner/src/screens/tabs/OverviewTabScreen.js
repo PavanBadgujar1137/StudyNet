@@ -11,6 +11,7 @@ import {
   Platform,
   Modal,
   StatusBar as NativeStatusBar,
+  Image,
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -60,10 +61,12 @@ export default function OverviewTabScreen({ navigation }) {
 
   const practitionerName = user?.firstName
     ? `${user.firstName} ${user.lastName || ''}`.trim()
-    : 'Dr. Evelyn Vance';
+    : 'Rashid Khopatkar';
 
-  const initials = `${user?.firstName?.[0] || 'E'}${user?.lastName?.[0] || 'V'}`.toUpperCase();
-  const handleSlug = user?.handle || user?.firstName?.toLowerCase() || 'dr-evelyn-vance';
+  const initials = user?.firstName
+    ? `${user?.firstName?.[0] || ''}${user?.lastName?.[0] || ''}`.toUpperCase()
+    : 'RK';
+  const handleSlug = user?.handle || user?.firstName?.toLowerCase() || 'rashid-khopatkar';
 
   const stats = telemetry?.stats || {
     monthlyEarnings: telemetry?.stats?.monthlyEarnings ?? 3450,
@@ -131,7 +134,7 @@ export default function OverviewTabScreen({ navigation }) {
     weekday: 'long',
     month: 'short',
     day: 'numeric',
-  });
+  }).toUpperCase();
 
   return (
     <View style={[styles.container, { backgroundColor: isDark ? '#050818' : '#F6F8FD' }]}>
@@ -162,10 +165,12 @@ export default function OverviewTabScreen({ navigation }) {
         <View style={styles.topBar}>
           <View style={styles.brandContainer}>
             <View style={styles.brandRow}>
-              <View style={[styles.brandDot, { backgroundColor: tokens.primary }]} />
-              <Text style={[styles.brandSuper, { color: tokens.primary }]}>OPENHAND</Text>
+              <View style={[styles.brandDot, { backgroundColor: '#7C3AED' }]} />
+              <Text style={[styles.brandSuper, { color: '#7C3AED' }]}>OPENHAND</Text>
             </View>
-            <Text style={[styles.brandTitle, { color: tokens.text }]}>Practitioner Studio</Text>
+            <Text style={[styles.brandTitle, { color: isDark ? '#F8FAFC' : '#0B0F2A' }]}>
+              Practitioner <Text style={{ color: '#7C3AED' }}>Studio</Text>
+            </Text>
           </View>
 
           <View style={styles.topBarActions}>
@@ -189,7 +194,7 @@ export default function OverviewTabScreen({ navigation }) {
               <Text
                 style={[
                   styles.themePillText,
-                  { color: isDark ? '#FBBF24' : '#7C3AED' },
+                  { color: isDark ? '#E2E8F0' : '#1E293B' },
                 ]}
               >
                 {isDark ? 'Light' : 'Dark'}
@@ -208,7 +213,7 @@ export default function OverviewTabScreen({ navigation }) {
               onPress={() => setShowAlertsModal(true)}
               activeOpacity={0.75}
             >
-              <Feather name="bell" size={17} color={tokens.text} />
+              <Feather name="bell" size={17} color={isDark ? '#E2E8F0' : '#1E293B'} />
               <View style={styles.notifDot} />
             </TouchableOpacity>
 
@@ -230,12 +235,12 @@ export default function OverviewTabScreen({ navigation }) {
               styles.badgePill,
               {
                 backgroundColor: isDark ? 'rgba(16, 185, 129, 0.12)' : '#ECFDF5',
-                borderColor: isDark ? 'rgba(16, 185, 129, 0.3)' : '#D1FAE5',
+                borderColor: isDark ? 'rgba(16, 185, 129, 0.3)' : '#A7F3D0',
               },
             ]}
           >
             <View style={styles.activePulseDot} />
-            <Text style={[styles.badgeText, { color: isDark ? '#34D399' : '#047857' }]}>
+            <Text style={[styles.badgeText, { color: isDark ? '#34D399' : '#059669' }]}>
               Open Plan (Free Access)
             </Text>
           </View>
@@ -245,12 +250,12 @@ export default function OverviewTabScreen({ navigation }) {
               styles.badgePill,
               {
                 backgroundColor: isDark ? 'rgba(56, 189, 248, 0.12)' : '#F0F9FF',
-                borderColor: isDark ? 'rgba(56, 189, 248, 0.3)' : '#E0F2FE',
+                borderColor: isDark ? 'rgba(56, 189, 248, 0.3)' : '#BAE6FD',
               },
             ]}
           >
-            <Ionicons name="checkmark-circle" size={12} color="#0284C7" style={{ marginRight: 4 }} />
-            <Text style={[styles.badgeText, { color: isDark ? '#38BDF8' : '#0369A1' }]}>
+            <Ionicons name="checkmark-circle" size={13} color="#0284C7" style={{ marginRight: 4 }} />
+            <Text style={[styles.badgeText, { color: isDark ? '#38BDF8' : '#0284C7' }]}>
               Verified Clinical Guide
             </Text>
           </View>
@@ -260,12 +265,12 @@ export default function OverviewTabScreen({ navigation }) {
               styles.badgePill,
               {
                 backgroundColor: isDark ? 'rgba(167, 139, 250, 0.12)' : '#F5F3FF',
-                borderColor: isDark ? 'rgba(167, 139, 250, 0.3)' : '#EDE9FE',
+                borderColor: isDark ? 'rgba(167, 139, 250, 0.3)' : '#DDD6FE',
               },
             ]}
           >
-            <Ionicons name="flash" size={12} color="#7C3AED" style={{ marginRight: 4 }} />
-            <Text style={[styles.badgeText, { color: isDark ? '#A78BFA' : '#6D28D9' }]}>
+            <Ionicons name="flash" size={13} color="#7C3AED" style={{ marginRight: 4 }} />
+            <Text style={[styles.badgeText, { color: isDark ? '#A78BFA' : '#7C3AED' }]}>
               SOAP Copilot
             </Text>
           </View>
@@ -278,71 +283,113 @@ export default function OverviewTabScreen({ navigation }) {
             {
               backgroundColor: isDark ? '#0C1333' : '#FFFFFF',
               borderColor: isDark ? 'rgba(167, 139, 250, 0.2)' : '#EDE9FE',
+              shadowColor: isDark ? '#000000' : 'rgba(124, 58, 237, 0.12)',
             },
           ]}
         >
-          {/* Subtle Decorative Header Accent Bar */}
-          <View
-            style={[
-              styles.heroAccentBar,
-              { backgroundColor: isDark ? '#7C3AED' : '#6D28D9' },
-            ]}
-          />
-
           <View style={styles.heroBody}>
-            <View style={styles.heroDateRow}>
-              <Feather name="calendar" size={12} color={tokens.textMuted} style={{ marginRight: 5 }} />
-              <Text style={[styles.heroDateText, { color: tokens.textMuted }]}>
-                {currentDateFormatted}
-              </Text>
+            {/* Top Row: Greeting Left + 3D Graphic Right */}
+            <View style={styles.heroTopRow}>
+              <View style={styles.heroTextCol}>
+                <View style={styles.heroDateRow}>
+                  <Feather name="calendar" size={13} color="#7C3AED" style={{ marginRight: 6 }} />
+                  <Text style={[styles.heroDateText, { color: isDark ? '#94A3B8' : '#64748B' }]}>
+                    {currentDateFormatted}
+                  </Text>
+                </View>
+
+                <Text style={[styles.greetingTitle, { color: isDark ? '#F8FAFC' : '#0B0F2A' }]}>
+                  Hello, {practitionerName} 👋
+                </Text>
+
+                <Text style={[styles.greetingDesc, { color: isDark ? '#CBD5E1' : '#475569' }]}>
+                  You have{' '}
+                  <Text style={{ fontWeight: '800', color: '#7C3AED' }}>
+                    {upcomingClasses.length || 7} live session(s)
+                  </Text>{' '}
+                  scheduled for today.
+                </Text>
+              </View>
+
+              <View style={styles.heroBadgeWrap}>
+                <Image
+                  source={require('../../../assets/practice_hero_badge.png')}
+                  style={styles.heroBadgeImage}
+                  resizeMode="contain"
+                />
+              </View>
             </View>
 
-            <Text style={[styles.greetingTitle, { color: tokens.text }]}>
-              Hello, {practitionerName} 👋
-            </Text>
-
-            <Text style={[styles.greetingDesc, { color: tokens.textSecondary }]}>
-              You have{' '}
-              <Text style={{ fontWeight: '800', color: tokens.primary }}>
-                {upcomingClasses.length} live session(s)
-              </Text>{' '}
-              scheduled for today.
-            </Text>
-
-            <View style={styles.heroActionRow}>
-              {/* Primary Action: Launch Live Room */}
-              <TouchableOpacity
-                style={styles.heroPrimaryBtn}
-                onPress={() => navigation.navigate('Live')}
-                activeOpacity={0.85}
-              >
-                <Feather name="video" size={15} color="#FFFFFF" style={{ marginRight: 7 }} />
-                <Text style={styles.heroPrimaryBtnText}>Launch Live Room</Text>
-              </TouchableOpacity>
-
-              {/* Secondary Action: Share Link */}
-              <TouchableOpacity
+            {/* Bottom Row: Great progress! Left + Actions Stack Right */}
+            <View style={styles.heroBottomRow}>
+              {/* Great progress! Card */}
+              <View
                 style={[
-                  styles.heroSecondaryBtn,
+                  styles.progressBox,
                   {
-                    backgroundColor: isDark ? '#141E47' : '#F5F3FF',
-                    borderColor: isDark ? 'rgba(167, 139, 250, 0.3)' : '#DDD6FE',
+                    backgroundColor: isDark ? 'rgba(124, 58, 237, 0.14)' : '#F3E8FF',
                   },
                 ]}
-                onPress={handleCopyLink}
-                activeOpacity={0.85}
               >
-                <Feather name="share-2" size={14} color={tokens.primary} style={{ marginRight: 6 }} />
-                <Text style={[styles.heroSecondaryBtnText, { color: tokens.primary }]}>Share Link</Text>
-              </TouchableOpacity>
+                <View style={styles.progressHeaderRow}>
+                  <Ionicons name="sparkles" size={14} color="#7C3AED" />
+                  <Text style={[styles.progressTitle, { color: isDark ? '#C4B5FD' : '#6D28D9' }]}>
+                    Great progress!
+                  </Text>
+                </View>
+                <Text style={[styles.progressText, { color: isDark ? '#CBD5E1' : '#475569' }]}>
+                  Your dedication to better care makes a real difference.
+                </Text>
+              </View>
+
+              {/* Action Buttons Stack */}
+              <View style={styles.heroButtonsCol}>
+                <TouchableOpacity
+                  style={styles.heroLaunchBtn}
+                  onPress={() => navigation.navigate('Live')}
+                  activeOpacity={0.88}
+                >
+                  <Feather name="video" size={15} color="#FFFFFF" style={{ marginRight: 6 }} />
+                  <Text style={styles.heroLaunchBtnText}>Launch Live Room</Text>
+                  <Feather name="arrow-right" size={14} color="#FFFFFF" style={{ marginLeft: 6 }} />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.heroShareBtn,
+                    {
+                      backgroundColor: isDark ? '#141E47' : '#FFFFFF',
+                      borderColor: isDark ? 'rgba(167, 139, 250, 0.3)' : '#DDD6FE',
+                    },
+                  ]}
+                  onPress={handleCopyLink}
+                  activeOpacity={0.85}
+                >
+                  <Feather name="link" size={14} color="#7C3AED" style={{ marginRight: 6 }} />
+                  <Text style={[styles.heroShareBtnText, { color: '#7C3AED' }]}>Share Link</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </View>
 
-        {/* ── SECTION D: Dashboard Statistics (2-Column Grid) ── */}
+        {/* ── SECTION D: Dashboard Statistics (Practice Vitals) ── */}
         <View style={styles.sectionHeaderRow}>
-          <Text style={[styles.sectionPretitle, { color: tokens.primary }]}>PRACTICE VITALS</Text>
-          <Text style={[styles.sectionMainTitle, { color: tokens.text }]}>Performance Metrics</Text>
+          <View style={styles.vitalsTitleWrap}>
+            <Feather name="bar-chart-2" size={18} color="#7C3AED" style={{ marginRight: 6 }} />
+            <Text style={[styles.sectionPretitle, { color: '#7C3AED' }]}>PRACTICE VITALS</Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.vitalsGlanceRow}
+            onPress={() => navigation.navigate('More')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.vitalsGlanceText, { color: isDark ? '#94A3B8' : '#64748B' }]}>
+              Your Practice at a Glance
+            </Text>
+            <Feather name="arrow-right" size={14} color="#7C3AED" style={{ marginLeft: 4 }} />
+          </TouchableOpacity>
         </View>
 
         <View style={styles.metricsGrid}>
@@ -1161,9 +1208,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   iconBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1171,17 +1218,17 @@ const styles = StyleSheet.create({
   },
   notifDot: {
     position: 'absolute',
-    top: 8,
+    top: 7,
     right: 8,
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
     backgroundColor: '#EF4444',
   },
   avatarBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: '#7C3AED',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1193,7 +1240,7 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     color: '#FFFFFF',
-    fontSize: 13,
+    fontSize: 13.5,
     fontWeight: '800',
   },
 
@@ -1201,15 +1248,15 @@ const styles = StyleSheet.create({
   badgesRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
-    marginBottom: 14,
+    gap: 8,
+    marginBottom: 16,
   },
   badgePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    paddingHorizontal: 9,
-    paddingVertical: 4.5,
+    borderWidth: 1.2,
+    paddingHorizontal: 11,
+    paddingVertical: 5.5,
     borderRadius: 999,
   },
   activePulseDot: {
@@ -1217,31 +1264,46 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
     backgroundColor: '#10B981',
-    marginRight: 5,
+    marginRight: 6,
   },
   badgeText: {
-    fontSize: 10.5,
+    fontSize: 11,
     fontWeight: '700',
   },
 
   // ── Welcome Hero Card ──
   heroCard: {
-    borderRadius: 20,
-    borderWidth: 1,
+    borderRadius: 24,
+    borderWidth: 1.5,
     overflow: 'hidden',
     marginBottom: 20,
-    shadowColor: '#1E1B4B',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 2,
-  },
-  heroAccentBar: {
-    height: 4,
-    width: '100%',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    elevation: 3,
   },
   heroBody: {
-    padding: 16,
+    padding: 18,
+  },
+  heroTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 14,
+  },
+  heroTextCol: {
+    flex: 1.25,
+    paddingRight: 8,
+  },
+  heroBadgeWrap: {
+    width: 125,
+    height: 108,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroBadgeImage: {
+    width: 125,
+    height: 108,
   },
   heroDateRow: {
     flexDirection: 'row',
@@ -1250,7 +1312,7 @@ const styles = StyleSheet.create({
   },
   heroDateText: {
     fontSize: 11.5,
-    fontWeight: '600',
+    fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.6,
   },
@@ -1261,44 +1323,67 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   greetingDesc: {
-    fontSize: 13,
+    fontSize: 12.5,
     lineHeight: 18,
-    marginBottom: 16,
   },
-  heroActionRow: {
+  heroBottomRow: {
     flexDirection: 'row',
-    gap: 10,
+    alignItems: 'stretch',
+    gap: 12,
   },
-  heroPrimaryBtn: {
-    flex: 1.2,
+  progressBox: {
+    flex: 1.1,
+    borderRadius: 16,
+    padding: 13,
+    justifyContent: 'center',
+  },
+  progressHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+  progressTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    marginLeft: 6,
+  },
+  progressText: {
+    fontSize: 11,
+    lineHeight: 15,
+  },
+  heroButtonsCol: {
+    flex: 1.05,
+    gap: 8,
+    justifyContent: 'center',
+  },
+  heroLaunchBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#7C3AED',
-    paddingVertical: 11,
-    borderRadius: 12,
+    height: 42,
+    borderRadius: 14,
     shadowColor: '#7C3AED',
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.28,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  heroPrimaryBtnText: {
+  heroLaunchBtnText: {
     color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '800',
+    fontSize: 12.5,
+    fontWeight: '700',
   },
-  heroSecondaryBtn: {
-    flex: 0.85,
+  heroShareBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    paddingVertical: 11,
-    borderRadius: 12,
+    borderWidth: 1.5,
+    height: 42,
+    borderRadius: 14,
   },
-  heroSecondaryBtnText: {
-    fontSize: 13,
+  heroShareBtnText: {
+    fontSize: 12.5,
     fontWeight: '700',
   },
 
@@ -1306,16 +1391,27 @@ const styles = StyleSheet.create({
   sectionHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    marginBottom: 10,
+    alignItems: 'center',
+    marginBottom: 12,
     marginTop: 2,
   },
+  vitalsTitleWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  vitalsGlanceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  vitalsGlanceText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
   sectionPretitle: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '800',
-    letterSpacing: 1,
+    letterSpacing: 0.8,
     textTransform: 'uppercase',
-    marginBottom: 2,
   },
   sectionMainTitle: {
     fontSize: 17,
