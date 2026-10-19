@@ -8,7 +8,6 @@ import {
   FiSmartphone,
   FiSend,
   FiZap,
-  FiInfo,
   FiSave,
   FiChevronDown,
   FiSearch,
