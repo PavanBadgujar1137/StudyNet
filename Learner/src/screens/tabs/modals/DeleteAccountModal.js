@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Modal,
   View,
@@ -23,6 +23,18 @@ export default function DeleteAccountModal({ visible, onClose, isDark, user, onL
 
   const [confirmed, setConfirmed] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [scrollReady, setScrollReady] = useState(false);
+
+  useEffect(() => {
+    if (visible) {
+      const timer = setTimeout(() => {
+        setScrollReady(true);
+      }, 50);
+      return () => clearTimeout(timer);
+    } else {
+      setScrollReady(false);
+    }
+  }, [visible]);
 
   const calculateEffectiveDate = () => {
     const d = new Date();
@@ -69,7 +81,14 @@ export default function DeleteAccountModal({ visible, onClose, isDark, user, onL
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose} statusBarTranslucent={false}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent={false}
+      onRequestClose={onClose}
+      statusBarTranslucent={false}
+      onShow={() => setScrollReady(true)}
+    >
       <View style={[styles.container, isDark ? styles.containerDark : styles.containerLight]}>
         {/* Header Bar */}
         <View style={[styles.header, { paddingTop: topPadding }, isDark ? styles.headerDark : styles.headerLight]}>
@@ -93,17 +112,21 @@ export default function DeleteAccountModal({ visible, onClose, isDark, user, onL
         </View>
 
         {/* Scrollable Content */}
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding + 60 }]}
-          showsVerticalScrollIndicator={true}
-          nestedScrollEnabled={true}
-          scrollEnabled={true}
-          bounces={true}
-          alwaysBounceVertical={true}
-        >
-          {/* Warning Banner */}
-          <View style={styles.warningCard}>
+        <View style={styles.scrollWrapper}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={[styles.scrollContent, { paddingBottom: 36 }]}
+            showsVerticalScrollIndicator={true}
+            scrollEnabled={true}
+            bounces={true}
+            alwaysBounceVertical={true}
+            keyboardShouldPersistTaps="handled"
+            nestedScrollEnabled={Platform.OS === 'android'}
+          >
+            {scrollReady ? (
+              <>
+                {/* Warning Banner */}
+                <View style={styles.warningCard}>
             <View style={styles.warnIconBox}>
               <Ionicons name="warning" size={24} color="#DC2626" />
             </View>
@@ -167,7 +190,14 @@ export default function DeleteAccountModal({ visible, onClose, isDark, user, onL
               thumbColor="#FFFFFF"
             />
           </View>
-        </ScrollView>
+        </>
+            ) : (
+              <View style={styles.loaderWrap}>
+                <ActivityIndicator size="small" color="#DC2626" />
+              </View>
+            )}
+          </ScrollView>
+        </View>
 
         {/* Bottom Bar */}
         <View style={[styles.footer, { paddingBottom: bottomPadding }, isDark ? styles.footerDark : styles.footerLight]}>
@@ -211,6 +241,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 14,
     borderBottomWidth: 1,
+    flexShrink: 0,
   },
   headerLight: {
     backgroundColor: '#FFFFFF',
@@ -262,13 +293,22 @@ const styles = StyleSheet.create({
   closeBtnDark: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
+  scrollWrapper: {
+    flex: 1,
+    width: '100%',
+    overflow: 'hidden',
+  },
   scrollView: {
     flex: 1,
-    flexGrow: 1,
+    width: '100%',
   },
   scrollContent: {
     padding: 18,
-    flexGrow: 1,
+  },
+  loaderWrap: {
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   warningCard: {
     flexDirection: 'row',
@@ -357,6 +397,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 12,
     borderTopWidth: 1,
+    flexShrink: 0,
   },
   footerLight: {
     backgroundColor: '#FFFFFF',

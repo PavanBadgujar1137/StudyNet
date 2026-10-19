@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Modal,
   View,
@@ -19,6 +19,18 @@ export default function ContactSupportModal({ visible, onClose, isDark, user, on
   const insets = useSafeAreaInsets();
   const topPadding = Platform.OS === 'web' ? 20 : Math.max(insets.top, 20) + 8;
   const bottomPadding = Platform.OS === 'web' ? 24 : Math.max(insets.bottom, 16) + 16;
+  const [scrollReady, setScrollReady] = useState(false);
+
+  useEffect(() => {
+    if (visible) {
+      const timer = setTimeout(() => {
+        setScrollReady(true);
+      }, 50);
+      return () => clearTimeout(timer);
+    } else {
+      setScrollReady(false);
+    }
+  }, [visible]);
 
   const [category, setCategory] = useState('Account & Profile');
   const [subject, setSubject] = useState('');
@@ -76,7 +88,14 @@ export default function ContactSupportModal({ visible, onClose, isDark, user, on
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose} statusBarTranslucent={false}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent={false}
+      onRequestClose={onClose}
+      statusBarTranslucent={false}
+      onShow={() => setScrollReady(true)}
+    >
       <View style={[styles.container, isDark ? styles.containerDark : styles.containerLight]}>
         {/* Header Bar */}
         <View style={[styles.header, { paddingTop: topPadding }, isDark ? styles.headerDark : styles.headerLight]}>
@@ -102,17 +121,21 @@ export default function ContactSupportModal({ visible, onClose, isDark, user, on
         </View>
 
         {/* Scrollable Content */}
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding + 40 }]}
-          showsVerticalScrollIndicator={true}
-          nestedScrollEnabled={true}
-          scrollEnabled={true}
-          bounces={true}
-          alwaysBounceVertical={true}
-        >
-          {/* Quick Action Channels */}
-          <Text style={[styles.sectionHeading, isDark && { color: '#94A3B8' }]}>DIRECT CHANNELS</Text>
+        <View style={styles.scrollWrapper}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding + 40 }]}
+            showsVerticalScrollIndicator={true}
+            scrollEnabled={true}
+            bounces={true}
+            alwaysBounceVertical={true}
+            keyboardShouldPersistTaps="handled"
+            nestedScrollEnabled={Platform.OS === 'android'}
+          >
+            {scrollReady ? (
+              <>
+                {/* Quick Action Channels */}
+                <Text style={[styles.sectionHeading, isDark && { color: '#94A3B8' }]}>DIRECT CHANNELS</Text>
 
           {/* AURA Live Chat Banner */}
           <TouchableOpacity
@@ -282,8 +305,14 @@ export default function ContactSupportModal({ visible, onClose, isDark, user, on
                 )}
               </TouchableOpacity>
             </View>
-          )}
-        </ScrollView>
+              </>
+            ) : (
+              <View style={styles.loaderWrap}>
+                <ActivityIndicator size="small" color={isDark ? '#38BDF8' : '#0284C7'} />
+              </View>
+            )}
+          </ScrollView>
+        </View>
       </View>
     </Modal>
   );
@@ -308,6 +337,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 14,
     borderBottomWidth: 1,
+    flexShrink: 0,
   },
   headerLight: {
     backgroundColor: '#FFFFFF',
@@ -369,13 +399,22 @@ const styles = StyleSheet.create({
   closeBtnDark: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
+  scrollWrapper: {
+    flex: 1,
+    width: '100%',
+    overflow: 'hidden',
+  },
   scrollView: {
     flex: 1,
-    flexGrow: 1,
+    width: '100%',
   },
   scrollContent: {
     padding: 18,
-    flexGrow: 1,
+  },
+  loaderWrap: {
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sectionHeading: {
     fontSize: 11,

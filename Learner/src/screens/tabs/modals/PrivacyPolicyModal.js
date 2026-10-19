@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Modal,
   View,
@@ -9,6 +9,7 @@ import {
   Platform,
   Alert,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -20,6 +21,18 @@ export default function PrivacyPolicyModal({ visible, onClose, isDark }) {
   const topPadding = Platform.OS === 'web' ? 20 : Math.max(insets.top, 20) + 8;
   const bottomPadding = Platform.OS === 'web' ? 24 : Math.max(insets.bottom, 16) + 16;
   const [copied, setCopied] = useState(false);
+  const [scrollReady, setScrollReady] = useState(false);
+
+  useEffect(() => {
+    if (visible) {
+      const timer = setTimeout(() => {
+        setScrollReady(true);
+      }, 50);
+      return () => clearTimeout(timer);
+    } else {
+      setScrollReady(false);
+    }
+  }, [visible]);
 
   const handleCopyLink = () => {
     if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
@@ -98,7 +111,14 @@ export default function PrivacyPolicyModal({ visible, onClose, isDark }) {
   ];
 
   return (
-    <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose} statusBarTranslucent={false}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent={false}
+      onRequestClose={onClose}
+      statusBarTranslucent={false}
+      onShow={() => setScrollReady(true)}
+    >
       <View style={[styles.container, isDark ? styles.containerDark : styles.containerLight]}>
         {/* Header Bar */}
         <View style={[styles.header, { paddingTop: topPadding }, isDark ? styles.headerDark : styles.headerLight]}>
@@ -124,69 +144,80 @@ export default function PrivacyPolicyModal({ visible, onClose, isDark }) {
         </View>
 
         {/* Scrollable Content */}
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding + 60 }]}
-          showsVerticalScrollIndicator={true}
-          nestedScrollEnabled={true}
-          scrollEnabled={true}
-          bounces={true}
-          alwaysBounceVertical={true}
-        >
-          {/* Trust Banner */}
-          <View style={[styles.trustCard, isDark ? styles.trustCardDark : styles.trustCardLight]}>
-            <View style={styles.trustIconWrap}>
-              <Ionicons name="shield-checkmark" size={24} color="#0D9488" />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.trustTitle, isDark && { color: '#CCFBF1' }]}>
-                End-to-End Privacy Guarantee
-              </Text>
-              <Text style={[styles.trustBody, isDark && { color: '#99F6E4' }]}>
-                Your notes, check-ins, and session interactions are private. We never sell your personal data.
-              </Text>
-            </View>
-          </View>
-
-          {/* Section Cards */}
-          {sections.map((sec) => (
-            <View
-              key={sec.id}
-              style={[
-                styles.sectionCard,
-                isDark ? styles.sectionCardDark : styles.sectionCardLight,
-                sec.highlight && (isDark ? styles.highlightDark : styles.highlightLight),
-              ]}
-            >
-              <View style={styles.sectionTitleRow}>
-                <View
-                  style={[
-                    styles.iconBox,
-                    isDark ? styles.iconBoxDark : styles.iconBoxLight,
-                    sec.highlight && { backgroundColor: '#0D9488' },
-                  ]}
-                >
-                  <Feather
-                    name={sec.icon}
-                    size={16}
-                    color={sec.highlight ? '#FFFFFF' : isDark ? '#2DD4BF' : '#0D9488'}
-                  />
+        <View style={styles.scrollWrapper}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={[styles.scrollContent, { paddingBottom: 36 }]}
+            showsVerticalScrollIndicator={true}
+            scrollEnabled={true}
+            bounces={true}
+            alwaysBounceVertical={true}
+            keyboardShouldPersistTaps="handled"
+            nestedScrollEnabled={Platform.OS === 'android'}
+          >
+            {scrollReady ? (
+              <>
+                {/* Trust Banner */}
+                <View style={[styles.trustCard, isDark ? styles.trustCardDark : styles.trustCardLight]}>
+                  <View style={styles.trustIconWrap}>
+                    <Ionicons name="shield-checkmark" size={24} color="#0D9488" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.trustTitle, isDark && { color: '#CCFBF1' }]}>
+                      End-to-End Privacy Guarantee
+                    </Text>
+                    <Text style={[styles.trustBody, isDark && { color: '#99F6E4' }]}>
+                      Your notes, check-ins, and session interactions are private. We never sell your personal data.
+                    </Text>
+                  </View>
                 </View>
-                <Text
-                  style={[
-                    styles.sectionTitle,
-                    isDark && { color: '#FFFFFF' },
-                    sec.highlight && { color: isDark ? '#2DD4BF' : '#0F766E', fontWeight: '800' },
-                  ]}
-                >
-                  {sec.title}
-                </Text>
-              </View>
 
-              <Text style={[styles.sectionBody, isDark && { color: '#CBD5E1' }]}>{sec.content}</Text>
-            </View>
-          ))}
-        </ScrollView>
+                {/* Section Cards */}
+                {sections.map((sec) => (
+                  <View
+                    key={sec.id}
+                    style={[
+                      styles.sectionCard,
+                      isDark ? styles.sectionCardDark : styles.sectionCardLight,
+                      sec.highlight && (isDark ? styles.highlightDark : styles.highlightLight),
+                    ]}
+                  >
+                    <View style={styles.sectionTitleRow}>
+                      <View
+                        style={[
+                          styles.iconBox,
+                          isDark ? styles.iconBoxDark : styles.iconBoxLight,
+                          sec.highlight && { backgroundColor: '#0D9488' },
+                        ]}
+                      >
+                        <Feather
+                          name={sec.icon}
+                          size={16}
+                          color={sec.highlight ? '#FFFFFF' : isDark ? '#2DD4BF' : '#0D9488'}
+                        />
+                      </View>
+                      <Text
+                        style={[
+                          styles.sectionTitle,
+                          isDark && { color: '#FFFFFF' },
+                          sec.highlight && { color: isDark ? '#2DD4BF' : '#0F766E', fontWeight: '800' },
+                        ]}
+                      >
+                        {sec.title}
+                      </Text>
+                    </View>
+
+                    <Text style={[styles.sectionBody, isDark && { color: '#CBD5E1' }]}>{sec.content}</Text>
+                  </View>
+                ))}
+              </>
+            ) : (
+              <View style={styles.loaderWrap}>
+                <ActivityIndicator size="small" color={isDark ? '#2DD4BF' : '#0D9488'} />
+              </View>
+            )}
+          </ScrollView>
+        </View>
 
         {/* Bottom Floating Bar */}
         <View style={[styles.footer, { paddingBottom: bottomPadding }, isDark ? styles.footerDark : styles.footerLight]}>
@@ -229,6 +260,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 14,
     borderBottomWidth: 1,
+    flexShrink: 0,
   },
   headerLight: {
     backgroundColor: '#FFFFFF',
@@ -290,14 +322,23 @@ const styles = StyleSheet.create({
   closeBtnDark: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
+  scrollWrapper: {
+    flex: 1,
+    width: '100%',
+    overflow: 'hidden',
+  },
   scrollView: {
     flex: 1,
-    flexGrow: 1,
+    width: '100%',
   },
   scrollContent: {
     padding: 18,
     gap: 14,
-    flexGrow: 1,
+  },
+  loaderWrap: {
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   trustCard: {
     flexDirection: 'row',
@@ -394,6 +435,7 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     borderTopWidth: 1,
     gap: 10,
+    flexShrink: 0,
   },
   footerLight: {
     backgroundColor: '#FFFFFF',

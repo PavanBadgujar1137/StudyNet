@@ -20,6 +20,18 @@ export default function NotificationPreferencesModal({ visible, onClose, isDark,
   const insets = useSafeAreaInsets();
   const topPadding = Platform.OS === 'web' ? 20 : Math.max(insets.top, 20) + 8;
   const bottomPadding = Platform.OS === 'web' ? 24 : Math.max(insets.bottom, 16) + 16;
+  const [scrollReady, setScrollReady] = useState(false);
+
+  useEffect(() => {
+    if (visible) {
+      const timer = setTimeout(() => {
+        setScrollReady(true);
+      }, 50);
+      return () => clearTimeout(timer);
+    } else {
+      setScrollReady(false);
+    }
+  }, [visible]);
 
   const initialPrefs = user?.notificationPreferences || {};
 
@@ -113,7 +125,14 @@ export default function NotificationPreferencesModal({ visible, onClose, isDark,
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose} statusBarTranslucent={false}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent={false}
+      onRequestClose={onClose}
+      statusBarTranslucent={false}
+      onShow={() => setScrollReady(true)}
+    >
       <View style={[styles.container, isDark ? styles.containerDark : styles.containerLight]}>
         {/* Header Bar */}
         <View style={[styles.header, { paddingTop: topPadding }, isDark ? styles.headerDark : styles.headerLight]}>
@@ -139,25 +158,29 @@ export default function NotificationPreferencesModal({ visible, onClose, isDark,
         </View>
 
         {/* Scrollable Content */}
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding + 60 }]}
-          showsVerticalScrollIndicator={true}
-          nestedScrollEnabled={true}
-          scrollEnabled={true}
-          bounces={true}
-          alwaysBounceVertical={true}
-        >
-          {/* Active Channel Info */}
-          <View style={[styles.channelInfoCard, isDark ? styles.cardDark : styles.cardLight]}>
-            <View style={styles.channelRow}>
-              <View style={styles.waIconBox}>
-                <Ionicons name="logo-whatsapp" size={20} color="#FFFFFF" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.channelName, isDark && { color: '#FFFFFF' }]}>Connected WhatsApp Number</Text>
-                <Text style={[styles.channelDetail, isDark && { color: '#94A3B8' }]}>
-                  {user?.contactNumber || user?.additionalDetails?.contactNumber || 'No phone number linked'}
+        <View style={styles.scrollWrapper}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={[styles.scrollContent, { paddingBottom: 36 }]}
+            showsVerticalScrollIndicator={true}
+            scrollEnabled={true}
+            bounces={true}
+            alwaysBounceVertical={true}
+            keyboardShouldPersistTaps="handled"
+            nestedScrollEnabled={Platform.OS === 'android'}
+          >
+            {scrollReady ? (
+              <>
+                {/* Active Channel Info */}
+                <View style={[styles.channelInfoCard, isDark ? styles.cardDark : styles.cardLight]}>
+                  <View style={styles.channelRow}>
+                    <View style={styles.waIconBox}>
+                      <Ionicons name="logo-whatsapp" size={20} color="#FFFFFF" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.channelName, isDark && { color: '#FFFFFF' }]}>Connected WhatsApp Number</Text>
+                      <Text style={[styles.channelDetail, isDark && { color: '#94A3B8' }]}>
+                        {user?.contactNumber || user?.additionalDetails?.contactNumber || 'No phone number linked'}
                 </Text>
               </View>
               <TouchableOpacity
@@ -251,7 +274,6 @@ export default function NotificationPreferencesModal({ visible, onClose, isDark,
                 <Text style={[styles.prefDesc, isDark && { color: '#94A3B8' }]}>
                   Gentle reminders to complete daily check-ins and maintain your learning roadmap streak.
                 </Text>
-              </View>
               <Switch
                 value={courseUpdates}
                 onValueChange={setCourseUpdates}
@@ -260,7 +282,14 @@ export default function NotificationPreferencesModal({ visible, onClose, isDark,
               />
             </View>
           </View>
-        </ScrollView>
+        </>
+      ) : (
+        <View style={styles.loaderWrap}>
+          <ActivityIndicator size="small" color="#2563EB" />
+        </View>
+      )}
+    </ScrollView>
+  </View>
 
         {/* Bottom Bar */}
         <View style={[styles.footer, { paddingBottom: bottomPadding }, isDark ? styles.footerDark : styles.footerLight]}>
@@ -296,6 +325,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 14,
     borderBottomWidth: 1,
+    flexShrink: 0,
   },
   headerLight: {
     backgroundColor: '#FFFFFF',
@@ -356,13 +386,22 @@ const styles = StyleSheet.create({
   closeBtnDark: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
+  scrollWrapper: {
+    flex: 1,
+    width: '100%',
+    overflow: 'hidden',
+  },
   scrollView: {
     flex: 1,
-    flexGrow: 1,
+    width: '100%',
   },
   scrollContent: {
     padding: 18,
-    flexGrow: 1,
+  },
+  loaderWrap: {
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   channelInfoCard: {
     padding: 14,
@@ -449,6 +488,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 12,
     borderTopWidth: 1,
+    flexShrink: 0,
   },
   footerLight: {
     backgroundColor: '#FFFFFF',
