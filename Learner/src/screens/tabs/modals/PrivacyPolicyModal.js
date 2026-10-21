@@ -144,80 +144,77 @@ export default function PrivacyPolicyModal({ visible, onClose, isDark }) {
         </View>
 
         {/* Scrollable Content */}
-        <View style={styles.scrollWrapper}>
-          <ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={[styles.scrollContent, { paddingBottom: 36 }]}
-            showsVerticalScrollIndicator={true}
-            scrollEnabled={true}
-            bounces={true}
-            alwaysBounceVertical={true}
-            keyboardShouldPersistTaps="handled"
-            nestedScrollEnabled={Platform.OS === 'android'}
-          >
-            {scrollReady ? (
-              <>
-                {/* Trust Banner */}
-                <View style={[styles.trustCard, isDark ? styles.trustCardDark : styles.trustCardLight]}>
-                  <View style={styles.trustIconWrap}>
-                    <Ionicons name="shield-checkmark" size={24} color="#0D9488" />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.trustTitle, isDark && { color: '#CCFBF1' }]}>
-                      End-to-End Privacy Guarantee
-                    </Text>
-                    <Text style={[styles.trustBody, isDark && { color: '#99F6E4' }]}>
-                      Your notes, check-ins, and session interactions are private. We never sell your personal data.
-                    </Text>
-                  </View>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: 36 }]}
+          showsVerticalScrollIndicator={true}
+          scrollEnabled={true}
+          bounces={true}
+          alwaysBounceVertical={true}
+          keyboardShouldPersistTaps="handled"
+        >
+          {scrollReady ? (
+            <>
+              {/* Trust Banner */}
+              <View style={[styles.trustCard, isDark ? styles.trustCardDark : styles.trustCardLight]}>
+                <View style={styles.trustIconWrap}>
+                  <Ionicons name="shield-checkmark" size={24} color="#0D9488" />
                 </View>
-
-                {/* Section Cards */}
-                {sections.map((sec) => (
-                  <View
-                    key={sec.id}
-                    style={[
-                      styles.sectionCard,
-                      isDark ? styles.sectionCardDark : styles.sectionCardLight,
-                      sec.highlight && (isDark ? styles.highlightDark : styles.highlightLight),
-                    ]}
-                  >
-                    <View style={styles.sectionTitleRow}>
-                      <View
-                        style={[
-                          styles.iconBox,
-                          isDark ? styles.iconBoxDark : styles.iconBoxLight,
-                          sec.highlight && { backgroundColor: '#0D9488' },
-                        ]}
-                      >
-                        <Feather
-                          name={sec.icon}
-                          size={16}
-                          color={sec.highlight ? '#FFFFFF' : isDark ? '#2DD4BF' : '#0D9488'}
-                        />
-                      </View>
-                      <Text
-                        style={[
-                          styles.sectionTitle,
-                          isDark && { color: '#FFFFFF' },
-                          sec.highlight && { color: isDark ? '#2DD4BF' : '#0F766E', fontWeight: '800' },
-                        ]}
-                      >
-                        {sec.title}
-                      </Text>
-                    </View>
-
-                    <Text style={[styles.sectionBody, isDark && { color: '#CBD5E1' }]}>{sec.content}</Text>
-                  </View>
-                ))}
-              </>
-            ) : (
-              <View style={styles.loaderWrap}>
-                <ActivityIndicator size="small" color={isDark ? '#2DD4BF' : '#0D9488'} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.trustTitle, isDark && { color: '#CCFBF1' }]}>
+                    End-to-End Privacy Guarantee
+                  </Text>
+                  <Text style={[styles.trustBody, isDark && { color: '#99F6E4' }]}>
+                    Your notes, check-ins, and session interactions are private. We never sell your personal data.
+                  </Text>
+                </View>
               </View>
-            )}
-          </ScrollView>
-        </View>
+
+              {/* Section Cards */}
+              {sections.map((sec) => (
+                <View
+                  key={sec.id}
+                  style={[
+                    styles.sectionCard,
+                    isDark ? styles.sectionCardDark : styles.sectionCardLight,
+                    sec.highlight && (isDark ? styles.highlightDark : styles.highlightLight),
+                  ]}
+                >
+                  <View style={styles.sectionTitleRow}>
+                    <View
+                      style={[
+                        styles.iconBox,
+                        isDark ? styles.iconBoxDark : styles.iconBoxLight,
+                        sec.highlight && { backgroundColor: '#0D9488' },
+                      ]}
+                    >
+                      <Feather
+                        name={sec.icon}
+                        size={16}
+                        color={sec.highlight ? '#FFFFFF' : isDark ? '#2DD4BF' : '#0D9488'}
+                      />
+                    </View>
+                    <Text
+                      style={[
+                        styles.sectionTitle,
+                        isDark && { color: '#FFFFFF' },
+                        sec.highlight && { color: isDark ? '#2DD4BF' : '#0F766E', fontWeight: '800' },
+                      ]}
+                    >
+                      {sec.title}
+                    </Text>
+                  </View>
+
+                  <Text style={[styles.sectionBody, isDark && { color: '#CBD5E1' }]}>{sec.content}</Text>
+                </View>
+              ))}
+            </>
+          ) : (
+            <View style={styles.loaderWrap}>
+              <ActivityIndicator size="small" color={isDark ? '#2DD4BF' : '#0D9488'} />
+            </View>
+          )}
+        </ScrollView>
 
         {/* Bottom Floating Bar */}
         <View style={[styles.footer, { paddingBottom: bottomPadding }, isDark ? styles.footerDark : styles.footerLight]}>
@@ -244,8 +241,8 @@ export default function PrivacyPolicyModal({ visible, onClose, isDark }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    height: '100%',
     width: '100%',
+    ...(Platform.OS === 'web' ? { height: '100vh', maxHeight: '100vh' } : {}),
   },
   containerLight: {
     backgroundColor: '#F8FAFC',
@@ -322,11 +319,6 @@ const styles = StyleSheet.create({
   closeBtnDark: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
-  scrollWrapper: {
-    flex: 1,
-    width: '100%',
-    overflow: 'hidden',
-  },
   scrollView: {
     flex: 1,
     width: '100%',
@@ -334,6 +326,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 18,
     gap: 14,
+    flexGrow: 1,
   },
   loaderWrap: {
     padding: 40,

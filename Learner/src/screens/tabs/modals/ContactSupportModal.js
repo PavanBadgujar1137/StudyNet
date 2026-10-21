@@ -121,17 +121,15 @@ export default function ContactSupportModal({ visible, onClose, isDark, user, on
         </View>
 
         {/* Scrollable Content */}
-        <View style={styles.scrollWrapper}>
-          <ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding + 40 }]}
-            showsVerticalScrollIndicator={true}
-            scrollEnabled={true}
-            bounces={true}
-            alwaysBounceVertical={true}
-            keyboardShouldPersistTaps="handled"
-            nestedScrollEnabled={Platform.OS === 'android'}
-          >
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding + 40 }]}
+          showsVerticalScrollIndicator={true}
+          scrollEnabled={true}
+          bounces={true}
+          alwaysBounceVertical={true}
+          keyboardShouldPersistTaps="handled"
+        >
             {scrollReady ? (
               <>
                 {/* Quick Action Channels */}
@@ -305,6 +303,7 @@ export default function ContactSupportModal({ visible, onClose, isDark, user, on
                 )}
               </TouchableOpacity>
             </View>
+                )}
               </>
             ) : (
               <View style={styles.loaderWrap}>
@@ -312,7 +311,6 @@ export default function ContactSupportModal({ visible, onClose, isDark, user, on
               </View>
             )}
           </ScrollView>
-        </View>
       </View>
     </Modal>
   );
@@ -321,8 +319,8 @@ export default function ContactSupportModal({ visible, onClose, isDark, user, on
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    height: '100%',
     width: '100%',
+    ...(Platform.OS === 'web' ? { height: '100vh', maxHeight: '100vh' } : {}),
   },
   containerLight: {
     backgroundColor: '#F8FAFC',
@@ -399,17 +397,13 @@ const styles = StyleSheet.create({
   closeBtnDark: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
-  scrollWrapper: {
-    flex: 1,
-    width: '100%',
-    overflow: 'hidden',
-  },
   scrollView: {
     flex: 1,
     width: '100%',
   },
   scrollContent: {
     padding: 18,
+    flexGrow: 1,
   },
   loaderWrap: {
     padding: 40,

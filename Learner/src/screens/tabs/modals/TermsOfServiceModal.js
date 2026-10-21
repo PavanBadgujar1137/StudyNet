@@ -244,8 +244,8 @@ export default function TermsOfServiceModal({ visible, onClose, isDark }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    height: '100%',
     width: '100%',
+    ...(Platform.OS === 'web' ? { height: '100vh', maxHeight: '100vh' } : {}),
   },
   containerLight: {
     backgroundColor: '#F8FAFC',
@@ -322,11 +322,6 @@ const styles = StyleSheet.create({
   closeBtnDark: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
-  scrollWrapper: {
-    flex: 1,
-    width: '100%',
-    overflow: 'hidden',
-  },
   scrollView: {
     flex: 1,
     width: '100%',
@@ -334,6 +329,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 18,
     gap: 14,
+    flexGrow: 1,
   },
   loaderWrap: {
     padding: 40,

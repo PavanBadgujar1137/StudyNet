@@ -71,17 +71,15 @@ export default function SubscriptionTierModal({ visible, onClose, isDark, user }
         </View>
 
         {/* Scrollable Content */}
-        <View style={styles.scrollWrapper}>
-          <ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={[styles.scrollContent, { paddingBottom: 36 }]}
-            showsVerticalScrollIndicator={true}
-            scrollEnabled={true}
-            bounces={true}
-            alwaysBounceVertical={true}
-            keyboardShouldPersistTaps="handled"
-            nestedScrollEnabled={Platform.OS === 'android'}
-          >
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: 36 }]}
+          showsVerticalScrollIndicator={true}
+          scrollEnabled={true}
+          bounces={true}
+          alwaysBounceVertical={true}
+          keyboardShouldPersistTaps="handled"
+        >
             {scrollReady ? (
               <>
                 {/* Hero Emerald Card matching Web App */}
@@ -147,7 +145,6 @@ export default function SubscriptionTierModal({ visible, onClose, isDark, user }
               </View>
             )}
           </ScrollView>
-        </View>
 
         {/* Bottom Bar */}
         <View style={[styles.footer, { paddingBottom: bottomPadding }, isDark ? styles.footerDark : styles.footerLight]}>
