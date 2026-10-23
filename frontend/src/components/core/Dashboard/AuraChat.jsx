@@ -91,7 +91,29 @@ export default function AuraChat({ role = 'learner', practitionerName: propPract
   const [isTyping, setIsTyping] = useState(false)
   const [copiedIndex, setCopiedIndex] = useState(null)
   const [speakingId, setSpeakingId] = useState(null)
+  const [voicesList, setVoicesList] = useState([])
   const messagesEndRef = useRef(null)
+
+  // Pre-fetch browser speech synthesis voices for Indian Girl voice detection
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return
+
+    const loadVoices = () => {
+      const v = window.speechSynthesis.getVoices()
+      if (v && v.length > 0) {
+        setVoicesList(v)
+      }
+    }
+
+    loadVoices()
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = loadVoices
+    }
+
+    return () => {
+      if (window.speechSynthesis) window.speechSynthesis.cancel()
+    }
+  }, [])
 
   // ─── IMAGE UPLOAD STATE ───
   const [selectedImage, setSelectedImage] = useState(null)
@@ -239,7 +261,100 @@ export default function AuraChat({ role = 'learner', practitionerName: propPract
     toast.success('Conversation reset.')
   }
 
-  // Text-to-Speech
+  // Select best available Indian female / girl voice across Edge, Chrome, Safari, Android & Windows
+  const selectIndianGirlVoice = (voices) => {
+    if (!voices || voices.length === 0) return null
+
+    const indianGirlKeywords = [
+      'neerja',
+      'swara',
+      'heera',
+      'veena',
+      'aditi',
+      'raveena',
+      'kavya',
+      'lekha',
+      'ananya',
+      'priya',
+      'shruti',
+      'kalpana',
+      'geeta',
+      'isha',
+      'kajal',
+    ]
+
+    const isIndianLang = (v) => {
+      const lang = (v.lang || '').toLowerCase().replace('_', '-')
+      return lang === 'en-in' || lang.startsWith('en-in') || lang === 'hi-in' || lang.startsWith('hi')
+    }
+
+    // 1. Edge/Chrome Online Natural Indian female voices (e.g. Microsoft Neerja Online (Natural) - English (India))
+    const naturalIndian = voices.find((v) => {
+      const name = (v.name || '').toLowerCase()
+      return (
+        isIndianLang(v) &&
+        (name.includes('natural') || name.includes('online')) &&
+        (name.includes('female') || indianGirlKeywords.some((k) => name.includes(k)))
+      )
+    })
+    if (naturalIndian) return naturalIndian
+
+    // 2. Named Indian female voices across platforms (Neerja, Veena, Swara, Heera, Aditi, Raveena, etc.)
+    const namedIndian = voices.find((v) => {
+      const name = (v.name || '').toLowerCase()
+      return indianGirlKeywords.some((k) => name.includes(k))
+    })
+    if (namedIndian) return namedIndian
+
+    // 3. Indian language voice explicitly tagged with female
+    const femaleIndian = voices.find((v) => {
+      const name = (v.name || '').toLowerCase()
+      return isIndianLang(v) && (name.includes('female') || name.includes('woman') || name.includes('girl'))
+    })
+    if (femaleIndian) return femaleIndian
+
+    // 4. Google English (India) or Microsoft Indian voice (female by default on Chromium)
+    const googleOrMsIndian = voices.find((v) => {
+      const name = (v.name || '').toLowerCase()
+      const lang = (v.lang || '').toLowerCase().replace('_', '-')
+      return (
+        (lang === 'en-in' || lang.startsWith('en-in')) &&
+        (name.includes('google') || name.includes('microsoft') || name.includes('india'))
+      )
+    })
+    if (googleOrMsIndian) return googleOrMsIndian
+
+    // 5. Any en-IN voice
+    const anyIndianEnglish = voices.find((v) => {
+      const lang = (v.lang || '').toLowerCase().replace('_', '-')
+      return lang === 'en-in' || lang.startsWith('en-in')
+    })
+    if (anyIndianEnglish) return anyIndianEnglish
+
+    // 6. Any Hindi voice
+    const anyHindi = voices.find((v) => {
+      const lang = (v.lang || '').toLowerCase().replace('_', '-')
+      return lang === 'hi-in' || lang.startsWith('hi')
+    })
+    if (anyHindi) return anyHindi
+
+    // 7. Soft, pleasant feminine fallback voice
+    const femaleFallback = voices.find((v) => {
+      const name = (v.name || '').toLowerCase()
+      return (
+        name.includes('female') ||
+        name.includes('natural') ||
+        name.includes('samantha') ||
+        name.includes('zira') ||
+        name.includes('victoria')
+      )
+    })
+    if (femaleFallback) return femaleFallback
+
+    return voices.find((v) => (v.lang || '').startsWith('en')) || voices[0] || null
+  }
+
+  // Text-to-Speech with Indian Girl Voice
   const handleToggleSpeak = (text, id) => {
     if (!window.speechSynthesis) {
       toast.error('Text-to-speech is not supported in this browser.')
@@ -258,14 +373,25 @@ export default function AuraChat({ role = 'learner', practitionerName: propPract
       .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
 
     const utterance = new SpeechSynthesisUtterance(cleanText)
-    utterance.rate = 0.95
-    utterance.pitch = 1.0
+
+    // Resolve best available Indian Girl Voice
+    const available = (window.speechSynthesis.getVoices()?.length > 0
+      ? window.speechSynthesis.getVoices()
+      : voicesList) || []
+    const indianGirlVoice = selectIndianGirlVoice(available)
+
+    if (indianGirlVoice) {
+      utterance.voice = indianGirlVoice
+      utterance.lang = indianGirlVoice.lang || 'en-IN'
+    } else {
+      utterance.lang = 'en-IN'
+    }
+
+    // Youthful, clear, gentle Indian girl voice parameters
+    utterance.rate = 0.98   // Natural, warm, unhurried cadence
+    utterance.pitch = 1.08  // Youthful, sweet feminine girl tone
     utterance.onend = () => setSpeakingId(null)
     utterance.onerror = () => setSpeakingId(null)
-
-    const voices = window.speechSynthesis.getVoices()
-    const naturalVoice = voices.find((v) => v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha') || v.lang.startsWith('en'))
-    if (naturalVoice) utterance.voice = naturalVoice
 
     setSpeakingId(id)
     window.speechSynthesis.speak(utterance)
@@ -759,6 +885,7 @@ export default function AuraChat({ role = 'learner', practitionerName: propPract
                       <button
                         type="button"
                         onClick={() => handleToggleSpeak(m.text, m.id || idx)}
+                        title={speakingId === (m.id || idx) ? 'Stop speaking' : 'Listen with AURA Indian Girl Voice'}
                         style={{
                           background: 'transparent',
                           border: 'none',
