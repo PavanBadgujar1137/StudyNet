@@ -90,24 +90,18 @@ export function HelpSupport() {
               We built Open Hand for practitioners whose work depends on presence. When something breaks — a video call won't connect, a payment fails, or a learner can't log in — you don't have time for chatbot loops.
             </p>
 
-            <div className="flex flex-wrap items-center justify-center gap-3.5 my-6">
+            <div className="flex flex-wrap items-center justify-center gap-3.5 mt-2 mb-4">
               <button
-                onClick={() => setChatOpen(true)}
-                className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white font-bold text-sm sm:text-base shadow-md transition-all hover:scale-[1.02]"
+                onClick={() => document.getElementById('direct-channels')?.scrollIntoView({ behavior: 'smooth' })}
+                className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white font-bold text-sm sm:text-base shadow-md transition-all hover:scale-[1.02] gap-2 cursor-pointer"
               >
-                <FiMessageSquare className="text-lg" /> Live Chat Support
-              </button>
-              <button
-                onClick={() => setEmailModal(true)}
-                className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white font-bold text-sm sm:text-base shadow-md transition-all hover:scale-[1.02]"
-              >
-                <FiMail className="text-lg" /> Email Support Desk
+                Explore Support Channels <FiArrowRight />
               </button>
               <button
                 onClick={() => setEmergencyModal(true)}
-                className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white font-bold text-sm sm:text-base shadow-md transition-all hover:scale-[1.02]"
+                className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 font-bold text-sm sm:text-base shadow-sm transition-all hover:scale-[1.02] gap-2 cursor-pointer"
               >
-                <FiAlertCircle className="text-lg" /> Crisis &amp; Helplines
+                <FiAlertCircle className="text-lg text-rose-500" /> Crisis &amp; Helplines (24/7)
               </button>
             </div>
           </div>
@@ -115,7 +109,7 @@ export function HelpSupport() {
       </header>
 
       {/* Main Support Channels Section */}
-      <section className="px-4 md:px-8 py-12 max-w-[1440px] mx-auto w-full">
+      <section id="direct-channels" className="px-4 md:px-8 py-12 max-w-[1440px] mx-auto w-full scroll-mt-20">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight">Direct Support Channels</h2>
