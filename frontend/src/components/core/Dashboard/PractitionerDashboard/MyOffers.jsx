@@ -115,7 +115,7 @@ export function MyOffers({ telemetryData, onUpdate }) {
 
   useEffect(() => {
     loadOffers()
-    
+
     // Check for calendar_connected callback
     if (searchParams.get('calendar_connected') === 'true') {
       toast.success("Google Calendar connected successfully!")
@@ -151,7 +151,7 @@ export function MyOffers({ telemetryData, onUpdate }) {
         return next
       })
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleOpenCreateModal = () => {
@@ -519,14 +519,14 @@ export function MyOffers({ telemetryData, onUpdate }) {
                               offerType === 'circle'
                                 ? '#FEF3C7'
                                 : offerType === 'program'
-                                ? '#F3E8FF'
-                                : '#DBEAFE',
+                                  ? '#F3E8FF'
+                                  : '#DBEAFE',
                             color:
                               offerType === 'circle'
                                 ? '#92400E'
                                 : offerType === 'program'
-                                ? '#6B21A8'
-                                : '#1E40AF',
+                                  ? '#6B21A8'
+                                  : '#1E40AF',
                           }}
                         >
                           {offerType === 'circle' ? 'Circle' : offerType === 'program' ? 'Program' : '1:1 Session'}
@@ -699,9 +699,9 @@ export function MyOffers({ telemetryData, onUpdate }) {
         </div>
       </div>
 
-      <PractitionerScheduleModal 
-        isOpen={showScheduleModal} 
-        onClose={() => setShowScheduleModal(false)} 
+      <PractitionerScheduleModal
+        isOpen={showScheduleModal}
+        onClose={() => setShowScheduleModal(false)}
       />
 
       {/* CREATE / EDIT OFFER MODAL */}
