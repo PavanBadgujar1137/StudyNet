@@ -83,6 +83,7 @@ export function MyOffers({ telemetryData, onUpdate }) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [price, setPrice] = useState('')
+  const [currency, setCurrency] = useState(telemetryData?.practitioner?.payoutCountry === 'US' ? 'USD' : 'INR')
   const [type, setType] = useState('session')
   const [durationMinutes, setDurationMinutes] = useState(50)
   const [maxSeats, setMaxSeats] = useState('')
@@ -158,6 +159,7 @@ export function MyOffers({ telemetryData, onUpdate }) {
     setTitle('')
     setDescription('')
     setPrice('')
+    setCurrency(telemetryData?.practitioner?.payoutCountry === 'US' ? 'USD' : 'INR')
     setType('session')
     setDurationMinutes(50)
     setMaxSeats('')
@@ -171,7 +173,8 @@ export function MyOffers({ telemetryData, onUpdate }) {
     setEditingOffer(offer)
     setTitle(offer.title || '')
     setDescription(offer.description || '')
-    setPrice(offer.price || '')
+    setPrice(offer.price != null ? offer.price : '')
+    setCurrency(offer.currency || (telemetryData?.practitioner?.payoutCountry === 'US' ? 'USD' : 'INR'))
     setType(offer.type || 'session')
     setDurationMinutes(offer.durationMinutes || 50)
     setMaxSeats(offer.maxSeats || '')
@@ -184,7 +187,7 @@ export function MyOffers({ telemetryData, onUpdate }) {
   const applyPreset = (p) => {
     setTitle(p.title)
     setDescription(p.description)
-    setPrice(p.price)
+    setPrice(currency === 'USD' ? (p.type === 'circle' ? 15 : p.type === 'program' ? 99 : 35) : p.price)
     setType(p.type)
     setDurationMinutes(p.durationMinutes)
     setMaxSeats(p.maxSeats)
@@ -212,6 +215,7 @@ export function MyOffers({ telemetryData, onUpdate }) {
         title: title.trim(),
         description: description.trim(),
         price: Number(price),
+        currency: currency || 'INR',
         type,
         durationMinutes: Number(durationMinutes) || 50,
         maxSeats: maxSeats ? Number(maxSeats) : undefined,
@@ -233,9 +237,15 @@ export function MyOffers({ telemetryData, onUpdate }) {
 
       if (res?.data?.success) {
         toast.success(editingOffer ? 'Offer updated!' : '🎉 Offer published to directory successfully!')
+        // Close modal first so UI is responsive
         setShowCreateModal(false)
-        loadOffers()
-        if (onUpdate) onUpdate()
+        // Await local list refresh before notifying parent — prevents race-condition blank screen
+        await loadOffers()
+        // Only call onUpdate AFTER local state is stable
+        if (onUpdate) {
+          // Small timeout prevents parent from re-mounting this component mid-render
+          setTimeout(() => onUpdate(), 50)
+        }
       } else {
         toast.error(res?.data?.message || 'Operation failed')
       }
@@ -259,8 +269,8 @@ export function MyOffers({ telemetryData, onUpdate }) {
       )
       if (res?.data?.success) {
         toast.success(`Offer marked as ${nextStatus.toUpperCase()}`)
-        loadOffers()
-        if (onUpdate) onUpdate()
+        await loadOffers()
+        if (onUpdate) setTimeout(() => onUpdate(), 50)
       } else {
         toast.error(res?.data?.message || 'Could not update offer status')
       }
@@ -297,8 +307,8 @@ export function MyOffers({ telemetryData, onUpdate }) {
       if (res?.data?.success) {
         toast.success('Offer deleted successfully')
         setDeleteTargetOffer(null)
-        loadOffers()
-        if (onUpdate) onUpdate()
+        await loadOffers()
+        if (onUpdate) setTimeout(() => onUpdate(), 50)
       } else {
         toast.error(res?.data?.message || 'Could not delete offer')
       }
@@ -537,7 +547,7 @@ export function MyOffers({ telemetryData, onUpdate }) {
                       </div>
 
                       <span style={{ fontSize: '20px', fontWeight: 900, color: '#1F5FE0' }}>
-                        ₹{o.price}
+                        {o.currency === 'USD' ? '$' : '₹'}{o.price}
                       </span>
                     </div>
 
@@ -844,22 +854,63 @@ export function MyOffers({ telemetryData, onUpdate }) {
               </div>
 
               {/* Price & Duration Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '14px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
-                    Fee Amount (₹ INR) *
-                  </label>
-                  <input
-                    type="number"
-                    placeholder="e.g. 2500"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value.slice(0, 8))}
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #CBD5E1', fontSize: '14px', outline: 'none' }}
-                    required
-                    min={0}
-                    max={999999}
-                    step="0.01"
-                  />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <label style={{ margin: 0, fontSize: '12.5px', fontWeight: 700, color: '#334155' }}>
+                      Fee Amount *
+                    </label>
+                    <div style={{ display: 'inline-flex', background: '#F1F5F9', borderRadius: '6px', padding: '2px' }}>
+                      <button
+                        type="button"
+                        onClick={() => setCurrency('USD')}
+                        style={{
+                          border: 'none',
+                          background: currency === 'USD' ? '#2563EB' : 'transparent',
+                          color: currency === 'USD' ? '#FFFFFF' : '#64748B',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        $ USD
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCurrency('INR')}
+                        style={{
+                          border: 'none',
+                          background: currency === 'INR' ? '#2563EB' : 'transparent',
+                          color: currency === 'INR' ? '#FFFFFF' : '#64748B',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        ₹ INR
+                      </button>
+                    </div>
+                  </div>
+                  <div style={{ position: 'relative' }}>
+                    <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontWeight: 700, color: '#64748B', fontSize: '14px' }}>
+                      {currency === 'USD' ? '$' : '₹'}
+                    </span>
+                    <input
+                      type="number"
+                      placeholder={currency === 'USD' ? 'e.g. 75' : 'e.g. 2500'}
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value.slice(0, 8))}
+                      style={{ width: '100%', padding: '10px 14px 10px 28px', borderRadius: '10px', border: '1px solid #CBD5E1', fontSize: '14px', outline: 'none' }}
+                      required
+                      min={0}
+                      max={999999}
+                      step="0.01"
+                    />
+                  </div>
                 </div>
 
                 <div>

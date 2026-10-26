@@ -4,7 +4,7 @@ const PractitionerProfile = require("../models/PractitionerProfile")
 exports.createOffer = async (req, res) => {
   try {
     const userId = req.user?.id || req.user?._id
-    const { type, kind, title, description, price, durationMinutes, maxSeats, weekCount, program, tags } = req.body
+    const { type, kind, title, description, price, currency, durationMinutes, maxSeats, weekCount, program, tags } = req.body
 
     if (!title || price === undefined || price === null || price === "") {
       return res.status(400).json({
@@ -23,6 +23,7 @@ exports.createOffer = async (req, res) => {
       title,
       description: description || "",
       price: Number(price),
+      currency: currency && ["USD", "INR"].includes(currency.toUpperCase()) ? currency.toUpperCase() : "INR",
       durationMinutes: durationMinutes ? Number(durationMinutes) : 50,
       maxSeats: maxSeats ? Number(maxSeats) : undefined,
       weekCount: weekCount ? Number(weekCount) : undefined,
@@ -79,12 +80,15 @@ exports.updateOffer = async (req, res) => {
   try {
     const { offerId } = req.params
     const userId = req.user.id
-    const { type, kind, title, description, price, durationMinutes, maxSeats, weekCount, status, tags } = req.body
+    const { type, kind, title, description, price, currency, durationMinutes, maxSeats, weekCount, status, tags } = req.body
 
     const updateData = {}
     if (title !== undefined) updateData.title = title
     if (description !== undefined) updateData.description = description
     if (price !== undefined) updateData.price = Number(price)
+    if (currency !== undefined && ["USD", "INR"].includes(currency.toUpperCase())) {
+      updateData.currency = currency.toUpperCase()
+    }
     if (durationMinutes !== undefined) updateData.durationMinutes = Number(durationMinutes)
     if (maxSeats !== undefined) updateData.maxSeats = Number(maxSeats)
     if (weekCount !== undefined) updateData.weekCount = Number(weekCount)

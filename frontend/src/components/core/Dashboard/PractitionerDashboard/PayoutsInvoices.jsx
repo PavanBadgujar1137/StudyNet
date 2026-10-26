@@ -38,6 +38,10 @@ export function PayoutsInvoices({ telemetryData }) {
     bankIfscCode: '',
     bankName: '',
     upiId: '',
+    paypalEmail: '',
+    bankRoutingNumber: '',
+    bankIban: '',
+    bankSwiftBic: '',
     payoutMethod: 'bank',
     payoutCountry: 'India',
   })
@@ -79,6 +83,10 @@ export function PayoutsInvoices({ telemetryData }) {
         bankIfscCode: telemetryData.bankDetails.bankIfscCode || '',
         bankName: telemetryData.bankDetails.bankName || '',
         upiId: telemetryData.bankDetails.upiId || '',
+        paypalEmail: telemetryData.bankDetails.paypalEmail || '',
+        bankRoutingNumber: telemetryData.bankDetails.bankRoutingNumber || '',
+        bankIban: telemetryData.bankDetails.bankIban || '',
+        bankSwiftBic: telemetryData.bankDetails.bankSwiftBic || '',
         payoutMethod: telemetryData.bankDetails.payoutMethod || 'bank',
         payoutCountry: telemetryData.bankDetails.payoutCountry || 'India',
       }))
@@ -93,6 +101,10 @@ export function PayoutsInvoices({ telemetryData }) {
       bankIfscCode: bankDetails?.bankIfscCode || '',
       bankName: bankDetails?.bankName || '',
       upiId: bankDetails?.upiId || '',
+      paypalEmail: bankDetails?.paypalEmail || '',
+      bankRoutingNumber: bankDetails?.bankRoutingNumber || '',
+      bankIban: bankDetails?.bankIban || '',
+      bankSwiftBic: bankDetails?.bankSwiftBic || '',
       payoutMethod: bankDetails?.payoutMethod || 'bank',
       payoutCountry: bankDetails?.payoutCountry || 'India',
     })
@@ -119,6 +131,23 @@ export function PayoutsInvoices({ telemetryData }) {
       if (!bankForm.upiId?.trim() || !bankForm.upiId.includes('@')) {
         return toast.error('Please enter a valid UPI ID (e.g. name@okhdfcbank)')
       }
+    } else if (bankForm.payoutMethod === 'wire') {
+      if (!bankForm.bankAccountName?.trim()) {
+        return toast.error('Please enter Account Holder Name')
+      }
+      if (!bankForm.bankRoutingNumber?.trim()) {
+        return toast.error('Please enter your US ABA Routing Number (9 digits)')
+      }
+      if (!bankForm.bankAccountNumber?.trim()) {
+        return toast.error('Please enter your US Bank Account Number')
+      }
+      if (bankForm.bankAccountNumber !== bankForm.confirmAccountNumber) {
+        return toast.error('Account Numbers do not match')
+      }
+    } else if (bankForm.payoutMethod === 'paypal') {
+      if (!bankForm.paypalEmail?.trim() || !bankForm.paypalEmail.includes('@')) {
+        return toast.error('Please enter a valid PayPal email address')
+      }
     }
 
     setSavingBank(true)
@@ -128,11 +157,15 @@ export function PayoutsInvoices({ telemetryData }) {
         'PUT',
         '/api/v1/practitioners/bank-details',
         {
-          bankAccountName: bankForm.bankAccountName.trim(),
-          bankAccountNumber: bankForm.bankAccountNumber.trim(),
-          bankIfscCode: bankForm.bankIfscCode.trim().toUpperCase(),
-          bankName: bankForm.bankName.trim(),
-          upiId: bankForm.upiId.trim(),
+          bankAccountName: bankForm.bankAccountName?.trim(),
+          bankAccountNumber: bankForm.bankAccountNumber?.trim(),
+          bankIfscCode: bankForm.bankIfscCode?.trim().toUpperCase(),
+          bankName: bankForm.bankName?.trim(),
+          upiId: bankForm.upiId?.trim(),
+          paypalEmail: bankForm.paypalEmail?.trim().toLowerCase(),
+          bankRoutingNumber: bankForm.bankRoutingNumber?.trim(),
+          bankIban: bankForm.bankIban?.trim().toUpperCase(),
+          bankSwiftBic: bankForm.bankSwiftBic?.trim().toUpperCase(),
           payoutMethod: bankForm.payoutMethod,
           payoutCountry: bankForm.payoutCountry,
         },
@@ -209,7 +242,8 @@ export function PayoutsInvoices({ telemetryData }) {
               72-Hour Automated Payout Center
             </h1>
             <p style={{ color: '#64748B', marginTop: 4, fontSize: 14 }}>
-              100% of learner course &amp; session payments are collected in OpenHand's central account. Platform fees are deducted, and your net earnings are directly disbursed into your bank account in 72 hours.
+              All learner payments are collected centrally. Platform fees are deducted, and your net earnings are
+              disbursed to your registered bank account (India: Bank/UPI · US: ACH Wire/PayPal) within 72 hours.
             </p>
           </div>
 
@@ -1001,43 +1035,99 @@ export function PayoutsInvoices({ telemetryData }) {
                 <label style={{ display: 'block', fontSize: 12.5, fontWeight: 700, color: '#475569', marginBottom: 6 }}>
                   Payout Transfer Method
                 </label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                  <button
-                    type="button"
-                    onClick={() => setBankForm((f) => ({ ...f, payoutMethod: 'bank' }))}
-                    style={{
-                      padding: '10px',
-                      borderRadius: 10,
-                      border: bankForm.payoutMethod === 'bank' ? '2px solid #059669' : '1px solid #CBD5E1',
-                      background: bankForm.payoutMethod === 'bank' ? '#ECFDF5' : '#FFFFFF',
-                      color: bankForm.payoutMethod === 'bank' ? '#065F46' : '#64748B',
-                      fontWeight: 700,
-                      fontSize: 13,
-                      cursor: 'pointer',
-                    }}
+                {/* Payout Country Selector */}
+                <div style={{ marginBottom: 10 }}>
+                  <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: '#64748B', marginBottom: 4 }}>
+                    Payout Country / Region
+                  </label>
+                  <select
+                    value={bankForm.payoutCountry}
+                    onChange={(e) => setBankForm((f) => ({ ...f, payoutCountry: e.target.value, payoutMethod: e.target.value === 'United States' ? 'wire' : 'bank' }))}
+                    style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1.5px solid #CBD5E1', fontSize: 13, outline: 'none', background: '#FFFFFF' }}
                   >
-                    🏦 Direct Bank Transfer
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setBankForm((f) => ({ ...f, payoutMethod: 'upi' }))}
-                    style={{
-                      padding: '10px',
-                      borderRadius: 10,
-                      border: bankForm.payoutMethod === 'upi' ? '2px solid #059669' : '1px solid #CBD5E1',
-                      background: bankForm.payoutMethod === 'upi' ? '#ECFDF5' : '#FFFFFF',
-                      color: bankForm.payoutMethod === 'upi' ? '#065F46' : '#64748B',
-                      fontWeight: 700,
-                      fontSize: 13,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    ⚡ Instant UPI Transfer
-                  </button>
+                    <option value="India">🇮🇳 India (INR — Bank / UPI)</option>
+                    <option value="United States">🇺🇸 United States (USD — ACH Wire / PayPal)</option>
+                    <option value="Other">🌍 Other Country (IBAN / SWIFT Wire)</option>
+                  </select>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: bankForm.payoutCountry === 'India' ? '1fr 1fr' : '1fr 1fr', gap: 10 }}>
+                  {bankForm.payoutCountry === 'India' && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setBankForm((f) => ({ ...f, payoutMethod: 'bank' }))}
+                        style={{
+                          padding: '10px',
+                          borderRadius: 10,
+                          border: bankForm.payoutMethod === 'bank' ? '2px solid #059669' : '1px solid #CBD5E1',
+                          background: bankForm.payoutMethod === 'bank' ? '#ECFDF5' : '#FFFFFF',
+                          color: bankForm.payoutMethod === 'bank' ? '#065F46' : '#64748B',
+                          fontWeight: 700,
+                          fontSize: 13,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        🏦 Direct Bank Transfer
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBankForm((f) => ({ ...f, payoutMethod: 'upi' }))}
+                        style={{
+                          padding: '10px',
+                          borderRadius: 10,
+                          border: bankForm.payoutMethod === 'upi' ? '2px solid #059669' : '1px solid #CBD5E1',
+                          background: bankForm.payoutMethod === 'upi' ? '#ECFDF5' : '#FFFFFF',
+                          color: bankForm.payoutMethod === 'upi' ? '#065F46' : '#64748B',
+                          fontWeight: 700,
+                          fontSize: 13,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        ⚡ Instant UPI Transfer
+                      </button>
+                    </>
+                  )}
+                  {(bankForm.payoutCountry === 'United States' || bankForm.payoutCountry === 'Other') && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setBankForm((f) => ({ ...f, payoutMethod: 'wire' }))}
+                        style={{
+                          padding: '10px',
+                          borderRadius: 10,
+                          border: bankForm.payoutMethod === 'wire' ? '2px solid #2563EB' : '1px solid #CBD5E1',
+                          background: bankForm.payoutMethod === 'wire' ? '#EFF6FF' : '#FFFFFF',
+                          color: bankForm.payoutMethod === 'wire' ? '#1D4ED8' : '#64748B',
+                          fontWeight: 700,
+                          fontSize: 13,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        🏦 {bankForm.payoutCountry === 'United States' ? 'US ACH Bank Wire' : 'IBAN / SWIFT Wire'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBankForm((f) => ({ ...f, payoutMethod: 'paypal' }))}
+                        style={{
+                          padding: '10px',
+                          borderRadius: 10,
+                          border: bankForm.payoutMethod === 'paypal' ? '2px solid #2563EB' : '1px solid #CBD5E1',
+                          background: bankForm.payoutMethod === 'paypal' ? '#EFF6FF' : '#FFFFFF',
+                          color: bankForm.payoutMethod === 'paypal' ? '#1D4ED8' : '#64748B',
+                          fontWeight: 700,
+                          fontSize: 13,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        💳 PayPal Transfer
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
 
-              {bankForm.payoutMethod === 'bank' ? (
+              {bankForm.payoutMethod === 'bank' && (
                 <>
                   <div>
                     <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 4 }}>
@@ -1108,7 +1198,9 @@ export function PayoutsInvoices({ telemetryData }) {
                     />
                   </div>
                 </>
-              ) : (
+              )}
+
+              {bankForm.payoutMethod === 'upi' && (
                 <div>
                   <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 4 }}>
                     Virtual Payment Address / UPI ID <span style={{ color: '#EF4444' }}>*</span>
@@ -1123,6 +1215,110 @@ export function PayoutsInvoices({ telemetryData }) {
                   />
                   <div style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
                     Funds will be directly transferred to your bank via NPCI UPI gateway upon 72-hour maturity.
+                  </div>
+                </div>
+              )}
+
+              {bankForm.payoutMethod === 'wire' && (
+                <>
+                  <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, padding: '10px 14px', fontSize: 12.5, color: '#1D4ED8', lineHeight: 1.5 }}>
+                    🇺🇸 <strong>US ACH Bank Wire</strong> — Payouts will be transferred in <strong>USD</strong> to your US bank account via ACH/Wire. Admin will manually convert from INR → USD at prevailing interbank rate and disburse within 72 hours.
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 4 }}>
+                      Account Holder Name <span style={{ color: '#EF4444' }}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Full legal name as on bank account"
+                      value={bankForm.bankAccountName}
+                      onChange={(e) => setBankForm((f) => ({ ...f, bankAccountName: e.target.value }))}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1.5px solid #CBD5E1', fontSize: 13.5, outline: 'none' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 4 }}>
+                      Bank Name <span style={{ color: '#94A3B8' }}>(Optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Chase Bank, Bank of America, Wells Fargo"
+                      value={bankForm.bankName}
+                      onChange={(e) => setBankForm((f) => ({ ...f, bankName: e.target.value }))}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1.5px solid #CBD5E1', fontSize: 13.5, outline: 'none' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 4 }}>
+                      ABA Routing Number (9 digits) <span style={{ color: '#EF4444' }}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. 021000021"
+                      maxLength={9}
+                      value={bankForm.bankRoutingNumber}
+                      onChange={(e) => setBankForm((f) => ({ ...f, bankRoutingNumber: e.target.value.replace(/\D/g, '') }))}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1.5px solid #CBD5E1', fontSize: 13.5, outline: 'none', fontFamily: 'monospace' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 4 }}>
+                      US Bank Account Number <span style={{ color: '#EF4444' }}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. 000123456789"
+                      value={bankForm.bankAccountNumber}
+                      onChange={(e) => setBankForm((f) => ({ ...f, bankAccountNumber: e.target.value.replace(/\D/g, '') }))}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1.5px solid #CBD5E1', fontSize: 13.5, outline: 'none', fontFamily: 'monospace' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 4 }}>
+                      Confirm Account Number <span style={{ color: '#EF4444' }}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Re-enter account number"
+                      value={bankForm.confirmAccountNumber}
+                      onChange={(e) => setBankForm((f) => ({ ...f, confirmAccountNumber: e.target.value.replace(/\D/g, '') }))}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1.5px solid #CBD5E1', fontSize: 13.5, outline: 'none', fontFamily: 'monospace' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 4 }}>
+                      SWIFT / BIC Code <span style={{ color: '#94A3B8' }}>(for international wires)</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. CHASUS33"
+                      value={bankForm.bankSwiftBic}
+                      onChange={(e) => setBankForm((f) => ({ ...f, bankSwiftBic: e.target.value.toUpperCase() }))}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1.5px solid #CBD5E1', fontSize: 13.5, outline: 'none', fontFamily: 'monospace', textTransform: 'uppercase' }}
+                    />
+                  </div>
+                </>
+              )}
+
+              {bankForm.payoutMethod === 'paypal' && (
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 4 }}>
+                    PayPal Email Address <span style={{ color: '#EF4444' }}>*</span>
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="your-paypal@email.com"
+                    value={bankForm.paypalEmail}
+                    onChange={(e) => setBankForm((f) => ({ ...f, paypalEmail: e.target.value.toLowerCase().trim() }))}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1.5px solid #CBD5E1', fontSize: 13.5, outline: 'none' }}
+                  />
+                  <div style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
+                    Your net earnings (in USD) will be sent to this PayPal account within 72 hours of client payment.
                   </div>
                 </div>
               )}

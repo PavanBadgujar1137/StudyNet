@@ -303,7 +303,7 @@ exports.getPractitionerByHandle = async (req, res) => {
         ]
       }).populate({
         path: "user",
-        select: "firstName lastName email image accountType credentials bio specialties languages",
+        select: "firstName lastName email image accountType credentials bio specialties languages contactNumber",
       })
     } else {
       profile = await PractitionerProfile.findOne({
@@ -313,7 +313,7 @@ exports.getPractitionerByHandle = async (req, res) => {
         ]
       }).populate({
         path: "user",
-        select: "firstName lastName email image accountType credentials bio specialties languages",
+        select: "firstName lastName email image accountType credentials bio specialties languages contactNumber",
       })
     }
 
@@ -438,6 +438,9 @@ exports.getPractitionerByHandle = async (req, res) => {
     const updatedViewCount = (profile.viewCount || 0) + 1
 
     const profileObj = profile.toObject()
+    if (!profile.phonePublic && profileObj.user) {
+      delete profileObj.user.contactNumber
+    }
     if (profileObj.user?.image) {
       if (profileObj.user.image.includes("dicebear")) {
         profileObj.user.image = ""
@@ -531,7 +534,7 @@ exports.getPractitionerDashboard = async (req, res) => {
         path: "user",
         select: "firstName lastName email image accountType credentials bio specialties languages",
       })
-    } else if (!profile.handle || profile.handle === 'Test') {
+    } else if (!profile.handle || profile.handle.toLowerCase() === 'test') {
       profile.handle = nameSlug
       await profile.save()
     }
@@ -1081,7 +1084,7 @@ exports.getBankDetails = async (req, res) => {
   try {
     const userId = req.user.id
     const profile = await PractitionerProfile.findOne({ user: userId }).select(
-      "payoutCountry payoutMethod bankAccountName bankAccountNumber bankIfscCode bankName bankIban bankSwiftBic bankCity upiId stripeAccountId paypalEmail"
+      "payoutCountry payoutMethod bankAccountName bankAccountNumber bankIfscCode bankRoutingNumber bankName bankIban bankSwiftBic bankCity upiId stripeAccountId paypalEmail phonePublic"
     )
 
     return res.status(200).json({
@@ -1103,6 +1106,7 @@ exports.updateBankDetails = async (req, res) => {
       bankAccountName,
       bankAccountNumber,
       bankIfscCode,
+      bankRoutingNumber,
       bankName,
       bankIban,
       bankSwiftBic,
@@ -1122,6 +1126,7 @@ exports.updateBankDetails = async (req, res) => {
     if (bankAccountName !== undefined) profile.bankAccountName = bankAccountName
     if (bankAccountNumber !== undefined) profile.bankAccountNumber = bankAccountNumber
     if (bankIfscCode !== undefined) profile.bankIfscCode = bankIfscCode
+    if (bankRoutingNumber !== undefined) profile.bankRoutingNumber = bankRoutingNumber
     if (bankName !== undefined) profile.bankName = bankName
     if (bankIban !== undefined) profile.bankIban = bankIban
     if (bankSwiftBic !== undefined) profile.bankSwiftBic = bankSwiftBic
@@ -1202,6 +1207,8 @@ exports.updatePractitionerProfile = async (req, res) => {
       upiId,
       stripeAccountId,
       paypalEmail,
+      bankRoutingNumber,
+      phonePublic,
       badges,
     } = req.body
 
@@ -1251,6 +1258,8 @@ exports.updatePractitionerProfile = async (req, res) => {
     if (upiId !== undefined) profile.upiId = upiId
     if (stripeAccountId !== undefined) profile.stripeAccountId = stripeAccountId
     if (paypalEmail !== undefined) profile.paypalEmail = paypalEmail
+    if (bankRoutingNumber !== undefined) profile.bankRoutingNumber = bankRoutingNumber
+    if (phonePublic !== undefined) profile.phonePublic = Boolean(phonePublic)
     if (Array.isArray(badges)) profile.badges = badges
 
     await profile.save()

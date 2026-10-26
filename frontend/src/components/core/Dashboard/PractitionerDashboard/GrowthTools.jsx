@@ -23,12 +23,20 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
   const { token } = useSelector((state) => state.auth)
 
   const [copiedLink, setCopiedLink] = useState(false)
+  const [copiedReferral, setCopiedReferral] = useState(false)
   const [showQrModal, setShowQrModal] = useState(false)
   const [showReviewModal, setShowReviewModal] = useState(false)
   const [showBadgesModal, setShowBadgesModal] = useState(false)
+  const [showReferralModal, setShowReferralModal] = useState(false)
   const [clientEmail, setClientEmail] = useState('')
+  const [referralEmail, setReferralEmail] = useState('')
+  const [sendingReferral, setSendingReferral] = useState(false)
   const [sendingReview, setSendingReview] = useState(false)
   const [featuredReviews, setFeaturedReviews] = useState({})
+  const [phonePublic, setPhonePublic] = useState(
+    telemetryData?.practitioner?.phonePublic ?? false
+  )
+  const [savingPhoneVisibility, setSavingPhoneVisibility] = useState(false)
 
   const practitioner = telemetryData?.practitioner || telemetryData?.data?.practitioner || user || {}
 
@@ -87,7 +95,6 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
     setLanguages(languages.filter((l) => l !== lang))
   }
 
-  // ITEM 28 & 34 FIX: Send Real Review Invitation Email
   const handleSendReviewRequest = async (e) => {
     e.preventDefault()
     if (!clientEmail.trim()) {
@@ -113,6 +120,57 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
       toast.error(err?.response?.data?.message || 'Could not send review email')
     } finally {
       setSendingReview(false)
+    }
+  }
+
+  const handleTogglePhoneVisibility = async () => {
+    setSavingPhoneVisibility(true)
+    const newVal = !phonePublic
+    try {
+      const res = await apiConnector('PUT', '/api/v1/practitioners/profile', {
+        phonePublic: newVal,
+      }, { Authorization: `Bearer ${token}` })
+      if (res?.data?.success) {
+        setPhonePublic(newVal)
+        toast.success(newVal ? '📞 Phone number is now PUBLIC on your booking profile.' : '🔒 Phone number is now PRIVATE — hidden from public.')
+      } else {
+        toast.error(res?.data?.message || 'Failed to update phone visibility')
+      }
+    } catch (err) {
+      toast.error('Could not update phone visibility')
+    } finally {
+      setSavingPhoneVisibility(false)
+    }
+  }
+
+  const handleSendReferral = async (e) => {
+    e.preventDefault()
+    if (!referralEmail.trim()) {
+      toast.error('Please enter a client email')
+      return
+    }
+    setSendingReferral(true)
+    try {
+      const res = await apiConnector('POST', '/api/v1/practitioners/send-referral', {
+        clientEmail: referralEmail.trim(),
+        bookingLink,
+        practitionerName: `${firstName} ${lastName}`.trim() || 'Your Practitioner',
+      }, { Authorization: `Bearer ${token}` })
+      if (res?.data?.success) {
+        toast.success(`🎉 Referral invitation sent to ${referralEmail}!`)
+        setReferralEmail('')
+        setShowReferralModal(false)
+      } else {
+        // Graceful fallback: copy referral link for manual sending
+        navigator.clipboard.writeText(bookingLink)
+        toast.success('Referral link copied to clipboard! Share it manually with your client.')
+        setShowReferralModal(false)
+      }
+    } catch (err) {
+      navigator.clipboard.writeText(bookingLink)
+      toast.success('Referral link copied! Send it directly to your client.')
+    } finally {
+      setSendingReferral(false)
     }
   }
 
@@ -334,10 +392,33 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
         <div className="card stat" style={{ padding: '20px', background: '#ffffff', border: '1px solid #E2E8F0', borderRadius: '12px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ color: '#64748B', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase' }}>Directory Status</span>
-            <FiGlobe color="#10B981" fontSize={20} />
+            <FiGlobe color={cleanHandle && cleanHandle !== 'practitioner' ? '#10B981' : '#F59E0B'} fontSize={20} />
           </div>
-          <div style={{ fontSize: '24px', fontWeight: 800, color: '#0F172A', margin: '8px 0 4px 0' }}>Verified &amp; Live</div>
-          <div style={{ fontSize: '12px', color: '#059669', fontWeight: 600 }}>Listed in Global Practitioner Directory</div>
+          {cleanHandle && cleanHandle !== 'practitioner' ? (
+            <>
+              <div style={{ fontSize: '22px', fontWeight: 800, color: '#0F172A', margin: '8px 0 4px 0' }}>Verified &amp; Live</div>
+              <div style={{ fontSize: '12px', color: '#059669', fontWeight: 600 }}>Listed in Global Practitioner Directory</div>
+              <a
+                href={bookingLink}
+                target="_blank"
+                rel="noreferrer"
+                style={{ fontSize: '11px', color: '#2563EB', fontWeight: 600, textDecoration: 'none', display: 'inline-block', marginTop: 4 }}
+              >
+                🔗 View your public profile &rarr;
+              </a>
+            </>
+          ) : (
+            <>
+              <div style={{ fontSize: '18px', fontWeight: 800, color: '#B45309', margin: '8px 0 4px 0' }}>⚠️ Action Required</div>
+              <div style={{ fontSize: '12px', color: '#92400E', fontWeight: 600, lineHeight: 1.4 }}>Your public profile URL is not set yet.</div>
+              <button
+                onClick={() => setActiveSection('setup')}
+                style={{ marginTop: 6, fontSize: '11.5px', fontWeight: 700, background: '#FEF3C7', color: '#92400E', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer' }}
+              >
+                Run Setup Wizard →
+              </button>
+            </>
+          )}
         </div>
 
         <div className="card stat" style={{ padding: '20px', background: '#ffffff', border: '1px solid #E2E8F0', borderRadius: '12px' }}>
@@ -364,7 +445,7 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
       {/* Main Grid: Booking Link vs Growth Checklist */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '24px', alignItems: 'start' }}>
         
-        {/* Left Column: Direct Booking Link */}
+        {/* Left Column: Direct Booking Link + Phone Visibility Toggle */}
         <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', alignSelf: 'start' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
             <div>
@@ -437,6 +518,42 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
               {copiedLink ? 'Copied' : 'Copy Link'}
             </button>
           </div>
+
+          {/* Phone Number Visibility Toggle */}
+          <div style={{ background: phonePublic ? '#F0FDF4' : '#F8FAFC', border: `1px solid ${phonePublic ? '#BBF7D0' : '#E2E8F0'}`, borderRadius: '10px', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+            <div>
+              <div style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>Phone Number Visibility</div>
+              <div style={{ fontSize: '11.5px', color: '#64748B', marginTop: 2 }}>
+                {user?.contactNumber || user?.whatsappNumber ? (
+                  phonePublic
+                    ? <>📞 Your number <strong>{user?.contactNumber || user?.whatsappNumber}</strong> is <span style={{ color: '#059669' }}>PUBLIC</span> on your booking page. Clients can call you directly.</>  
+                    : <>🔒 Your phone number is <strong>PRIVATE</strong> and not shown to clients. Toggle to make it public. <span style={{ color: '#64748B' }}>Note: US-based practitioners, your number will never be shared without your consent.</span></>
+                ) : (
+                  'No phone number added to your account yet. Go to Profile → Settings to add one.'
+                )}
+              </div>
+            </div>
+            <button
+              onClick={handleTogglePhoneVisibility}
+              disabled={savingPhoneVisibility || !(user?.contactNumber || user?.whatsappNumber)}
+              style={{
+                flexShrink: 0,
+                padding: '8px 16px',
+                borderRadius: '8px',
+                border: 'none',
+                background: phonePublic ? '#059669' : '#64748B',
+                color: '#FFFFFF',
+                fontSize: '12px',
+                fontWeight: 700,
+                cursor: (savingPhoneVisibility || !(user?.contactNumber || user?.whatsappNumber)) ? 'not-allowed' : 'pointer',
+                opacity: (!(user?.contactNumber || user?.whatsappNumber)) ? 0.5 : 1,
+                transition: 'all 0.2s ease',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {savingPhoneVisibility ? 'Saving...' : phonePublic ? '📞 Public' : '🔒 Private'}
+            </button>
+          </div>
         </div>
 
         {/* Right Column: Growth Acceleration Checklist & Testimonials */}
@@ -487,6 +604,77 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
                 >
                   Send Request →
                 </button>
+              </div>
+            </div>
+          </div>
+
+          {/* 🌟 Client Referral Hub Card */}
+          <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', border: '1.5px solid #DDD6FE', borderRadius: '16px', background: 'linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+              <div>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#7C3AED', color: '#FFFFFF', padding: '3px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}>
+                  🌟 CLIENT REFERRAL HUB
+                </div>
+                <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#4C1D95', margin: 0 }}>Refer Clients to Your Practice</h3>
+                <p style={{ fontSize: '12px', color: '#6D28D9', margin: '2px 0 0 0' }}>
+                  Invite clients directly via email or share your booking link with a personal referral message.
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {/* Option 1: Copy Referral Link */}
+              <div style={{ background: '#FFFFFF', borderRadius: '10px', padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', border: '1px solid #C4B5FD' }}>
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#4C1D95' }}>🔗 Share Your Booking Link</div>
+                  <div style={{ fontSize: '11.5px', color: '#6D28D9', marginTop: 2 }}>Copy and send your personal booking link to any client via WhatsApp, email or social.</div>
+                </div>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(bookingLink)
+                    setCopiedReferral(true)
+                    toast.success('Referral link copied!')
+                    setTimeout(() => setCopiedReferral(false), 2500)
+                  }}
+                  style={{ background: copiedReferral ? '#059669' : '#7C3AED', color: '#FFFFFF', border: 'none', padding: '8px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  {copiedReferral ? <FiCheck /> : <FiCopy />}
+                  {copiedReferral ? 'Copied!' : 'Copy Link'}
+                </button>
+              </div>
+
+              {/* Option 2: Email Referral Invite */}
+              <div style={{ background: '#FFFFFF', borderRadius: '10px', padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', border: '1px solid #C4B5FD' }}>
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#4C1D95' }}>📧 Email a Client Referral</div>
+                  <div style={{ fontSize: '11.5px', color: '#6D28D9', marginTop: 2 }}>Send a personalised booking invitation email to a specific client.</div>
+                </div>
+                <button
+                  onClick={() => setShowReferralModal(true)}
+                  style={{ background: '#4C1D95', color: '#FFFFFF', border: 'none', padding: '8px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <FiSend size={13} /> Send Invite
+                </button>
+              </div>
+
+              {/* Option 3: WhatsApp Referral */}
+              <div style={{ background: '#FFFFFF', borderRadius: '10px', padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', border: '1px solid #C4B5FD' }}>
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#4C1D95' }}>💬 WhatsApp Referral</div>
+                  <div style={{ fontSize: '11.5px', color: '#6D28D9', marginTop: 2 }}>Open a pre-filled WhatsApp referral message to share with your client.</div>
+                </div>
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(`Hi! I'd like to invite you to book a session with me on OpenHand.
+
+🔗 Book here: ${bookingLink}
+
+Looking forward to working together!`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ background: '#25D366', color: '#FFFFFF', border: 'none', padding: '8px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                >
+                  💬 Share
+                </a>
               </div>
             </div>
           </div>
@@ -710,6 +898,47 @@ export function GrowthTools({ telemetryData, setActiveSection }) {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* REFERRAL INVITATION MODAL */}
+      {showReferralModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ background: '#ffffff', borderRadius: '16px', padding: '28px', maxWidth: '440px', width: '100%', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
+            <h3 style={{ margin: '0 0 6px 0', fontSize: '20px', fontWeight: 800, color: '#4C1D95' }}>📧 Send Client Referral Invite</h3>
+            <p style={{ fontSize: '13px', color: '#64748B', margin: '0 0 18px 0' }}>Enter your client’s email address and we’ll send them a personalised booking invitation with your practice link.</p>
+            
+            <form onSubmit={handleSendReferral} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '6px' }}>Client Email Address</label>
+                <input
+                  type="email"
+                  placeholder="client@example.com"
+                  value={referralEmail}
+                  onChange={(e) => setReferralEmail(e.target.value)}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '14px' }}
+                  required
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '6px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowReferralModal(false)}
+                  style={{ background: '#F1F5F9', color: '#475569', border: 'none', padding: '10px 16px', borderRadius: '8px', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={sendingReferral}
+                  style={{ background: sendingReferral ? '#94A3B8' : '#7C3AED', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: 700, cursor: sendingReferral ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <FiSend /> {sendingReferral ? 'Sending...' : 'Send Referral Invite'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

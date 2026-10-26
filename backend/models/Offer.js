@@ -15,6 +15,7 @@ const offerSchema = new mongoose.Schema(
     title: { type: String, required: true, trim: true },
     description: { type: String },
     price: { type: Number, required: true, min: 0 },
+    currency: { type: String, default: "INR", enum: ["INR", "USD"] },
     durationMinutes: { type: Number, default: 50 }, // for 1:1 sessions
     maxSeats: { type: Number }, // for circle
     weekCount: { type: Number }, // for circle

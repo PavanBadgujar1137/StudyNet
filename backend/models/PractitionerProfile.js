@@ -57,6 +57,9 @@ const practitionerProfileSchema = new mongoose.Schema(
     upiId: { type: String, trim: true },
     stripeAccountId: { type: String, trim: true },
     paypalEmail: { type: String, trim: true, lowercase: true },
+    bankRoutingNumber: { type: String, trim: true }, // US ACH ABA Routing Number
+    // Phone number public visibility toggle (US practitioners: private by default)
+    phonePublic: { type: Boolean, default: false },
     // Intake Questionnaire Customization (Stage 02)
     intakeQuestions: {
       type: [String],

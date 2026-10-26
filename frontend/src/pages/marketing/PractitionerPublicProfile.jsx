@@ -934,7 +934,9 @@ export function PractitionerPublicProfile() {
                               whiteSpace: 'nowrap',
                             }}
                           >
-                            ₹{offer.price.toLocaleString('en-IN')}
+                            {offer.currency === 'USD'
+                              ? `$${Number(offer.price).toLocaleString('en-US')}`
+                              : `₹${Number(offer.price).toLocaleString('en-IN')}`}
                           </span>
                         )}
                       </div>
