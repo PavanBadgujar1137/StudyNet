@@ -103,8 +103,11 @@ exports.getPractitioners = async (req, res) => {
       profile.userOffers = userOffers || []
 
       if (userOffers.length > 0) {
-        const minPrice = Math.min(...userOffers.map((o) => o.price || 0))
-        profile.sessionRate = minPrice > 0 ? minPrice : 0
+        const validPrices = userOffers
+          .map((o) => (o.price !== null && o.price !== undefined && !isNaN(o.price) ? Number(o.price) : null))
+          .filter((p) => p !== null)
+        const minPrice = validPrices.length > 0 ? Math.min(...validPrices) : 0
+        profile.sessionRate = minPrice >= 0 ? minPrice : 0
         const offerFormats = [...new Set(userOffers.map((o) => (o.type === "circle" ? "Group Circles" : "1:1 Sessions")))]
         profile.formats = offerFormats.length > 0 ? offerFormats : []
         profile.hasDummyOffer = false
@@ -124,7 +127,7 @@ exports.getPractitioners = async (req, res) => {
         }
         profile.offers = [dummyOffer]
         profile.userOffers = [dummyOffer]
-        profile.sessionRate = null
+        profile.sessionRate = 0
         profile.formats = ["1:1 Sessions"]
         profile.hasDummyOffer = true
       }
@@ -208,15 +211,24 @@ exports.getPractitioners = async (req, res) => {
       })
     } else if (sort === "rate_low") {
       results.sort((a, b) => {
-        if (a.sessionRate == null) return 1
-        if (b.sessionRate == null) return -1
-        return (a.sessionRate || 0) - (b.sessionRate || 0)
+        const rateA = (a.sessionRate !== null && a.sessionRate !== undefined && !isNaN(a.sessionRate)) ? Number(a.sessionRate) : 0
+        const rateB = (b.sessionRate !== null && b.sessionRate !== undefined && !isNaN(b.sessionRate)) ? Number(b.sessionRate) : 0
+        const diff = rateA - rateB
+        if (diff !== 0) return diff
+        // If prices are equal (e.g. both ₹0 or unpriced), sort real published offers before dummy
+        if (Boolean(a.hasDummyOffer) !== Boolean(b.hasDummyOffer)) {
+          return a.hasDummyOffer ? 1 : -1
+        }
+        // Secondary sort by popularity / viewCount
+        return (b.viewCount || 0) - (a.viewCount || 0)
       })
     } else if (sort === "rate_high") {
       results.sort((a, b) => {
-        if (a.sessionRate == null) return 1
-        if (b.sessionRate == null) return -1
-        return (b.sessionRate || 0) - (a.sessionRate || 0)
+        const rateA = (a.sessionRate !== null && a.sessionRate !== undefined && !isNaN(a.sessionRate)) ? Number(a.sessionRate) : 0
+        const rateB = (b.sessionRate !== null && b.sessionRate !== undefined && !isNaN(b.sessionRate)) ? Number(b.sessionRate) : 0
+        const diff = rateB - rateA
+        if (diff !== 0) return diff
+        return (b.viewCount || 0) - (a.viewCount || 0)
       })
     }
 

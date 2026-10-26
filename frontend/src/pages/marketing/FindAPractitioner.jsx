@@ -626,6 +626,10 @@ export function FindAPractitioner() {
                               <span className="p-rate-amount">₹{minPrice.toLocaleString('en-IN')}</span>
                               <span className="p-rate-unit"> /session</span>
                             </>
+                          ) : minPrice === 0 ? (
+                            <span className="p-rate-amount" style={{ fontSize: '15px', color: '#059669', fontWeight: 800 }}>
+                              Free (₹0)
+                            </span>
                           ) : (
                             <span className="p-rate-amount" style={{ fontSize: '13px', color: '#64748B' }}>
                               Contact for pricing
