@@ -9,6 +9,7 @@ const Profile = require("../models/Profile")
 require("dotenv").config()
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const { resolvePublicSignupAccountType } = require("../utils/authPolicy")
 
 // Signup Controller for Registering USers
 
@@ -43,6 +44,14 @@ exports.signup = async (req, res) => {
     }
 
     const cleanEmail = String(email).trim().toLowerCase()
+    const accountTypeResult = resolvePublicSignupAccountType(accountType)
+    if (!accountTypeResult.ok) {
+      return res.status(400).json({
+        success: false,
+        message: accountTypeResult.message,
+      })
+    }
+    const assignedAccountType = accountTypeResult.accountType
 
     if (!EMAIL_REGEX.test(cleanEmail)) {
       return res.status(400).json({
@@ -108,8 +117,8 @@ exports.signup = async (req, res) => {
       contactNumber: contactNumber || "",
     })
     const now = new Date()
-    const isPractitioner = accountType === "Practitioner" || accountType === "Instructor"
-    const isLearner = accountType === "Learner" || accountType === "Client" || accountType === "Student"
+    const isPractitioner = assignedAccountType === "Practitioner" || assignedAccountType === "Instructor"
+    const isLearner = assignedAccountType === "Learner" || assignedAccountType === "Client" || assignedAccountType === "Student"
     const trialDays = 14
     const trialExpiresAt = isPractitioner ? new Date(now.getTime() + trialDays * 24 * 60 * 60 * 1000) : null
 
@@ -129,7 +138,7 @@ exports.signup = async (req, res) => {
       email: cleanEmail,
       contactNumber: contactNumber || "",
       password: hashedPassword,
-      accountType: accountType,
+      accountType: assignedAccountType,
       approved: approved,
       additionalDetails: profileDetails._id,
       image: "",
@@ -142,7 +151,7 @@ exports.signup = async (req, res) => {
     user = await User.create(userCreatePayload)
 
     // If Practitioner / Instructor, auto-create PractitionerProfile with bank payout details & default handle
-    if (accountType === "Practitioner" || accountType === "Instructor") {
+    if (assignedAccountType === "Practitioner" || assignedAccountType === "Instructor") {
       const PractitionerProfile = require("../models/PractitionerProfile")
       const { bankAccountName, bankAccountNumber, bankIfscCode, bankName, upiId } = req.body
       const nameSlug = `${firstName || ''}-${lastName || ''}`
@@ -236,24 +245,6 @@ exports.login = async (req, res) => {
     let user = await User.findOne({
       email: { $regex: new RegExp("^" + cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "$", "i") },
     }).populate("additionalDetails")
-
-    // Auto-create default admin account on first login attempt if missing
-    if (!user && cleanEmail === "admin@openhand.com") {
-      const Profile = require("../models/Profile")
-      const hashedPassword = await bcrypt.hash("AdminPassword123!", 10)
-      const profile = await Profile.create({ gender: null, dateOfBirth: null, about: "Platform Administrator", contactNumber: null })
-      user = await User.create({
-        firstName: "Super",
-        lastName: "Admin",
-        email: "admin@openhand.com",
-        password: hashedPassword,
-        accountType: "Admin",
-        additionalDetails: profile._id,
-        approved: true,
-        active: true,
-      })
-      user = await User.findById(user._id).populate("additionalDetails")
-    }
 
     // If user not found with provided email
     if (!user) {

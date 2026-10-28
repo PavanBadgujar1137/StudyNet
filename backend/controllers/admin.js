@@ -8,6 +8,10 @@ const OrgConversation = require("../models/OrgConversation")
 const PractitionerProfile = require("../models/PractitionerProfile")
 const Course = require("../models/Course")
 const PractitionerScheduleCall = require("../models/PractitionerScheduleCall")
+const {
+  extractAdminBootstrapSecret,
+  isAdminBootstrapAuthorized,
+} = require("../utils/authPolicy")
 
 // ─── Admin Dashboard Statistics ──────────────────────────────────────────────
 exports.getAdminDashboardStats = async (req, res) => {
@@ -690,9 +694,20 @@ exports.processMonthlyPayout = async (req, res) => {
 }
 
 // ─── Seed Admin Account ───────────────────────────────────────────────────────
-// One-time use: POST /api/v1/admin/seed-admin (only works if no Admin exists)
+// One-time operator bootstrap: POST /api/v1/admin/seed-admin
+// Requires ADMIN_BOOTSTRAP_SECRET (header x-admin-bootstrap-secret or body.bootstrapSecret)
+// and only succeeds when no Admin user exists.
 exports.seedAdminAccount = async (req, res) => {
+  let createdProfileId = null
+  let createdAdminId = null
   try {
+    if (!isAdminBootstrapAuthorized(extractAdminBootstrapSecret(req))) {
+      return res.status(403).json({
+        success: false,
+        message: "Admin bootstrap is disabled until a valid operator secret is configured and provided.",
+      })
+    }
+
     const existingAdmin = await User.findOne({ accountType: "Admin" })
     if (existingAdmin) {
       return res.status(400).json({ success: false, message: "Admin account already exists. Login with existing admin credentials." })
@@ -707,6 +722,7 @@ exports.seedAdminAccount = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10)
     const profile = await Profile.create({ gender: null, dateOfBirth: null, about: "Platform Administrator", contactNumber: null })
+    createdProfileId = profile._id
 
     const admin = await User.create({
       firstName,
@@ -718,6 +734,21 @@ exports.seedAdminAccount = async (req, res) => {
       approved: true,
       active: true,
     })
+    createdAdminId = admin._id
+
+    // Deterministic sort with unique _id tie-breaker to prevent undefined sort order on identical timestamps
+    const admins = await User.find({ accountType: "Admin" }).sort({ createdAt: 1, _id: 1 }).select("_id")
+    if (admins.length > 1 && String(admins[0]._id) !== String(admin._id)) {
+      // This losing request cleans up ONLY the administrator and profile it created
+      await User.findByIdAndDelete(admin._id)
+      await Profile.findByIdAndDelete(profile._id)
+      createdAdminId = null
+      createdProfileId = null
+      return res.status(400).json({
+        success: false,
+        message: "Admin account already exists. Login with existing admin credentials.",
+      })
+    }
 
     return res.status(201).json({
       success: true,
@@ -725,12 +756,18 @@ exports.seedAdminAccount = async (req, res) => {
       admin: { _id: admin._id, email: admin.email, firstName: admin.firstName },
     })
   } catch (error) {
+    if (createdAdminId) {
+      try { await User.findByIdAndDelete(createdAdminId) } catch (_) {}
+    }
+    if (createdProfileId) {
+      try { await Profile.findByIdAndDelete(createdProfileId) } catch (_) {}
+    }
     console.error("seedAdminAccount error:", error)
     return res.status(500).json({ success: false, message: error.message })
   }
 }
 
-// ─── Admin: Update Client Plan / Extend Trial ────────────────────────────────
+// ─── Update Client Plan ───────────────────────────────────────────────────────
 exports.updateClientPlan = async (req, res) => {
   try {
     const { id } = req.params

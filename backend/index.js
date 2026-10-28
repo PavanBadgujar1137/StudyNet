@@ -100,6 +100,7 @@ const corsOptions = {
     "Access-Control-Request-Method",
     "Access-Control-Request-Headers",
     "x-auth-token",
+    "x-admin-bootstrap-secret",
   ],
   optionsSuccessStatus: 200,
 }

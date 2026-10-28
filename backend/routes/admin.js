@@ -30,7 +30,7 @@ const {
   disburseInstantPayout,
 } = require("../controllers/admin")
 
-// ─── Admin Account Setup (one-time, no auth required) ────────────────────────
+// ─── Admin Account Setup (operator secret required; see seedAdminAccount) ────
 // POST /api/v1/admin/seed-admin
 router.post("/seed-admin", seedAdminAccount)
 
