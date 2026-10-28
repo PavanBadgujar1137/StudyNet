@@ -60,4 +60,9 @@ const subscriptionSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
+subscriptionSchema.index(
+  { payglocalOrderId: 1 },
+  { unique: true, partialFilterExpression: { payglocalOrderId: { $type: "string", $gt: "" } } }
+)
+
 module.exports = mongoose.model("Subscription", subscriptionSchema)

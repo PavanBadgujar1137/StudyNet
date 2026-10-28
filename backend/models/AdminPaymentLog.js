@@ -83,4 +83,9 @@ const adminPaymentLogSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
+adminPaymentLogSchema.index(
+  { payglocalOrderId: 1 },
+  { unique: true, partialFilterExpression: { payglocalOrderId: { $type: "string", $gt: "" } } }
+)
+
 module.exports = mongoose.model("AdminPaymentLog", adminPaymentLogSchema)

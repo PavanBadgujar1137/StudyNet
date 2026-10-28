@@ -58,5 +58,10 @@ const payoutSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
+payoutSchema.index(
+  { payoutTransactionId: 1 },
+  { unique: true, partialFilterExpression: { payoutTransactionId: { $type: "string", $gt: "" } } }
+)
+
 module.exports = mongoose.model("Payout", payoutSchema)
 

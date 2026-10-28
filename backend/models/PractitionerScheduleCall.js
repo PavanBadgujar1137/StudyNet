@@ -172,4 +172,9 @@ const practitionerScheduleCallSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
+practitionerScheduleCallSchema.index(
+  { payglocalOrderId: 1 },
+  { unique: true, partialFilterExpression: { payglocalOrderId: { $type: "string", $gt: "" } } }
+)
+
 module.exports = mongoose.model("PractitionerScheduleCall", practitionerScheduleCallSchema)

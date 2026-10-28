@@ -14,6 +14,81 @@ const { paymentSuccessEmail } = require("../mail/templates/paymentSuccessEmail")
 const PractitionerAvailability = require("../models/PractitionerAvailability")
 const { google } = require("googleapis")
 const { hasValidBankDetails, notifyPendingBankDetails } = require("../services/autopayService")
+const { sanitizePaymentReturnUrl, idsEqual } = require("../utils/paymentSecurity")
+const {
+  recordPaymentOrder,
+  findPaymentOrder,
+  assertOrderAccess,
+  assertOrderResourceBinding,
+  consumePaymentOrder,
+  markOrderFulfilled,
+  isOrderFulfilled,
+} = require("../utils/paymentOrders")
+
+const buildMerchantCallback = (returnUrl) => {
+  const backendUrl =
+    process.env.BACKEND_URL ||
+    (process.env.NODE_ENV === "production" ? "https://api.openhand.live" : "http://localhost:4000")
+  const safe = sanitizePaymentReturnUrl(returnUrl)
+  return `${backendUrl}/api/v1/payments/payglocal/callback?returnUrl=${encodeURIComponent(safe.path)}`
+}
+
+const requireVerifiedOrder = async ({
+  req,
+  merchantTxnId,
+  gid,
+  token,
+  signature,
+  expectedKind,
+  expectedCourseId,
+  expectedBookingId,
+  expectedPractitionerId,
+  expectedPlanKey,
+}) => {
+  const order = await findPaymentOrder({ merchantTxnId, gid })
+  const access = assertOrderAccess(order, req.user?.id)
+  if (!access.ok) {
+    return { ok: false, status: access.status, message: access.message }
+  }
+
+  const binding = assertOrderResourceBinding(order, {
+    expectedKind,
+    expectedCourseId,
+    expectedBookingId,
+    expectedPractitionerId,
+    expectedPlanKey,
+  })
+  if (!binding.ok) {
+    return { ok: false, status: binding.status, message: binding.message }
+  }
+
+  const verifyRes = await verifyPayGlocalPayment({
+    gid: order.gid || gid,
+    merchantTxnId: order.merchantTxnId,
+    orderId: order.merchantTxnId,
+    paymentId: order.gid || gid,
+    token,
+    signature,
+    statusUrl: order.statusUrl,
+    expectedAmount: order.amount,
+    expectedCurrency: order.currency || "INR",
+  })
+
+  if (!verifyRes?.success) {
+    return {
+      ok: false,
+      status: 400,
+      message: verifyRes?.message || "PayGlocal payment verification failed",
+    }
+  }
+
+  const consumed = await consumePaymentOrder(order.merchantTxnId)
+  if (!consumed.order) {
+    return { ok: false, status: 400, message: "Payment order could not be finalized" }
+  }
+
+  return { ok: true, order: consumed.order, first: consumed.first, verifyRes }
+}
 
 const addGoogleCalendarEvent = async (booking, clientUser, practitionerUser) => {
   try {
@@ -133,6 +208,18 @@ exports.createSubscriptionOrder = async (req, res) => {
       },
     })
 
+    await recordPaymentOrder({
+      merchantTxnId: order.merchantTxnId,
+      gid: order.gid || "",
+      userId,
+      kind: "subscription",
+      amount,
+      currency: "INR",
+      planKey,
+      statusUrl: order.statusUrl || "",
+      metadata: { planName: planNames[planKey] },
+    })
+
     return res.status(200).json({
       success: true,
       order,
@@ -162,26 +249,37 @@ exports.verifySubscriptionPayment = async (req, res) => {
       gid,
       signature,
       token,
-      planKey,
     } = req.body
     const userId = req.user.id
 
     const effectiveOrderId = payglocal_order_id || merchantTxnId
     const effectivePaymentId = payglocal_payment_id || gid || payglocal_gid
 
-    const verifyRes = await verifyPayGlocalPayment({
-      gid: effectivePaymentId,
+    const verified = await requireVerifiedOrder({
+      req,
       merchantTxnId: effectiveOrderId,
-      orderId: effectiveOrderId,
-      paymentId: effectivePaymentId,
+      gid: effectivePaymentId,
       token,
       signature,
+      expectedKind: "subscription",
     })
+    if (!verified.ok) {
+      return res.status(verified.status).json({ success: false, message: verified.message })
+    }
+    let subscription = await Subscription.findOne({ payglocalOrderId: effectiveOrderId })
+    let adminLog = await AdminPaymentLog.findOne({ payglocalOrderId: effectiveOrderId })
 
-    if (!verifyRes?.success) {
-      return res.status(400).json({ success: false, message: "PayGlocal payment verification failed" })
+    if (subscription && adminLog && verified.order.fulfilled) {
+      return res.status(200).json({
+        success: true,
+        message: "Subscription payment was already confirmed",
+        subscription,
+        replayed: true,
+      })
     }
 
+    const planKey = verified.order.planKey
+    const verifyRes = verified.verifyRes
     const planPrices = {
       open: 0,
       pro: 9588,
@@ -203,7 +301,7 @@ exports.verifySubscriptionPayment = async (req, res) => {
       growth: "Pro Plan (Yearly)",
       master: "Pro Plan (Yearly)",
     }
-    const amount = planPrices[planKey] || 0
+    const amount = verified.order.amount ?? planPrices[planKey] ?? 0
 
     // Deactivate any existing active subscription for this user
     await Subscription.updateMany({ client: userId, status: "active" }, { status: "expired" })
@@ -217,42 +315,68 @@ exports.verifySubscriptionPayment = async (req, res) => {
       endDate.setMonth(endDate.getMonth() + 1)
     }
 
-    const subscription = await Subscription.create({
-      client: userId,
-      planKey,
-      planName: planNames[planKey] || planKey,
-      amount,
-      status: "active",
-      startDate,
-      endDate,
-      paymentGateway: "payglocal",
-      payglocalOrderId: effectiveOrderId,
-      payglocalPaymentId: effectivePaymentId,
-      payglocalGid: verifyRes.gid || effectivePaymentId,
-    })
+    if (!subscription) {
+      try {
+        subscription = await Subscription.create({
+          client: userId,
+          planKey,
+          planName: planNames[planKey] || planKey,
+          amount,
+          status: "active",
+          startDate,
+          endDate,
+          paymentGateway: "payglocal",
+          payglocalOrderId: effectiveOrderId,
+          payglocalPaymentId: effectivePaymentId,
+          payglocalGid: verifyRes.gid || effectivePaymentId,
+        })
+      } catch (subErr) {
+        if (subErr.code === 11000) {
+          subscription = await Subscription.findOne({ payglocalOrderId: effectiveOrderId })
+        } else {
+          throw subErr
+        }
+      }
+    }
 
     // Log to admin payment ledger
     const clientUser = await User.findById(userId).select("firstName lastName email")
-    const adminLog = await AdminPaymentLog.create({
-      paymentType: "subscription",
-      client: userId,
-      clientName: `${clientUser.firstName} ${clientUser.lastName}`,
-      description: `${planNames[planKey] || planKey} Subscription`,
-      planKey,
-      amount,
-      currency: "INR",
-      amountOwedToPractitioner: 0, // Subscription fees are pure platform revenue
-      paymentGateway: "payglocal",
-      payglocalOrderId: effectiveOrderId,
-      payglocalPaymentId: effectivePaymentId,
-      payglocalGid: verifyRes.gid || effectivePaymentId,
-      subscriptionId: subscription._id,
-      status: "received",
-    })
+    if (!adminLog) {
+      try {
+        adminLog = await AdminPaymentLog.create({
+          paymentType: "subscription",
+          client: userId,
+          clientName: clientUser ? `${clientUser.firstName} ${clientUser.lastName}` : "Client",
+          description: `${planNames[planKey] || planKey} Subscription`,
+          planKey,
+          amount,
+          currency: "INR",
+          amountOwedToPractitioner: 0, // Subscription fees are pure platform revenue
+          paymentGateway: "payglocal",
+          payglocalOrderId: effectiveOrderId,
+          payglocalPaymentId: effectivePaymentId,
+          payglocalGid: verifyRes.gid || effectivePaymentId,
+          subscriptionId: subscription?._id,
+          status: "received",
+        })
+      } catch (logErr) {
+        if (logErr.code === 11000) {
+          adminLog = await AdminPaymentLog.findOne({ payglocalOrderId: effectiveOrderId })
+        } else {
+          throw logErr
+        }
+      }
+    }
 
     // Update subscription with admin log ref
-    subscription.adminPaymentLog = adminLog._id
-    await subscription.save()
+    if (subscription && !subscription.adminPaymentLog && adminLog) {
+      subscription.adminPaymentLog = adminLog._id
+      await subscription.save()
+    }
+
+    if (subscription && adminLog) {
+      await markOrderFulfilled(effectiveOrderId, { subscriptionId: subscription._id, adminPaymentLogId: adminLog._id })
+    }
 
     // Send payment success email & WhatsApp
     try {
@@ -491,62 +615,13 @@ exports.bookOffer = async (req, res) => {
     }
 
     if (gateway === "stripe") {
-      const mockStripeIntentId = `pi_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
-      const booking = await Booking.create({
-        client: userId,
-        practitioner: practitionerId,
-        offer: offer._id,
-        offerType: offer.type,
-        amount: grossAmount,
-        commission: 0,
-        netPayout: practitionerPortion,
-        clientPhone: resolvedPhone,
-        clientEmail: resolvedEmail,
-        paymentGateway: "stripe",
-        stripePaymentIntentId: mockStripeIntentId,
-        status: "confirmed",
-        settlementStatus: "pending_t2",
-        scheduledAt: scheduledAt ? new Date(scheduledAt) : new Date(Date.now() + 86400000),
-        intakeAnswers,
-      })
-
-      await _createInvoiceAndAdminLog({
-        booking,
-        clientId: userId,
-        practitionerId,
-        practitionerUser,
-        offer,
-        grossAmount,
-        practitionerPortion,
-        gateway: "stripe",
-        paymentId: mockStripeIntentId,
-        orderId: null,
-      })
-      
-      await addGoogleCalendarEvent(booking, clientUser, practitionerUser)
-
-      // Multi-Channel Purchase Notification (WhatsApp + Email)
-      try {
-        const { sendSessionPurchaseNotification } = require("../services/notificationService")
-        sendSessionPurchaseNotification(booking._id).catch(err => console.warn("Purchase notif err:", err.message))
-      } catch (notifErr) {
-        console.warn("Purchase notif init err:", notifErr.message)
-      }
-
-      return res.status(200).json({
-        success: true,
-        message: "Offer booked successfully",
-        booking,
-        stripeClientSecret: `${mockStripeIntentId}_secret_openhand`,
+      return res.status(400).json({
+        success: false,
+        message: "Stripe checkout is not available. Use the supported payment gateway.",
       })
     }
 
-    const backendUrl =
-      process.env.BACKEND_URL ||
-      (process.env.NODE_ENV === "production" ? "https://api.openhand.live" : "http://localhost:4000")
-    const resolvedCallback = req.body.callbackUrl
-      ? `${backendUrl}/api/v1/payments/payglocal/callback?returnUrl=${encodeURIComponent(req.body.callbackUrl)}`
-      : `${backendUrl}/api/v1/payments/payglocal/callback?returnUrl=/app/practitioners`
+    const resolvedCallback = buildMerchantCallback(req.body.callbackUrl || "/app/practitioners")
 
     // PayGlocal flow — create order with discounted amount
     const pglOrder = await createPayCollectOrder({
@@ -586,6 +661,19 @@ exports.bookOffer = async (req, res) => {
       settlementStatus: "unsettled",
       scheduledAt: scheduledAt ? new Date(scheduledAt) : new Date(Date.now() + 86400000),
       intakeAnswers,
+    })
+
+    await recordPaymentOrder({
+      merchantTxnId: pglOrder.merchantTxnId,
+      gid: pglOrder.gid || "",
+      userId,
+      kind: "offer",
+      amount: grossAmount,
+      currency: "INR",
+      bookingId: booking._id,
+      practitionerId,
+      statusUrl: pglOrder.statusUrl || "",
+      metadata: { offerId: offer._id.toString() },
     })
 
     return res.status(200).json({
@@ -628,22 +716,48 @@ exports.verifyOfferBooking = async (req, res) => {
     if (!booking) {
       return res.status(404).json({ success: false, message: "Booking not found" })
     }
+    if (!req.user?.id || !idsEqual(booking.client, req.user.id)) {
+      return res.status(403).json({ success: false, message: "This booking does not belong to the authenticated user" })
+    }
 
-    const effectivePaymentId = payglocal_payment_id || gid || payglocal_gid
-    const effectiveOrderId = payglocal_order_id || merchantTxnId
+    const effectivePaymentId = payglocal_payment_id || gid || payglocal_gid || booking.payglocalGid
+    const effectiveOrderId = payglocal_order_id || merchantTxnId || booking.payglocalOrderId
 
-    const verifyRes = await verifyPayGlocalPayment({
-      gid: effectivePaymentId,
+    const verified = await requireVerifiedOrder({
+      req,
       merchantTxnId: effectiveOrderId,
-      orderId: effectiveOrderId,
-      paymentId: effectivePaymentId,
+      gid: effectivePaymentId,
       token,
       signature,
+      expectedKind: "offer",
+      expectedBookingId: booking._id,
     })
-
-    if (!verifyRes?.success) {
-      return res.status(400).json({ success: false, message: "PayGlocal payment verification failed" })
+    if (!verified.ok) {
+      return res.status(verified.status).json({ success: false, message: verified.message })
     }
+
+    let freshBooking = await Booking.findById(booking._id).populate("offer", "title type price")
+    const existingLog = await AdminPaymentLog.findOne({ payglocalOrderId: effectiveOrderId })
+    const existingInvoice = await Invoice.findOne({ booking: booking._id })
+    const existingPayout = await Payout.findOne({ sourceType: "offer_booking", sourceId: booking._id.toString() })
+
+    const isFullyFulfilled =
+      freshBooking &&
+      (freshBooking.status === "confirmed" || freshBooking.status === "completed") &&
+      Boolean(freshBooking.meetingLink) &&
+      Boolean(existingLog) &&
+      Boolean(existingInvoice) &&
+      (Number(freshBooking.netPayout || 0) <= 0 || Boolean(existingPayout))
+
+    if (isFullyFulfilled && verified.order.fulfilled) {
+      return res.status(200).json({
+        success: true,
+        message: "Booking is already confirmed",
+        booking: freshBooking,
+        replayed: true,
+      })
+    }
+    const verifyRes = verified.verifyRes
 
     booking.payglocalPaymentId = effectivePaymentId
     booking.payglocalOrderId = effectiveOrderId
@@ -679,32 +793,58 @@ exports.verifyOfferBooking = async (req, res) => {
         console.warn("LiveClass auto-creation in payments warning:", lcErr.message)
       }
     }
-    await booking.save()
+    const confirmed = await Booking.findOneAndUpdate(
+      { _id: booking._id, client: req.user.id, status: { $in: ["pending", "pending_payment"] } },
+      {
+        $set: {
+          payglocalPaymentId: booking.payglocalPaymentId,
+          payglocalOrderId: booking.payglocalOrderId,
+          payglocalGid: booking.payglocalGid,
+          paymentGateway: "payglocal",
+          status: "confirmed",
+          settlementStatus: "pending_t2",
+          clientPhone: booking.clientPhone,
+          meetingLink: booking.meetingLink,
+        },
+      },
+      { new: true }
+    ).populate("offer", "title type price")
+
+    if (!confirmed) {
+      const current = await Booking.findById(booking._id).populate("offer", "title type price")
+      return res.status(200).json({
+        success: true,
+        message: "Booking is already confirmed",
+        booking: current || booking,
+        replayed: true,
+      })
+    }
 
     const [clientUser, practitionerUser] = await Promise.all([
-      User.findById(booking.client).select("firstName lastName email"),
-      User.findById(booking.practitioner).select("firstName lastName email"),
+      User.findById(confirmed.client).select("firstName lastName email"),
+      User.findById(confirmed.practitioner).select("firstName lastName email"),
     ])
 
     await _createInvoiceAndAdminLog({
-      booking,
-      clientId: booking.client,
-      practitionerId: booking.practitioner,
+      booking: confirmed,
+      clientId: confirmed.client,
+      practitionerId: confirmed.practitioner,
       practitionerUser,
-      offer: booking.offer,
-      grossAmount: booking.amount,
-      practitionerPortion: booking.netPayout,
+      offer: confirmed.offer,
+      grossAmount: confirmed.amount,
+      practitionerPortion: confirmed.netPayout,
       gateway: "payglocal",
       paymentId: effectivePaymentId,
       orderId: effectiveOrderId,
     })
 
-    await addGoogleCalendarEvent(booking, clientUser, practitionerUser)
+    await addGoogleCalendarEvent(confirmed, clientUser, practitionerUser)
+    await markOrderFulfilled(effectiveOrderId, { bookingId: confirmed._id })
 
     // Multi-Channel Purchase Notification (WhatsApp + Email)
     try {
       const { sendSessionPurchaseNotification } = require("../services/notificationService")
-      sendSessionPurchaseNotification(booking).catch(err => console.warn("Purchase notif err:", err.message))
+      sendSessionPurchaseNotification(confirmed).catch(err => console.warn("Purchase notif err:", err.message))
     } catch (notifErr) {
       console.warn("Booking notification trigger warning:", notifErr.message)
     }
@@ -712,7 +852,7 @@ exports.verifyOfferBooking = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Booking confirmed! Your session is scheduled via PayGlocal.",
-      booking,
+      booking: confirmed,
     })
   } catch (error) {
     console.error("verifyOfferBooking error:", error)
@@ -840,6 +980,23 @@ exports.createCourseOrder = async (req, res) => {
       },
     })
 
+    await recordPaymentOrder({
+      merchantTxnId: order.merchantTxnId,
+      gid: order.gid || "",
+      userId,
+      kind: "course",
+      amount: finalPayable,
+      currency: "INR",
+      courseId,
+      practitionerId: course.practitioner?._id || course.practitioner,
+      statusUrl: order.statusUrl || "",
+      metadata: {
+        couponCodes,
+        appliedCoupons: discountRes.appliedCoupons,
+        originalPrice: discountRes.originalPrice,
+      },
+    })
+
     return res.status(200).json({
       success: true,
       order,
@@ -872,12 +1029,11 @@ exports.verifyCourseOrder = async (req, res) => {
       gid,
       signature,
       token,
-      couponCodes = [],
     } = req.body
     const userId = req.user.id
 
     const Course = require("../models/Course")
-    const { evaluateDiscounts, recordDiscountUsage } = require("./coupon")
+    const { recordDiscountUsage } = require("./coupon")
 
     const course = await Course.findById(courseId).populate("practitioner", "firstName lastName email")
     if (!course) {
@@ -887,34 +1043,51 @@ exports.verifyCourseOrder = async (req, res) => {
     const effectivePaymentId = payglocal_payment_id || gid || payglocal_gid
     const effectiveOrderId = payglocal_order_id || merchantTxnId
 
-    const verifyRes = await verifyPayGlocalPayment({
-      gid: effectivePaymentId,
+    const verified = await requireVerifiedOrder({
+      req,
       merchantTxnId: effectiveOrderId,
-      orderId: effectiveOrderId,
-      paymentId: effectivePaymentId,
+      gid: effectivePaymentId,
       token,
       signature,
+      expectedKind: "course",
+      expectedCourseId: courseId,
     })
+    if (!verified.ok) {
+      return res.status(verified.status).json({ success: false, message: verified.message })
+    }
+    const verifyRes = verified.verifyRes
+    const alreadyEnrolled = (course.enrolledClients || []).map(String).includes(String(userId))
+    let existingCourseLog = await AdminPaymentLog.findOne({ payglocalOrderId: effectiveOrderId, courseId: course._id })
+    let existingCoursePayout = await Payout.findOne({ sourceType: "course", sourceId: course._id.toString(), payoutTransactionId: effectiveOrderId })
 
-    if (!verifyRes?.success) {
-      return res.status(400).json({ success: false, message: "PayGlocal signature verification failed" })
+    const isFullyFulfilled =
+      alreadyEnrolled &&
+      Boolean(existingCourseLog) &&
+      (Number(verified.order.amount || 0) <= 0 || Boolean(existingCoursePayout))
+
+    if (isFullyFulfilled && verified.order.fulfilled) {
+      return res.status(200).json({
+        success: true,
+        message: `Successfully purchased ${course.title}! Course is now unlocked via PayGlocal.`,
+        course,
+        replayed: true,
+      })
     }
 
     // Enroll user into course
-    if (!course.enrolledClients.map(String).includes(String(userId))) {
+    if (!alreadyEnrolled) {
       course.enrolledClients.push(userId)
       await course.save()
     }
 
-    // Evaluate discounts for audit log
-    const discountRes = await evaluateDiscounts({
-      userId,
-      productType: "course",
-      productId: courseId,
-      couponCodes,
-    })
+    const discountRes = {
+      originalPrice: verified.order.metadata?.originalPrice,
+      totalDiscountAmount: Math.max(0, Number(verified.order.metadata?.originalPrice || 0) - Number(verified.order.amount || 0)),
+      finalPrice: verified.order.amount,
+      appliedCoupons: verified.order.metadata?.appliedCoupons || [],
+    }
 
-    const finalAmount = discountRes.finalPrice
+    const finalAmount = verified.order.amount
     const practitionerId = course.practitioner?._id || course.practitioner
     const practitionerPortion = Math.round(finalAmount * 0.8) // 80% to practitioner
 
@@ -945,7 +1118,8 @@ exports.verifyCourseOrder = async (req, res) => {
     const netSalary = Math.max(0, finalAmount - platformFee - taxDeducted)
 
     // Log in Admin Payment Ledger
-    await AdminPaymentLog.create({
+    if (!existingCourseLog) {
+      await AdminPaymentLog.create({
       paymentType: "paid_course",
       client: userId,
       clientName: clientUser ? `${clientUser.firstName} ${clientUser.lastName}` : "Learner",
@@ -963,6 +1137,7 @@ exports.verifyCourseOrder = async (req, res) => {
       courseId: course._id,
       status: "received",
     })
+    }
 
     // Schedule 72-hour automated payout to practitioner's bank account
     if (netSalary > 0) {
@@ -982,6 +1157,8 @@ exports.verifyCourseOrder = async (req, res) => {
         payoutMethod: practProfile.payoutMethod || (practProfile.upiId ? "upi" : "bank"),
       } : {}
 
+      const existingCoursePayout = await Payout.findOne({ sourceType: "course", sourceId: course._id.toString(), payoutTransactionId: effectiveOrderId })
+      if (!existingCoursePayout) {
       await Payout.create({
         practitioner: practitionerId,
         amount: finalAmount,
@@ -1000,7 +1177,9 @@ exports.verifyCourseOrder = async (req, res) => {
         sourceId: course._id.toString(),
         sourceTitle: course.title,
         bookingsCount: 1,
+        payoutTransactionId: effectiveOrderId,
       })
+      }
 
       if (!hasBank) {
         notifyPendingBankDetails(practitionerId, netSalary, course.title).catch((e) =>
@@ -1021,6 +1200,8 @@ exports.verifyCourseOrder = async (req, res) => {
     } catch (notifErr) {
       console.warn("Course notif init warning:", notifErr.message)
     }
+
+    await markOrderFulfilled(effectiveOrderId, { courseId: course._id })
 
     return res.status(200).json({
       success: true,
@@ -1250,45 +1431,58 @@ async function _createInvoiceAndAdminLog({
 }) {
   try {
     const clientUser = await User.findById(clientId).select("firstName lastName")
-    const invoiceNum = `OH-${Date.now().toString().slice(-8)}`
 
-    // Create Invoice
-    await Invoice.create({
-      booking: booking._id,
-      client: clientId,
-      practitioner: practitionerId,
-      invoiceNumber: invoiceNum,
-      subtotal: grossAmount,
-      gstRatePercentage: 18,
-      gstAmount: Math.round(grossAmount * 0.18),
-      totalAmount: grossAmount,
-      status: "paid",
-    })
+    // Create Invoice if not already created
+    const existingInvoice = await Invoice.findOne({ booking: booking._id })
+    if (!existingInvoice) {
+      const invoiceNum = `OH-${Date.now().toString().slice(-8)}`
+      try {
+        await Invoice.create({
+          booking: booking._id,
+          client: clientId,
+          practitioner: practitionerId,
+          invoiceNumber: invoiceNum,
+          subtotal: grossAmount,
+          gstRatePercentage: 18,
+          gstAmount: Math.round(grossAmount * 0.18),
+          totalAmount: grossAmount,
+          status: "paid",
+        })
+      } catch (invErr) {
+        if (invErr.code !== 11000) throw invErr
+      }
+    }
 
-    // Log to admin payment ledger (THE core record)
-    await AdminPaymentLog.create({
-      paymentType: "offer_booking",
-      client: clientId,
-      clientName: clientUser ? `${clientUser.firstName} ${clientUser.lastName}` : "Unknown",
-      practitioner: practitionerId,
-      practitionerName: practitionerUser ? `${practitionerUser.firstName} ${practitionerUser.lastName}` : "Unknown",
-      description: offer?.title
-        ? `${offer.title} (${offer.type})`
-        : `Practitioner Offer Booking`,
-      offerTitle: offer?.title || "",
-      offerType: offer?.type || "",
-      amount: grossAmount,
-      amountOwedToPractitioner: practitionerPortion,
-      paymentGateway: gateway || "payglocal",
-      payglocalOrderId: orderId,
-      payglocalPaymentId: paymentId,
-      payglocalGid: paymentId,
-      bookingId: booking._id,
-      status: "received",
-    })
+    // Log to admin payment ledger if not already logged
+    const existingLog = orderId ? await AdminPaymentLog.findOne({ payglocalOrderId: orderId }) : null
+    if (!existingLog) {
+      try {
+        await AdminPaymentLog.create({
+          paymentType: "offer_booking",
+          client: clientId,
+          clientName: clientUser ? `${clientUser.firstName} ${clientUser.lastName}` : "Unknown",
+          practitioner: practitionerId,
+          practitionerName: practitionerUser ? `${practitionerUser.firstName} ${practitionerUser.lastName}` : "Unknown",
+          description: offer?.title
+            ? `${offer.title} (${offer.type})`
+            : `Practitioner Offer Booking`,
+          offerTitle: offer?.title || "",
+          offerType: offer?.type || "",
+          amount: grossAmount,
+          amountOwedToPractitioner: practitionerPortion,
+          paymentGateway: gateway || "payglocal",
+          payglocalOrderId: orderId,
+          payglocalPaymentId: paymentId,
+          payglocalGid: paymentId,
+          bookingId: booking._id,
+          status: "received",
+        })
+      } catch (logErr) {
+        if (logErr.code !== 11000) throw logErr
+      }
+    }
 
-    // Create Payout Record (Automated 72-Hour PayGlocal Direct Transfer)
-    // Central OpenHand account collects 100%, and deducts platform fee + taxes before disbursing
+    // Create Payout Record if not already created
     const practPlan = String(practitionerUser?.activePlan || "").toLowerCase()
     const feeRate = (practPlan.includes("pro") ? 5 : practPlan.includes("institution") ? 0 : 10)
     const platformFee = Math.round((grossAmount * feeRate) / 100)
@@ -1297,41 +1491,48 @@ async function _createInvoiceAndAdminLog({
     const finalNet = practitionerPortion > 0 ? Math.min(practitionerPortion, calculatedNet) : calculatedNet
 
     if (finalNet > 0) {
-      const practProfile = await PractitionerProfile.findOne({ user: practitionerId })
-      const hasBank = hasValidBankDetails(practProfile)
-      const scheduledPayoutAt = new Date(Date.now() + 72 * 60 * 60 * 1000)
+      const existingPayout = await Payout.findOne({ sourceType: "offer_booking", sourceId: booking._id.toString() })
+      if (!existingPayout) {
+        const practProfile = await PractitionerProfile.findOne({ user: practitionerId })
+        const hasBank = hasValidBankDetails(practProfile)
+        const scheduledPayoutAt = new Date(Date.now() + 72 * 60 * 60 * 1000)
 
-      const bankSnapshot = practProfile ? {
-        accountHolderName: practProfile.bankAccountName || (practitionerUser ? `${practitionerUser.firstName} ${practitionerUser.lastName}`.trim() : ""),
-        accountNumberMasked: practProfile.bankAccountNumber ? `•••• ${practProfile.bankAccountNumber.slice(-4)}` : (practProfile.upiId || ""),
-        bankName: practProfile.bankName || (practProfile.upiId ? "UPI Virtual Payment Address" : "Registered Bank"),
-        ifsc: practProfile.bankIfscCode || "",
-        upiId: practProfile.upiId || "",
-        iban: practProfile.bankIban || "",
-        swift: practProfile.bankSwiftBic || "",
-        country: practProfile.payoutCountry || "India",
-        payoutMethod: practProfile.payoutMethod || (practProfile.upiId ? "upi" : "bank"),
-      } : {}
+        const bankSnapshot = practProfile ? {
+          accountHolderName: practProfile.bankAccountName || (practitionerUser ? `${practitionerUser.firstName} ${practitionerUser.lastName}`.trim() : ""),
+          accountNumberMasked: practProfile.bankAccountNumber ? `•••• ${practProfile.bankAccountNumber.slice(-4)}` : (practProfile.upiId || ""),
+          bankName: practProfile.bankName || (practProfile.upiId ? "UPI Virtual Payment Address" : "Registered Bank"),
+          ifsc: practProfile.bankIfscCode || "",
+          upiId: practProfile.upiId || "",
+          iban: practProfile.bankIban || "",
+          swift: practProfile.bankSwiftBic || "",
+          country: practProfile.payoutCountry || "India",
+          payoutMethod: practProfile.payoutMethod || (practProfile.upiId ? "upi" : "bank"),
+        } : {}
 
-      await Payout.create({
-        practitioner: practitionerId,
-        amount: grossAmount,
-        grossAmount: grossAmount,
-        platformFeeDeducted: platformFee,
-        taxDeducted: taxDeducted,
-        commissionDeducted: platformFee + taxDeducted,
-        netAmount: finalNet,
-        status: hasBank ? "processing" : "pending_bank_details",
-        failureReason: hasBank ? "" : "Practitioner bank account or UPI details missing",
-        settlementWindowHours: 72,
-        scheduledPayoutAt,
-        payoutMethod: "payglocal_direct_transfer",
-        bankDetails: bankSnapshot,
-        sourceType: "offer_booking",
-        sourceId: booking._id.toString(),
-        sourceTitle: offer?.title || "1:1 Session / Offer Booking",
-        bookingsCount: 1,
-      })
+        try {
+          await Payout.create({
+            practitioner: practitionerId,
+            amount: grossAmount,
+            grossAmount: grossAmount,
+            platformFeeDeducted: platformFee,
+            taxDeducted: taxDeducted,
+            commissionDeducted: platformFee + taxDeducted,
+            netAmount: finalNet,
+            status: hasBank ? "processing" : "pending_bank_details",
+            failureReason: hasBank ? "" : "Practitioner bank account or UPI details missing",
+            settlementWindowHours: 72,
+            scheduledPayoutAt,
+            payoutMethod: "payglocal_direct_transfer",
+            bankDetails: bankSnapshot,
+            sourceType: "offer_booking",
+            sourceId: booking._id.toString(),
+            sourceTitle: offer?.title || "1:1 Session / Offer Booking",
+            bookingsCount: 1,
+            payoutTransactionId: orderId,
+          })
+        } catch (payErr) {
+          if (payErr.code !== 11000) throw payErr
+        }
 
       if (!hasBank) {
         notifyPendingBankDetails(practitionerId, finalNet, offer?.title).catch((e) =>
@@ -1354,18 +1555,16 @@ exports.createPractitionerOrder = async (req, res) => {
       return res.status(400).json({ success: false, message: "Practitioner ID is required" })
     }
 
-    const numericAmount = Number(amount) || 500
+    const numericAmount = Number(amount)
+    if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+      return res.status(400).json({ success: false, message: "A valid payment amount is required" })
+    }
     const clientUser = await User.findById(userId).select("firstName lastName email contactNumber whatsappNumber")
 
     const effectivePhone = clientPhone || clientUser?.whatsappNumber || clientUser?.contactNumber || ""
     const effectiveEmail = clientEmail || clientUser?.email || ""
 
-    const backendUrl =
-      process.env.BACKEND_URL ||
-      (process.env.NODE_ENV === "production" ? "https://api.openhand.live" : "http://localhost:4000")
-    const resolvedCallback = req.body.callbackUrl
-      ? `${backendUrl}/api/v1/payments/payglocal/callback?returnUrl=${encodeURIComponent(req.body.callbackUrl)}`
-      : `${backendUrl}/api/v1/payments/payglocal/callback?returnUrl=/app/practitioners`
+    const resolvedCallback = buildMerchantCallback(req.body.callbackUrl || "/app/practitioners")
 
     const order = await createPayCollectOrder({
       merchantTxnId: `pract_${Date.now().toString().slice(-8)}`,
@@ -1382,6 +1581,17 @@ exports.createPractitionerOrder = async (req, res) => {
         practitionerId: String(practitionerId),
       },
       callbackUrl: resolvedCallback,
+    })
+
+    await recordPaymentOrder({
+      merchantTxnId: order.merchantTxnId,
+      gid: order.gid || "",
+      userId,
+      kind: "practitioner",
+      amount: numericAmount,
+      currency: "INR",
+      practitionerId,
+      statusUrl: order.statusUrl || "",
     })
 
     return res.status(200).json({
@@ -1417,26 +1627,21 @@ exports.handlePayGlocalCallback = async (req, res) => {
     const merchantTxnId = body.merchantTxnId || query.merchantTxnId || (body.data && body.data.merchantTxnId) || ""
     const token = body["x-gl-token"] || query["x-gl-token"] || body.token || query.token || ""
 
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000"
-
-    let targetPath = "/app/practitioners"
-    if (query.returnUrl) {
-      targetPath = query.returnUrl
-    } else if (
-      merchantTxnId.startsWith("call_sub_") ||
-      merchantTxnId.startsWith("plan_") ||
-      merchantTxnId.startsWith("sub_")
-    ) {
-      targetPath = "/practice"
-    } else if (
-      merchantTxnId.startsWith("pract_") ||
-      merchantTxnId.startsWith("oh_offer_")
-    ) {
-      targetPath = "/app/practitioners"
+    let requestedReturn = query.returnUrl
+    if (!requestedReturn) {
+      if (
+        merchantTxnId.startsWith("call_sub_") ||
+        merchantTxnId.startsWith("plan_") ||
+        merchantTxnId.startsWith("sub_")
+      ) {
+        requestedReturn = "/practice"
+      } else {
+        requestedReturn = "/app/practitioners"
+      }
     }
 
-    const redirectBase = targetPath.startsWith("http") ? targetPath : `${frontendUrl}${targetPath}`
-    const urlObj = new URL(redirectBase)
+    const safeReturn = sanitizePaymentReturnUrl(requestedReturn)
+    const urlObj = new URL(safeReturn.href)
 
     if (status) urlObj.searchParams.set("status", status)
     if (gid) urlObj.searchParams.set("gid", gid)

@@ -1,4 +1,5 @@
 const { verifyPayGlocalPayment } = require("../config/payglocal")
+const { findPaymentOrder, assertOrderAccess, assertOrderResourceBinding, consumePaymentOrder, markOrderFulfilled, isOrderFulfilled } = require("../utils/paymentOrders")
 const mailSender = require("../utils/mailSender")
 const User = require("../models/User")
 const PractitionerProfile = require("../models/PractitionerProfile")
@@ -720,10 +721,6 @@ exports.connectClientWithPractitioner = async (req, res) => {
       return res.status(400).json({ success: false, message: "Practitioner ID is required" })
     }
 
-    if (!amountPaid || isNaN(Number(amountPaid)) || Number(amountPaid) <= 0) {
-      return res.status(400).json({ success: false, message: "Valid payment amount is required" })
-    }
-
     let practUser = await User.findById(practitionerId)
     if (!practUser) {
       const pProfile = await PractitionerProfile.findById(practitionerId)
@@ -734,32 +731,68 @@ exports.connectClientWithPractitioner = async (req, res) => {
       return res.status(404).json({ success: false, message: "Practitioner not found" })
     }
 
-    const glOrderId = payglocal_order_id || merchantTxnId || orderId || `order_pgl_${Date.now()}`
-    const glPaymentId = payglocal_payment_id || gid || payglocal_gid || paymentId || `pay_pgl_${Date.now()}`
-
-    // Verify PayGlocal Signature / Token if provided
-    if (signature || token) {
-      try {
-        const verifyRes = await verifyPayGlocalPayment({
-          gid: glPaymentId,
-          merchantTxnId: glOrderId,
-          orderId: glOrderId,
-          paymentId: glPaymentId,
-          token,
-          signature,
-        })
-        if (!verifyRes?.success) {
-          return res.status(400).json({
-            success: false,
-            message: "PayGlocal signature verification failed",
-          })
-        }
-      } catch (sigErr) {
-        console.warn("PayGlocal verification warning:", sigErr.message)
-      }
+    const glOrderId = payglocal_order_id || merchantTxnId || orderId
+    const glPaymentId = payglocal_payment_id || gid || payglocal_gid || paymentId
+    const trustedOrder = await findPaymentOrder({ merchantTxnId: glOrderId, gid: glPaymentId })
+    const access = assertOrderAccess(trustedOrder, clientId)
+    if (!access.ok) {
+      return res.status(access.status).json({ success: false, message: access.message })
     }
 
-    const grossAmount = Number(amountPaid)
+    const binding = assertOrderResourceBinding(trustedOrder, {
+      expectedKind: "practitioner",
+      expectedPractitionerId: practUser._id,
+    })
+    if (!binding.ok) {
+      return res.status(binding.status).json({ success: false, message: binding.message })
+    }
+
+    const verifyRes = await verifyPayGlocalPayment({
+      gid: trustedOrder.gid || glPaymentId,
+      merchantTxnId: trustedOrder.merchantTxnId,
+      orderId: trustedOrder.merchantTxnId,
+      paymentId: trustedOrder.gid || glPaymentId,
+      token,
+      signature,
+      statusUrl: trustedOrder.statusUrl,
+      expectedAmount: trustedOrder.amount,
+      expectedCurrency: trustedOrder.currency || "INR",
+    })
+    if (!verifyRes?.success) {
+      return res.status(400).json({
+        success: false,
+        message: verifyRes?.message || "PayGlocal payment verification failed",
+      })
+    }
+
+    const consumed = await consumePaymentOrder(trustedOrder.merchantTxnId)
+    const existingBooking = await Booking.findOne({ payglocalOrderId: glOrderId })
+    const existingConn = await ClientConnection.findOne({ client: clientId, practitioner: practUser._id, orderId: glOrderId })
+    const existingPayout = await Payout.findOne({ payoutTransactionId: glOrderId })
+    const existingInvoice = existingBooking ? await Invoice.findOne({ booking: existingBooking._id }) : null
+    const existingLog = await AdminPaymentLog.findOne({ payglocalOrderId: glOrderId })
+
+    const isFullyFulfilled =
+      Boolean(existingBooking) &&
+      existingBooking.status === "confirmed" &&
+      Boolean(existingConn) &&
+      Boolean(existingPayout) &&
+      Boolean(existingInvoice) &&
+      Boolean(existingLog)
+
+    if (isFullyFulfilled && trustedOrder.fulfilled) {
+      return res.status(200).json({
+        success: true,
+        message: "Connection payment was already confirmed",
+        connection: existingConn,
+        booking: existingBooking,
+        payout: existingPayout,
+        status: existingConn?.status || "pending_approval",
+        replayed: true,
+      })
+    }
+
+    const grossAmount = Number(trustedOrder.amount)
 
     // Calculate commission rate based on practitioner profile plan
     let profile = await PractitionerProfile.findOne({ user: practUser._id })
@@ -834,26 +867,37 @@ exports.connectClientWithPractitioner = async (req, res) => {
       ? `${process.env.FRONTEND_URL || "http://localhost:3000"}/live-classroom/${liveClass._id}?role=learner`
       : `${process.env.FRONTEND_URL || "http://localhost:3000"}/dashboard?tab=sessions`
 
-    const booking = await Booking.create({
-      client: clientId,
-      practitioner: practUser._id,
-      offer: targetOfferId || new mongoose.Types.ObjectId(),
-      offerType: "session",
-      amount: grossAmount,
-      commission: platformFee,
-      netPayout,
-      clientPhone: resolvedPhone,
-      clientEmail: resolvedEmail,
-      paymentGateway: "payglocal",
-      payglocalOrderId: glOrderId,
-      payglocalPaymentId: glPaymentId,
-      payglocalGid: glPaymentId,
-      status: "confirmed",
-      settlementStatus: "pending_t2",
-      scheduledAt: finalScheduledAt,
-      slotTime: finalSlotTime,
-      meetingLink,
-    })
+    let booking = await Booking.findOne({ payglocalOrderId: glOrderId })
+    if (!booking) {
+      try {
+        booking = await Booking.create({
+          client: clientId,
+          practitioner: practUser._id,
+          offer: targetOfferId || new mongoose.Types.ObjectId(),
+          offerType: "session",
+          amount: grossAmount,
+          commission: platformFee,
+          netPayout,
+          clientPhone: resolvedPhone,
+          clientEmail: resolvedEmail,
+          paymentGateway: "payglocal",
+          payglocalOrderId: glOrderId,
+          payglocalPaymentId: glPaymentId,
+          payglocalGid: glPaymentId,
+          status: "confirmed",
+          settlementStatus: "pending_t2",
+          scheduledAt: finalScheduledAt,
+          slotTime: finalSlotTime,
+          meetingLink,
+        })
+      } catch (bookErr) {
+        if (bookErr.code === 11000) {
+          booking = await Booking.findOne({ payglocalOrderId: glOrderId })
+        } else {
+          throw bookErr
+        }
+      }
+    }
 
     // 3. Create Payout record crediting practitioner (Automated 72-Hour PayGlocal Direct Transfer)
     const { hasValidBankDetails, notifyPendingBankDetails } = require("../services/autopayService")
@@ -872,25 +916,37 @@ exports.connectClientWithPractitioner = async (req, res) => {
       payoutMethod: profile.payoutMethod || (profile.upiId ? "upi" : "bank"),
     } : {}
 
-    const payout = await Payout.create({
-      practitioner: practUser._id,
-      amount: grossAmount,
-      grossAmount: grossAmount,
-      platformFeeDeducted: platformFee,
-      taxDeducted: taxDeducted,
-      commissionDeducted: platformFee + taxDeducted,
-      netAmount: netPayout,
-      status: hasBank ? "processing" : "pending_bank_details",
-      failureReason: hasBank ? "" : "Practitioner bank account or UPI details missing",
-      settlementWindowHours: 72,
-      scheduledPayoutAt,
-      payoutMethod: "payglocal_direct_transfer",
-      bankDetails: bankSnapshot,
-      sourceType: "session",
-      sourceId: booking._id.toString(),
-      sourceTitle: targetOffer?.title || "1:1 Counseling & Healing Session",
-      bookingsCount: 1,
-    })
+    let payout = await Payout.findOne({ payoutTransactionId: glOrderId })
+    if (!payout) {
+      try {
+        payout = await Payout.create({
+          practitioner: practUser._id,
+          amount: grossAmount,
+          grossAmount: grossAmount,
+          platformFeeDeducted: platformFee,
+          taxDeducted: taxDeducted,
+          commissionDeducted: platformFee + taxDeducted,
+          netAmount: netPayout,
+          status: hasBank ? "processing" : "pending_bank_details",
+          failureReason: hasBank ? "" : "Practitioner bank account or UPI details missing",
+          settlementWindowHours: 72,
+          scheduledPayoutAt,
+          payoutMethod: "payglocal_direct_transfer",
+          bankDetails: bankSnapshot,
+          sourceType: "session",
+          sourceId: booking._id.toString(),
+          sourceTitle: targetOffer?.title || "1:1 Counseling & Healing Session",
+          bookingsCount: 1,
+          payoutTransactionId: glOrderId,
+        })
+      } catch (payErr) {
+        if (payErr.code === 11000) {
+          payout = await Payout.findOne({ payoutTransactionId: glOrderId })
+        } else {
+          throw payErr
+        }
+      }
+    }
 
     if (!hasBank) {
       notifyPendingBankDetails(practUser._id, netPayout, targetOffer?.title).catch((e) =>
@@ -899,40 +955,54 @@ exports.connectClientWithPractitioner = async (req, res) => {
     }
 
     // 4. Create Invoice record
-    const invoiceNum = `OH-${Date.now().toString().slice(-6)}`
-    await Invoice.create({
-      booking: booking._id,
-      client: clientId,
-      practitioner: practUser._id,
-      invoiceNumber: invoiceNum,
-      subtotal: grossAmount,
-      gstRatePercentage: 18,
-      gstAmount: Math.round(grossAmount * 0.18),
-      totalAmount: grossAmount,
-      status: "paid",
-    })
+    const existingInvoice = await Invoice.findOne({ booking: booking._id })
+    if (!existingInvoice) {
+      const invoiceNum = `OH-${Date.now().toString().slice(-6)}`
+      try {
+        await Invoice.create({
+          booking: booking._id,
+          client: clientId,
+          practitioner: practUser._id,
+          invoiceNumber: invoiceNum,
+          subtotal: grossAmount,
+          gstRatePercentage: 18,
+          gstAmount: Math.round(grossAmount * 0.18),
+          totalAmount: grossAmount,
+          status: "paid",
+        })
+      } catch (invErr) {
+        if (invErr.code !== 11000) throw invErr
+      }
+    }
 
     // 4b. Log to Admin Payment Ledger
     try {
-      const clientUserObj = await User.findById(clientId).select("firstName lastName")
-      const clientNameStr = clientUserObj ? `${clientUserObj.firstName} ${clientUserObj.lastName}` : "Client"
-      const AdminPaymentLog = require("../models/AdminPaymentLog")
-      await AdminPaymentLog.create({
-        paymentType: "offer_booking",
-        client: clientId,
-        clientName: clientNameStr,
-        practitioner: practUser._id,
-        practitionerName: `${practUser.firstName} ${practUser.lastName}`,
-        description: `Practitioner Connection & Offer Booking`,
-        amount: grossAmount,
-        amountOwedToPractitioner: netPayout,
-        paymentGateway: "payglocal",
-        payglocalOrderId: glOrderId,
-        payglocalPaymentId: glPaymentId,
-        payglocalGid: glPaymentId,
-        bookingId: booking._id,
-        status: "received",
-      })
+      const existingLog = await AdminPaymentLog.findOne({ payglocalOrderId: glOrderId })
+      if (!existingLog) {
+        const clientUserObj = await User.findById(clientId).select("firstName lastName")
+        const clientNameStr = clientUserObj ? `${clientUserObj.firstName} ${clientUserObj.lastName}` : "Client"
+        const AdminPaymentLog = require("../models/AdminPaymentLog")
+        try {
+          await AdminPaymentLog.create({
+            paymentType: "offer_booking",
+            client: clientId,
+            clientName: clientNameStr,
+            practitioner: practUser._id,
+            practitionerName: `${practUser.firstName} ${practUser.lastName}`,
+            description: `Practitioner Connection & Offer Booking`,
+            amount: grossAmount,
+            amountOwedToPractitioner: netPayout,
+            paymentGateway: "payglocal",
+            payglocalOrderId: glOrderId,
+            payglocalPaymentId: glPaymentId,
+            payglocalGid: glPaymentId,
+            bookingId: booking._id,
+            status: "received",
+          })
+        } catch (logErr) {
+          if (logErr.code !== 11000) throw logErr
+        }
+      }
     } catch (logErr) {
       console.warn("AdminPaymentLog creation warning:", logErr.message)
     }
@@ -973,6 +1043,8 @@ exports.connectClientWithPractitioner = async (req, res) => {
     } catch (mailErr) {
       console.warn("Notification email trigger warning:", mailErr.message)
     }
+
+    await markOrderFulfilled(trustedOrder.merchantTxnId, { bookingId: booking._id })
 
     return res.status(200).json({
       success: true,

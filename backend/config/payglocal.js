@@ -2,6 +2,10 @@ const crypto = require("crypto")
 const fs = require("fs")
 const path = require("path")
 const { generateJWEAndJWS, generateJWS } = require("payglocal-js-client")
+const {
+  evaluateGatewayVerification,
+  isTrustedPayGlocalStatusUrl,
+} = require("../utils/paymentSecurity")
 
 /**
  * PayGlocal Payment Gateway Integration Module
@@ -254,6 +258,28 @@ const createPayCollectOrder = async ({
  * @param {string} [params.statusUrl] - Status URL provided by PayGlocal
  * @returns {Promise<Object>} Verification status
  */
+const parseGatewayPayload = (data, fallback) => {
+  const st = data?.status || data?.data?.status
+  const amount =
+    data?.data?.Amount ||
+    data?.data?.totalAmount ||
+    data?.paymentData?.totalAmount ||
+    data?.data?.paymentData?.totalAmount
+  const currency =
+    data?.data?.Currency ||
+    data?.data?.txnCurrency ||
+    data?.paymentData?.txnCurrency ||
+    data?.data?.paymentData?.txnCurrency
+  return {
+    status: st,
+    gid: data?.gid || data?.data?.gid || fallback.targetId,
+    merchantTxnId: data?.data?.merchantTxnId || fallback.merchantTxnId,
+    amount,
+    currency,
+    raw: data,
+  }
+}
+
 const verifyPayGlocalPayment = async ({
   gid,
   merchantTxnId,
@@ -262,6 +288,8 @@ const verifyPayGlocalPayment = async ({
   orderId,
   paymentId,
   statusUrl,
+  expectedAmount,
+  expectedCurrency = "INR",
 }) => {
   const config = getPayGlocalConfig()
   const targetId = gid || paymentId || merchantTxnId || orderId
@@ -273,71 +301,67 @@ const verifyPayGlocalPayment = async ({
     }
   }
 
-  // 1. If explicit statusUrl is available, query it directly
-  if (statusUrl && typeof statusUrl === "string" && statusUrl.startsWith("http")) {
+  const failClosed = (message, extra = {}) => ({
+    success: false,
+    message,
+    gid: extra.gid || targetId,
+    merchantTxnId: extra.merchantTxnId || merchantTxnId || orderId,
+    status: extra.status || "UNVERIFIED",
+    amount: extra.amount,
+    currency: extra.currency,
+    raw: extra.raw,
+  })
+
+  const acceptIfFinal = (parsed) => {
+    const decision = evaluateGatewayVerification({
+      status: parsed.status,
+      amount: parsed.amount,
+      currency: parsed.currency,
+      expectedAmount,
+      expectedCurrency,
+    })
+    if (!decision.ok) {
+      return failClosed(decision.message, parsed)
+    }
+    return {
+      success: true,
+      status: parsed.status,
+      gid: parsed.gid,
+      merchantTxnId: parsed.merchantTxnId,
+      amount: parsed.amount,
+      currency: parsed.currency || expectedCurrency,
+      raw: parsed.raw,
+      verifiedAt: new Date(),
+    }
+  }
+
+  if (statusUrl && isTrustedPayGlocalStatusUrl(statusUrl, config.baseUrl)) {
     try {
       const res = await fetch(statusUrl)
       if (res.ok) {
         const data = await res.json()
-        const st = data.status || data.data?.status
-        const isOk =
-          st === "COMPLETED" ||
-          st === "SUCCESS" ||
-          st === "SENT_FOR_CAPTURE" ||
-          st === "AUTHORIZED" ||
-          st === "INPROGRESS"
-        return {
-          success: isOk,
-          status: st || "SUCCESS",
-          gid: data.gid || targetId,
-          merchantTxnId: data.data?.merchantTxnId || merchantTxnId || orderId,
-          amount: data.data?.Amount || data.paymentData?.totalAmount,
-          currency: data.data?.Currency || "INR",
-          raw: data,
-        }
+        return acceptIfFinal(parseGatewayPayload(data, { targetId, merchantTxnId: merchantTxnId || orderId }))
       }
     } catch (e) {
       console.warn("PayGlocal direct statusUrl fetch warning:", e.message)
     }
   }
 
-  // 2. Query PayGlocal status endpoint using x-gl-token if provided
   if (token) {
     try {
-      const tokenUrl = `${config.baseUrl}/gl/v1/payments/${targetId}/status?x-gl-token=${encodeURIComponent(token)}`
+      const tokenUrl = `${config.baseUrl}/gl/v1/payments/${encodeURIComponent(targetId)}/status?x-gl-token=${encodeURIComponent(token)}`
       const res = await fetch(tokenUrl)
       if (res.ok) {
         const data = await res.json()
-        const st = data.status || data.data?.status
-        const isOk =
-          st === "COMPLETED" ||
-          st === "SUCCESS" ||
-          st === "SENT_FOR_CAPTURE" ||
-          st === "AUTHORIZED" ||
-          st === "INPROGRESS"
-        return {
-          success: isOk,
-          status: st || "SUCCESS",
-          gid: data.gid || targetId,
-          merchantTxnId: data.data?.merchantTxnId || merchantTxnId || orderId,
-          amount: data.data?.Amount || data.paymentData?.totalAmount,
-          currency: data.data?.Currency || "INR",
-          raw: data,
-        }
+        return acceptIfFinal(parseGatewayPayload(data, { targetId, merchantTxnId: merchantTxnId || orderId }))
       }
     } catch (e) {
       console.warn("PayGlocal token status check warning:", e.message)
     }
   }
 
-  // 3. Fallback signature/token verification
-  return {
-    success: true,
-    status: "SENT_FOR_CAPTURE",
-    gid: gid || paymentId || `gl_${Date.now()}`,
-    merchantTxnId: merchantTxnId || orderId || `pgl_${Date.now()}`,
-    verifiedAt: new Date(),
-  }
+  void signature
+  return failClosed("PayGlocal payment could not be verified with the gateway")
 }
 
 module.exports = {

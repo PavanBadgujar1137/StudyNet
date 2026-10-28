@@ -70,4 +70,9 @@ const bookingSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
+bookingSchema.index(
+  { payglocalOrderId: 1 },
+  { unique: true, partialFilterExpression: { payglocalOrderId: { $type: "string", $gt: "" } } }
+)
+
 module.exports = mongoose.model("Booking", bookingSchema)
