@@ -30,12 +30,47 @@ function isFinalSuccessStatus(status) {
   return FINAL_SUCCESS_STATUSES.has(normalized)
 }
 
+const PLAIN_AMOUNT_REGEX = /^\d+(\.\d{1,2})?$/
+const MAX_SAFE_MAIN_UNITS = Math.floor(Number.MAX_SAFE_INTEGER / 100)
+
+function toMinorUnits(val) {
+  let str
+  if (typeof val === "number") {
+    if (!Number.isFinite(val) || val < 0 || val > MAX_SAFE_MAIN_UNITS) {
+      return null
+    }
+    str = String(val)
+  } else if (typeof val === "string") {
+    str = val.trim()
+  } else {
+    return null
+  }
+
+  if (!PLAIN_AMOUNT_REGEX.test(str)) {
+    return null
+  }
+
+  const [wholeStr, fracStr = ""] = str.split(".")
+  const whole = Number(wholeStr)
+  if (!Number.isSafeInteger(whole) || whole > MAX_SAFE_MAIN_UNITS) {
+    return null
+  }
+  const frac = Number(fracStr.padEnd(2, "0"))
+  const minor = whole * 100 + frac
+  return Number.isSafeInteger(minor) && minor >= 0 ? minor : null
+}
+
+function isValidAmountValue(val) {
+  return toMinorUnits(val) !== null
+}
+
 function amountsMatch(expected, actual) {
-  if (expected == null || actual == null || actual === "") return false
-  const left = Number(expected)
-  const right = Number(actual)
-  if (!Number.isFinite(left) || !Number.isFinite(right)) return false
-  return Math.abs(left - right) < 0.05
+  const expectedMinor = toMinorUnits(expected)
+  const actualMinor = toMinorUnits(actual)
+  if (expectedMinor === null || actualMinor === null) {
+    return false
+  }
+  return expectedMinor === actualMinor
 }
 
 function currenciesMatch(expected, actual) {
@@ -116,7 +151,7 @@ function evaluateGatewayVerification({ status, amount, currency, expectedAmount,
       message: "Payment is not in a verified final success state",
     }
   }
-  if (expectedAmount != null && amount != null && amount !== "" && !amountsMatch(expectedAmount, amount)) {
+  if (!amountsMatch(expectedAmount, amount)) {
     return {
       ok: false,
       message: "Gateway amount does not match the trusted order amount",
@@ -139,6 +174,8 @@ function idsEqual(left, right) {
 module.exports = {
   FINAL_SUCCESS_STATUSES,
   isFinalSuccessStatus,
+  toMinorUnits,
+  isValidAmountValue,
   amountsMatch,
   currenciesMatch,
   isTrustedPayGlocalStatusUrl,
