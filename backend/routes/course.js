@@ -1,6 +1,6 @@
 const express = require("express")
 const router = express.Router()
-const { auth, isInstructor } = require("../middleware/auth")
+const { auth, isInstructor, optionalAuth } = require("../middleware/auth")
 const {
   createCourse,
   updateCourse,
@@ -20,7 +20,7 @@ const {
 
 // ─── Public / Client routes ───────────────────────────────────────────────────
 router.get("/", getAllCourses)
-router.get("/:id", getCourseDetail)
+router.get("/:id", optionalAuth, getCourseDetail)
 router.get("/:id/videos", auth, getCourseVideos)
 
 // ─── Practitioner routes ──────────────────────────────────────────────────────

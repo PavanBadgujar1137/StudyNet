@@ -156,3 +156,33 @@ exports.isOrgAdmin = async (req, res, next) => {
 	}
 };
 
+// Optional authentication middleware: attaches user if a valid token is present, but allows unauthenticated requests
+exports.optionalAuth = async (req, res, next) => {
+	try {
+		const authHeader =
+			req.header("Authorization") ||
+			req.header("authorization") ||
+			req.headers?.authorization ||
+			req.headers?.Authorization;
+
+		let rawToken =
+			req.cookies?.token ||
+			(authHeader ? authHeader.replace(/^Bearer\s+/i, "") : null);
+
+		if (rawToken) {
+			let cleanToken = String(rawToken).trim();
+			if (
+				(cleanToken.startsWith('"') && cleanToken.endsWith('"')) ||
+				(cleanToken.startsWith("'") && cleanToken.endsWith("'"))
+			) {
+				cleanToken = cleanToken.slice(1, -1).trim();
+			}
+			const decode = jwt.verify(cleanToken, process.env.JWT_SECRET);
+			req.user = decode;
+			if (!req.user.id && req.user._id) req.user.id = req.user._id;
+		}
+	} catch (error) {
+		// Proceed as unauthenticated for missing or invalid token
+	}
+	next();
+};

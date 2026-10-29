@@ -1,4 +1,5 @@
 const Course = require("../models/Course")
+const { canAccessCourseMedia, sanitizeCourseForPublic } = require("../utils/courseAccess")
 const CourseVideo = require("../models/CourseVideo")
 const Subscription = require("../models/Subscription")
 const User = require("../models/User")
@@ -510,12 +511,18 @@ exports.getPractitionerCourses = async (req, res) => {
 exports.getAllCourses = async (req, res) => {
   try {
     const courses = await Course.find({ status: "published" })
+      .select("-enrolledClients -__v")
       .populate("practitioner", "firstName lastName image")
-      .populate("videos", "title description videoUrl durationSeconds order thumbnail attachments")
+      .populate("videos", "title description durationSeconds order thumbnail")
       .sort({ createdAt: -1 })
       .lean()
 
-    return res.status(200).json({ success: true, courses })
+    const sanitizedCourses = (courses || []).map((course) => {
+      const { enrolledClients, __v, ...publicCourse } = course
+      return publicCourse
+    })
+
+    return res.status(200).json({ success: true, courses: sanitizedCourses })
   } catch (error) {
     console.error("getAllCourses error:", error)
     return res.status(500).json({ success: false, message: error.message })
@@ -567,7 +574,7 @@ function checkAccess(accessCtx, requiredPlanKey) {
 exports.getCourseDetail = async (req, res) => {
   try {
     const { id } = req.params
-    const userId = req.user?.id
+    const user = req.user
 
     const course = await Course.findById(id)
       .populate("practitioner", "firstName lastName image email")
@@ -576,26 +583,22 @@ exports.getCourseDetail = async (req, res) => {
 
     if (!course) return res.status(404).json({ success: false, message: "Course not found" })
 
-    let hasAccess = false
+    const hasAccess = canAccessCourseMedia(course, user)
     let accessNotice = null
 
-    if (userId) {
-      const isEnrolled = (course.enrolledClients || []).map(String).includes(String(userId))
-      const isCreator = String(course.practitioner?._id || course.practitioner) === String(userId)
-
-      if (isCreator || isEnrolled) {
-        hasAccess = true
-      } else if (course.price > 0 && !course.isFree) {
+    if (!hasAccess) {
+      if (course.price > 0 && !course.isFree) {
         // Paid Course: requires separate purchase
-        hasAccess = false
         accessNotice = `This is a premium paid course (₹${course.price}). Please purchase to unlock access.`
       } else {
         // Free Course created by practitioner: 100% Free for all registered learners
-        hasAccess = true
+        accessNotice = "Please log in to access course media and resources."
       }
     }
 
-    return res.status(200).json({ success: true, course, hasAccess, accessNotice })
+    const sanitizedCourse = sanitizeCourseForPublic(course, hasAccess)
+
+    return res.status(200).json({ success: true, course: sanitizedCourse, hasAccess, accessNotice })
   } catch (error) {
     console.error("getCourseDetail error:", error)
     return res.status(500).json({ success: false, message: error.message })
@@ -606,15 +609,12 @@ exports.getCourseDetail = async (req, res) => {
 exports.getCourseVideos = async (req, res) => {
   try {
     const { id: courseId } = req.params
-    const userId = req.user.id
+    const user = req.user
 
     const course = await Course.findById(courseId).lean()
     if (!course) return res.status(404).json({ success: false, message: "Course not found" })
 
-    const isEnrolled = (course.enrolledClients || []).map(String).includes(String(userId))
-    const isCreator = String(course.practitioner) === String(userId)
-
-    let hasAccess = isCreator || isEnrolled
+    const hasAccess = canAccessCourseMedia(course, user)
 
     if (!hasAccess) {
       if (course.price > 0 && !course.isFree) {
@@ -624,8 +624,10 @@ exports.getCourseVideos = async (req, res) => {
         })
       }
 
-      // Free course: All learners get 100% free access
-      hasAccess = true
+      return res.status(403).json({
+        success: false,
+        message: "You do not have permission to view videos for this course.",
+      })
     }
 
     const videos = await CourseVideo.find({ course: courseId }).sort({ order: 1 }).lean()
