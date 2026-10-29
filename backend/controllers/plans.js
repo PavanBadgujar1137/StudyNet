@@ -299,7 +299,6 @@ exports.verifyPlanPayment = async (req, res) => {
       growth: "Pro Plan (Yearly)",
       master: "Pro Plan (Yearly)",
     }
-    const keyLower = String(verified.order.planKey || "pro_monthly").toLowerCase()
     const amount = verified.order.amount ?? planPrices[keyLower] ?? 0
 
     if (req.user?.id) {

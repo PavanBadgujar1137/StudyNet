@@ -1534,10 +1534,11 @@ async function _createInvoiceAndAdminLog({
           if (payErr.code !== 11000) throw payErr
         }
 
-      if (!hasBank) {
-        notifyPendingBankDetails(practitionerId, finalNet, offer?.title).catch((e) =>
-          console.warn("[Autopay] notifyPendingBankDetails warning:", e.message)
-        )
+        if (!hasBank) {
+          notifyPendingBankDetails(practitionerId, finalNet, offer?.title).catch((e) =>
+            console.warn("[Autopay] notifyPendingBankDetails warning:", e.message)
+          )
+        }
       }
     }
   } catch (err) {

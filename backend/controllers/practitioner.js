@@ -955,8 +955,8 @@ exports.connectClientWithPractitioner = async (req, res) => {
     }
 
     // 4. Create Invoice record
-    const existingInvoice = await Invoice.findOne({ booking: booking._id })
-    if (!existingInvoice) {
+    let invoiceRecord = existingInvoice || (booking ? await Invoice.findOne({ booking: booking._id }) : null)
+    if (!invoiceRecord) {
       const invoiceNum = `OH-${Date.now().toString().slice(-6)}`
       try {
         await Invoice.create({
