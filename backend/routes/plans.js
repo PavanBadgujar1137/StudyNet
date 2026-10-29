@@ -13,15 +13,17 @@ const {
 const optionalAuth = (req, res, next) => {
   try {
     const authHeader = req.header("Authorization") || req.header("authorization") || req.headers?.authorization
-    let rawToken = req.cookies?.token || req.body?.token || (authHeader ? authHeader.replace(/^Bearer\s+/i, "") : null)
+    let rawToken = (authHeader ? authHeader.replace(/^Bearer\s+/i, "") : null) || req.cookies?.token || req.body?.userToken || req.body?.authToken || req.body?.token
     if (rawToken) {
       let cleanToken = String(rawToken).trim()
       if ((cleanToken.startsWith('"') && cleanToken.endsWith('"')) || (cleanToken.startsWith("'") && cleanToken.endsWith("'"))) {
         cleanToken = cleanToken.slice(1, -1).trim()
       }
-      const decode = jwt.verify(cleanToken, process.env.JWT_SECRET)
-      req.user = decode
-      if (!req.user.id && req.user._id) req.user.id = req.user._id
+      if (cleanToken.split(".").length === 3) {
+        const decode = jwt.verify(cleanToken, process.env.JWT_SECRET)
+        req.user = decode
+        if (!req.user.id && req.user._id) req.user.id = req.user._id
+      }
     }
   } catch (e) {
     // optional token parsing error ignored
