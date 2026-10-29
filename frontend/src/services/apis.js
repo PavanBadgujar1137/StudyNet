@@ -74,6 +74,7 @@ export const chatEndpoints = {
   SEND_DIRECT_CHAT_API: BASE_URL + "/chat/direct",        // + "/:targetUserId"
   GET_CHAT_CONTACTS_API: BASE_URL + "/chat/contacts",
   PRESIGN_CHAT_MEDIA_API: BASE_URL + "/chat/presign-media",
+  DELETE_CHAT_MESSAGE_API: BASE_URL + "/chat/message",
 }
 
 // SOCIAL POST ENDPOINTS

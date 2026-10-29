@@ -354,15 +354,21 @@ exports.toggleSocialAccountConnection = async (req, res) => {
       })
     }
 
-    const cleanHandle = (rawHandle) => {
+    const extractRawUsername = (rawHandle) => {
       if (!rawHandle) return ""
       let clean = String(rawHandle).trim().replace(/\/+$/, "")
       if (clean.includes("/") || clean.startsWith("http")) {
         const parts = clean.split("/").filter(Boolean)
         clean = parts[parts.length - 1] || clean
       }
+      clean = clean.split("?")[0].split("#")[0].trim()
       clean = clean.replace(/^@+/, "")
-      return `@${clean}`
+      return clean
+    }
+
+    const cleanHandle = (rawHandle) => {
+      const username = extractRawUsername(rawHandle)
+      return username ? `@${username}` : ""
     }
 
     let account = await SocialAccount.findOne({ practitioner: practitionerId, platform })
@@ -380,20 +386,87 @@ exports.toggleSocialAccountConnection = async (req, res) => {
     }
 
     // Connect or update handle
+    const targetHandle = handle || account?.handle || ""
+    const rawUsername = extractRawUsername(targetHandle)
+
+    if (!rawUsername) {
+      return res.status(400).json({
+        success: false,
+        message: platform === "instagram" ? "Invalid Instagram username" : "Social handle or username is required to connect",
+      })
+    }
+
+    // Platform-specific validation
+    if (platform === "instagram") {
+      // Instagram rules:
+      // 1-30 characters, letters, numbers, periods, and underscores only.
+      // Cannot contain spaces or symbols.
+      // Cannot start or end with a period.
+      // Cannot contain consecutive periods.
+      const isFormatValid =
+        rawUsername.length >= 1 &&
+        rawUsername.length <= 30 &&
+        /^[a-zA-Z0-9._]+$/.test(rawUsername) &&
+        !rawUsername.startsWith(".") &&
+        !rawUsername.endsWith(".") &&
+        !rawUsername.includes("..")
+
+      if (!isFormatValid) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid Instagram username",
+        })
+      }
+
+      // Live verification of Instagram profile
+      try {
+        const verifyRes = await fetch(`https://www.instagram.com/${encodeURIComponent(rawUsername)}/`, {
+          headers: {
+            "User-Agent":
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept-Language": "en-US,en;q=0.9",
+          },
+          signal: AbortSignal.timeout(3500),
+        })
+
+        if (verifyRes.status === 404) {
+          return res.status(400).json({
+            success: false,
+            message: "Invalid Instagram username: account not found",
+          })
+        }
+
+        if (verifyRes.ok) {
+          const html = await verifyRes.text()
+          if (
+            html.includes("Sorry, this page isn't available") ||
+            html.includes("The link you followed may be broken")
+          ) {
+            return res.status(400).json({
+              success: false,
+              message: "Invalid Instagram username: account not found",
+            })
+          }
+        }
+      } catch (err) {
+        // Fall back gracefully if outbound network call fails or times out
+      }
+    } else if (platform === "twitter") {
+      const isTwitterValid = rawUsername.length >= 1 && rawUsername.length <= 15 && /^[a-zA-Z0-9_]+$/.test(rawUsername)
+      if (!isTwitterValid) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid X (Twitter) username: must be 1-15 characters containing only letters, numbers, and underscores.",
+        })
+      }
+    }
+
     if (!account) {
       account = new SocialAccount({ practitioner: practitionerId, platform })
     }
 
-    if (handle) {
-      account.handle = cleanHandle(handle)
-      account.accountName = accountName || account.handle
-    } else if (!account.handle) {
-      return res.status(400).json({
-        success: false,
-        message: "Social handle or username is required to connect",
-      })
-    }
-
+    account.handle = cleanHandle(targetHandle)
+    account.accountName = accountName || account.handle
     account.isConnected = true
     account.connectedAt = new Date()
     await account.save()

@@ -11,6 +11,7 @@ const {
   sendDirectMessage,
   getChatContacts,
   presignChatMediaUpload,
+  deleteMessage,
 } = require("../controllers/chat")
 
 // All chat routes require authentication
@@ -33,5 +34,9 @@ router.post("/direct/:targetUserId", sendDirectMessage)
 
 // Contacts / Direct Message user list
 router.get("/contacts", getChatContacts)
+
+// Delete sent message
+router.delete("/message/:messageId", deleteMessage)
+router.delete("/:messageId", deleteMessage)
 
 module.exports = router

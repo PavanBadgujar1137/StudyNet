@@ -150,7 +150,7 @@ export const toggleSocialAccount = async (data, token) => {
     return response.data.account
   } catch (error) {
     console.error("toggleSocialAccount error:", error)
-    toast.error("Error updating account connection", { id: toastId })
+    toast.error(error?.response?.data?.message || error?.message || "Error updating account connection", { id: toastId })
     return null
   }
 }

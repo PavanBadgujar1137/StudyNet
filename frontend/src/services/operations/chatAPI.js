@@ -11,6 +11,7 @@ const {
   SEND_DIRECT_CHAT_API,
   GET_CHAT_CONTACTS_API,
   PRESIGN_CHAT_MEDIA_API,
+  DELETE_CHAT_MESSAGE_API,
 } = chatEndpoints
 
 export const fetchGlobalMessages = async (token) => {
@@ -154,6 +155,26 @@ export const presignChatMedia = async (token, data) => {
     console.error("presignChatMedia error:", error)
     toast.error(error.message || "Failed to initialize media upload")
     return null
+  }
+}
+
+export const deleteChatMessage = async (token, messageId) => {
+  try {
+    const response = await apiConnector(
+      "DELETE",
+      `${DELETE_CHAT_MESSAGE_API}/${messageId}`,
+      null,
+      { Authorization: `Bearer ${token}` }
+    )
+    if (!response?.data?.success) {
+      throw new Error(response?.data?.message || "Failed to delete message")
+    }
+    toast.success("Message deleted")
+    return true
+  } catch (error) {
+    console.error("deleteChatMessage error:", error)
+    toast.error(error.response?.data?.message || error.message || "Could not delete message")
+    return false
   }
 }
 

@@ -342,3 +342,47 @@ exports.getChatContacts = async (req, res) => {
     return res.status(500).json({ success: false, message: error.message })
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 5. DELETE CHAT MESSAGE
+// ─────────────────────────────────────────────────────────────────────────────
+
+// DELETE /api/v1/chat/message/:messageId
+exports.deleteMessage = async (req, res) => {
+  try {
+    const { messageId } = req.params
+    const userId = req.user.id
+
+    if (!messageId) {
+      return res.status(400).json({ success: false, message: "Message ID is required." })
+    }
+
+    const message = await ChatMessage.findById(messageId)
+    if (!message) {
+      return res.status(404).json({ success: false, message: "Message not found." })
+    }
+
+    // Only the message sender or an Admin can delete the message
+    const isSender = String(message.sender) === String(userId)
+    const isAdmin = req.user.accountType === "Admin"
+
+    if (!isSender && !isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: "You are only permitted to delete your own messages.",
+      })
+    }
+
+    await ChatMessage.findByIdAndDelete(messageId)
+
+    return res.status(200).json({
+      success: true,
+      message: "Message deleted successfully.",
+      data: { messageId },
+    })
+  } catch (error) {
+    console.error("deleteMessage error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+

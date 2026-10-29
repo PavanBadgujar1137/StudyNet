@@ -464,9 +464,44 @@ export function SocialPostStudio() {
   const handleSaveChannelHandle = async (platformId) => {
     const inputHandle = handleInputs[platformId]?.trim()
     const existingAcc = getConnectedAccount(platformId)
-    if (!inputHandle && !existingAcc?.handle) {
+    const rawVal = inputHandle || existingAcc?.handle || ''
+
+    if (!rawVal) {
       toast.error(`Please enter your ${platformId.toUpperCase()} username or profile link before connecting`)
       return
+    }
+
+    if (platformId === 'instagram') {
+      let clean = String(rawVal).trim().replace(/\/+$/, '')
+      if (clean.includes('/') || clean.startsWith('http')) {
+        const parts = clean.split('/').filter(Boolean)
+        clean = parts[parts.length - 1] || clean
+      }
+      clean = clean.split('?')[0].split('#')[0].trim().replace(/^@+/, '')
+
+      const isValid =
+        clean.length >= 1 &&
+        clean.length <= 30 &&
+        /^[a-zA-Z0-9._]+$/.test(clean) &&
+        !clean.startsWith('.') &&
+        !clean.endsWith('.') &&
+        !clean.includes('..')
+
+      if (!isValid) {
+        toast.error('Invalid Instagram username')
+        return
+      }
+    } else if (platformId === 'twitter') {
+      let clean = String(rawVal).trim().replace(/\/+$/, '')
+      if (clean.includes('/') || clean.startsWith('http')) {
+        const parts = clean.split('/').filter(Boolean)
+        clean = parts[parts.length - 1] || clean
+      }
+      clean = clean.split('?')[0].split('#')[0].trim().replace(/^@+/, '')
+      if (!/^[a-zA-Z0-9_]{1,15}$/.test(clean)) {
+        toast.error('Invalid X (Twitter) username')
+        return
+      }
     }
 
     const cleanHandle = inputHandle ? formatDisplayHandle(inputHandle) : existingAcc.handle
@@ -478,7 +513,6 @@ export function SocialPostStudio() {
       setHandleInputs((prev) => ({ ...prev, [platformId]: '' }))
       setEditingChannels((prev) => ({ ...prev, [platformId]: false }))
       loadAccounts()
-      toast.success(`✓ ${platformId.toUpperCase()} handle connected!`)
     }
   }
 

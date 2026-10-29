@@ -18,6 +18,7 @@ import {
   FiMaximize2,
   FiArchive,
   FiBell,
+  FiTrash2,
 } from "react-icons/fi"
 import {
   fetchGlobalMessages,
@@ -28,6 +29,7 @@ import {
   sendDirectMessage,
   fetchChatContacts,
   presignChatMedia,
+  deleteChatMessage,
 } from "../../../services/operations/chatAPI"
 import { apiConnector } from "../../../services/apiConnector"
 import { toast } from "react-hot-toast"
@@ -71,6 +73,8 @@ export default function CommunityChatHub({ defaultPractitionerId = null }) {
   const [sending, setSending] = useState(false)
   // eslint-disable-next-line no-unused-vars
   const [msgFilter, setMsgFilter] = useState("")
+  const [deletingMsgId, setDeletingMsgId] = useState(null)
+  const [hoveredMsgId, setHoveredMsgId] = useState(null)
 
   // Media Staging & Upload State
   const [stagedFiles, setStagedFiles] = useState([]) // [{ id, file, name, size, type, category, previewUrl }]
@@ -364,6 +368,23 @@ export default function CommunityChatHub({ defaultPractitionerId = null }) {
     } else {
       toast.error("Message could not be sent")
     }
+  }
+
+  // Handle message deletion
+  const handleDeleteMessage = async (messageId) => {
+    if (!messageId || deletingMsgId) return
+    if (!window.confirm("Are you sure you want to delete this message?")) return
+
+    setDeletingMsgId(messageId)
+    const prevMessages = [...messages]
+    // Optimistic UI update
+    setMessages((prev) => prev.filter((m) => m._id !== messageId))
+
+    const success = await deleteChatMessage(token, messageId)
+    if (!success) {
+      setMessages(prevMessages)
+    }
+    setDeletingMsgId(null)
   }
 
   // Drag and Drop handlers for entire chat zone
@@ -844,8 +865,10 @@ export default function CommunityChatHub({ defaultPractitionerId = null }) {
                     flexDirection: "column",
                     alignItems: isMine ? "flex-end" : "flex-start",
                   }}
+                  onMouseEnter={() => setHoveredMsgId(msg._id)}
+                  onMouseLeave={() => setHoveredMsgId((curr) => (curr === msg._id ? null : curr))}
                 >
-                  <div style={{ fontSize: "11px", color: "#64748B", marginBottom: "4px", display: "flex", alignItems: "center", gap: "4px" }}>
+                  <div style={{ fontSize: "11px", color: "#64748B", marginBottom: "4px", display: "flex", alignItems: "center", gap: "5px" }}>
                     <span style={{ fontWeight: 700, color: "#334155" }}>{senderName}</span>
                     {isPract && (
                       <span style={{ fontSize: "8px", background: "#FEF3C7", color: "#92400E", padding: "1px 4px", borderRadius: "4px", fontWeight: 800 }}>
@@ -853,20 +876,97 @@ export default function CommunityChatHub({ defaultPractitionerId = null }) {
                       </span>
                     )}
                     <span>• {new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                    {isMine && msg._id && (
+                      <button
+                        onClick={() => handleDeleteMessage(msg._id)}
+                        disabled={deletingMsgId === msg._id}
+                        title="Delete this message"
+                        style={{
+                          background: "none",
+                          border: "none",
+                          cursor: deletingMsgId === msg._id ? "not-allowed" : "pointer",
+                          color: "#94A3B8",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "3px",
+                          fontSize: "11px",
+                          fontWeight: 600,
+                          padding: "1px 5px",
+                          borderRadius: "4px",
+                          transition: "all 0.15s ease",
+                          marginLeft: "2px",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.color = "#EF4444"
+                          e.currentTarget.style.background = "#FEE2E2"
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color = "#94A3B8"
+                          e.currentTarget.style.background = "none"
+                        }}
+                      >
+                        <FiTrash2 size={11} />
+                        <span>{deletingMsgId === msg._id ? "Deleting..." : "Delete"}</span>
+                      </button>
+                    )}
                   </div>
 
                   <div
                     style={{
-                      maxWidth: "75%",
-                      padding: "10px 12px",
-                      borderRadius: isMine ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
-                      background: isMine ? "linear-gradient(135deg, #1F5FE0 0%, #8A2BE0 100%)" : "#FFFFFF",
-                      color: isMine ? "#FFFFFF" : "#0F172A",
-                      fontSize: "13.5px",
-                      lineHeight: 1.45,
-                      boxShadow: "0 2px 6px rgba(0,0,0,0.06)",
-                      border: isMine ? "none" : "1px solid #E2E8F0",
                       display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      flexDirection: isMine ? "row" : "row-reverse",
+                      maxWidth: "75%",
+                    }}
+                  >
+                    {isMine && msg._id && (
+                      <button
+                        onClick={() => handleDeleteMessage(msg._id)}
+                        disabled={deletingMsgId === msg._id}
+                        title="Delete message"
+                        style={{
+                          opacity: hoveredMsgId === msg._id ? 1 : 0,
+                          pointerEvents: hoveredMsgId === msg._id ? "auto" : "none",
+                          transition: "opacity 0.2s ease, background 0.15s ease",
+                          background: "#FFFFFF",
+                          border: "1px solid #E2E8F0",
+                          borderRadius: "6px",
+                          padding: "6px",
+                          cursor: deletingMsgId === msg._id ? "not-allowed" : "pointer",
+                          color: "#64748B",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+                          flexShrink: 0,
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.color = "#EF4444"
+                          e.currentTarget.style.borderColor = "#FCA5A5"
+                          e.currentTarget.style.background = "#FEF2F2"
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color = "#64748B"
+                          e.currentTarget.style.borderColor = "#E2E8F0"
+                          e.currentTarget.style.background = "#FFFFFF"
+                        }}
+                      >
+                        <FiTrash2 size={13} />
+                      </button>
+                    )}
+
+                    <div
+                      style={{
+                        padding: "10px 12px",
+                        borderRadius: isMine ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
+                        background: isMine ? "linear-gradient(135deg, #1F5FE0 0%, #8A2BE0 100%)" : "#FFFFFF",
+                        color: isMine ? "#FFFFFF" : "#0F172A",
+                        fontSize: "13.5px",
+                        lineHeight: 1.45,
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.06)",
+                        border: isMine ? "none" : "1px solid #E2E8F0",
+                        display: "flex",
                       flexDirection: "column",
                       gap: "8px",
                     }}
@@ -1047,6 +1147,7 @@ export default function CommunityChatHub({ defaultPractitionerId = null }) {
                         {msg.content}
                       </div>
                     )}
+                    </div>
                   </div>
                 </div>
               )
