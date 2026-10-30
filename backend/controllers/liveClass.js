@@ -1,6 +1,7 @@
 const { v4: uuidv4 } = require("uuid")
 const LiveClass = require("../models/LiveClass")
 const User = require("../models/User")
+const { canAccessLiveClass, sanitizeLiveClassForClient } = require("../utils/liveClassAccess")
 const mailSender = require("../utils/mailSender")
 const {
   generateRoomName,
@@ -336,7 +337,17 @@ exports.joinClass = async (req, res) => {
 
     if (!liveClass) return res.status(404).json({ success: false, message: "Class not found." })
 
-    const isInstructor = String(liveClass.instructor) === String(userId)
+    if (liveClass.course && typeof liveClass.populate === "function") {
+      await liveClass.populate("course", "title practitioner enrolledClients")
+    }
+    if (!canAccessLiveClass(liveClass, req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to access this live class.",
+      })
+    }
+
+    const isInstructor = String(liveClass.instructor?._id || liveClass.instructor) === String(userId)
 
     // Verify 1-on-1 session privacy (only designated client or host instructor can join)
     if (liveClass.sessionType === "1-on-1" && liveClass.client) {
@@ -443,7 +454,17 @@ exports.getLiveClassToken = async (req, res) => {
     const liveClass = await LiveClass.findById(classId)
     if (!liveClass) return res.status(404).json({ success: false, message: "Class not found." })
 
-    const isInstructor = String(liveClass.instructor) === String(userId)
+    if (liveClass.course && typeof liveClass.populate === "function") {
+      await liveClass.populate("course", "title practitioner enrolledClients")
+    }
+    if (!canAccessLiveClass(liveClass, req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to access this live class.",
+      })
+    }
+
+    const isInstructor = String(liveClass.instructor?._id || liveClass.instructor) === String(userId)
 
     if (!liveClass.livekitRoomName) {
       liveClass.livekitRoomName = generateRoomName(liveClass._id, liveClass.title)
@@ -609,11 +630,23 @@ exports.getClassById = async (req, res) => {
       .populate("instructor", "firstName lastName image email")
       .populate("client", "firstName lastName image email")
       .populate("attendees.user", "firstName lastName email image")
+      .populate("course", "title practitioner enrolledClients")
       .lean()
 
     if (!liveClass) return res.status(404).json({ success: false, message: "Class not found." })
 
-    return res.status(200).json({ success: true, data: liveClass })
+    if (liveClass.course && typeof liveClass.populate === "function") {
+      await liveClass.populate("course", "title practitioner enrolledClients")
+    }
+    if (!canAccessLiveClass(liveClass, req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to access this live class.",
+      })
+    }
+
+    const sanitizedData = sanitizeLiveClassForClient(liveClass, req.user)
+    return res.status(200).json({ success: true, data: sanitizedData })
   } catch (error) {
     console.error("getClassById error:", error)
     return res.status(500).json({ success: false, message: error.message })
