@@ -9,9 +9,9 @@ import {
   FiHome,
 } from "react-icons/fi"
 import { HiSparkles } from "react-icons/hi"
-// import toast from "react-hot-toast"
+import toast from "react-hot-toast"
 import OHEyebrow from "./OHEyebrow"
-// import { apiConnector } from "../../services/apiConnector"
+import { apiConnector } from "../../services/apiConnector"
 // import PayGlocalCheckoutModal from "./PayGlocalCheckoutModal"
 import CalendlyDiscoveryModal from "./CalendlyDiscoveryModal"
 
@@ -50,8 +50,70 @@ export default function OHPricingSection({
   }, [defaultRole, role])
 
   const { token } = useSelector((state) => state.auth)
-  // const { user } = useSelector((state) => state.profile)
   const navigate = useNavigate()
+  const [isStartingFree, setIsStartingFree] = useState(false)
+
+  const handleStartFree = async () => {
+    if (!token) {
+      navigate("/signup?role=practitioner")
+      return
+    }
+
+    if (isStartingFree) return
+    setIsStartingFree(true)
+
+    try {
+      let effectivePlan = null
+
+      try {
+        const res = await apiConnector("GET", "/api/v1/payments/subscription/mine", null, {
+          Authorization: `Bearer ${token}`,
+        })
+        if (res?.data?.effectivePlan) {
+          effectivePlan = res.data.effectivePlan
+        }
+      } catch (err) {
+        // Keep effectivePlan null on network or server error
+      }
+
+      if (!effectivePlan) {
+        toast.error("Could not verify your subscription status. Please try again.")
+        return
+      }
+
+      const planLower = String(effectivePlan).toLowerCase()
+      const isFree = planLower === "open" || planLower === "free"
+      const isPaid =
+        planLower.startsWith("pro") ||
+        planLower === "custom" ||
+        planLower === "institution" ||
+        planLower === "growth" ||
+        planLower === "master" ||
+        planLower === "starter"
+
+      if (isPaid) {
+        const planDisplayName =
+          planLower === "custom" || planLower === "institution"
+            ? "Custom/Enterprise"
+            : effectivePlan.toUpperCase()
+        toast(`You currently have an active ${planDisplayName} subscription.`, {
+          icon: "ℹ️",
+        })
+        if (onSuccess) onSuccess()
+      } else if (isFree) {
+        toast.success("Open (Free) Plan is active. You have access to practice tools!")
+        if (onSuccess) {
+          onSuccess()
+        } else if (window.location.pathname !== "/dashboard") {
+          navigate("/dashboard")
+        }
+      } else {
+        toast.error("Unrecognized subscription plan status. Please contact support.")
+      }
+    } finally {
+      setIsStartingFree(false)
+    }
+  }
 
   /*
   const handlePayNow = async (planKey) => {
@@ -392,11 +454,12 @@ export default function OHPricingSection({
 
                   <button
                     type="button"
-                    onClick={() => navigate(token ? "/dashboard" : "/signup?role=practitioner")}
-                    className="w-full py-3.5 px-6 rounded-2xl font-extrabold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer mb-8 hover:bg-blue-100 active:scale-[0.98]"
+                    onClick={handleStartFree}
+                    disabled={isStartingFree}
+                    className="w-full py-3.5 px-6 rounded-2xl font-extrabold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer mb-8 hover:bg-blue-100 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
                     style={{ backgroundColor: "#EFF6FF", color: "#1D4ED8", border: "1px solid #DBEAFE" }}
                   >
-                    <span>Start free →</span>
+                    <span>{isStartingFree ? "Checking plan..." : "Start free →"}</span>
                   </button>
 
                   <ul className="space-y-3.5 text-xs sm:text-[13px] text-slate-700 font-medium">
