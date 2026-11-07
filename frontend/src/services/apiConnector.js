@@ -1,0 +1,40 @@
+import axios from "axios"
+
+export const axiosInstance = axios.create({
+  maxContentLength: Infinity,
+  maxBodyLength: Infinity,
+  timeout: 0,
+})
+
+const BASE_URL = process.env.REACT_APP_BASE_URL || "http://localhost:4000/api/v1"
+const BACKEND_HOST = BASE_URL.replace(/\/api\/v1\/?$/, "")
+
+export const apiConnector = (method, url, bodyData, headers, params, options = {}) => {
+  let finalUrl = url
+  if (url && url.startsWith("/api/v1")) {
+    finalUrl = `${BACKEND_HOST}${url}`
+  }
+
+  const config = {
+    method,
+    url: finalUrl,
+    data: bodyData ?? null,
+    params: params ?? null,
+    headers: { ...(headers || {}) },
+    maxContentLength: Infinity,
+    maxBodyLength: Infinity,
+    timeout: 0,
+    ...options,
+  }
+
+  // Let the browser set the multipart boundary for FormData uploads across all browsers/OS
+  if (typeof FormData !== "undefined" && bodyData instanceof FormData) {
+    Object.keys(config.headers).forEach((key) => {
+      if (key.toLowerCase() === "content-type") {
+        delete config.headers[key]
+      }
+    })
+  }
+
+  return axiosInstance(config)
+}
